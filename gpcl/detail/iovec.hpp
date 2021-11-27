@@ -13,9 +13,10 @@
 
 #include "gpcl/buffer_sequence.hpp"
 #include "gpcl/detail/config.hpp"
+#include "gpcl/vector.hpp"
+
 #include <cstdlib>
 #include <sys/uio.h>
-#include <vector>
 
 namespace gpcl {
 namespace detail {
@@ -66,7 +67,7 @@ struct dynamic_iovec
 
   int iovcnt() const { return vec.size(); }
 
-  std::vector<struct iovec, typename std::allocator_traits<
+  gpcl::vector<struct iovec, typename std::allocator_traits<
                                 Allocator>::template rebind_alloc<struct iovec>>
       vec;
 };
