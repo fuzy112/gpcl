@@ -13,16 +13,22 @@
 
 #include <gpcl/detail/config.hpp>
 
-#ifdef _MSC_VER
+
+#if defined __cpp_lib_atomic_is_always_lock_free
+#  include <gpcl/detail/std_shared_block_base.hpp>
+#elif defined _MSC_VER
 #  include <gpcl/detail/msvc_shared_block_base.hpp>
 #elif defined(__GNUC__)
 #  include <gpcl/detail/gcc_shared_block_base.hpp>
 #endif
 
+
 namespace gpcl {
 namespace detail {
 
-#ifdef _MSC_VER
+#if defined __cpp_lib_atomic_is_always_lock_free
+typedef std_shared_block_base shared_block_base;
+#elif defined _MSC_VER
 typedef msvc_shared_block_base shared_block_base;
 #elif defined(__GNUC__)
 typedef gcc_shared_block_base shared_block_base;
