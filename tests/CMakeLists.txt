@@ -20,7 +20,7 @@ set (TESTS_SRCS
 	vector_test.cpp
 	shared_ptr_test.cpp
 )
-add_executable(tests ${TESTS_SRCS} 	include_src.cpp)
+add_executable(tests ${TESTS_SRCS} include_src.cpp)
 target_link_libraries(tests PRIVATE gpcl::gpcl)
 
 add_executable(tests-separate ${TESTS_SRCS})
