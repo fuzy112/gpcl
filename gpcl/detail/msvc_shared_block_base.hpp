@@ -81,13 +81,15 @@ public:
   bool lock() noexcept
   {
     GPCL_ASSERT(weak_count() > 0);
-    if (InterlockedIncrementNoFence(&use_count_) == 1)
+    long old_val = use_count_;
+
+    while (old_val > 0)
     {
-      use_count_ = 0;
-      return false;
+      if (InterlockedCompareExchange(&use_count_, old_val + 1, old_val))
+        return true;
     }
 
-    return true;
+    return false;
   }
 
 protected:
