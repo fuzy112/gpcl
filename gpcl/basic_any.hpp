@@ -1,0 +1,218 @@
+//
+// basic_any.hpp
+// ~~~~~~~~~~~~~
+//
+// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+#ifndef GPCL_BASIC_ANY_HPP
+#define GPCL_BASIC_ANY_HPP
+
+#include <gpcl/detail/any_manager.hpp>
+#include <gpcl/detail/config.hpp>
+#include <gpcl/in_place_type.hpp>
+
+namespace gpcl {
+
+template <std::size_t LocalSize = 3 * sizeof(void *),
+          std::size_t LocalAlign = alignof(std::max_align_t)>
+class basic_any;
+
+template <typename T>
+struct is_basic_any : std::false_type
+{
+};
+
+template <std::size_t LocalSize, std::size_t LocalAlign>
+struct is_basic_any<basic_any<LocalSize, LocalAlign>> : std::true_type
+{
+};
+
+template <typename T>
+constexpr is_basic_any<T> is_basic_any_v{};
+
+template <std::size_t LocalSize, std::size_t LocalAlign>
+class basic_any
+{
+  using any_data_t = detail::any_data<LocalSize, LocalAlign>;
+  using any_manage_func_t = detail::any_manage_func_t<LocalSize, LocalAlign>;
+  using any_manage_op = detail::any_manage_op;
+
+  template <typename T>
+  using any_manager = detail::any_manager<T, LocalSize, LocalAlign>;
+
+  any_data_t data_;
+  any_manage_func_t manage_ = nullptr;
+
+public:
+  constexpr basic_any() = default;
+
+  basic_any(const basic_any &other) : manage_(other.manage_)
+  {
+    if (manage_)
+      manage_(&data_, &other.data_, any_manage_op::clone);
+  }
+
+  basic_any(basic_any &&other) noexcept : manage_(other.manage_)
+  {
+    if (manage_)
+      if (manage_(&data_, &other.data_, any_manage_op::move))
+        other.manage_ = nullptr;
+  }
+
+  template <typename ValueType,
+            std::enable_if_t<!is_basic_any_v<std::decay_t<ValueType>>, int> = 0>
+  basic_any(ValueType &&value)
+      : manage_(&any_manager<std::decay_t<ValueType>>::manage)
+  {
+    using decayed_value_t = std::decay_t<ValueType>;
+    using manager = any_manager<decayed_value_t>;
+
+    if constexpr (manager::local_storage)
+      new (&data_.local_buffer) decayed_value_t(std::forward<ValueType>(value));
+    else
+      data_.remote_addr = new decayed_value_t(std::forward<ValueType>(value));
+  }
+
+  template <typename ValueType, typename... Args>
+  explicit basic_any(in_place_type_t<ValueType>, Args &&... args)
+      : manage_(&any_manager<std::decay_t<ValueType>>::manage)
+  {
+    using decayed_value_t = std::decay_t<ValueType>;
+    using manager = any_manager<decayed_value_t>;
+
+    if constexpr (manager::local_storage)
+      new (&data_.local_buffer) decayed_value_t(std::forward<Args>(args)...);
+    else
+      data_.remote_addr = new decayed_value_t(std::forward<Args>(args)...);
+  }
+
+  template <typename ValueType, typename U, typename... Args>
+  explicit basic_any(in_place_type_t<ValueType>, std::initializer_list<U> il,
+                     Args &&... args)
+      : manage_(&any_manager<std::decay_t<ValueType>>::manage)
+  {
+    using decayed_value_t = std::decay_t<ValueType>;
+    using manager = any_manager<decayed_value_t>;
+
+    if constexpr (manager::local_storage)
+      new (&data_.local_buffer)
+          decayed_value_t(il, std::forward<Args>(args)...);
+    else
+      data_.remote_addr = new decayed_value_t(il, std::forward<Args>(args)...);
+  }
+
+  ~basic_any()
+  {
+    if (manage_)
+      manage_(&data_, nullptr, any_manage_op::destroy);
+  }
+
+  basic_any &operator=(const basic_any &other)
+  {
+    basic_any(other).swap(*this);
+    return *this;
+  }
+
+  basic_any &operator=(basic_any &&other) noexcept
+  {
+    if (manage_)
+      manage_(&data_, nullptr, any_manage_op::destroy);
+    manage_ = other.manage_;
+    if (manage_)
+      if (manage_(&data_, &other.data_, any_manage_op::move))
+        other.manage_ = nullptr;
+    return *this;
+  }
+
+  template <typename ValueType,
+            std::enable_if_t<
+                std::is_copy_constructible<std::decay_t<ValueType>>::value &&
+                    !is_basic_any_v<std::decay_t<ValueType>>,
+                int> = 0>
+  basic_any &operator=(ValueType &&value)
+  {
+    basic_any(std::forward<ValueType>(value)).swap(*this);
+    return *this;
+  }
+
+  void swap(basic_any &other) noexcept
+  {
+    basic_any temp(std::move(other));
+    other = std::move(*this);
+    *this = std::move(temp);
+  }
+
+  void reset() noexcept
+  {
+    if (manage_)
+      manage_(&data_, nullptr, any_manage_op::destroy);
+    manage_ = nullptr;
+  }
+
+  template <typename ValueType, typename... Args>
+  std::decay_t<ValueType> &emplace(Args &&... args)
+  {
+    basic_any(in_place_type<ValueType>, std::forward<Args>(args)...)
+        .swap(*this);
+    return *static_cast<std::decay_t<ValueType> *>(raw_value());
+  }
+
+  template <typename ValueType, typename U, typename... Args>
+  std::decay_t<ValueType> &emplace(std::initializer_list<U> il, Args &&... args)
+  {
+    basic_any(in_place_type<ValueType>, il, std::forward<Args>(args)...)
+        .swap(*this);
+    return *static_cast<std::decay_t<ValueType> *>(raw_value());
+  }
+
+  const void *raw_value() const noexcept
+  {
+    return manage_(nullptr, &data_, any_manage_op::get_pointer);
+  }
+
+  void *raw_value() noexcept
+  {
+    return manage_(nullptr, &data_, any_manage_op::get_pointer);
+  }
+
+  bool empty() const noexcept { return !manage_; }
+
+  bool has_value() const noexcept { return manage_; }
+
+  template <typename T>
+  bool has_type() const
+  {
+#ifdef GPCL_NO_RTTI
+    return false;
+#else
+    return type() == typeid(T);
+#endif
+  }
+
+#ifndef GPCL_NO_RTTI
+  const std::type_info &type() const noexcept
+  {
+    if (manage_)
+      return *static_cast<const std::type_info *>(
+          manage_(nullptr, &data_, any_manage_op::get_type_info));
+    return typeid(void);
+  }
+#endif
+};
+
+template <std::size_t LocalSize, std::size_t LocalAlign>
+inline void swap(basic_any<LocalSize> &x, basic_any<LocalAlign> &y) noexcept
+{
+  x.swap(y);
+}
+
+} // namespace gpcl
+
+#include <gpcl/any_cast.hpp>
+#include <gpcl/make_basic_any.hpp>
+
+#endif // GPCL_BASIC_ANY_HPP

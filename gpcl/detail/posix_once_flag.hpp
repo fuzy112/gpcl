@@ -1,0 +1,58 @@
+//
+// posix_once_flag.hpp
+// ~~~~~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+#ifndef GPCL_DETAIL_POSIX_ONCE_FLAG_HPP
+#define GPCL_DETAIL_POSIX_ONCE_FLAG_HPP
+
+#include <gpcl/detail/config.hpp>
+#include <gpcl/detail/posix_mutex.hpp>
+#include <gpcl/function.hpp>
+
+#include <pthread.h>
+
+namespace gpcl {
+
+namespace detail {
+class posix_once_flag;
+}
+
+template <typename Callable, typename... Args>
+void call_once(detail::posix_once_flag &flag, Callable &&callable,
+               Args &&... args);
+
+namespace detail {
+class posix_once_flag
+{
+public:
+  explicit constexpr posix_once_flag() : data_(PTHREAD_ONCE_INIT) {}
+
+  posix_once_flag(const posix_once_flag &) = delete;
+  posix_once_flag &operator=(const posix_once_flag &) = delete;
+
+  template <typename Callable, typename... Args>
+  friend void ::gpcl::call_once(posix_once_flag &flag, Callable &&callable,
+                                Args &&... args);
+
+  typedef pthread_once_t *native_handle_type;
+
+  native_handle_type native_handle() { return &data_; }
+
+private:
+  pthread_once_t data_;
+};
+
+inline __thread gpcl::function<void()> *posix_once_functor;
+
+} // namespace detail
+} // namespace gpcl
+
+#include <gpcl/detail/impl/posix_once_flag.hpp>
+
+#endif // GPCL_DETAIL_POSIX_ONCE_FLAG_HPP

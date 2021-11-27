@@ -1,0 +1,184 @@
+//
+// weak_ptr.hpp
+// ~~~~~~~~~~~~
+//
+// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+#ifndef GPCL_WEAK_PTR_HPP
+#define GPCL_WEAK_PTR_HPP
+
+#include <gpcl/detail/config.hpp>
+#include <gpcl/detail/shared_block_base.hpp>
+
+namespace gpcl {
+
+template <typename T>
+class shared_ptr;
+
+template <typename T>
+class weak_ptr
+{
+  template <typename Y>
+  friend class weak_ptr;
+
+  template <typename Y>
+  friend class shared_ptr;
+
+  T *p_ = nullptr;
+  detail::shared_block_base *s_ = nullptr;
+
+public:
+  using element_type = T;
+
+  /// Default constructor.
+  constexpr weak_ptr() noexcept = default;
+
+  /// Copy constructor.
+  weak_ptr(const weak_ptr &r) noexcept : p_(r.p_), s_(r.s_)
+  {
+    if (s_)
+      s_->weak_get();
+  }
+
+  /// Converting copy constructor.
+  template <typename Y,
+            std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
+  weak_ptr(const weak_ptr<Y> &r) noexcept : p_(r.p_),
+                                            s_(r.s_)
+  {
+    if (s_)
+      s_->weak_get();
+  }
+
+  /// Construct a weak_ptr from a shared_ptr.
+  template <typename Y,
+            std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
+  weak_ptr(const shared_ptr<Y> &r) noexcept;
+
+  /// Move constructor.
+  weak_ptr(weak_ptr &&r) noexcept
+      : p_(detail::exchange(r.p_, nullptr)),
+        s_(detail::exchange(r.s_, nullptr))
+  {
+  }
+
+  /// Converting move constructor.
+  template <typename Y,
+            std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
+  weak_ptr(weak_ptr<Y> &&r) noexcept
+      : p_(detail::exchange(r.p_, nullptr)),
+        s_(detail::exchange(r.s_, nullptr))
+  {
+  }
+
+  /// Destructor.
+  ~weak_ptr()
+  {
+    if (s_)
+      s_->weak_put();
+  }
+
+  /// Copy assignment.
+  weak_ptr &operator=(const weak_ptr &r) noexcept
+  {
+    weak_ptr(r).swap(*this);
+    return *this;
+  }
+
+  /// Converting copy assignment.
+  template <typename Y,
+            std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
+  weak_ptr &operator=(const weak_ptr<Y> &r) noexcept
+  {
+    weak_ptr(r).swap(*this);
+    return *this;
+  }
+
+  /// Move assignment.
+  weak_ptr &operator=(weak_ptr &&r) noexcept
+  {
+    r.swap(*this);
+    return *this;
+  }
+
+  /// Converting move assignment.
+  template <typename Y,
+            std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
+  weak_ptr &operator=(weak_ptr<Y> &&r) noexcept
+  {
+    weak_ptr(std::move(r)).swap(*this);
+    return *this;
+  }
+
+  /// Assignment a shared_ptr to a weak_ptr.
+  template <typename Y,
+            std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
+  weak_ptr &operator=(const shared_ptr<Y> &r) noexcept;
+
+  /// Reset to nullptr.
+  void reset() noexcept
+  {
+    if (s_)
+      s_->weak_put();
+
+    p_ = nullptr;
+    s_ = nullptr;
+  }
+
+  /// Swap two weak_ptr's.
+  void swap(weak_ptr &r) noexcept
+  {
+    using std::swap;
+    swap(p_, r.p_);
+    swap(s_, r.s_);
+  }
+
+  /// Returns number of shared_ptr to the managed object.
+  long use_count() const noexcept
+  {
+    if (!s_)
+      return 0;
+    return s_->use_count();
+  }
+
+  /// Determines whether the managed object has been destroyed.
+  bool expired() const noexcept
+  {
+    if (!s_)
+      return true;
+
+    return s_->use_count() == 0;
+  }
+
+  /// Try to create a shared_ptr to the managed object.
+  shared_ptr<T> lock() const noexcept
+  {
+    if (!s_)
+      return nullptr;
+
+    if (s_->lock())
+      return shared_ptr<T>(detail::create_from_shared_block, p_, s_);
+    return nullptr;
+  }
+
+  /// Compare the addresses of the control blocks.
+  template <typename Y>
+  bool owner_before(const weak_ptr<Y> &other) const noexcept
+  {
+    return s_ < other.s_;
+  }
+
+  /// Compare the addresses of the control blocks.
+  template <typename Y>
+  bool owner_before(const shared_ptr<Y> &other) const noexcept;
+};
+
+} // namespace gpcl
+
+#include <gpcl/impl/weak_ptr.hpp>
+
+#endif // GPCL_WEAK_PTR_HPP

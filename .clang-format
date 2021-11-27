@@ -1,0 +1,39 @@
+#
+# .clang-format
+# ~~~~~~~~~~~~~
+#
+# Copyright (c) 2020 Zhengyi Fu (tsingyat at outlook dot com)
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+
+---
+BasedOnStyle: LLVM
+AlignTrailingComments: true
+IncludeCategories:
+  - Regex:           '^<(gpcl)/'
+    Priority:        2
+  - Regex:           '.*'
+    Priority:        3
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterStruct: true
+  AfterFunction: true
+  AfterEnum: true
+  AfterControlStatement: Always
+  AfterUnion: true
+  BeforeCatch: true
+  BeforeElse: true
+  # BeforeLambdaBody: true
+AllowAllArgumentsOnNextLine: true
+AllowAllConstructorInitializersOnNextLine: false
+AllowShortFunctionsOnASingleLine: Inline
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
+AlwaysBreakTemplateDeclarations: Yes 
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+IndentPPDirectives: AfterHash
+
+# vim:set filetype=yaml:
