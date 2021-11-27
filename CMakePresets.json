@@ -7,8 +7,8 @@
     },
     "configurePresets": [
         {
-            "name": "default",
-            "displayName": "Default",
+            "name": "gcc",
+            "displayName": "GCC",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "generator": "Ninja",
             "cacheVariables": {
@@ -18,8 +18,8 @@
             }
         },
         {
-            "name": "default-clang",
-            "displayName": "Default Clang",
+            "name": "clang",
+            "displayName": "Clang",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "generator": "Ninja",
             "cacheVariables": {
@@ -33,10 +33,11 @@
             "name": "msvc",
             "displayName": "MSVC",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
-            "generator": "Visual Studio 16 2019",
+            "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "BUILD_SHARED_LIBS": "ON"
+                "BUILD_SHARED_LIBS": "ON",
+                "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {

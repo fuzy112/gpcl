@@ -3,7 +3,6 @@ include(CTest)
 
 set (TESTS_SRCS
     main.cpp
-	include_src.cpp
     expected_test.cpp
     monotonic_buffer_resource_test.cpp
 	time_test.cpp
@@ -21,7 +20,7 @@ set (TESTS_SRCS
 	vector_test.cpp
 	shared_ptr_test.cpp
 )
-add_executable(tests ${TESTS_SRCS})
+add_executable(tests ${TESTS_SRCS} 	include_src.cpp)
 target_link_libraries(tests PRIVATE gpcl::gpcl)
 
 add_executable(tests-separate ${TESTS_SRCS})

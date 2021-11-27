@@ -16,6 +16,10 @@ endif ()
 
 target_compile_definitions(separate PUBLIC GPCL_SEPARATE_COMPILATION=1)
 
+if (BUILD_SHARED_LIBS)
+	target_compile_definitions(separate PUBLIC GPCL_DYN_LINK=1)
+endif ()
+
 set_target_properties(separate
 	PROPERTIES
 	OUTPUT_NAME gpcl

@@ -11,6 +11,7 @@
 #ifndef GPCL_PMR_TLSF_RESOURCE_HPP
 #define GPCL_PMR_TLSF_RESOURCE_HPP
 
+#include <gpcl/detail/config.hpp>
 #include <gpcl/detail/tlsf.hpp>
 #include <gpcl/intrusive_list.hpp>
 #include <gpcl/pmr/default_resource.hpp>
@@ -29,12 +30,9 @@ public:
       std::size_t initial_buffer,
       memory_resource *upstream = get_default_resource());
 
-  explicit tlsf_resource(memory_resource *upstream = get_default_resource())
-      : tlsf_resource(8152, upstream)
-  {
-  }
+  GPCL_DECL tlsf_resource(memory_resource *upstream = get_default_resource());
 
-  GPCL_DECL ~tlsf_resource() override;
+  GPCL_DECL virtual ~tlsf_resource() override;
 
   memory_resource *upstream_resource() const { return upstream_; }
 
@@ -53,7 +51,10 @@ private:
                                std::size_t alignment) override;
 
   GPCL_DECL bool
-  do_is_equal(const memory_resource &other) const noexcept override;
+  do_is_equal(const memory_resource &other) const noexcept override
+  {
+    return this == std::addressof(other);
+  }
 
   struct pool_base
   {

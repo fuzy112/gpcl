@@ -40,6 +40,11 @@ tlsf_resource::tlsf_resource(std::size_t initial_buffer,
   }
 }
 
+tlsf_resource::tlsf_resource(memory_resource *upstream)
+    : tlsf_resource(8152, upstream)
+{
+}
+
 tlsf_resource::~tlsf_resource()
 {
   release();
@@ -106,11 +111,6 @@ void tlsf_resource::do_deallocate(void *p, std::size_t bytes,
   (void)bytes;
   (void)alignment;
   gpcl::detail::tlsf_free(tlsf_, p);
-}
-
-bool tlsf_resource::do_is_equal(const memory_resource &other) const noexcept
-{
-  return std::addressof(other) == this;
 }
 
 } // namespace pmr
