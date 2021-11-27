@@ -35,7 +35,7 @@ public:
   {
   }
 
-  ~monotonic_buffer_resource() override { release(); }
+  GPCL_DECL ~monotonic_buffer_resource() override;
 
   GPCL_DECL void release();
 

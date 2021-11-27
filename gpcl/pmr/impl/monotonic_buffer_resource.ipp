@@ -37,6 +37,11 @@ monotonic_buffer_resource::monotonic_buffer_resource(std::size_t initial_buffer,
   request_from_upstream();
 }
 
+monotonic_buffer_resource::~monotonic_buffer_resource()
+{
+  release();
+}
+
 void monotonic_buffer_resource::release()
 {
   while (block_list_.ptr)
