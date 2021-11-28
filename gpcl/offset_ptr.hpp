@@ -14,7 +14,8 @@
 #include <gpcl/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/type_traits.hpp>
-#include "narrow_cast.hpp"
+#include <gpcl/narrow_cast.hpp>
+
 #include <limits>
 #include <string>
 
@@ -250,6 +251,31 @@ public:
                               int>::type = 0>
   bool operator!=(const std::string &str) const;
 };
+
+template <typename T, typename U>
+offset_ptr<T> static_pointer_cast(const offset_ptr<U> &p) noexcept
+{
+  return offset_ptr<T>(static_cast<U *>(p.get()));
+}
+
+template <typename T, typename U>
+offset_ptr<T> dynamic_pointer_cast(const offset_ptr<U> &p) noexcept
+{
+  return offset_ptr<T>(dynamic_cast<U *>(p.get()));
+}
+
+template <typename T, typename U>
+offset_ptr<T> const_pointer_cast(const offset_ptr<U> &p) noexcept
+{
+  return offset_ptr<T>(const_cast<U *>(p.get()));
+}
+
+template <typename T, typename U>
+offset_ptr<T> reinterpret_pointer_cast(const offset_ptr<U> &p) noexcept
+{
+  return offset_ptr<T>(reinterpret_cast<U *>(p.get()));
+}
+
 
 } // namespace gpcl
 

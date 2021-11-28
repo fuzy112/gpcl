@@ -175,7 +175,47 @@ public:
   /// Compare the addresses of the control blocks.
   template <typename Y>
   bool owner_before(const shared_ptr<Y> &other) const noexcept;
+
+  element_type *get_unchecked() const noexcept { return p_; }
+
+  template <typename Y>
+  weak_ptr<Y> generic_pointer_cast_helper(Y *p) const noexcept
+  {
+    if (!s_)
+      return nullptr;
+    if (!p_)
+      return nullptr;
+    weak_ptr<Y> rv;
+    rv.p_ = p;
+    rv.s_ = s_;
+    rv.s_->weak_get();
+    return rv;
+  }
 };
+
+template <typename T, typename U>
+weak_ptr<T> static_pointer_cast(const weak_ptr<U> &p) noexcept
+{
+  return p.generic_pointer_cast_helper(static_cast<T *>(p.get_unchecked()));
+}
+
+template <typename T, typename U>
+weak_ptr<T> dynamic_pointer_cast(const weak_ptr<U> &p) noexcept
+{
+  return p.generic_pointer_cast_helper(dynamic_cast<T *>(p.get_unchecked()));
+}
+
+template <typename T, typename U>
+weak_ptr<T> const_pointer_cast(const weak_ptr<U> &p) noexcept
+{
+  return p.generic_pointer_cast_helper(const_cast<T *>(p.get_unchecked()));
+}
+
+template <typename T, typename U>
+weak_ptr<T> reinterpret_pointer_cast(const weak_ptr<U> &p) noexcept
+{
+  return p.generic_pointer_cast_helper(reinterpret_cast<T *>(p.get_unchecked()));
+}
 
 } // namespace gpcl
 

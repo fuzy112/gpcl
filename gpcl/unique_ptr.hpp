@@ -303,6 +303,36 @@ void swap(unique_ptr<T, D> &x, unique_ptr<T, D> &y) noexcept
   x.swap(y);
 }
 
+template <typename T, typename U>
+unique_ptr<T> static_pointer_cast(unique_ptr<U> &&p) noexcept
+{
+  return unique_ptr<T>(static_cast<T *>(p.release()));
+}
+
+template <typename T, typename U>
+unique_ptr<T> dynamic_pointer_cast(unique_ptr<U> &&p) noexcept
+{
+  if (auto tp = dynamic_cast<T*>(p.get()))
+  {
+    p.release();
+    return unique_ptr<T>(tp);
+  }
+  return unique_ptr<T>();
+}
+
+template <typename T, typename U>
+unique_ptr<T> const_pointer_cast(unique_ptr<U>&& p) noexcept
+{
+  return unique_ptr<T>(const_cast<T *>(p.release()));
+}
+
+template <typename T, typename U>
+unique_ptr<T> reinterpret_pointer_cast(unique_ptr<U> &&p) noexcept
+{
+  return unique_ptr<T>(reinterpret_cast<T *>(p.release()));
+}
+
+
 template <typename T, typename... Args>
 unique_ptr<T> make_unique(Args &&... args)
 {

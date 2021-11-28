@@ -272,6 +272,32 @@ public:
   bool owner_before(const weak_ptr<Y> &other) const noexcept;
 };
 
+template <typename T, typename Y>
+shared_ptr<T> static_pointer_cast(const shared_ptr<Y> &p) noexcept
+{
+  return shared_ptr<T>(p, static_cast<T *>(p.get()));
+}
+
+template <typename T, typename U>
+shared_ptr<T> dynamic_pointer_cast(const shared_ptr<U> &p) noexcept
+{
+  if (auto tp = dynamic_cast<T *>(p.get()))
+    return shared_ptr<T>(p, tp);
+  return nullptr;
+}
+
+template <typename T, typename U>
+shared_ptr<T> const_pointer_cast(const shared_ptr<U> &p) noexcept
+{
+  return shared_ptr<T>(p, const_cast<T *>(p.get()));
+}
+
+template <typename T, typename U>
+shared_ptr<T> reinterpret_pointer_cast(const shared_ptr<U> &p) noexcept
+{
+  return shared_ptr<T>(p, reinterpret_cast<T *>(p.get()));
+}
+
 } // namespace gpcl
 
 #include <gpcl/allocate_shared.hpp>
