@@ -133,6 +133,23 @@ TEST_CASE("enable_shared_from_this")
   REQUIRE(p3.get());
 }
 
+#include <gpcl/enable_shared_from.hpp>
+
+TEST_CASE("enable_shared_from")
+{
+  class Y : public gpcl::enable_shared_from
+  {
+  public:
+    shared_ptr<Y> f() { return gpcl::shared_from(this); }
+  };
+  
+  shared_ptr<Y> p(new Y);
+  shared_ptr<Y> q = p->f();
+
+  REQUIRE(p.get() == q.get());
+  // REQUIRE(!(p < q || q < p)); // p and q must share ownership
+}
+
 #include <thread>
 #include <vector>
 
