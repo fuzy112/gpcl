@@ -17,6 +17,16 @@
 
 namespace gpcl {
 
+namespace detail 
+  {
+
+  class enable_shared_from_this_base
+  {
+  protected:
+    enable_shared_from_this_base() = default;
+  };
+}
+
 template <typename Derived>
 class enable_shared_from_this
 {
@@ -55,7 +65,7 @@ public:
 namespace detail {
 template <typename T>
 struct shared_ptr_hooks<
-    T, std::enable_if_t<std::is_base_of_v<enable_shared_from_this<T>, T>>>
+    T, std::enable_if_t<std::is_base_of_v<enable_shared_from_this_base, T>>>
 {
   template <typename Y>
   static void on_creation(Y *p, const shared_ptr<T> &sp) noexcept
