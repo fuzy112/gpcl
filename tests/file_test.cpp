@@ -64,13 +64,3 @@ TEST_CASE("file read write at")
 }
 
 #endif
-
-#ifdef GPCL_POSIX
-TEST_CASE("file error")
-{
-  file out(1);
-  file out1(dup(1));
-  out.close();
-  out1.close();
-}
-#endif
