@@ -24,6 +24,8 @@ class optional;
 
 namespace detail {
 
+#ifndef GPCL_DOXYGEN
+
 template <typename T, typename = void>
 class optional_destruct_base;
 template <typename T, typename = void>
@@ -51,7 +53,7 @@ public:
   template <typename... Args,
             typename std::enable_if<std::is_constructible<T, Args...>::value,
                                     int>::type = 0>
-  constexpr explicit optional_destruct_base(in_place_t, Args &&... args)
+  constexpr explicit optional_destruct_base(in_place_t, Args &&...args)
       : val_(detail::forward<Args>(args)...),
         has_val_(true)
   {
@@ -64,7 +66,7 @@ public:
                 int>::type = 0>
   constexpr explicit optional_destruct_base(in_place_t,
                                             std::initializer_list<U> ilist,
-                                            Args &&... args)
+                                            Args &&...args)
       : val_(ilist, detail::forward<Args>(args)...),
         has_val_(true)
   {
@@ -94,7 +96,7 @@ public:
   template <typename... Args,
             typename std::enable_if<std::is_constructible<T, Args...>::value,
                                     int>::type = 0>
-  constexpr explicit optional_destruct_base(in_place_t, Args &&... args)
+  constexpr explicit optional_destruct_base(in_place_t, Args &&...args)
       : val_(detail::forward<Args>(args)...),
         has_val_(true)
   {
@@ -107,7 +109,7 @@ public:
                 int>::type = 0>
   constexpr explicit optional_destruct_base(in_place_t,
                                             std::initializer_list<U> ilist,
-                                            Args &&... args)
+                                            Args &&...args)
       : val_(ilist, detail::forward<Args>(args)...),
         has_val_(true)
   {
@@ -395,6 +397,8 @@ struct optional_convert_assignable
                     !std::is_assignable<T, const optional<U> &&>::value>
 {
 };
+
+#endif
 
 } // namespace detail
 

@@ -334,7 +334,7 @@ constexpr const size_t block_size_max = GPCL_DETAIL_TLSF_CAST(size_t, 1) << FL_I
 
 
 /* The TLSF control structure. */
-typedef struct control_t
+typedef struct tlsf_control_t
 {
 	/* Empty lists point at this block to indicate they are free. */
 	block_header_t block_null;
@@ -345,7 +345,7 @@ typedef struct control_t
 
 	/* Head of free lists. */
 	block_header_t* blocks[FL_INDEX_COUNT][SL_INDEX_COUNT];
-} control_t;
+} tlsf_control_t;
 
 /* A type used for casting when doing pointer arithmetic. */
 typedef ptrdiff_t tlsfptr_t;
@@ -532,7 +532,7 @@ GPCL_DECL void mapping_search(size_t size, int* fli, int* sli)
 	mapping_insert(size, fli, sli);
 }
 
-GPCL_DECL block_header_t* search_suitable_block(control_t* control, int* fli, int* sli)
+GPCL_DECL block_header_t* search_suitable_block(tlsf_control_t* control, int* fli, int* sli)
 {
 	int fl = *fli;
 	int sl = *sli;
@@ -565,7 +565,7 @@ GPCL_DECL block_header_t* search_suitable_block(control_t* control, int* fli, in
 }
 
 /* Remove a free block from the free list.*/
-GPCL_DECL void remove_free_block(control_t* control, block_header_t* block, int fl, int sl)
+GPCL_DECL void remove_free_block(tlsf_control_t* control, block_header_t* block, int fl, int sl)
 {
 	block_header_t* prev = block->prev_free;
 	block_header_t* next = block->next_free;
@@ -594,7 +594,7 @@ GPCL_DECL void remove_free_block(control_t* control, block_header_t* block, int 
 }
 
 /* Insert a free block into the free block list. */
-GPCL_DECL void insert_free_block(control_t* control, block_header_t* block, int fl, int sl)
+GPCL_DECL void insert_free_block(tlsf_control_t* control, block_header_t* block, int fl, int sl)
 {
 	block_header_t* current = control->blocks[fl][sl];
 	GPCL_ASSERT_CONST(current && "free list cannot have a null entry");
@@ -615,7 +615,7 @@ GPCL_DECL void insert_free_block(control_t* control, block_header_t* block, int 
 }
 
 /* Remove a given block from the free list. */
-GPCL_DECL void block_remove(control_t* control, block_header_t* block)
+GPCL_DECL void block_remove(tlsf_control_t* control, block_header_t* block)
 {
 	int fl, sl;
 	mapping_insert(block_size(block), &fl, &sl);
@@ -623,7 +623,7 @@ GPCL_DECL void block_remove(control_t* control, block_header_t* block)
 }
 
 /* Insert a given block into the free list. */
-GPCL_DECL void block_insert(control_t* control, block_header_t* block)
+GPCL_DECL void block_insert(tlsf_control_t* control, block_header_t* block)
 {
 	int fl, sl;
 	mapping_insert(block_size(block), &fl, &sl);
@@ -668,7 +668,7 @@ GPCL_DECL block_header_t* block_absorb(block_header_t* prev, block_header_t* blo
 }
 
 /* Merge a just-freed block with an adjacent previous free block. */
-GPCL_DECL block_header_t* block_merge_prev(control_t* control, block_header_t* block)
+GPCL_DECL block_header_t* block_merge_prev(tlsf_control_t* control, block_header_t* block)
 {
 	if (block_is_prev_free(block))
 	{
@@ -683,7 +683,7 @@ GPCL_DECL block_header_t* block_merge_prev(control_t* control, block_header_t* b
 }
 
 /* Merge a just-freed block with an adjacent free block. */
-GPCL_DECL block_header_t* block_merge_next(control_t* control, block_header_t* block)
+GPCL_DECL block_header_t* block_merge_next(tlsf_control_t* control, block_header_t* block)
 {
 	block_header_t* next = block_next(block);
 	GPCL_ASSERT_CONST(next && "next physical block can't be null");
@@ -699,7 +699,7 @@ GPCL_DECL block_header_t* block_merge_next(control_t* control, block_header_t* b
 }
 
 /* Trim any trailing block space off the end of a block, return to pool. */
-GPCL_DECL void block_trim_free(control_t* control, block_header_t* block, size_t size)
+GPCL_DECL void block_trim_free(tlsf_control_t* control, block_header_t* block, size_t size)
 {
 	GPCL_ASSERT_CONST(block_is_free(block) && "block must be free");
 	if (block_can_split(block, size))
@@ -712,7 +712,7 @@ GPCL_DECL void block_trim_free(control_t* control, block_header_t* block, size_t
 }
 
 /* Trim any trailing block space off the end of a used block, return to pool. */
-GPCL_DECL void block_trim_used(control_t* control, block_header_t* block, size_t size)
+GPCL_DECL void block_trim_used(tlsf_control_t* control, block_header_t* block, size_t size)
 {
 	GPCL_ASSERT_CONST(!block_is_free(block) && "block must be used");
 	if (block_can_split(block, size))
@@ -726,7 +726,7 @@ GPCL_DECL void block_trim_used(control_t* control, block_header_t* block, size_t
 	}
 }
 
-GPCL_DECL block_header_t* block_trim_free_leading(control_t* control, block_header_t* block, size_t size)
+GPCL_DECL block_header_t* block_trim_free_leading(tlsf_control_t* control, block_header_t* block, size_t size)
 {
 	block_header_t* remaining_block = block;
 	if (block_can_split(block, size))
@@ -742,7 +742,7 @@ GPCL_DECL block_header_t* block_trim_free_leading(control_t* control, block_head
 	return remaining_block;
 }
 
-GPCL_DECL block_header_t* block_locate_free(control_t* control, size_t size)
+GPCL_DECL block_header_t* block_locate_free(tlsf_control_t* control, size_t size)
 {
 	int fl = 0, sl = 0;
 	block_header_t* block = 0;
@@ -772,7 +772,7 @@ GPCL_DECL block_header_t* block_locate_free(control_t* control, size_t size)
 	return block;
 }
 
-GPCL_DECL void* block_prepare_used(control_t* control, block_header_t* block, size_t size)
+GPCL_DECL void* block_prepare_used(tlsf_control_t* control, block_header_t* block, size_t size)
 {
 	void* p = 0;
 	if (block)
@@ -786,7 +786,7 @@ GPCL_DECL void* block_prepare_used(control_t* control, block_header_t* block, si
 }
 
 /* Clear structure and point all empty lists at the null block. */
-GPCL_DECL void control_construct(control_t* control)
+GPCL_DECL void control_construct(tlsf_control_t* control)
 {
 	int i, j;
 
@@ -837,7 +837,7 @@ int tlsf_check(tlsf_t tlsf)
 {
 	int i, j;
 
-	control_t* control = GPCL_DETAIL_TLSF_CAST(control_t*, tlsf);
+	tlsf_control_t* control = GPCL_DETAIL_TLSF_CAST(tlsf_control_t*, tlsf);
 	int status = 0;
 
 	/* Check that the free lists and bitmaps are accurate. */
@@ -932,11 +932,11 @@ int tlsf_check_pool(pool_t pool)
 
 /*
 ** Size of the TLSF structures in a given memory block passed to
-** tlsf_create, equal to the size of a control_t
+** tlsf_create, equal to the size of a tlsf_control_t
 */
 size_t tlsf_size(void)
 {
-	return sizeof(control_t);
+	return sizeof(tlsf_control_t);
 }
 
 size_t tlsf_align_size(void)
@@ -1007,7 +1007,7 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 	block_set_size(block, pool_bytes);
 	block_set_free(block);
 	block_set_prev_used(block);
-	block_insert(GPCL_DETAIL_TLSF_CAST(control_t*, tlsf), block);
+	block_insert(GPCL_DETAIL_TLSF_CAST(tlsf_control_t*, tlsf), block);
 
 	/* Split the block to create a zero-size sentinel block. */
 	next = block_link_next(block);
@@ -1020,7 +1020,7 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 
 void tlsf_remove_pool(tlsf_t tlsf, pool_t pool)
 {
-	control_t* control = GPCL_DETAIL_TLSF_CAST(control_t*, tlsf);
+	tlsf_control_t* control = GPCL_DETAIL_TLSF_CAST(tlsf_control_t*, tlsf);
 	block_header_t* block = offset_to_block(pool, -(int)block_header_overhead);
 
 	int fl = 0, sl = 0;
@@ -1081,7 +1081,7 @@ tlsf_t tlsf_create(void* mem)
 		return 0;
 	}
 
-	control_construct(GPCL_DETAIL_TLSF_CAST(control_t*, mem));
+	control_construct(GPCL_DETAIL_TLSF_CAST(tlsf_control_t*, mem));
 
 	return GPCL_DETAIL_TLSF_CAST(tlsf_t, mem);
 }
@@ -1106,7 +1106,7 @@ pool_t tlsf_get_pool(tlsf_t tlsf)
 
 void* tlsf_malloc(tlsf_t tlsf, size_t size)
 {
-	control_t* control = GPCL_DETAIL_TLSF_CAST(control_t*, tlsf);
+	tlsf_control_t* control = GPCL_DETAIL_TLSF_CAST(tlsf_control_t*, tlsf);
 	const size_t adjust = adjust_request_size(size, ALIGN_SIZE);
 	block_header_t* block = block_locate_free(control, adjust);
 	return block_prepare_used(control, block, adjust);
@@ -1114,7 +1114,7 @@ void* tlsf_malloc(tlsf_t tlsf, size_t size)
 
 void* tlsf_memalign(tlsf_t tlsf, size_t align, size_t size)
 {
-	control_t* control = GPCL_DETAIL_TLSF_CAST(control_t*, tlsf);
+	tlsf_control_t* control = GPCL_DETAIL_TLSF_CAST(tlsf_control_t*, tlsf);
 	const size_t adjust = adjust_request_size(size, ALIGN_SIZE);
 
 	/*
@@ -1174,7 +1174,7 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 	/* Don't attempt to free a NULL pointer. */
 	if (ptr)
 	{
-		control_t* control = GPCL_DETAIL_TLSF_CAST(control_t*, tlsf);
+		tlsf_control_t* control = GPCL_DETAIL_TLSF_CAST(tlsf_control_t*, tlsf);
 		block_header_t* block = block_from_ptr(ptr);
 		GPCL_ASSERT_CONST(!block_is_free(block) && "block already marked as free");
 		block_mark_as_free(block);
@@ -1199,7 +1199,7 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 */
 void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 {
-	control_t* control = GPCL_DETAIL_TLSF_CAST(control_t*, tlsf);
+	tlsf_control_t* control = GPCL_DETAIL_TLSF_CAST(tlsf_control_t*, tlsf);
 	void* p = 0;
 
 	/* Zero-size requests are treated as free. */

@@ -21,31 +21,34 @@
 namespace gpcl {
 namespace detail {
 
-// shared_block has two forms of partial specializations:
-// a. shared_block<Manager>
-// b. shared_block<Manager, Allocator>
-// where Manager is a specialization of either gpcl::optional or
-// gpcl::unique_ptr.
-//
-// The first form of shared_block is created through new expression.
-// The second form is created using allocator.
-//
-// While neither delete_this() nor delete_managed_object() function is public,
-// the destruction of the managed object and the shared_block itself is
-// performed by invoking shared_block_base's operate function.
-//
-// Instances of shared_block are meant to be created by calling the
-// shared_block::create() member function.
+/// Shared control block of shared_ptr and weak_ptr.
+///
+/// shared_block has two forms of partial specializations:
+/// a. shared_block<Manager>
+/// b. shared_block<Manager, Allocator>
+/// where Manager is a specialization of either gpcl::optional or
+/// gpcl::unique_ptr.
+///
+/// The first form of shared_block is created through new expression.
+/// The second form is created using allocator.
+///
+/// While neither delete_this() nor delete_managed_object() function is public,
+/// the destruction of the managed object and the shared_block itself is
+/// performed by invoking shared_block_base's operate function.
+///
+/// Instances of shared_block are meant to be created by calling the
+/// shared_block::create() member function.
 template <typename... ManagerAndAllocator>
 class shared_block;
 
+/// Shared block allocated using new.
 template <typename Manager>
 class shared_block<Manager> : public shared_block_base
 {
 private:
   Manager manager_;
 
-  // Delete the shared_block itself.
+  /// Delete the shared_block itself.
   void delete_this() noexcept
   {
     GPCL_ASSERT(use_count() == 0);
@@ -53,7 +56,7 @@ private:
     delete this;
   }
 
-  // Delete the managed object.
+  /// Delete the managed object.
   void delete_managed_object() noexcept
   {
     GPCL_ASSERT(use_count() == 0);
@@ -61,7 +64,7 @@ private:
   }
 
 protected:
-  // operation function.
+  /// operation function.
   static void do_operate(shared_block_base *self,
                          shared_block_operation_t op) noexcept
   {
@@ -81,8 +84,9 @@ protected:
     }
   }
 
-  // @param op_func the operation function, normally &shared_block::do_operate.
-  // @param args... arguments passed to the constructor of Manager.
+  /// Constructor.
+  /// @param op_func the operation function, normally &shared_block::do_operate.
+  /// @param args... arguments passed to the constructor of Manager.
   template <typename... Args>
   explicit shared_block(operation_func_t op_func, Args &&...args)
       : shared_block_base{op_func},
@@ -91,7 +95,7 @@ protected:
   }
 
 public:
-  // Access the managed object.
+  /// Access the managed object.
   decltype(std::addressof(*std::declval<Manager &>())) managed_object() noexcept
   {
     // Cannot call .get() or .value() simply.
@@ -100,8 +104,8 @@ public:
     return nullptr;
   }
 
-  // Create a shared_block.
-  // @param args... arguments passed to constructor of Manager.
+  /// Create a shared_block.
+  /// @param args... arguments passed to constructor of Manager.
   template <typename... Args>
   static shared_block *create(Args &&...args)
   {
@@ -109,9 +113,10 @@ public:
   }
 };
 
-// The Allocator has to be stored for deallocation and destruction of the
-// shared_block itself. The Allocator is inherited to perform empty base class
-// optimization.
+/// Shared block allocated using an allocator.
+/// The Allocator has to be stored for deallocation and destruction of the
+/// shared_block itself. The Allocator is inherited to perform empty base class
+/// optimization.
 template <typename Manager, typename Allocator>
 class shared_block<Manager, Allocator> : public shared_block<Manager>,
                                          private Allocator
@@ -121,8 +126,9 @@ public:
       Allocator>::template rebind_alloc<shared_block>;
   using rebind_allocator_traits = std::allocator_traits<rebind_allocator>;
 
-  // @param allocator allocator to allocate memory for the created shared_block.
-  // @param args... arguments passed to the constructor of Manager.
+  //// Create a shared_block.
+  /// @param allocator allocator to allocate memory for the created shared_block.
+  /// @param args... arguments passed to the constructor of Manager.
   template <typename... Args>
   static shared_block *create(const Allocator &allocator, Args &&...args)
   {
@@ -142,7 +148,7 @@ public:
   }
 
 private:
-  // destroy the shared_block itself then deallocate the memory.
+  /// destroy the shared_block itself then deallocate the memory.
   void delete_this() noexcept
   {
     GPCL_ASSERT(this->use_count() == 0);
@@ -153,7 +159,7 @@ private:
   }
 
 protected:
-  // operation function.
+  /// operation function.
   static void do_operate(shared_block_base *self,
                          shared_block_operation_t op) noexcept
   {
@@ -170,10 +176,11 @@ protected:
     }
   }
 
-  // @param op_func the operation function, normally &shared_block::do_operate.
-  // @param alloc the allocator that allocates memory for the shared_block
-  // instance.
-  // @param args... arguments passed to the constructor of Manager.
+  //// Constructor.
+  /// @param op_func the operation function, normally &shared_block::do_operate.
+  /// @param alloc the allocator that allocates memory for the shared_block
+  /// instance.
+  /// @param args... arguments passed to the constructor of Manager.
   template <typename... Args>
   explicit shared_block(shared_block_base::operation_func_t op_func,
                         const Allocator &alloc, Args &&...args)

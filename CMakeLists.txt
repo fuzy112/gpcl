@@ -50,6 +50,16 @@ if (UNIX)
 	# target_compile_options(gpcl INTERFACE "-fno-exceptions")
 endif ()
 
+find_package(Doxygen)
+
+if (Doxygen_FOUND)
+	set (DOXYGEN_PREDEFINED GPCL_DOXYGEN)
+	set (DOXYGEN_JAVADOC_AUTOBRIEF YES)
+	set (DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
+    doxygen_add_docs(doc README.md gpcl)
+endif ()
+
+
 add_subdirectory(lib)
 add_subdirectory(tests)
 add_subdirectory(tools)

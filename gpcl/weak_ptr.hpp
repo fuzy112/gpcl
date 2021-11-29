@@ -19,6 +19,9 @@ namespace gpcl {
 template <typename T>
 class shared_ptr;
 
+/// @ingroup SmartPtr
+/// @{
+  
 template <typename T>
 class weak_ptr
 {
@@ -176,6 +179,7 @@ public:
   template <typename Y>
   bool owner_before(const shared_ptr<Y> &other) const noexcept;
 
+#ifndef GPCL_DOXYGEN
   element_type *get_unchecked() const noexcept { return p_; }
 
   template <typename Y>
@@ -191,6 +195,7 @@ public:
     rv.s_->weak_get();
     return rv;
   }
+#endif
 };
 
 template <typename T, typename U>
@@ -213,6 +218,8 @@ weak_ptr<T> reinterpret_pointer_cast(const weak_ptr<U> &p) noexcept
 {
   return p.generic_pointer_cast_helper(reinterpret_cast<T *>(p.get_unchecked()));
 }
+
+/// @}
 
 } // namespace gpcl
 

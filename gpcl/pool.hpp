@@ -19,6 +19,7 @@
 
 namespace gpcl {
 
+#ifndef GPCL_DOXYGEN
 template <typename T, typename = void>
 struct is_user_allocator : std::false_type
 {
@@ -31,6 +32,7 @@ struct is_user_allocator<
     : std::true_type
 {
 };
+#endif
 
 struct default_malloc_free_user_allocator
 {

@@ -16,6 +16,7 @@
 
 namespace gpcl {
 
+#ifndef GPCL_DOXYGEN
 template <typename T, typename = void>
 struct is_lockable : std::false_type
 {
@@ -28,6 +29,7 @@ struct is_lockable<
     : is_basic_lockable<T>
 {
 };
+#endif
 
 } // namespace gpcl
 

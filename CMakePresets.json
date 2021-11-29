@@ -24,8 +24,8 @@
             "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_CXX_COMPILER": "/usr/bin/clang++-13",
-                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -ggdb3",
+                "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
+                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Wdocumentation -ggdb3",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
             }
         },

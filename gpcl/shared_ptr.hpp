@@ -44,6 +44,13 @@ struct shared_ptr_hooks
 
 } // namespace detail
 
+/** @defgroup SmartPtr Smart Pointers.
+*/
+
+/// @ingroup SmartPtr
+/// @{
+
+/// Reference-counting based smart pointer.
 template <typename T>
 class shared_ptr
 {
@@ -297,6 +304,8 @@ shared_ptr<T> reinterpret_pointer_cast(const shared_ptr<U> &p) noexcept
 {
   return shared_ptr<T>(p, reinterpret_cast<T *>(p.get()));
 }
+
+/// @}
 
 } // namespace gpcl
 

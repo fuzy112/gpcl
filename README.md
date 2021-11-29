@@ -1,7 +1,7 @@
 # General Purpose C++ Libraries
 
 ## Build status
-[![CMake](https://github.com/Chingyat/gpcl/workflows/CMake/badge.svg)](https://github.com/Chingyat/gpcl/actions/workflows/cmake.yml)
+[![CMake](https://github.com/Chingyat/gpcl/actions/workflows/cmake.yml/badge.svg)](https://github.com/Chingyat/gpcl/actions/workflows/cmake.yml)
 
 ## Installation
 

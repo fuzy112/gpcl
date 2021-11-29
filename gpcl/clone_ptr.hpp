@@ -18,6 +18,7 @@
 
 namespace gpcl {
 
+#ifndef GPCL_DOXYGEN
 template <typename T, typename Void = void>
 struct is_cloneable : std::false_type
 {
@@ -30,6 +31,7 @@ struct is_cloneable<
     : std::true_type
 {
 };
+#endif
 
 /// clone_ptr is a smart pointer that automatically clones the managed object.
 ///

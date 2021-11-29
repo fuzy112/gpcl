@@ -20,6 +20,7 @@ namespace gpcl {
 struct buffer_sequence_begin_t
 {
 
+#ifndef GPCL_DOXYGEN
   template <typename MutableBuffer,
             std::enable_if_t<std::is_convertible<const MutableBuffer *,
                                                  const mutable_buffer *>::value,
@@ -53,16 +54,17 @@ struct buffer_sequence_begin_t
     return buffer_sequence_begin(c);
   }
 
-  template <typename C,
-            std::enable_if_t<
-                detail::conjunction_v<
-                    detail::negate<
-                        std::is_convertible<const C *, const mutable_buffer *>>,
-                    detail::negate<
-                        std::is_convertible<const C *, const const_buffer *>>,
-                    detail::negate<std::is_void<detail::void_t<decltype(
-                        buffer_sequence_begin(std::declval<C &>()))>>>>,
-                int> = 0>
+  template <
+      typename C,
+      std::enable_if_t<
+          detail::conjunction_v<
+              detail::negate<
+                  std::is_convertible<const C *, const mutable_buffer *>>,
+              detail::negate<
+                  std::is_convertible<const C *, const const_buffer *>>,
+              detail::negate<std::is_void<detail::void_t<
+                  decltype(buffer_sequence_begin(std::declval<C &>()))>>>>,
+          int> = 0>
   auto operator()(C &c) const
   {
     return std::begin(c);
@@ -83,24 +85,27 @@ struct buffer_sequence_begin_t
     return buffer_sequence_begin(c);
   }
 
-  template <typename C,
-            std::enable_if_t<
-                detail::conjunction_v<
-                    detail::negate<
-                        std::is_convertible<const C *, const mutable_buffer *>>,
-                    detail::negate<
-                        std::is_convertible<const C *, const const_buffer *>>,
-                    detail::negate<std::is_void<detail::void_t<decltype(
-                        buffer_sequence_begin(std::declval<C &>()))>>>>,
-                int> = 0>
+  template <
+      typename C,
+      std::enable_if_t<
+          detail::conjunction_v<
+              detail::negate<
+                  std::is_convertible<const C *, const mutable_buffer *>>,
+              detail::negate<
+                  std::is_convertible<const C *, const const_buffer *>>,
+              detail::negate<std::is_void<detail::void_t<
+                  decltype(buffer_sequence_begin(std::declval<C &>()))>>>>,
+          int> = 0>
   auto operator()(const C &c) const
   {
     return std::begin(c);
   }
+#endif
 };
 
 struct buffer_sequence_end_t
 {
+#ifndef GPCL_DOXYGEN
   template <typename MutableBuffer,
             std::enable_if_t<std::is_convertible<const MutableBuffer *,
                                                  const mutable_buffer *>::value,
@@ -148,11 +153,13 @@ struct buffer_sequence_end_t
   {
     return std::end(c);
   }
+#endif
 };
 
 GPCL_CXX17_INLINE_CONSTEXPR buffer_sequence_begin_t buffer_sequence_begin{};
 GPCL_CXX17_INLINE_CONSTEXPR buffer_sequence_end_t buffer_sequence_end{};
 
+#ifndef GPCL_DOXYGEN
 template <typename T, typename = void>
 struct is_mutable_buffer_sequence : std::false_type
 {
@@ -188,6 +195,7 @@ struct is_const_buffer_sequence<
                                const_buffer>>>> : std::true_type
 {
 };
+#endif
 
 } // namespace gpcl
 

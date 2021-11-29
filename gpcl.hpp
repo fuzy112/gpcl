@@ -25,6 +25,7 @@
 #include <gpcl/condition_variable.hpp>
 #include <gpcl/creation_tag.hpp>
 #include <gpcl/decay_copy.hpp>
+#include <gpcl/enable_shared_from.hpp>
 #include <gpcl/enable_shared_from_this.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/event.hpp>
@@ -32,7 +33,9 @@
 #include <gpcl/expected_fwd.hpp>
 #include <gpcl/file.hpp>
 #include <gpcl/function.hpp>
+#include <gpcl/function_ref.hpp>
 #include <gpcl/future.hpp>
+#include <gpcl/generic_pointer_cast.hpp>
 #include <gpcl/in_place.hpp>
 #include <gpcl/in_place_type.hpp>
 #include <gpcl/intrusive_list.hpp>

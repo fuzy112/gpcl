@@ -17,6 +17,7 @@
 
 namespace gpcl {
 
+/// @ingroup SmartPtr
 template <typename T, typename Alloc, typename... Args>
 shared_ptr<T> allocate_shared(const Alloc &alloc, Args &&... args)
 {

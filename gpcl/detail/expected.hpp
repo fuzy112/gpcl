@@ -19,6 +19,7 @@
 namespace gpcl {
 namespace detail {
 
+#ifndef GPCL_DOXYGEN
 template <typename T, typename E, bool TIsCVVoid = detail::is_void_v<T>,
           bool BothAreTriviallyDestructible =
               (detail::is_trivially_destructible_v<T> &&
@@ -1087,6 +1088,8 @@ struct expected_convert_constructible<
 template <typename T, typename E, typename U, typename G>
 GPCL_CXX17_INLINE_CONSTEXPR bool expected_convert_constructible_v =
     expected_convert_constructible<T, E, U, G>();
+
+#endif
 
 } // namespace detail
 } // namespace gpcl

@@ -55,6 +55,7 @@ struct pointer_type<T, Deleter, std::void_t<typename Deleter::pointer>>
   using type = typename Deleter::pointer;
 };
 
+/// @ingroup SmartPtr
 template <class T, class Deleter = default_delete<T>>
 class unique_ptr
 {

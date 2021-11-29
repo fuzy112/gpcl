@@ -16,6 +16,7 @@
 
 namespace gpcl {
 
+#ifndef GPCL_DOXYGEN
 template <typename T, typename = void>
 struct is_basic_lockable : std::false_type
 {
@@ -27,6 +28,7 @@ struct is_basic_lockable<T, decltype(std::declval<T>().lock(),
     : std::true_type
 {
 };
+#endif
 
 } // namespace gpcl
 

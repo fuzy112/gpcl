@@ -21,6 +21,20 @@
 namespace gpcl {
 namespace detail {
 
+#ifdef GPCL_DOXYGEN
+template <typename BufferSequence, typename Allocator = std::allocator<void>>
+struct native_buffer_sequence
+{
+  /// Constructor.
+  explicit native_buffer_sequence(const BufferSequence &bs,
+                                  const Allocator &a = Allocator());
+
+
+  /// A contiguous sequence of struct ::iovec.
+  unspecified-sequence iov;
+};
+#else
+
 template <typename BufferSequence, typename Allocator = std::allocator<void>>
 struct native_buffer_sequence
 {
@@ -72,7 +86,7 @@ struct native_buffer_sequence<Buffer[S], Allocator>
 template <typename Buffer, std::size_t S, typename Allocator>
 struct native_buffer_sequence<std::array<Buffer, S>, Allocator>
 {
-  explicit native_buffer_sequence(std::array<Buffer, S> const &bs)
+  explicit native_buffer_sequence(std::array<Buffer, S> const &bs) noexcept
   {
     auto io = iov.begin();
     for (auto iter = buffer_sequence_begin(bs), end = buffer_sequence_end(bs);
@@ -85,7 +99,7 @@ struct native_buffer_sequence<std::array<Buffer, S>, Allocator>
     }
   }
 
-  native_buffer_sequence(const std::array<Buffer, S> &bs, const Allocator &)
+  native_buffer_sequence(const std::array<Buffer, S> &bs, const Allocator &) noexcept
       : native_buffer_sequence(bs)
   {
   }
@@ -96,13 +110,13 @@ struct native_buffer_sequence<std::array<Buffer, S>, Allocator>
 template <typename Allocator>
 struct native_buffer_sequence<const_buffer, Allocator>
 {
-  explicit native_buffer_sequence(const_buffer b)
+  explicit native_buffer_sequence(const_buffer b) noexcept
   {
-    iov[0].iov_base = b.data();
+    iov[0].iov_base = const_cast<char *>(b.data());
     iov[0].iov_len = b.size();
   }
 
-  native_buffer_sequence(const_buffer bs, const Allocator &)
+  native_buffer_sequence(const_buffer bs, const Allocator &) noexcept
       : native_buffer_sequence(bs)
   {
   }
@@ -113,19 +127,21 @@ struct native_buffer_sequence<const_buffer, Allocator>
 template <typename Allocator>
 struct native_buffer_sequence<mutable_buffer, Allocator>
 {
-  explicit native_buffer_sequence(mutable_buffer b)
+  explicit native_buffer_sequence(mutable_buffer b) noexcept
   {
     iov[0].iov_base = b.data();
     iov[0].iov_len = b.size();
   }
 
-  native_buffer_sequence(mutable_buffer bs, const Allocator &)
+  native_buffer_sequence(mutable_buffer bs, const Allocator &) noexcept
       : native_buffer_sequence(bs)
   {
   }
 
   std::array<struct ::iovec, 1> iov;
 };
+
+#endif
 
 } // namespace detail
 } // namespace gpcl

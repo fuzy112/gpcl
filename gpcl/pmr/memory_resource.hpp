@@ -48,7 +48,8 @@ public:
   /// compares equal to *this, and the storage it points to shall not yet have
   /// been deallocated.
   ///
-  /// \returns Equivalent to do_deallocate(p, bytes, alignment);.
+  /// Equivalent to do_deallocate(p, bytes, alignment);
+  ///
   /// \throws nothing.
   void deallocate(void *p, std::size_t bytes,
                   std::size_t alignment = alignof(std::max_align_t))

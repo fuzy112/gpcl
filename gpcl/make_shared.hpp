@@ -17,6 +17,7 @@
 
 namespace gpcl {
 
+/// @ingroup SmartPtr
 template <typename T, typename... Args>
 shared_ptr<T> make_shared(Args &&... args)
 {

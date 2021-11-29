@@ -169,6 +169,7 @@ public:
     return *static_cast<std::decay_t<ValueType> *>(raw_value());
   }
 
+#ifndef GPCL_DOXYGEN
   const void *raw_value() const noexcept
   {
     return manage_(nullptr, &data_, any_manage_op::get_pointer);
@@ -178,6 +179,7 @@ public:
   {
     return manage_(nullptr, &data_, any_manage_op::get_pointer);
   }
+#endif
 
   bool empty() const noexcept { return !manage_; }
 

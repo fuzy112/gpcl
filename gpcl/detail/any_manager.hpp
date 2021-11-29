@@ -22,9 +22,9 @@
 namespace gpcl {
 namespace detail {
 
-// An type that can store data of any type in it.
-// @tparam LocalSize the maximum size of type stored locally.
-// @tparam LocalAlign the maximum alignment of type stored locally.
+/// An type that can store data of any type in it.
+/// @tparam LocalSize the maximum size of type stored locally.
+/// @tparam LocalAlign the maximum alignment of type stored locally.
 template <std::size_t LocalSize, std::size_t LocalAlign>
 union any_data
 {
