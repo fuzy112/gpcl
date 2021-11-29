@@ -21,8 +21,8 @@ std::size_t posix_file::write_some_at(offset_type off,
                                       const ConstBufferSequence &bs,
                                       error_code &error)
 {
-  auto iovec = make_iovec(bs);
-  ssize_t nbytes = ::pwritev(fd_, iovec.iov(), iovec.iovcnt(), off);
+  native_buffer_sequence<ConstBufferSequence> nbs(bs);
+  ssize_t nbytes = ::pwritev(fd_, nbs.iov.data(), nbs.iov.size(), off);
   if (nbytes == -1)
   {
     error = {errno, system_category()};
@@ -39,8 +39,8 @@ std::size_t posix_file::read_some_at(offset_type off,
                                      const MutableBufferSequence &bs,
                                      error_code &error)
 {
-  auto iovec = make_iovec(bs);
-  ssize_t nbytes = ::preadv64(fd_, iovec.iov(), iovec.iovcnt(), off);
+  native_buffer_sequence<MutableBufferSequence> nbs(bs);
+  ssize_t nbytes = ::preadv64(fd_, nbs.iov.data(), nbs.iov.size(), off);
   if (nbytes == -1)
   {
     error = {errno, system_category()};
@@ -56,8 +56,8 @@ template <typename ConstBufferSequence>
 std::size_t posix_file::write_some(const ConstBufferSequence &bs,
                                    error_code &error)
 {
-  auto iovec = make_iovec(bs);
-  ssize_t nbytes = ::writev(fd_, iovec.iov(), iovec.iovcnt());
+  native_buffer_sequence<ConstBufferSequence> nbs(bs);
+  ssize_t nbytes = ::writev(fd_, nbs.iov.data(), nbs.iov.size());
   if (nbytes == -1)
   {
     error = {errno, system_category()};
@@ -73,8 +73,8 @@ template <typename MutableBufferSequence>
 std::size_t posix_file::read_some(const MutableBufferSequence &bs,
                                   error_code &error)
 {
-  auto iovec = make_iovec(bs);
-  ssize_t nbytes = ::readv(fd_, iovec.iov(), iovec.iovcnt());
+  native_buffer_sequence<MutableBufferSequence> nbs(bs);
+  ssize_t nbytes = ::readv(fd_, nbs.iov.data(), nbs.iov.size());
   if (nbytes == -1)
   {
     error = {errno, system_category()};

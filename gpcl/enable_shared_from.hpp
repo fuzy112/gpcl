@@ -8,21 +8,21 @@ namespace gpcl {
 
 class enable_shared_from : public enable_shared_from_this<enable_shared_from>
 {
+protected:
+  ~enable_shared_from() = default;
 };
 
 template <class T>
 shared_ptr<T> shared_from(T *p)
 {
-  return static_pointer_cast<T>(p->shared_from_this());
+  return static_pointer_cast<T>(p->enable_shared_from::shared_from_this());
 }
-
 
 template <class T>
 weak_ptr<T> weak_from(T *p) noexcept
 {
-  return static_pointer_cast<T>(p->weak_from_this());
+  return static_pointer_cast<T>(p->enable_shared_from::weak_from_this());
 }
-
 
 } // namespace gpcl
 
