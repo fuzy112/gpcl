@@ -52,14 +52,13 @@ struct dynamic_iovec
                          const Allocator &alloc = Allocator())
       : vec(alloc)
   {
-    vec.resize(std::size(bs));
-    auto io = vec.begin();
     for (auto iter = buffer_sequence_begin(bs), end = buffer_sequence_end(bs);
          iter != end; ++iter)
     {
-      io->iov_base = const_cast<void *>(static_cast<void *>(iter->data()));
-      io->iov_len = iter->size();
-      ++io;
+      struct iovec io;
+      io.iov_base = const_cast<void *>(static_cast<void *>(iter->data()));
+      io.iov_len = iter->size();
+      vec.emplace_back(io);
     }
   }
 
