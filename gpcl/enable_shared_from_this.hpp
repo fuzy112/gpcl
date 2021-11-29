@@ -28,11 +28,12 @@ namespace detail
 }
 
 template <typename Derived>
-class enable_shared_from_this
+class enable_shared_from_this : public detail::enable_shared_from_this_base
 {
   mutable weak_ptr<Derived> weak_;
 
-  friend struct detail::shared_ptr_hooks<Derived>;
+  template <typename T>
+  friend struct detail::shared_ptr_hooks;
 
   void init_weak(shared_ptr<Derived> const &sp) noexcept
   {
