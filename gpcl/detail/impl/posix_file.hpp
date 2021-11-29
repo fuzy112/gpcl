@@ -9,7 +9,7 @@
 //
 
 #include <gpcl/detail/error.hpp>
-#include <gpcl/detail/iovec.hpp>
+#include <gpcl/detail/native_buffer_sequence.hpp>
 #include <gpcl/detail/posix_file.hpp>
 #include <unistd.h>
 
