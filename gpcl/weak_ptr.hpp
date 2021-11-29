@@ -158,11 +158,11 @@ public:
   shared_ptr<T> lock() const noexcept
   {
     if (!s_)
-      return nullptr;
+      return shared_ptr<T>();
 
     if (s_->lock())
       return shared_ptr<T>(detail::create_from_shared_block, p_, s_);
-    return nullptr;
+    return shared_ptr<T>();
   }
 
   /// Compare the addresses of the control blocks.
@@ -182,9 +182,9 @@ public:
   weak_ptr<Y> generic_pointer_cast_helper(Y *p) const noexcept
   {
     if (!s_)
-      return nullptr;
+      return shared_ptr<T>();
     if (!p_)
-      return nullptr;
+      return shared_ptr<T>();
     weak_ptr<Y> rv;
     rv.p_ = p;
     rv.s_ = s_;
@@ -200,10 +200,7 @@ weak_ptr<T> static_pointer_cast(const weak_ptr<U> &p) noexcept
 }
 
 template <typename T, typename U>
-weak_ptr<T> dynamic_pointer_cast(const weak_ptr<U> &p) noexcept
-{
-  return p.generic_pointer_cast_helper(dynamic_cast<T *>(p.get_unchecked()));
-}
+weak_ptr<T> dynamic_pointer_cast(const weak_ptr<U> &p) noexcept;
 
 template <typename T, typename U>
 weak_ptr<T> const_pointer_cast(const weak_ptr<U> &p) noexcept

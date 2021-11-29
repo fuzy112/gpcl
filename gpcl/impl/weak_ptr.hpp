@@ -40,6 +40,14 @@ bool weak_ptr<T>::owner_before(const shared_ptr<Y> &other) const noexcept
   return s_ < other.s_;
 }
 
+template <typename T, typename U>
+weak_ptr<T> dynamic_pointer_cast(const weak_ptr<U> &p) noexcept
+{
+  if (auto sp = p.lock())
+    return dynamic_pointer_cast<T>(sp);
+  return weak_ptr<T>();
+}
+
 } // namespace gpcl
 
 #endif // GPCL_IMPL_WEAK_PTR_HPP

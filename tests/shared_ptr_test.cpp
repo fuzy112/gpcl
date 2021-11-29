@@ -207,4 +207,28 @@ TEST_CASE("weak_ptr")
       t.join();
     }
   }
+
+
+  SUBCASE("dynamic_pointer_cast")
+  {
+    class A { public: virtual ~A() = default; };
+    class B : public A {};
+
+    auto sp = make_shared<B>();
+    auto wp = gpcl::weak_ptr<A>(sp);
+
+    SUBCASE("not expired")
+    {
+      auto p = gpcl::dynamic_pointer_cast<B>(wp);
+      REQUIRE(p.lock());
+    }
+
+    SUBCASE("expired")
+    {
+      sp.reset();
+
+      auto p = gpcl::dynamic_pointer_cast<B>(wp);
+      REQUIRE(!p.lock());
+    }
+  }
 }
