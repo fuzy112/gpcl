@@ -159,7 +159,7 @@ TEST_CASE("weak_ptr")
 
   std::vector<std::thread> threads;
 
-  for (int i = 0; i != 1000; ++i)
+  for (int i = 0; i != 10; ++i)
   {
     threads.emplace_back([sp]() mutable {
       REQUIRE(*sp == 42);
@@ -167,7 +167,7 @@ TEST_CASE("weak_ptr")
     });
   }
 
-  for (int i = 0; i != 1000; ++i)
+  for (int i = 0; i != 10; ++i)
   {
     threads.emplace_back([wp = gpcl::weak_ptr<int>(sp)]() mutable {
       if (auto sp = wp.lock())
@@ -194,10 +194,10 @@ TEST_CASE("weak_ptr")
 
     std::vector<std::thread> threads;
 
-    for (int i = 0; i != 100; ++i)
+    for (int i = 0; i != 10; ++i)
     {
       threads.emplace_back([wp = wp]() mutable {
-        for (int j = 0; j != 100000; ++j)
+        for (int j = 0; j != 1000; ++j)
           REQUIRE(!wp.lock());
       });
     }
