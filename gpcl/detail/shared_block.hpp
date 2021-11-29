@@ -86,7 +86,7 @@ protected:
 
   /// Constructor.
   /// @param op_func the operation function, normally &shared_block::do_operate.
-  /// @param args... arguments passed to the constructor of Manager.
+  /// @param args arguments passed to the constructor of Manager.
   template <typename... Args>
   explicit shared_block(operation_func_t op_func, Args &&...args)
       : shared_block_base{op_func},
@@ -105,7 +105,7 @@ public:
   }
 
   /// Create a shared_block.
-  /// @param args... arguments passed to constructor of Manager.
+  /// @param args arguments passed to constructor of Manager.
   template <typename... Args>
   static shared_block *create(Args &&...args)
   {
@@ -128,7 +128,7 @@ public:
 
   //// Create a shared_block.
   /// @param allocator allocator to allocate memory for the created shared_block.
-  /// @param args... arguments passed to the constructor of Manager.
+  /// @param args arguments passed to the constructor of Manager.
   template <typename... Args>
   static shared_block *create(const Allocator &allocator, Args &&...args)
   {
@@ -180,7 +180,7 @@ protected:
   /// @param op_func the operation function, normally &shared_block::do_operate.
   /// @param alloc the allocator that allocates memory for the shared_block
   /// instance.
-  /// @param args... arguments passed to the constructor of Manager.
+  /// @param args arguments passed to the constructor of Manager.
   template <typename... Args>
   explicit shared_block(shared_block_base::operation_func_t op_func,
                         const Allocator &alloc, Args &&...args)
