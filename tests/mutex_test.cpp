@@ -4,7 +4,7 @@
 #include <gpcl/thread.hpp>
 #include <gpcl/unique_lock.hpp>
 
-const int end = 10000000;
+const int end = 100;
 const int nthreads = 4;
 
 TEST_CASE("mutex")

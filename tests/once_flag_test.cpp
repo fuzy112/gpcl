@@ -21,7 +21,7 @@ TEST_CASE("once_flag concurrency")
   for (int i = 0; i < 4; ++i)
   {
     threads.emplace_back([&]() {
-      for (int j = 0; j < 10000; ++j)
+      for (int j = 0; j < 100; ++j)
       {
         std::this_thread::sleep_for(std::chrono::microseconds(10));
 
