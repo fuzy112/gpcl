@@ -31,36 +31,54 @@ inline mutable_buffer &operator+=(mutable_buffer &buf, std::size_t sz)
   return buf = buf.subspan(sz);
 }
 
-/// Create a buffer from raw memory.
-inline const_buffer buffer(const void *data, std::size_t size)
+namespace buffer_detail {
+
+// Create a buffer from raw memory.
+inline const_buffer buffer(const void *data, std::size_t size) noexcept
 {
   return const_buffer(reinterpret_cast<const char *>(data), size);
 }
 
-/// Create a buffer from raw memory.
-inline mutable_buffer buffer(void *data, std::size_t size)
+// Create a buffer from raw memory.
+inline mutable_buffer buffer(void *data, std::size_t size) noexcept
 {
   return mutable_buffer(reinterpret_cast<char *>(data), size);
 }
 
-/// Make a buffer from a contiguous container.
+// Make a buffer from a contiguous container.
 template <typename T>
-mutable_buffer
-buffer(T &obj, detail::void_t<decltype(std::declval<T &>().data(),
-                                       std::declval<T &>().size())> * = nullptr)
+mutable_buffer buffer(
+    T &obj,
+    detail::void_t<decltype(std::declval<T &>().data(),
+                            std::declval<T &>().size())> * = nullptr) noexcept
 {
   return buffer(obj.data(), obj.size() * sizeof(*obj.data()));
 }
 
-/// Make a buffer from a contiguous container.
+// Make a buffer from a contiguous container.
 template <typename T>
 const_buffer
 buffer(const T &obj,
        detail::void_t<decltype(std::declval<const T &>().data(),
-                               std::declval<const T &>().size())> * = nullptr)
+                               std::declval<const T &>().size())> * =
+           nullptr) noexcept
 {
   return buffer(obj.data(), obj.size() * sizeof(*obj.data()));
 }
+
+} // namespace buffer_detail
+
+struct buffer_t
+{
+  template <typename... Args>
+  auto operator()(Args &&...args) const noexcept
+  {
+    using buffer_detail::buffer;
+    return buffer(std::forward<Args>(args)...);
+  }
+};
+
+inline constexpr buffer_t buffer{};
 
 } // namespace gpcl
 
