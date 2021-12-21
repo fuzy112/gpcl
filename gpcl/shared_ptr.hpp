@@ -32,6 +32,8 @@ struct nullptr_wrapper
   constexpr nullptr_wrapper(std::nullptr_t) noexcept {}
 
   constexpr operator std::nullptr_t() const noexcept { return nullptr; }
+
+  constexpr explicit operator bool() const noexcept { return false; }
 };
 
 } // namespace detail
@@ -515,7 +517,7 @@ void swap(shared_ptr<T> &x, shared_ptr<T> &y) noexcept
 {
   x.swap(y);
 }
-}
+} // namespace swap_detail
 
 template <typename T, typename Y>
 shared_ptr<T> static_pointer_cast(const shared_ptr<Y> &p) noexcept

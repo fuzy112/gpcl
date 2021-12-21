@@ -39,11 +39,16 @@ template <typename T>
 template <typename Y>
 void shared_ptr<T>::enables_shared_from_this(Y *ptr) noexcept
 {
-  if constexpr (std::is_base_of_v<detail::enable_shared_from_this_base, std::remove_cv_t<Y>>)
+  if constexpr (std::is_base_of_v<detail::enable_shared_from_this_base,
+                                  std::remove_cv_t<Y>>)
   {
     if (ptr != nullptr && ptr->weak_this.expired())
       ptr->weak_this = shared_ptr<std::remove_cv_t<Y>>(
           *this, const_cast<std::remove_cv_t<Y> *>(ptr));
+  }
+  else
+  {
+    (void)ptr;
   }
 }
 
