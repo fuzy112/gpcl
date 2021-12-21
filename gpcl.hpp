@@ -16,6 +16,7 @@
 #include <gpcl/any_cast.hpp>
 #include <gpcl/assert.hpp>
 #include <gpcl/bad_any_cast.hpp>
+#include <gpcl/bad_expected_access.hpp>
 #include <gpcl/bad_weak_ptr.hpp>
 #include <gpcl/basic_any.hpp>
 #include <gpcl/buffer.hpp>
@@ -36,6 +37,7 @@
 #include <gpcl/function_ref.hpp>
 #include <gpcl/future.hpp>
 #include <gpcl/generic_pointer_cast.hpp>
+#include <gpcl/get_deleter.hpp>
 #include <gpcl/in_place.hpp>
 #include <gpcl/in_place_type.hpp>
 #include <gpcl/intrusive_list.hpp>
@@ -63,6 +65,7 @@
 #include <gpcl/shared_ptr.hpp>
 #include <gpcl/simple_segregated_storage.hpp>
 #include <gpcl/span.hpp>
+#include <gpcl/swap.hpp>
 #include <gpcl/thread.hpp>
 #include <gpcl/thread_annotations.hpp>
 #include <gpcl/thread_attributes.hpp>

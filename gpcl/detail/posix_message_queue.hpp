@@ -49,7 +49,7 @@ public:
 
   inline posix_message_queue &operator=(posix_message_queue &&other) noexcept
   {
-    using std::swap;
+    using gpcl::swap;
     swap(q_, other.q_);
     return *this;
   }

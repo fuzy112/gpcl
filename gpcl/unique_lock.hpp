@@ -15,8 +15,8 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/is_basic_lockable.hpp>
 #include <gpcl/is_lockable.hpp>
+#include <gpcl/swap.hpp>
 #include <gpcl/thread_annotations.hpp>
-#include <utility>
 
 namespace gpcl {
 
@@ -90,20 +90,14 @@ public:
 
   auto operator=(unique_lock &&other) noexcept -> unique_lock &
   {
-    using std::swap;
-    swap(other);
+    gpcl::swap(other);
   }
 
   auto swap(unique_lock &other) noexcept -> void
   {
-    using std::swap;
+    using gpcl::swap;
     swap(mtx_, other.mtx_);
     swap(owns_lock_, other.owns_lock_);
-  }
-
-  friend inline auto swap(unique_lock &x, unique_lock &y) noexcept -> void
-  {
-    x.swap(y);
   }
 
   [[nodiscard]] auto owns_lock() const noexcept -> bool { return owns_lock_; }
@@ -146,6 +140,14 @@ private:
   mutex_type *mtx_{};
   bool owns_lock_{};
 };
+
+namespace swap_detail {
+template <typename L>
+inline auto swap(unique_lock<L> &x, unique_lock<L> &y) noexcept -> void
+{
+  x.swap(y);
+}
+} // namespace swap_detail
 
 } // namespace gpcl
 

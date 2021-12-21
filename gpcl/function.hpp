@@ -13,6 +13,7 @@
 
 #include <gpcl/basic_any.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/swap.hpp>
 
 #include <tuple>
 
@@ -80,7 +81,7 @@ public:
 
   void swap(function &other) noexcept
   {
-    using std::swap;
+    using gpcl::swap;
     swap(data_, other.data_);
     swap(invoke_, other.invoke_);
   }
@@ -101,12 +102,14 @@ public:
   }
 };
 
+namespace swap_detail {
 template <typename Signature, std::size_t LocalSize>
 void swap(function<Signature, LocalSize> &x,
           function<Signature, LocalSize> &y) noexcept
 {
   x.swap(y);
 }
+} // namespace swap_detail
 
 } // namespace gpcl
 

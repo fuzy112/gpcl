@@ -77,7 +77,7 @@ public:
 
   void swap(posix_file &other) noexcept
   {
-    using std::swap;
+    using gpcl::swap;
     swap(fd_, other.fd_);
   }
 
@@ -146,10 +146,12 @@ private:
   native_handle_type fd_{-1};
 };
 
+namespace swap_detail {
 inline void swap(posix_file &x, posix_file &y) noexcept
 {
   x.swap(y);
 }
+} // namespace swap_detail
 
 } // namespace detail
 } // namespace gpcl

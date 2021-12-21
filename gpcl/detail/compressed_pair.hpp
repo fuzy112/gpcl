@@ -12,6 +12,7 @@
 #define GPCL_DETAIL_COMPRESSED_PAIR_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/swap.hpp>
 
 #include <tuple>
 #include <type_traits>
@@ -31,21 +32,20 @@ public:
   using type = T;
 
   template <typename... Args>
-  explicit constexpr compressed_storage(Args &&...args)
+  explicit constexpr compressed_storage(Args &&... args)
       : data_(std::forward<Args>(args)...)
   {
   }
 
-  void
-  swap(compressed_storage &other) noexcept(std::is_nothrow_swappable_v<T>)
+  void swap(compressed_storage &other) noexcept(std::is_nothrow_swappable_v<T>)
   {
-    using std::swap;
+    using gpcl::swap;
     swap(data_, other.data_);
   }
 
   T &get() &noexcept { return data_; }
   T &&get() &&noexcept { return std::move(data_); };
-  
+
   T const &get() const &noexcept { return data_; }
   T const &&get() const &&noexcept { return data_; }
 };
@@ -57,22 +57,22 @@ public:
   using type = T;
 
   template <typename... Args>
-  explicit constexpr compressed_storage(Args &&...args)
+  explicit constexpr compressed_storage(Args &&... args)
       : T(std::forward<Args>(args)...)
   {
   }
 
   void swap(compressed_storage &other) noexcept(std::is_nothrow_swappable_v<T>)
   {
-    using std::swap;
+    using gpcl::swap;
     swap(static_cast<T &>(*this), static_cast<T &>(other));
   }
 
-  T &get() & noexcept { return *this; }
-  T &&get() && noexcept { return std::move(*this); }
+  T &get() &noexcept { return *this; }
+  T &&get() &&noexcept { return std::move(*this); }
 
-  T const &get() const  & noexcept { return *this; }
-  T const &&get() const && noexcept  { return *this; }
+  T const &get() const &noexcept { return *this; }
+  T const &&get() const &&noexcept { return *this; }
 };
 
 enum piecewise_construct_t
@@ -143,35 +143,37 @@ public:
     base_type_2::swap(other);
   }
 
-  T1 &first() & noexcept { return base_type_1::get(); }
+  T1 &first() &noexcept { return base_type_1::get(); }
 
-  T1 &&first() && noexcept { return std::move(*this).base_type_1::get(); }
+  T1 &&first() &&noexcept { return std::move(*this).base_type_1::get(); }
 
-  T1 const &first() const & noexcept { return base_type_1::get(); }
+  T1 const &first() const &noexcept { return base_type_1::get(); }
 
-  T1 const &&first() const && noexcept
+  T1 const &&first() const &&noexcept
   {
     return std::move(*this).base_type_1::get();
   }
 
-  T2 &second() & noexcept { return base_type_2::get(); }
+  T2 &second() &noexcept { return base_type_2::get(); }
 
-  T2 &&second() && noexcept { return std::move(*this).base_type_2::get(); }
+  T2 &&second() &&noexcept { return std::move(*this).base_type_2::get(); }
 
-  T2 const &second() const & noexcept { return base_type_2::get(); }
+  T2 const &second() const &noexcept { return base_type_2::get(); }
 
-  T2 const &&second() const && noexcept
+  T2 const &&second() const &&noexcept
   {
     return std::move(*this).base_type_2::get();
   }
 };
 
+namespace swap_detail {
 template <typename T1, typename T2>
 inline void swap(compressed_pair<T1, T2> &x,
                  compressed_pair<T1, T2> &y) noexcept(noexcept(x.swap(y)))
 {
   x.swap(y);
 }
+} // namespace swap_detail
 
 } // namespace detail
 } // namespace gpcl

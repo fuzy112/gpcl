@@ -807,11 +807,13 @@ public:
   }
 };
 
+namespace swap_detail {
 template <typename T, typename E>
 void swap(expected<T, E> &x, expected<T, E> &y) noexcept(noexcept(x.swap(y)))
 {
   x.swap(y);
 }
+} // namespace swap_detail
 
 template <typename T, typename E>
 constexpr bool operator==(const expected<T, E> &x, const expected<T, E> &y)

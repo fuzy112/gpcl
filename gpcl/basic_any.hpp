@@ -206,11 +206,13 @@ public:
 #endif
 };
 
+namespace swap_detail {
 template <std::size_t LocalSize, std::size_t LocalAlign>
 inline void swap(basic_any<LocalSize> &x, basic_any<LocalAlign> &y) noexcept
 {
   x.swap(y);
 }
+} // namespace swap_detail
 
 } // namespace gpcl
 

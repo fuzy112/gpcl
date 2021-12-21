@@ -13,6 +13,7 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/type_traits.hpp>
+#include <gpcl/swap.hpp>
 
 namespace gpcl {
 
@@ -46,19 +47,20 @@ public:
 
   void swap(intrusive_list_node_base &other) noexcept
   {
-    using std::swap;
-    swap(prev, other.prev);
-    swap(next, other.next);
+    gpcl::swap(prev, other.prev);
+    gpcl::swap(next, other.next);
   }
 
   intrusive_list_node_base *prev;
   intrusive_list_node_base *next;
 };
 
+namespace swap_detail {
 inline void swap(intrusive_list_node_base &x,
                  intrusive_list_node_base &y) noexcept
 {
   x.swap(y);
+}
 }
 
 inline void insert_between(intrusive_list_node_base *node,
@@ -314,8 +316,7 @@ public:
 
   void exchange(reference x, reference y) noexcept
   {
-    using std::swap;
-    swap(static_cast<node_type &>(x), static_cast<node_type &>(y));
+    gpcl::swap(static_cast<node_type &>(x), static_cast<node_type &>(y));
   }
 
   void exchange(iterator x, iterator y) noexcept { exchange(*x, *y); }

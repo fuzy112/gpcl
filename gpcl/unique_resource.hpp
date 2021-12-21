@@ -76,7 +76,7 @@ public:
   unique_resource &operator=(unique_resource &&other) noexcept(
       std::is_nothrow_move_assignable_v<R>
           &&std::is_nothrow_move_assignable_v<D>)
-  { 
+  {
     reset();
     p_ = std::move(other.p_);
     owns_resource_ = std::exchange(other.owns_resource_, false);
@@ -86,7 +86,7 @@ public:
   void swap(unique_resource &other) noexcept(
       std::is_nothrow_swappable_v<R> &&std::is_nothrow_swappable_v<D>)
   {
-    using std::swap;
+    using gpcl::swap;
     swap(p_, other.p_);
     swap(owns_resource_, other.owns_resource_);
   }
@@ -158,12 +158,14 @@ unique_resource<std::decay_t<R>, std::decay_t<D>> make_unique_resource_checked(
         std::forward<R>(r), std::forward<D>(d));
 }
 
+namespace swap_detail {
 template <typename R, typename D>
 void swap(unique_resource<R, D> &x,
           unique_resource<R, D> &y) noexcept(noexcept(x.swap(y)))
 {
   x.swap(y);
 }
+} // namespace swap_detail
 
 } // namespace gpcl
 

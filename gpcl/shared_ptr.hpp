@@ -13,6 +13,7 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/ref_count.hpp>
+#include <gpcl/swap.hpp>
 
 namespace gpcl {
 
@@ -344,7 +345,7 @@ public:
   /// Swaps two `shared_ptr`s.
   void swap(shared_ptr &r) noexcept
   {
-    using std::swap;
+    using gpcl::swap;
     swap(p_, r.p_);
     swap(s_, r.s_);
   }
@@ -508,10 +509,12 @@ bool operator>=(std::nullptr_t, const shared_ptr<T> &y)
   return !(nullptr < y);
 }
 
+namespace swap_detail {
 template <typename T>
 void swap(shared_ptr<T> &x, shared_ptr<T> &y) noexcept
 {
   x.swap(y);
+}
 }
 
 template <typename T, typename Y>

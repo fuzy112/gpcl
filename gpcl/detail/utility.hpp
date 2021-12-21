@@ -14,6 +14,8 @@
 #include <gpcl/assert.hpp>
 #include <gpcl/detail/error.hpp>
 #include <gpcl/narrow_cast.hpp>
+#include <gpcl/swap.hpp>
+
 
 namespace gpcl {
 namespace detail {
@@ -37,8 +39,6 @@ inline constexpr T exchange(T &obj, U &&new_value)
   obj = detail::forward<U>(new_value);
   return old_value;
 }
-
-using std::swap;
 
 } // namespace detail
 } // namespace gpcl

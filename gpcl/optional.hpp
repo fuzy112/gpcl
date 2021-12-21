@@ -16,6 +16,7 @@
 #include <gpcl/detail/type_traits.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/optional_fwd.hpp>
+#include <gpcl/swap.hpp>
 
 namespace gpcl {
 
@@ -396,8 +397,7 @@ public:
   {
     if (this->has_val_ && other.has_val_)
     {
-      using std::swap;
-      swap(this->val_, other.val_);
+      gpcl::swap(this->val_, other.val_);
     }
     else if (this->has_val_ && !other.has_val_)
     {
@@ -664,12 +664,14 @@ inline constexpr bool operator>=(const T &x, const optional<U> &y)
   return y && (x > *y);
 }
 
+namespace swap_detail {
 // specialized algorithms
 template <typename T>
 void swap(optional<T> &x, optional<T> &y) noexcept(true)
 {
   x.swap(y);
 }
+} // namespace swap_detail
 
 template <typename T>
 constexpr optional<typename std::decay<T>::type> make_optional(T &&x)

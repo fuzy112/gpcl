@@ -15,6 +15,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/iterator.hpp>
 #include <gpcl/error.hpp>
+#include <gpcl/swap.hpp>
 
 namespace gpcl {
 
@@ -439,7 +440,7 @@ public:
 
     if (can_take_ownership)
     {
-      using std::swap;
+      using gpcl::swap;
       swap(storage(), other.storage());
       swap(cap_, other.cap_);
       swap(size_, other.size_);
@@ -856,7 +857,7 @@ public:
       alloc_traits::propagate_on_container_swap::value ||
       alloc_traits::is_always_equal::value)
   {
-    using std::swap;
+    using gpcl::swap;
     if constexpr (alloc_traits::propagate_on_container_swap::value ||
                   alloc_traits::is_always_equal::value)
     {
@@ -985,6 +986,7 @@ bool operator<=(const vector<Tp, Allocator> &x, const vector<Tp, Allocator> &y)
   return !(y < x);
 }
 
+namespace swap_detail {
 // 26.3.11.6, specialized algorithms
 template <typename Tp, typename Allocator>
 void swap(vector<Tp, Allocator> &x,
@@ -992,6 +994,8 @@ void swap(vector<Tp, Allocator> &x,
 {
   x.swap(y);
 }
+} // namespace swap_detail
+
 } // namespace gpcl
 
 #endif // GPCL_VECTOR_HPP

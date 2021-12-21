@@ -62,7 +62,7 @@ public:
 
   auto swap(posix_thread &other) noexcept -> void
   {
-    using std::swap;
+    using gpcl::swap;
     swap(thread_, other.thread_);
   }
 

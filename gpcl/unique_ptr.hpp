@@ -163,7 +163,7 @@ public:
 
   void swap(unique_ptr &other) noexcept
   {
-    using std::swap;
+    using gpcl::swap;
     swap(_p, other._p);
   }
 
@@ -298,11 +298,13 @@ bool operator>=(std::nullptr_t, const unique_ptr<T, D> &y)
   return !(nullptr < y);
 }
 
+namespace swap_detail {
 template <typename T, typename D>
 void swap(unique_ptr<T, D> &x, unique_ptr<T, D> &y) noexcept
 {
   x.swap(y);
 }
+} // namespace swap_detail
 
 template <typename T, typename U>
 unique_ptr<T> static_pointer_cast(unique_ptr<U> &&p) noexcept

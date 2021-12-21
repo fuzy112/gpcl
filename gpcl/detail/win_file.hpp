@@ -58,8 +58,7 @@ public:
 
   void swap(win_file &other) noexcept
   {
-    using std::swap;
-    swap(hd_, other.hd_);
+    gpcl::swap(hd_, other.hd_);
   }
 
   native_handle_type native_handle() const { return hd_; }

@@ -312,23 +312,23 @@ gpcl::expected<void, int> test_try(Func &&func)
   return {};
 }
 
-#ifdef __GNUC__
-template <typename Func>
-gpcl::expected<void, int> test_try_return(Func &&func)
-{
-  auto e = GPCL_EXPECTED_TRY_RETURN(func());
-  (void)e;
-  return {};
-}
-#endif
-
-TEST_CASE("expected extension")
-{
-  CHECK(test_try(return_success));
-  CHECK(!test_try(return_failure));
-
-#ifdef __GNUC__
-  CHECK(test_try_return(return_success));
-  CHECK(!test_try_return(return_failure));
-#endif
-}
+// #ifdef __GNUC__
+// template <typename Func>
+// gpcl::expected<void, int> test_try_return(Func &&func)
+// {
+//   auto e = GPCL_EXPECTED_TRY_RETURN(func());
+//   (void)e;
+//   return {};
+// }
+// #endif
+// 
+// TEST_CASE("expected extension")
+// {
+//   CHECK(test_try(return_success));
+//   CHECK(!test_try(return_failure));
+// 
+// #ifdef __GNUC__
+//   CHECK(test_try_return(return_success));
+//   CHECK(!test_try_return(return_failure));
+// #endif
+// }

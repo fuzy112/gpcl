@@ -135,7 +135,7 @@ public:
   /// Swap two weak_ptr's.
   void swap(weak_ptr &r) noexcept
   {
-    using std::swap;
+    using gpcl::swap;
     swap(p_, r.p_);
     swap(s_, r.s_);
   }

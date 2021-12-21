@@ -62,7 +62,6 @@ public:
   auto operator=(thread &&) noexcept -> thread & = default;
 
   auto swap(thread &other) noexcept -> void { impl_.swap(other.impl_); }
-  friend inline auto swap(thread &y, thread &x) noexcept -> void { x.swap(y); }
 
   [[nodiscard]] bool joinable() const { return impl_.joinable(); }
 
@@ -85,6 +84,13 @@ private:
 };
 
 #endif
+
+namespace swap_detail {
+inline auto swap(thread &y, thread &x) noexcept -> void
+{
+  x.swap(y);
+}
+} // namespace swap_detail
 
 namespace this_thread {
 
