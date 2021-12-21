@@ -1,6 +1,6 @@
 //
-// shared_block_operation.hpp
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ref_count_operation.hpp
+// ~~~~~~~~~~~~~~~~~~~~~~~
 //
 // Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
 //
@@ -8,19 +8,21 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_DETAIL_SHARED_BLOCK_OPERATION_HPP
-#define GPCL_DETAIL_SHARED_BLOCK_OPERATION_HPP
+#ifndef GPCL_DETAIL_REF_COUNT_OPERATION_HPP
+#define GPCL_DETAIL_REF_COUNT_OPERATION_HPP
 
 #include <gpcl/detail/config.hpp>
 
 namespace gpcl {
 namespace detail {
-enum shared_block_operation_t
+enum ref_count_operation_t
 {
   delete_control_block = 1,
   destroy_managed_object = 2,
+  get_deleter = 3,
+  get_deleter_type_info = 4,
 };
 }
 } // namespace gpcl
 
-#endif // GPCL_DETAIL_SHARED_BLOCK_OPERATION_HPP
+#endif // GPCL_DETAIL_REF_COUNT_OPERATION_HPP

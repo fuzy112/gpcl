@@ -13,22 +13,17 @@
 
 #include <gpcl/detail/config.hpp>
 
-#include <gpcl/shared_ptr.hpp>
 
 namespace gpcl {
 
+template <typename T> class shared_ptr;
+
 /// @ingroup SmartPtr
 template <typename T, typename Alloc, typename... Args>
-shared_ptr<T> allocate_shared(const Alloc &alloc, Args &&... args)
-{
-  auto control = detail::shared_block<gpcl::optional<T>, Alloc>::create(
-      alloc, in_place, std::forward<Args>(args)...);
-  shared_ptr<T> r(detail::create_from_shared_block, control->managed_object(),
-                  control);
-  detail::shared_ptr_hooks<T>::on_creation(r.get(), r);
-  return r;
-}
+shared_ptr<T> allocate_shared(const Alloc &alloc, Args &&...args);
 
 } // namespace gpcl
+
+#include <gpcl/impl/allocate_shared.hpp>
 
 #endif // GPCL_ALLOCATE_SHARED_HPP

@@ -1,6 +1,6 @@
 //
-// gcc_shared_block_base.hpp
-// ~~~~~~~~~~~~~~~~~~~~~~~~~
+// std_ref_count_base.hpp
+// ~~~~~~~~~~~~~~~~~~~~~~
 //
 // Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
 //
@@ -8,29 +8,30 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_DETAIL_GCC_SHARED_BLOCK_BASE_HPP
-#define GPCL_DETAIL_GCC_SHARED_BLOCK_BASE_HPP
+#ifndef GPCL_DETAIL_STD_REF_COUNT_BASE_HPP
+#define GPCL_DETAIL_STD_REF_COUNT_BASE_HPP
 
 #include <gpcl/assert.hpp>
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/shared_block_operation.hpp>
+#include <gpcl/detail/ref_count_operation.hpp>
+
+#include <atomic>
 
 namespace gpcl {
 namespace detail {
 
-class gcc_shared_block_base
+class std_ref_count_base
 {
 public:
-  typedef long count_t;
-
-  typedef void (*operation_func_t)(gcc_shared_block_base *self,
-                                   shared_block_operation_t) noexcept;
+  typedef void *(*operation_func_t)(std_ref_count_base *self,
+                                    ref_count_operation_t) noexcept;
 
   // Increment use count.
   void get() noexcept
   {
     GPCL_ASSERT(use_count() > 0);
-    __atomic_fetch_add(&use_count_, 1, __ATOMIC_RELAXED);
+
+    use_count_.fetch_add(1, std::memory_order_relaxed);
   }
 
   // Decrement use count and if use count reaches zero, destroy the managed
@@ -41,11 +42,11 @@ public:
   {
     GPCL_ASSERT(use_count() > 0);
 
-    if (__atomic_sub_fetch(&use_count_, 1, __ATOMIC_ACQ_REL) == 0)
+    if (use_count_.fetch_sub(1, std::memory_order_acquire) == 1)
     {
       operate(destroy_managed_object);
 
-      if (__atomic_sub_fetch(&weak_count_, 1, __ATOMIC_RELAXED) == 0)
+      if (weak_count_.fetch_sub(1, std::memory_order_acquire) == 1)
       {
         operate(delete_control_block);
       }
@@ -55,16 +56,15 @@ public:
   // Returns the use count.
   long use_count() const noexcept
   {
-    long val;
-    __atomic_load(&use_count_, &val, __ATOMIC_RELAXED);
-    return val;
+    return use_count_.load(std::memory_order_relaxed);
   }
 
   // Increment weak count.
   void weak_get() noexcept
   {
     GPCL_ASSERT(weak_count() > 0);
-    __atomic_fetch_add(&weak_count_, 1, __ATOMIC_RELAXED);
+
+    weak_count_.fetch_add(1, std::memory_order_relaxed);
   }
 
   // Decrement weak count.
@@ -72,7 +72,7 @@ public:
   void weak_put() noexcept
   {
     GPCL_ASSERT(weak_count() > 0);
-    if (__atomic_sub_fetch(&weak_count_, 1, __ATOMIC_ACQ_REL) == 0)
+    if (weak_count_.fetch_sub(1, std::memory_order_acquire) == 1)
     {
       GPCL_ASSERT(use_count() == 0);
       operate(delete_control_block);
@@ -82,22 +82,20 @@ public:
   // Returns the weak count.
   long weak_count() const noexcept
   {
-    long val;
-    __atomic_load(&weak_count_, &val, __ATOMIC_SEQ_CST);
-    return val;
+    return weak_count_.load(std::memory_order_relaxed);
   }
 
   // Try increment the use count, fail if use count equals 0.
-  bool lock() noexcept
+  [[nodiscard]] bool lock() noexcept
   {
     GPCL_ASSERT(weak_count() > 0);
     long old_val = use_count();
 
     while (old_val > 0)
     {
-      long new_val = old_val + 1;
-      if (__atomic_compare_exchange(&use_count_, &old_val, &new_val, true,
-                                    __ATOMIC_RELEASE, __ATOMIC_RELAXED))
+      if (use_count_.compare_exchange_weak(old_val, old_val + 1,
+                                           std::memory_order_release,
+                                           std::memory_order_relaxed))
         return true;
     }
 
@@ -105,11 +103,14 @@ public:
   }
 
   // Invoke an operation.
-  void operate(shared_block_operation_t op) noexcept { op_func_(this, op); }
+  void *operate(ref_count_operation_t op) noexcept
+  {
+    return op_func_(this, op);
+  }
 
 protected:
   // Constructor.
-  explicit gcc_shared_block_base(operation_func_t op_func) : op_func_(op_func)
+  explicit std_ref_count_base(operation_func_t op_func) : op_func_(op_func)
   {
     GPCL_ASSERT(op_func_);
   }
@@ -118,12 +119,12 @@ private:
   // Use function pointer to avoid overhead of virtual functions.
   operation_func_t op_func_;
 
-  count_t use_count_ = 1;
+  std::atomic<long> use_count_ = 1;
 
-  count_t weak_count_ = 1;
+  std::atomic<long> weak_count_ = 1;
 };
 
 } // namespace detail
 } // namespace gpcl
 
-#endif // GPCL_DETAIL_GCC_SHARED_BLOCK_BASE_HPP
+#endif // GPCL_DETAIL_STD_REF_COUNT_BASE_HPP

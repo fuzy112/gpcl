@@ -16,8 +16,11 @@
 
 namespace gpcl {
 
-using const_buffer = span<const char>;
-using mutable_buffer = span<char>;
+/// Constant buffer.
+using const_buffer = span<const unsigned char>;
+
+/// Mutable buffer.
+using mutable_buffer = span<unsigned char>;
 
 /// Consume some bytes of the buffer.
 inline const_buffer &operator+=(const_buffer &buf, std::size_t sz)
@@ -36,13 +39,13 @@ namespace buffer_detail {
 // Create a buffer from raw memory.
 inline const_buffer buffer(const void *data, std::size_t size) noexcept
 {
-  return const_buffer(reinterpret_cast<const char *>(data), size);
+  return const_buffer(reinterpret_cast<const unsigned char *>(data), size);
 }
 
 // Create a buffer from raw memory.
 inline mutable_buffer buffer(void *data, std::size_t size) noexcept
 {
-  return mutable_buffer(reinterpret_cast<char *>(data), size);
+  return mutable_buffer(reinterpret_cast<unsigned char *>(data), size);
 }
 
 // Make a buffer from a contiguous container.

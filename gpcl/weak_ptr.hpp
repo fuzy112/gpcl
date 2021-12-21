@@ -12,7 +12,7 @@
 #define GPCL_WEAK_PTR_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/shared_block_base.hpp>
+#include <gpcl/detail/ref_count_base.hpp>
 
 namespace gpcl {
 
@@ -32,7 +32,7 @@ class weak_ptr
   friend class shared_ptr;
 
   T *p_ = nullptr;
-  detail::shared_block_base *s_ = nullptr;
+  detail::ref_count_base *s_ = nullptr;
 
 public:
   using element_type = T;
@@ -160,12 +160,17 @@ public:
   /// Try to create a shared_ptr to the managed object.
   shared_ptr<T> lock() const noexcept
   {
+    shared_ptr<T> rv;
     if (!s_)
-      return shared_ptr<T>();
+      return rv;
 
-    if (s_->lock())
-      return shared_ptr<T>(detail::create_from_shared_block, p_, s_);
-    return shared_ptr<T>();
+    if (!s_->lock())
+      return rv;
+    
+    rv.p_ = p_;
+    rv.s_ = s_;
+    
+    return rv;
   }
 
   /// Compare the addresses of the control blocks.

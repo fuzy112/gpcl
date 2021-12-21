@@ -20,6 +20,16 @@
 
 namespace gpcl {
 
+/// Cast an integer to a narrower type.
+/** It is undefined behaviour if the target type cannot hold the value.
+ *
+ *  @par Example
+ * @code {cpp}
+ * long a;
+ * short b = narrow_cast<short>(a);
+ * @endcode
+ *
+ */
 template <typename To, typename From>
 constexpr To narrow_cast(From F) noexcept
 {
@@ -40,6 +50,15 @@ public:
   czstring<> what() const noexcept final { return "bad_narrow_cast"; }
 };
 
+/// Cast an integer to a narrower type.
+/** @throws bad_narrow_cast if the target type cannot hold the value.
+ * @par Example
+ * @code {cpp}
+ * long a;
+ *
+ * short b = narrow<short>(a);
+ * @endcode
+ */
 template <typename To, typename From>
 To narrow(From F)
 {

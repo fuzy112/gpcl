@@ -17,88 +17,54 @@
 
 namespace gpcl {
 
+namespace detail_buffer_sequence {
+template <typename Buffer,
+          std::enable_if_t<
+              std::is_convertible<const Buffer *, const const_buffer *>::value,
+              int> = 0>
+const Buffer *buffer_sequence_begin(const Buffer &b) noexcept
+{
+  return std::addressof(b);
+}
+
+template <typename Container,
+          std::enable_if_t<!std::is_convertible<const Container *,
+                                                const const_buffer *>::value,
+                           int> = 0>
+auto buffer_sequence_begin(const Container &b) noexcept
+{
+  return std::begin(b);
+}
+
+template <typename Buffer,
+          std::enable_if_t<
+              std::is_convertible<const Buffer *, const const_buffer *>::value,
+              int> = 0>
+const Buffer *buffer_sequence_end(const Buffer &b) noexcept
+{
+  return std::addressof(b) + 1;
+}
+
+template <typename Container,
+          std::enable_if_t<!std::is_convertible<const Container *,
+                                                const const_buffer *>::value,
+                           int> = 0>
+auto buffer_sequence_end(const Container &b) noexcept
+{
+  return std::end(b);
+}
+
+} // namespace detail_buffer_sequence
+
 struct buffer_sequence_begin_t
 {
-
 #ifndef GPCL_DOXYGEN
-  template <typename MutableBuffer,
-            std::enable_if_t<std::is_convertible<const MutableBuffer *,
-                                                 const mutable_buffer *>::value,
-                             int> = 0>
-  const mutable_buffer *operator()(const MutableBuffer &b) const
+  template <typename BufferSequence>
+  auto operator()(const BufferSequence &bs) const noexcept
   {
-    return std::addressof(b);
-  }
+    using detail_buffer_sequence::buffer_sequence_begin;
 
-  template <typename ConstBuffer,
-            std::enable_if_t<std::is_convertible<const ConstBuffer *,
-                                                 const const_buffer *>::value,
-                             int> = 0>
-  const const_buffer *operator()(const ConstBuffer &b) const
-  {
-    return std::addressof(b);
-  }
-
-  template <typename C,
-            std::enable_if_t<
-                detail::conjunction_v<
-                    detail::negate<
-                        std::is_convertible<const C *, const mutable_buffer *>>,
-                    detail::negate<
-                        std::is_convertible<const C *, const const_buffer *>>,
-                    std::is_void<detail::void_t<
-                        decltype(buffer_sequence_begin(std::declval<C &>()))>>>,
-                int> = 0>
-  auto operator()(C &c) const
-  {
-    return buffer_sequence_begin(c);
-  }
-
-  template <
-      typename C,
-      std::enable_if_t<
-          detail::conjunction_v<
-              detail::negate<
-                  std::is_convertible<const C *, const mutable_buffer *>>,
-              detail::negate<
-                  std::is_convertible<const C *, const const_buffer *>>,
-              detail::negate<std::is_void<detail::void_t<
-                  decltype(buffer_sequence_begin(std::declval<C &>()))>>>>,
-          int> = 0>
-  auto operator()(C &c) const
-  {
-    return std::begin(c);
-  }
-
-  template <typename C,
-            std::enable_if_t<
-                detail::conjunction_v<
-                    detail::negate<
-                        std::is_convertible<const C *, const mutable_buffer *>>,
-                    detail::negate<
-                        std::is_convertible<const C *, const const_buffer *>>,
-                    std::is_void<detail::void_t<
-                        decltype(buffer_sequence_begin(std::declval<C &>()))>>>,
-                int> = 0>
-  auto operator()(const C &c) const
-  {
-    return buffer_sequence_begin(c);
-  }
-
-  template <
-      typename C,
-      std::enable_if_t<
-          detail::conjunction_v<
-              detail::negate<
-                  std::is_convertible<const C *, const mutable_buffer *>>,
-              detail::negate<
-                  std::is_convertible<const C *, const const_buffer *>>,
-              detail::negate<std::is_void<detail::void_t<
-                  decltype(buffer_sequence_begin(std::declval<C &>()))>>>>,
-          int> = 0>
-  auto operator()(const C &c) const
-  {
-    return std::begin(c);
+    return buffer_sequence_begin(bs);
   }
 #endif
 };
@@ -106,58 +72,18 @@ struct buffer_sequence_begin_t
 struct buffer_sequence_end_t
 {
 #ifndef GPCL_DOXYGEN
-  template <typename MutableBuffer,
-            std::enable_if_t<std::is_convertible<const MutableBuffer *,
-                                                 const mutable_buffer *>::value,
-                             int> = 0>
-  const mutable_buffer *operator()(const MutableBuffer &b) const
+  template <typename BufferSequence>
+  auto operator()(const BufferSequence &bs) const noexcept
   {
-    return std::addressof(b) + 1;
-  }
+    using detail_buffer_sequence::buffer_sequence_end;
 
-  template <typename ConstBuffer,
-            std::enable_if_t<std::is_convertible<const ConstBuffer *,
-                                                 const const_buffer *>::value,
-                             int> = 0>
-  const const_buffer *operator()(const ConstBuffer &b) const
-  {
-    return std::addressof(b) + 1;
-  }
-
-  template <typename C,
-            std::enable_if_t<
-                detail::conjunction_v<
-                    detail::negate<
-                        std::is_convertible<const C *, const mutable_buffer *>>,
-                    detail::negate<
-                        std::is_convertible<const C *, const const_buffer *>>,
-                    std::is_void<detail::void_t<
-                        decltype(buffer_sequence_end(std::declval<C &>()))>>>,
-                int> = 0>
-  auto operator()(const C &c) const
-  {
-    return buffer_sequence_end(c);
-  }
-
-  template <typename C,
-            std::enable_if_t<
-                detail::conjunction_v<
-                    detail::negate<
-                        std::is_convertible<const C *, const mutable_buffer *>>,
-                    detail::negate<
-                        std::is_convertible<const C *, const const_buffer *>>,
-                    detail::negate<std::is_void<detail::void_t<
-                        decltype(buffer_sequence_end(std::declval<C &>()))>>>>,
-                int> = 0>
-  auto operator()(const C &c) const
-  {
-    return std::end(c);
+    return buffer_sequence_end(bs);
   }
 #endif
 };
 
-GPCL_CXX17_INLINE_CONSTEXPR buffer_sequence_begin_t buffer_sequence_begin{};
-GPCL_CXX17_INLINE_CONSTEXPR buffer_sequence_end_t buffer_sequence_end{};
+inline constexpr buffer_sequence_begin_t buffer_sequence_begin{};
+inline constexpr buffer_sequence_end_t buffer_sequence_end{};
 
 #ifndef GPCL_DOXYGEN
 template <typename T, typename = void>
@@ -196,6 +122,90 @@ struct is_const_buffer_sequence<
 {
 };
 #endif
+
+template <typename BufferSequence>
+struct buffers_iterator
+{
+  typedef std::forward_iterator_tag iterator_category;
+
+  using buffer_sequence_iterator = std::decay_t<decltype(
+      buffer_sequence_begin(std::declval<BufferSequence>()))>;
+
+  buffer_sequence_iterator curr_buf;
+  std::size_t byte_pos;
+
+  buffers_iterator(buffer_sequence_iterator curr_buf,
+                   std::size_t byte_pos) noexcept
+      : curr_buf(curr_buf),
+        byte_pos(byte_pos)
+  {
+  }
+
+  decltype(auto) operator*() const { return *operator->(); }
+
+  auto operator->() const { return curr_buf->begin() + byte_pos; }
+
+  /// @bug this does not work when a buffer is empty.
+  buffers_iterator &operator++()
+  {
+    ++byte_pos;
+    if (byte_pos >= curr_buf->size())
+    {
+      ++curr_buf;
+      byte_pos = 0;
+    }
+    return *this;
+  };
+
+  buffers_iterator operator++(int)
+  {
+    auto r = *this;
+    ++*this;
+    return r;
+  }
+
+  bool operator==(const buffers_iterator &other) const noexcept
+  {
+    return curr_buf == other.curr_buf && byte_pos == other.byte_pos;
+  }
+
+  bool operator!=(const buffers_iterator &other) const noexcept
+  {
+    return !(*this == other);
+  }
+};
+
+template <typename BufferSequence>
+buffers_iterator<BufferSequence> buffers_begin(BufferSequence &&bs) noexcept
+{
+  return buffers_iterator<BufferSequence>(buffer_sequence_begin(bs), 0);
+}
+
+template <typename BufferSequence>
+buffers_iterator<BufferSequence> buffers_end(BufferSequence &&bs) noexcept
+{
+  return buffers_iterator<BufferSequence>(buffer_sequence_end(bs), 0);
+}
+
+inline auto buffers_begin(const_buffer b) noexcept
+{
+  return b.begin();
+}
+
+inline auto buffers_end(const_buffer b) noexcept
+{
+  return b.end();
+}
+
+inline auto buffers_begin(mutable_buffer b) noexcept
+{
+  return b.begin();
+}
+
+inline auto buffers_end(mutable_buffer b) noexcept
+{
+  return b.end();
+}
 
 } // namespace gpcl
 

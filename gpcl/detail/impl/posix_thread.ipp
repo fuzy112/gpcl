@@ -95,10 +95,10 @@ void posix_thread::start_thread(thread_attributes const &attr,
   {
     throw_system_error(err, "pthread_create");
   }
-  fn.release();
+  (void)fn.release();
 }
 
-void *posix_thread_function(void *arg)
+void *posix_thread_function(void *arg) noexcept
 {
   GPCL_ASSERT(arg != nullptr);
   auto fn = unique_ptr<posix_thread::func_base>(

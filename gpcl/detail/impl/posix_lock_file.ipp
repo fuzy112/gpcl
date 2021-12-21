@@ -22,7 +22,7 @@ void posix_lock_file::lock()
 
   GPCL_ASSERT(!owns_lock());
   file_.open(open_or_create, filename_.c_str(),
-             posix_file::access_mode::readwrite);
+             posix_file::access_mode::readwrite).value();
 
   // Lock the whole file.
   if (::lockf(file_.native_handle(), F_LOCK, 0) == -1)
@@ -41,7 +41,7 @@ bool posix_lock_file::try_lock()
 
   GPCL_ASSERT(!owns_lock());
   file_.open(open_or_create, filename_.c_str(),
-             posix_file::access_mode::readwrite);
+             posix_file::access_mode::readwrite).value();
 
   // try locking the file.
   if (lockf(file_.native_handle(), F_TLOCK, 0) == -1)
@@ -64,11 +64,11 @@ bool posix_lock_file::try_lock()
 void posix_lock_file::write_pid()
 {
   // truncate the file size to zero.
-  file_.truncate(0);
+  file_.truncate(0).value();
 
   // write PID.
   auto pid_str = std::to_string(getpid());
-  file_.write_some(gpcl::buffer(pid_str));
+  file_.write_some(gpcl::buffer(pid_str)).value();
 }
 
 void posix_lock_file::unlock()
@@ -79,10 +79,10 @@ void posix_lock_file::unlock()
 
   // Remove the file.
   // At the moment other processes can acquire the lock.
-  posix_file::unlink(filename_.c_str());
+  posix_file::unlink(filename_.c_str()).value();
 
   // truncate the file.
-  file_.truncate(0);
+  file_.truncate(0).value();
 
   // unlock the file.
   if (lockf(file_.native_handle(), F_ULOCK, 0) == -1)
@@ -91,7 +91,7 @@ void posix_lock_file::unlock()
   }
 
   // close the file descriptor.
-  file_.close();
+  file_.close().value();
 
   owns_lock_ = false;
 }

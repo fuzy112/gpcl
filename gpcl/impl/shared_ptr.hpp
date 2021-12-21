@@ -13,6 +13,7 @@
 
 #include <gpcl/bad_weak_ptr.hpp>
 #include <gpcl/detail/error.hpp>
+#include <gpcl/enable_shared_from_this.hpp>
 #include <gpcl/shared_ptr.hpp>
 #include <gpcl/weak_ptr.hpp>
 
@@ -32,6 +33,18 @@ template <typename Y>
 bool shared_ptr<T>::owner_before(const weak_ptr<Y> &other) const noexcept
 {
   return s_ - other.s_ < 0;
+}
+
+template <typename T>
+template <typename Y>
+void shared_ptr<T>::enables_shared_from_this(Y *ptr) noexcept
+{
+  if constexpr (std::is_base_of_v<detail::enable_shared_from_this_base, std::remove_cv_t<Y>>)
+  {
+    if (ptr != nullptr && ptr->weak_this.expired())
+      ptr->weak_this = shared_ptr<std::remove_cv_t<Y>>(
+          *this, const_cast<std::remove_cv_t<Y> *>(ptr));
+  }
 }
 
 } // namespace gpcl

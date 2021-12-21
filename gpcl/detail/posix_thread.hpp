@@ -26,7 +26,7 @@
 
 namespace gpcl {
 namespace detail {
-GPCL_DECL void *posix_thread_function(void *arg);
+GPCL_DECL void *posix_thread_function(void *arg) noexcept;
 
 GPCL_DECL bool posix_thread_interrupted();
 
@@ -89,7 +89,7 @@ private:
   public:
     virtual ~func_base() = default;
 
-    virtual void run() = 0;
+    virtual void run() noexcept = 0;
   };
 
   template <typename F>
@@ -98,7 +98,7 @@ private:
   public:
     explicit func(F f) : f_(detail::move(f)) {}
 
-    void run() final { f_(); }
+    void run() noexcept final { f_(); }
 
   private:
     F f_;
@@ -115,7 +115,7 @@ private:
   }
 
   pthread_t thread_{};
-  friend GPCL_DECL void *posix_thread_function(void *arg);
+  friend GPCL_DECL void *posix_thread_function(void *arg) noexcept;
 };
 
 } // namespace detail

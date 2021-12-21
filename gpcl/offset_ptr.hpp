@@ -70,12 +70,12 @@ private:
   std::intptr_t typedef offset_type;
 
   static constexpr const offset_type invalid_offset =
-      (std::numeric_limits<offset_type>::max)() / 2;
+      (std::numeric_limits<offset_type>::max)();
   offset_type offset_; // offset in bytes to this
 
 public:
   /// Constructor
-  inline constexpr offset_ptr(std::nullptr_t = nullptr)
+  inline constexpr offset_ptr(std::nullptr_t = nullptr) noexcept
       : offset_(invalid_offset)
   {
   }
@@ -84,12 +84,13 @@ public:
   offset_ptr(T *ptr);
 
   /// Copy constructor
-  inline constexpr offset_ptr(const offset_ptr &other) : offset_ptr(other.get())
+  inline constexpr offset_ptr(const offset_ptr &other) noexcept
+      : offset_ptr(other.get())
   {
   }
 
   /// Converts to raw pointer
-  inline explicit operator pointer() const { return get(); }
+  inline explicit operator pointer() const noexcept { return get(); }
 
   /// Copy assignment
   inline offset_ptr &operator=(const offset_ptr &other);
@@ -175,7 +176,7 @@ public:
                                         !detail::is_unbounded_array<U>::value,
                                     int>::type = 0>
   friend inline offset_ptr operator+(difference_type diff,
-                                     const offset_ptr &ptr)
+                                     const offset_ptr &ptr) noexcept
   {
     return ptr + diff;
   }
@@ -184,66 +185,76 @@ public:
             typename std::enable_if<!std::is_void<U>::value &&
                                         !detail::is_unbounded_array<U>::value,
                                     int>::type = 0>
-  inline U &operator[](difference_type diff) const
+  inline U &operator[](difference_type diff) const noexcept
   {
     return *(*this + diff);
   }
 
-  inline bool operator==(const offset_ptr &other) const
+  inline bool operator==(const offset_ptr &other) const noexcept
   {
     return this->get() == other.get();
   }
 
-  inline bool operator!=(const offset_ptr &other) const
+  inline bool operator!=(const offset_ptr &other) const noexcept
   {
     return !(*this == other);
   }
 
-  inline bool operator==(std::nullptr_t) const
+  inline bool operator==(std::nullptr_t) const noexcept
   {
     return this->get() == nullptr;
   }
 
-  inline bool operator!=(std::nullptr_t) const
+  inline bool operator!=(std::nullptr_t) const noexcept
   {
     return this->get() != nullptr;
   }
 
-  inline bool operator==(pointer ptr) const { return this->get() == ptr; }
+  inline bool operator==(pointer ptr) const noexcept
+  {
+    return this->get() == ptr;
+  }
 
-  inline bool operator!=(pointer ptr) const { return this->get() == ptr; }
+  inline bool operator!=(pointer ptr) const noexcept
+  {
+    return this->get() == ptr;
+  }
 
   template <
       typename Dummy = T,
       typename std::enable_if<std::is_convertible<Dummy *, const char *>::value,
                               int>::type = 0>
-  inline bool operator==(const std::string &str) const
+  inline bool operator==(const std::string &str) const noexcept
   {
     GPCL_ASSERT(get() != 0);
     return get() == str;
   }
 
-  friend inline bool operator<(const offset_ptr &x, const offset_ptr &y)
+  friend inline bool operator<(const offset_ptr &x,
+                               const offset_ptr &y) noexcept
   {
     return std::addressof(*x) < std::addressof(*y);
   }
 
-  friend inline bool operator>(const offset_ptr &x, const offset_ptr &y)
+  friend inline bool operator>(const offset_ptr &x,
+                               const offset_ptr &y) noexcept
   {
     return y < x;
   }
 
-  friend inline bool operator<=(const offset_ptr &x, const offset_ptr &y)
+  friend inline bool operator<=(const offset_ptr &x,
+                                const offset_ptr &y) noexcept
   {
     return !(x > y);
   }
 
-  friend inline bool operator>=(const offset_ptr &x, const offset_ptr &y)
+  friend inline bool operator>=(const offset_ptr &x,
+                                const offset_ptr &y) noexcept
   {
     return !(x < y);
   }
 
-  inline explicit operator bool() const { return get() != nullptr; }
+  inline explicit operator bool() const noexcept { return get() != nullptr; }
 
   template <
       typename Dummy = T,
@@ -275,7 +286,6 @@ offset_ptr<T> reinterpret_pointer_cast(const offset_ptr<U> &p) noexcept
 {
   return offset_ptr<T>(reinterpret_cast<U *>(p.get()));
 }
-
 
 } // namespace gpcl
 

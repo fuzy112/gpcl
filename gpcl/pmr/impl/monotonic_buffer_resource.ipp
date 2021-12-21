@@ -20,7 +20,7 @@ namespace pmr {
 monotonic_buffer_resource::monotonic_buffer_resource(void *buffer,
                                                      std::size_t size,
                                                      memory_resource *upstream)
-    : buffer_(reinterpret_cast<char *>(buffer), size),
+    : buffer_(gpcl::buffer(buffer, size)),
       upstream_(upstream)
 {
   GPCL_ASSERT(buffer);

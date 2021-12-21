@@ -16,6 +16,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/utility.hpp>
 #include <gpcl/error.hpp>
+#include <gpcl/expected.hpp>
 #include <gpcl/noncopyable.hpp>
 #include <gpcl/zstring.hpp>
 
@@ -52,7 +53,7 @@ public:
   template <typename CreationTag>
   posix_file(CreationTag, czstring<> filename, access_mode mode)
   {
-    open(CreationTag{}, filename, mode);
+    open(CreationTag{}, filename, mode).value();
   }
 
   posix_file(posix_file &&other) noexcept : fd_(exchange(other.fd_, -1)) {}
@@ -63,7 +64,16 @@ public:
     return *this;
   }
 
-  ~posix_file() noexcept { close(); }
+  ~posix_file() noexcept
+  {
+    close()
+        .or_else([](error_code ec) -> expected<void, error_code> {
+          if (ec == errc::bad_file_descriptor)
+            return {};
+          return unexpected(ec);
+        })
+        .value();
+  }
 
   void swap(posix_file &other) noexcept
   {
@@ -73,165 +83,64 @@ public:
 
   native_handle_type native_handle() const { return fd_; }
 
-  void assign(native_handle_type fd)
+  expected<void, error_code> assign(native_handle_type fd)
   {
-    close();
-    fd_ = fd;
+    return close()
+        .or_else([](error_code ec) -> expected<void, error_code> {
+          if (ec == errc::bad_file_descriptor)
+            return {};
+          return unexpected(ec);
+        })
+        .and_then([this, fd]() -> expected<void, error_code> {
+          fd_ = fd;
+          return {};
+        });
   }
 
   native_handle_type release() { return exchange(fd_, -1); }
 
-  GPCL_DECL void open(open_only_t, czstring<> filename, access_mode mode,
-                      error_code &error);
+  GPCL_DECL expected<void, error_code> open(open_only_t, czstring<> filename,
+                                            access_mode mode);
 
-  GPCL_DECL void open(create_only_t, czstring<> filename, access_mode mode,
-                      error_code &error);
+  GPCL_DECL expected<void, error_code> open(create_only_t, czstring<> filename,
+                                            access_mode mode);
 
-  GPCL_DECL void open(open_or_create_t, czstring<> filename, access_mode mode,
-                      error_code &error);
+  GPCL_DECL expected<void, error_code>
+  open(open_or_create_t, czstring<> filename, access_mode mode);
 
-  template <typename CreationTag>
-  void open(CreationTag tag, czstring<> filename, access_mode mode)
-  {
-    error_code ec;
-    posix_file::open(tag, filename, mode, ec);
-    if (ec)
-      GPCL_THROW(system_error(ec, __func__));
-  }
+  GPCL_DECL expected<void, error_code> close();
 
-  GPCL_DECL void close(error_code &error);
-
-  void close()
-  {
-    error_code ec;
-    close(ec);
-    if (ec)
-    {
-      GPCL_FATAL(ec.value());
-    }
-  }
-
-  GPCL_DECL posix_file clone(error_code &error);
-
-  posix_file clone()
-  {
-    error_code ec;
-    auto ret = clone(ec);
-    if (ec)
-    {
-      GPCL_FATAL(ec.value());
-    }
-    return ret;
-  }
+  GPCL_DECL expected<posix_file, error_code> clone();
 
   constexpr bool is_open() const noexcept { return -1 != fd_; }
 
   template <typename ConstBufferSequence>
-  std::size_t write_some_at(offset_type off, const ConstBufferSequence &bs,
-                            error_code &error);
+  expected<std::size_t, error_code>
+  write_some_at(offset_type off, const ConstBufferSequence &bs);
+
+  template <typename MutableBufferSequence>
+  expected<std::size_t, error_code>
+  read_some_at(offset_type off, const MutableBufferSequence &bs);
 
   template <typename ConstBufferSequence>
-  std::size_t write_some_at(offset_type off, const ConstBufferSequence &bs)
-  {
-    error_code error;
-    auto ret = write_some_at(off, bs, error);
-    if (error)
-      GPCL_THROW(system_error(error, __func__));
-    return ret;
-  }
+  expected<std::size_t, error_code> write_some(const ConstBufferSequence &bs);
 
   template <typename MutableBufferSequence>
-  std::size_t read_some_at(offset_type off, const MutableBufferSequence &bs,
-                           error_code &error);
+  expected<std::size_t, error_code> read_some(const MutableBufferSequence &bs);
 
-  template <typename MutableBufferSequence>
-  std::size_t read_some_at(offset_type off, const MutableBufferSequence &bs)
+  GPCL_DECL expected<std::size_t, error_code> tell();
+
+  GPCL_DECL expected<void, error_code> seek(offset_type off,
+                                            seek_direction dir);
+
+  expected<void, error_code> seek(offset_type pos)
   {
-    error_code error;
-    auto ret = read_some_at(off, bs, error);
-    if (error)
-      GPCL_THROW(system_error(error, __func__));
-    return ret;
+    return seek(pos, seek_begin);
   }
 
-  template <typename ConstBufferSequence>
-  std::size_t write_some(const ConstBufferSequence &bs, error_code &error);
+  GPCL_DECL expected<void, error_code> truncate(std::size_t size);
 
-  template <typename ConstBufferSequence>
-  std::size_t write_some(const ConstBufferSequence &bs)
-  {
-    error_code error;
-    auto ret = write_some(bs, error);
-    if (error)
-      GPCL_THROW(system_error(error, __func__));
-    return ret;
-  }
-
-  template <typename MutableBufferSequence>
-  std::size_t read_some(const MutableBufferSequence &bs, error_code &error);
-
-  template <typename MutableBufferSequence>
-  std::size_t read_some(const MutableBufferSequence &bs)
-  {
-    error_code error;
-    auto ret = read_some(bs, error);
-    if (error)
-      GPCL_THROW(system_error(error, __func__));
-    return ret;
-  }
-
-  GPCL_DECL std::size_t tell(error_code &error);
-
-  std::size_t tell()
-  {
-    error_code error;
-    std::size_t result = tell(error);
-    if (error)
-      GPCL_THROW((system_error{error, __func__}));
-    return result;
-  }
-
-  GPCL_DECL void seek(offset_type off, seek_direction dir, error_code &error);
-
-  void seek(offset_type off, seek_direction dir)
-  {
-    error_code error;
-    seek(off, dir, error);
-    if (error)
-      GPCL_THROW((system_error{error, __func__}));
-  }
-
-  void seek(offset_type pos, error_code &error)
-  {
-    seek(pos, seek_begin, error);
-  }
-
-  void seek(offset_type pos)
-  {
-    error_code error;
-    seek(pos, error);
-    if (error)
-      GPCL_THROW((system_error{error, __func__}));
-  }
-
-  GPCL_DECL void truncate(std::size_t size, error_code &error);
-
-  void truncate(std::size_t size)
-  {
-    error_code error;
-    truncate(size, error);
-    if (error)
-      GPCL_THROW((system_error{error, __func__}));
-  }
-
-  GPCL_DECL static void unlink(czstring<> filename, error_code &error);
-
-  static bool unlink(czstring<> filename)
-  {
-    error_code error;
-    posix_file::unlink(filename, error);
-    return !error;
-  }
+  GPCL_DECL static expected<void, error_code> unlink(czstring<> filename);
 
 private:
   native_handle_type fd_{-1};

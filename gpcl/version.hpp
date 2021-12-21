@@ -11,6 +11,6 @@
 #ifndef GPCL_VERSION_HPP
 #define GPCL_VERSION_HPP
 
-#define GPCL_VERSION 300
+#define GPCL_VERSION 400
 
 #endif

@@ -16,9 +16,9 @@ TEST_CASE("shared_ptr constructors")
     shared_ptr<decltype(not_default_construtible)> p1;
     shared_ptr<decltype(not_default_construtible)> p2 = nullptr;
     shared_ptr<decltype(not_default_construtible)> p3(
-        nullptr, [](auto *p) { delete p; });
+        nullptr, [](decltype(not_default_construtible) *p) { delete p; });
     shared_ptr<decltype(not_default_construtible)> p4(
-        nullptr, [](auto *p) { delete p; }, std::allocator<void>());
+        nullptr, [](decltype(not_default_construtible) *p) { delete p; }, std::allocator<void>());
 
     REQUIRE(!p1);
     REQUIRE(!p2);
@@ -114,7 +114,13 @@ TEST_CASE("shared_ptr constructors")
 
 TEST_CASE("enable_shared_from_this")
 {
-  class MyClass : public gpcl::enable_shared_from_this<MyClass>
+  class MyBase
+  {
+  public:
+    virtual ~MyBase() {}
+  };
+
+  class MyClass : public MyBase, public gpcl::enable_shared_from_this<MyClass>
   {
   };
 
@@ -129,8 +135,11 @@ TEST_CASE("enable_shared_from_this")
   shared_ptr<MyClass> p3 =
       gpcl::allocate_shared<MyClass>(std::allocator<void>());
   auto p4 = p3->shared_from_this();
-
   REQUIRE(p3.get());
+
+  auto *p5 = new MyClass;
+  shared_ptr<MyBase> p6(p5);
+  REQUIRE(p5 == p5->shared_from_this().get());
 }
 
 #include <gpcl/enable_shared_from.hpp>
@@ -142,7 +151,7 @@ TEST_CASE("enable_shared_from")
   public:
     shared_ptr<Y> f() { return gpcl::shared_from(this); }
   };
-  
+
   shared_ptr<Y> p(new Y);
   shared_ptr<Y> q = p->f();
 
@@ -208,11 +217,16 @@ TEST_CASE("weak_ptr")
     }
   }
 
-
   SUBCASE("dynamic_pointer_cast")
   {
-    class A { public: virtual ~A() = default; };
-    class B : public A {};
+    class A
+    {
+    public:
+      virtual ~A() = default;
+    };
+    class B : public A
+    {
+    };
 
     auto sp = make_shared<B>();
     auto wp = gpcl::weak_ptr<A>(sp);

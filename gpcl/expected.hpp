@@ -11,6 +11,7 @@
 #ifndef GPCL_EXPECTED_HPP
 #define GPCL_EXPECTED_HPP
 
+#include <gpcl/bad_expected_access.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/expected.hpp>
 #include <gpcl/detail/type_traits.hpp>
@@ -19,102 +20,14 @@
 #include <gpcl/in_place.hpp>
 #include <gpcl/optional_fwd.hpp>
 #include <gpcl/unexpected.hpp>
-#include <exception>
+
 #include <functional>
-#include <sstream>
-#include <string>
-#include <typeinfo>
 
 namespace gpcl {
 
 enum use_expected_t : bool
 {
   use_expected
-};
-
-template <>
-class bad_expected_access<void> : public std::exception
-{
-public:
-  explicit bad_expected_access() = default;
-};
-
-template <typename E, typename = void>
-class error_formatter
-{
-public:
-#if !defined(GPCL_NO_RTTI)
-  static std::string format(const E &) { return typeid(E).name(); }
-#else
-  static std::string format(const E &) { return "unknown type"; }
-#endif
-};
-
-template <typename E>
-class error_formatter<E, std::void_t<decltype(std::declval<std::ostream &>()
-                                              << std::declval<const E &>())>>
-{
-public:
-  static std::string format(const E &e)
-  {
-    std::stringstream ss;
-    ss << e;
-    return ss.str();
-  }
-};
-
-template <>
-class error_formatter<std::error_code>
-{
-public:
-  static std::string format(const std::error_code &e) { return e.message(); }
-};
-
-template <>
-class error_formatter<std::exception_ptr>
-{
-public:
-  static std::string format(const std::exception_ptr &eptr)
-  {
-#ifndef GPCL_NO_EXCEPTIONS
-    GPCL_TRY
-    {
-      if (eptr)
-        std::rethrow_exception(eptr);
-    }
-    GPCL_CATCH(std::exception & e) { return e.what(); }
-    GPCL_CATCH_END
-#endif
-        (void)
-    eptr;
-    return "unknown exception";
-  }
-};
-
-/// Exception thrown when trying to access the value from an expected that
-/// contains an error.
-template <typename E>
-class bad_expected_access : public bad_expected_access<void>
-{
-public:
-  inline explicit bad_expected_access(E e) : val(detail::move(e)) {}
-
-  /// Returns a string that describes the error.
-  /// The string is created using error_formatter.
-  [[nodiscard]] czstring<> what() const noexcept override
-  {
-    what_ = "bad_exception_access: " + error_formatter<E>::format(val);
-    return what_.c_str();
-  }
-
-  E &error() & { return val; }
-  const E &error() const & { return val; }
-  E &&error() && { return detail::move(val); }
-  const E &&error() const && { return detail::move(val); }
-
-private:
-  E val;
-  mutable std::string what_;
 };
 
 /// Represents either a value T or an error E.
@@ -552,11 +465,14 @@ public:
 
   /// Calls f if the bool(*this) is true, otherwise returns
   /// unexpected(error()).
-  template <typename F,
-            typename Result =
-                std::invoke_result_t<F, std::add_lvalue_reference_t<const T>>,
-            detail::enable_if_t<
-                detail::is_same_v<typename Result::error_type, E>, int> = 0>
+  template <
+      typename F,
+      typename Result =
+          std::invoke_result_t<F, std::add_lvalue_reference_t<const T>>,
+      detail::enable_if_t<detail::is_same_v<typename Result::error_type, E>
+                          // && detail::is_expected_v<std::decay_t<Result>>
+                          ,
+                          int> = 0>
   inline Result and_then(F && f) const &
   {
     if (*this)
@@ -574,13 +490,31 @@ public:
   template <
       typename F,
       typename Result = std::invoke_result_t<F, std::add_rvalue_reference_t<T>>,
-      detail::enable_if_t<detail::is_same_v<typename Result::error_type, E>,
+      detail::enable_if_t<detail::is_same_v<typename Result::error_type, E>
+                          // && detail::is_expected_v<std::decay_t<Result>>
+                          ,
                           int> = 0>
   inline Result and_then(F && f) &&
   {
     if (*this)
     {
       return std::invoke(detail::forward<F>(f), *detail::move(*this));
+    }
+    else
+    {
+      return unexpected<E>(detail::move(*this).error());
+    }
+  }
+
+  /// Calls f if bool(*this) is true, otherwise returns unexpected(error()).
+  template <typename F, typename V = T,
+            typename Result = std::invoke_result_t<F>,
+            detail::enable_if_t<detail::is_void_v<V>, int> = 0>
+  inline Result and_then(F && f) const
+  {
+    if (*this)
+    {
+      return std::invoke(detail::forward<F>(f));
     }
     else
     {
@@ -975,8 +909,6 @@ constexpr bool operator!=(const unexpected<E> &x, const expected<T, E> &y)
 
 } // namespace gpcl
 
-#ifndef GPCL_DOXYGEN
-#  include <gpcl/impl/expected.hpp>
-#endif
+#include <gpcl/impl/expected.hpp>
 
 #endif // GPCL_EXPECTED_HPP

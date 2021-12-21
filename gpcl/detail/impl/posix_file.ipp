@@ -20,124 +20,100 @@
 namespace gpcl {
 namespace detail {
 
-void posix_file::open(create_only_t, czstring<> path, access_mode mode,
-                      error_code &error)
+expected<void, error_code> posix_file::open(create_only_t, czstring<> path,
+                                            access_mode mode)
 {
   fd_ = ::open(path, O_CREAT | O_EXCL | O_CLOEXEC | mode, 0666);
   if (fd_ == -1)
   {
-    error.assign(errno, generic_category());
+    return unexpected<error_code>{in_place, errno, generic_category()};
   }
-  else
-  {
-    error = {};
-  }
+  return {};
 }
 
-void posix_file::open(open_only_t, czstring<> path, access_mode mode,
-                      error_code &error)
+expected<void, error_code> posix_file::open(open_only_t, czstring<> path,
+                                            access_mode mode)
 {
   fd_ = ::open(path, O_CLOEXEC | mode);
   if (fd_ == -1)
   {
-    error.assign(errno, generic_category());
+    return unexpected<error_code>{in_place, errno, generic_category()};
   }
-  else
-  {
-    error = {};
-  }
+  return {};
 }
 
-void posix_file::open(open_or_create_t, czstring<> path, access_mode mode,
-                      error_code &error)
+expected<void, error_code> posix_file::open(open_or_create_t,
+                                                 czstring<> path,
+                                                 access_mode mode)
 {
   fd_ = ::open(path, O_CREAT | O_CLOEXEC | mode, 0666);
   if (fd_ == -1)
   {
-    error.assign(errno, generic_category());
+    return unexpected<error_code>{in_place, errno, generic_category()};
   }
-  else
-  {
-    error = {};
-  }
+  return {};
 }
 
-void posix_file::close(error_code &error)
+expected<void, error_code> posix_file::close()
 {
-  if (fd_ != -1)
+  if (::close(fd_) == -1)
   {
-    if (::close(fd_) == -1)
-    {
-      error.assign(errno, generic_category());
-      return;
-    }
-
-    error = {};
-    fd_ = -1;
+    return unexpected<error_code>(in_place, errno, generic_category());
   }
+
+  fd_ = -1;
+  return {};
 }
 
-posix_file posix_file::clone(error_code &error)
+expected<posix_file, error_code> posix_file::clone()
 {
   if (fd_ == -1)
   {
-    error = std::make_error_code(std::errc::bad_file_descriptor);
-    return {};
+    return unexpected(std::make_error_code(std::errc::bad_file_descriptor));
   }
 
   auto fd2 = ::dup(fd_);
   if (fd2 == -1)
   {
-    error.assign(errno, generic_category());
-    return {};
+    return unexpected<error_code>(in_place, errno, generic_category());
   }
 
-  error = {};
   return posix_file{fd2};
 }
 
-std::size_t posix_file::tell(error_code &error)
+expected<std::size_t, error_code> posix_file::tell()
 {
   off_t ret = ::lseek(fd_, 0, SEEK_CUR);
   if (ret == -1)
-    error = {errno, generic_category()};
-  else
-    error = {};
+    return unexpected<error_code>{in_place, errno, generic_category()};
   return ret;
 }
 
-void posix_file::seek(offset_type off, seek_direction dir, error_code &error)
+expected<void, error_code> posix_file::seek(offset_type off, seek_direction dir)
 {
   off_t ret = ::lseek(fd_, off, dir);
   if (ret == -1)
   {
-    error = {errno, generic_category()};
+    return unexpected<error_code>{in_place, errno, generic_category()};
   }
-  else
-  {
-    error = {};
-  }
+  return {};
 }
 
-void posix_file::truncate(std::size_t size, error_code &error)
+expected<void, error_code> posix_file::truncate(std::size_t size)
 {
   // no need to use call ftruncate64 explicitly. the glibc wrapper handles this.
   if (::ftruncate(fd_, size) == -1)
   {
-    error = {errno, generic_category()};
+    return unexpected<error_code>{in_place, errno, generic_category()};
   }
-  else
-  {
-    error = {};
-  }
+  return {};
 }
 
-void posix_file::unlink(czstring<> filename, error_code &error)
+expected<void, error_code> posix_file::unlink(czstring<> filename)
 {
   if (::unlink(filename) == -1)
-    error = {errno, generic_category()};
-  else
-    error = {};
+    return unexpected<error_code>{in_place, errno, generic_category()};
+  return {};
 }
 
 } // namespace detail

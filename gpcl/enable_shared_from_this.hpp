@@ -17,23 +17,21 @@
 
 namespace gpcl {
 
+namespace detail {
+class enable_shared_from_this_base
+{
+};
+} // namespace detail
+
 template <typename Derived>
-class enable_shared_from_this
+class enable_shared_from_this : public detail::enable_shared_from_this_base
 {
   mutable weak_ptr<Derived> weak_this;
 
-  template <typename, typename>
-  friend struct detail::shared_ptr_hooks;
+  template <typename T>
+  friend class shared_ptr;
 
-  void init_weak(shared_ptr<Derived> const &sp) noexcept
-  {
-    GPCL_ASSERT(this == sp.get());
-    weak_this = sp;
-  }
-
-public:
-  using enable_shared_from_this_inherited = int;
-
+protected:
   constexpr enable_shared_from_this() noexcept = default;
 
   enable_shared_from_this(const enable_shared_from_this &) noexcept {}
@@ -43,30 +41,24 @@ public:
     return *this;
   }
 
-  shared_ptr<Derived> shared_from_this() { return shared_ptr<Derived>(weak_this); }
+public:
+  shared_ptr<Derived> shared_from_this()
+  {
+    return shared_ptr<Derived>(weak_this);
+  }
 
   shared_ptr<Derived const> shared_from_this() const
   {
     return shared_ptr<Derived>(weak_this);
   }
 
-  shared_ptr<Derived> weak_from_this() { return weak_this; }
+  shared_ptr<Derived> weak_from_this() noexcept { return weak_this; }
 
-  shared_ptr<Derived const> weak_from_this() const { return weak_this; }
-};
-
-namespace detail {
-template <typename T>
-struct shared_ptr_hooks<T, detail::void_t<typename T::enable_shared_from_this_inherited>>
-{
-  template <typename Y>
-  static void on_creation(Y *p, const shared_ptr<T> &sp) noexcept
+  shared_ptr<Derived const> weak_from_this() const noexcept
   {
-    if (sp.get() == p)
-      sp->init_weak(sp);
+    return weak_this;
   }
 };
-} // namespace detail
 
 } // namespace gpcl
 

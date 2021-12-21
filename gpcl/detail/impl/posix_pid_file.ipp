@@ -40,7 +40,7 @@ posix_pid_file::posix_pid_file(std::string path)
   }
 
   // clear file content.
-  f_.truncate(0);
+  f_.truncate(0).value();
 
   // write pid to the file
   std::string buf = std::to_string(getpid()) + '\n';
@@ -49,7 +49,7 @@ posix_pid_file::posix_pid_file(std::string path)
 
 posix_pid_file::~posix_pid_file() noexcept
 {
-  f_.unlink(path_.c_str());
+  f_.unlink(path_.c_str()).value();
 }
 
 } // namespace detail

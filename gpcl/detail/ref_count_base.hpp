@@ -1,6 +1,6 @@
 //
-// shared_block_base.hpp
-// ~~~~~~~~~~~~~~~~~~~~~
+// ref_count_base.hpp
+// ~~~~~~~~~~~~~~~~~~
 //
 // Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
 //
@@ -8,18 +8,18 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_DETAIL_SHARED_BLOCK_BASE_HPP
-#define GPCL_DETAIL_SHARED_BLOCK_BASE_HPP
+#ifndef GPCL_DETAIL_REF_COUNT_BASE_HPP
+#define GPCL_DETAIL_REF_COUNT_BASE_HPP
 
 #include <gpcl/detail/config.hpp>
 
 
 #if defined __cpp_lib_atomic_is_always_lock_free
-#  include <gpcl/detail/std_shared_block_base.hpp>
+#  include <gpcl/detail/std_ref_count_base.hpp>
 #elif defined _MSC_VER
-#  include <gpcl/detail/msvc_shared_block_base.hpp>
+#  include <gpcl/detail/msvc_ref_count_base.hpp>
 #elif defined(__GNUC__)
-#  include <gpcl/detail/gcc_shared_block_base.hpp>
+#  include <gpcl/detail/gcc_ref_count_base.hpp>
 #endif
 
 
@@ -30,10 +30,10 @@ namespace detail {
 
 /// Base class of shared_block<>.
 /// This class implements the reference counting functionality.
-class shared_block_base
+class ref_count_base
 {
 public:
-  typedef void (*operation_func_t)(shared_block_base *self,
+  typedef void *(*operation_func_t)(ref_count_base *self,
                                    shared_block_operation_t) noexcept;
 
   /// Increment use count.
@@ -66,18 +66,18 @@ public:
 
 protected:
   /// Constructor.
-  explicit shared_block_base(operation_func_t op_func);
+  explicit ref_count_base(operation_func_t op_func);
 };
 
 #elif defined __cpp_lib_atomic_is_always_lock_free
-typedef std_shared_block_base shared_block_base;
+typedef std_ref_count_base ref_count_base;
 #elif defined _MSC_VER
-typedef msvc_shared_block_base shared_block_base;
+typedef msvc_ref_count_base ref_count_base;
 #elif defined(__GNUC__)
-typedef gcc_shared_block_base shared_block_base;
+typedef gcc_ref_count_base ref_count_base;
 #endif
 
 } // namespace detail
 } // namespace gpcl
 
-#endif // GPCL_DETAIL_SHARED_BLOCK_BASE_HPP
+#endif // GPCL_DETAIL_REF_COUNT_BASE_HPP

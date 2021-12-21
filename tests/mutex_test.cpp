@@ -3,6 +3,7 @@
 #include <gpcl/mutex.hpp>
 #include <gpcl/thread.hpp>
 #include <gpcl/unique_lock.hpp>
+#include <gpcl/vector.hpp>
 
 const int end = 100;
 const int nthreads = 4;
@@ -23,7 +24,7 @@ TEST_CASE("mutex")
     }
   };
 
-  std::vector<gpcl::thread> threads;
+  gpcl::vector<gpcl::thread> threads;
   for (int i = 0; i < nthreads; ++i)
     threads.emplace_back(f1);
 
@@ -33,3 +34,9 @@ TEST_CASE("mutex")
 
 static gpcl::mutex mtx1;
 static gpcl::mutex mtx2;
+
+const int i = [] {
+  assert(mtx1.native_handle());
+  assert(mtx2.native_handle());
+  return 0;
+}();

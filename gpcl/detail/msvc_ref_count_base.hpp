@@ -1,5 +1,5 @@
 //
-// msvc_shared_block_base.hpp
+// msvc_ref_count_base.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
 // Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
@@ -8,12 +8,12 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_DETAIL_MSVC_SHARED_BLOCK_BASE_HPP
-#define GPCL_DETAIL_MSVC_SHARED_BLOCK_BASE_HPP
+#ifndef GPCL_DETAIL_MSVC_REF_COUNT_BASE_HPP
+#define GPCL_DETAIL_MSVC_REF_COUNT_BASE_HPP
 
 #include <gpcl/assert.hpp>
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/shared_block_operation.hpp>
+#include <gpcl/detail/ref_count_operation.hpp>
 
 #include <winbase.h>
 #include <winnt.h>
@@ -21,13 +21,13 @@
 namespace gpcl {
 namespace detail {
 
-class msvc_shared_block_base
+class msvc_ref_count_base
 {
 public:
   typedef volatile unsigned long count_t;
 
-  typedef void (*operation_func_t)(msvc_shared_block_base *self,
-                                   shared_block_operation_t) noexcept;
+  typedef void *(*operation_func_t)(msvc_ref_count_base *self,
+                                    ref_count_operation_t) noexcept;
 
   void get() noexcept
   {
@@ -42,11 +42,11 @@ public:
     GPCL_ASSERT(prev_use_count > 0);
     if (prev_use_count == 1)
     {
-      op_func_(this, destroy_managed_object);
+      operate(destroy_managed_object);
 
       if (InterlockedDecrement(&weak_count_) == 0)
       {
-        op_func_(this, delete_control_block);
+        operate(delete_control_block);
       }
     }
   }
@@ -68,7 +68,7 @@ public:
     if (InterlockedDecrement(&weak_count_) == 0)
     {
       GPCL_ASSERT(use_count() == 0);
-      op_func_(this, delete_control_block);
+      operate(delete_control_block);
     }
   }
 
@@ -92,10 +92,13 @@ public:
     return false;
   }
 
-protected:
-  explicit msvc_shared_block_base(operation_func_t op_func) : op_func_(op_func)
+  void *operate(ref_count_operation_t op) noexcept
   {
+    return op_func_(this, op);
   }
+
+protected:
+  explicit msvc_ref_count_base(operation_func_t op_func) : op_func_(op_func) {}
 
 private:
   operation_func_t op_func_ = nullptr;
@@ -108,4 +111,4 @@ private:
 } // namespace detail
 } // namespace gpcl
 
-#endif // GPCL_DETAIL_MSVC_SHARED_BLOCK_BASE_HPP
+#endif // GPCL_DETAIL_MSVC_REF_COUNT_BASE_HPP
