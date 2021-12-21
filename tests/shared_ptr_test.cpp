@@ -18,7 +18,7 @@ TEST_CASE("shared_ptr constructors")
     shared_ptr<decltype(not_default_construtible)> p3(
         nullptr, [](decltype(not_default_construtible) *p) { delete p; });
     shared_ptr<decltype(not_default_construtible)> p4(
-        nullptr, [](decltype(not_default_construtible) *p) { delete p; }, std::allocator<void>());
+        nullptr, [](decltype(not_default_construtible) *p) { delete p; }, std::allocator<char>());
 
     REQUIRE(!p1);
     REQUIRE(!p2);
@@ -52,7 +52,7 @@ TEST_CASE("shared_ptr constructors")
     REQUIRE(p9.use_count() == 2);
 
     shared_ptr<int> p10(
-        new int, [](auto *p) { delete p; }, std::allocator<void>());
+        new int, [](auto *p) { delete p; }, std::allocator<char>());
     auto p11 = p10;
     REQUIRE(p11.get() == p10.get());
     REQUIRE(p11.use_count() == 2);
@@ -108,7 +108,7 @@ TEST_CASE("shared_ptr constructors")
   {
     shared_ptr<void> p1(new int);
     shared_ptr<void> p2 = make_shared<int>();
-    shared_ptr<void> p3 = gpcl::allocate_shared<int>(std::allocator<void>());
+    shared_ptr<void> p3 = gpcl::allocate_shared<int>(std::allocator<char>());
   }
 }
 
@@ -133,7 +133,7 @@ TEST_CASE("enable_shared_from_this")
   p2->shared_from_this();
 
   shared_ptr<MyClass> p3 =
-      gpcl::allocate_shared<MyClass>(std::allocator<void>());
+      gpcl::allocate_shared<MyClass>(std::allocator<char>());
   auto p4 = p3->shared_from_this();
   REQUIRE(p3.get());
 

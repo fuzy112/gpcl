@@ -17,11 +17,11 @@
 namespace gpcl {
 
 template <typename T, typename... Args>
-auto make_shared(Args &&... args)
+auto make_shared(Args &&...args)
     -> std::enable_if_t<!std::is_array_v<T>, shared_ptr<T>>
 {
-  return gpcl::allocate_shared<T, std::allocator<void>>(
-      std::allocator<void>(), std::forward<Args>(args)...);
+  return gpcl::allocate_shared<T, std::allocator<T>>(
+      std::allocator<T>(), std::forward<Args>(args)...);
 }
 
 } // namespace gpcl

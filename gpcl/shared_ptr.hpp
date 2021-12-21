@@ -93,8 +93,8 @@ public:
             std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
   explicit shared_ptr(Y *ptr)
       : p_(ptr),
-        s_(detail::ref_count_ptr<Y *, default_delete<Y>, std::allocator<void>>::
-               create(std::allocator<void>(), ptr, default_delete<Y>()))
+        s_(detail::ref_count_ptr<Y *, default_delete<Y>, std::allocator<Y *>>::
+               create(std::allocator<Y *>(), ptr, default_delete<Y>()))
   {
     enables_shared_from_this(ptr);
   }
@@ -113,8 +113,8 @@ public:
             std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
   shared_ptr(Y *ptr, Deleter d)
       : p_(ptr),
-        s_(detail::ref_count_ptr<Y *, Deleter, std::allocator<void>>::create(
-            std::allocator<void>(), ptr, std::move(d)))
+        s_(detail::ref_count_ptr<Y *, Deleter, std::allocator<Y *>>::create(
+            std::allocator<Y *>(), ptr, std::move(d)))
   {
     enables_shared_from_this(ptr);
   }
@@ -131,11 +131,10 @@ public:
    */
   template <typename Deleter>
   shared_ptr(std::nullptr_t, Deleter d)
-      : s_(detail::ref_count_ptr<
-            detail::nullptr_wrapper, Deleter,
-            std::allocator<void>>::create(std::allocator<void>(),
-                                          detail::nullptr_wrapper(),
-                                          std::move(d)))
+      : s_(detail::ref_count_ptr<detail::nullptr_wrapper, Deleter,
+                                 std::allocator<std::nullptr_t>>::
+               create(std::allocator<std::nullptr_t>(),
+                      detail::nullptr_wrapper(), std::move(d)))
   {
   }
 

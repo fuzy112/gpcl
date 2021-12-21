@@ -20,7 +20,11 @@
 #include <gpcl/bad_weak_ptr.hpp>
 #include <gpcl/basic_any.hpp>
 #include <gpcl/buffer.hpp>
+#include <gpcl/buffer_iterator.hpp>
 #include <gpcl/buffer_sequence.hpp>
+#include <gpcl/buffer_size.hpp>
+#include <gpcl/buffer_to_string.hpp>
+#include <gpcl/buffers_range_ref.hpp>
 #include <gpcl/clock.hpp>
 #include <gpcl/clone_ptr.hpp>
 #include <gpcl/condition_variable.hpp>

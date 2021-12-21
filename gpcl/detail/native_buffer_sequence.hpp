@@ -22,7 +22,7 @@ namespace gpcl {
 namespace detail {
 
 #ifdef GPCL_DOXYGEN
-template <typename BufferSequence, typename Allocator = std::allocator<void>>
+template <typename BufferSequence, typename Allocator = std::allocator<char>>
 struct native_buffer_sequence
 {
   /// Constructor.
@@ -35,7 +35,7 @@ struct native_buffer_sequence
 };
 #else
 
-template <typename BufferSequence, typename Allocator = std::allocator<void>>
+template <typename BufferSequence, typename Allocator = std::allocator<char>>
 struct native_buffer_sequence
 {
   explicit native_buffer_sequence(const BufferSequence &bs,
