@@ -74,6 +74,7 @@
 #include <gpcl/thread_annotations.hpp>
 #include <gpcl/thread_attributes.hpp>
 #include <gpcl/time.hpp>
+#include <gpcl/type_identity.hpp>
 #include <gpcl/unexpected.hpp>
 #include <gpcl/unique_lock.hpp>
 #include <gpcl/unique_ptr.hpp>
