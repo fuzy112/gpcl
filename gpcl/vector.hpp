@@ -16,6 +16,7 @@
 #include <gpcl/detail/iterator.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/swap.hpp>
+#include <gpcl/type_identity.hpp>
 
 namespace gpcl {
 
@@ -142,7 +143,7 @@ private:
       while (i < count)
       {
         std::apply(
-            [&allocator, ptr = data + i](auto &&...args) {
+            [&allocator, ptr = data + i](auto &&... args) {
               alloc_traits::construct(allocator, ptr,
                                       std::forward<decltype(args)>(args)...);
             },
@@ -221,7 +222,7 @@ private:
   }
 
   template <typename... Args>
-  static decltype(auto) forward_args(Args &&...args) noexcept
+  static decltype(auto) forward_args(Args &&... args) noexcept
   {
     return std::tuple<Args &&...>(std::forward<Args>(args)...);
   }
@@ -677,7 +678,7 @@ public:
 
   // 26.3.11.5, modifiers
   template <typename... Args>
-  reference emplace_back(Args &&...args)
+  reference emplace_back(Args &&... args)
   {
     reserve(size_ + 1);
     alloc_traits::construct(stored_allocator(), &storage()[size_],
@@ -707,7 +708,7 @@ public:
   }
 
   template <typename... Args>
-  iterator emplace(const_iterator position, Args &&...args)
+  iterator emplace(const_iterator position, Args &&... args)
   {
     auto ptr = insert_impl(position - begin(), 1,
                            forward_args(std::forward<Args>(args)...));
