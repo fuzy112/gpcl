@@ -17,7 +17,7 @@
 
 namespace gpcl {
 
-namespace detail_buffer_sequence {
+namespace detail::buffer_sequence {
 template <typename Buffer,
           std::enable_if_t<
               std::is_convertible<const Buffer *, const const_buffer *>::value,
@@ -54,33 +54,25 @@ auto buffer_sequence_end(const Container &b) noexcept
   return std::end(b);
 }
 
-} // namespace detail_buffer_sequence
-
 struct buffer_sequence_begin_t
 {
-#ifndef GPCL_DOXYGEN
   template <typename BufferSequence>
   auto operator()(const BufferSequence &bs) const noexcept
   {
-    using detail_buffer_sequence::buffer_sequence_begin;
-
     return buffer_sequence_begin(bs);
   }
-#endif
 };
 
 struct buffer_sequence_end_t
 {
-#ifndef GPCL_DOXYGEN
   template <typename BufferSequence>
   auto operator()(const BufferSequence &bs) const noexcept
   {
-    using detail_buffer_sequence::buffer_sequence_end;
-
     return buffer_sequence_end(bs);
   }
-#endif
 };
+
+} // namespace detail::buffer_sequence
 
 /// Returns iterator to the first buffer of the buffer sequence.
 /**
@@ -92,7 +84,8 @@ struct buffer_sequence_end_t
 template <typename BufferSequence>
 auto buffer_sequence_begin(const BufferSequence &buffers);
 #else
-inline constexpr buffer_sequence_begin_t buffer_sequence_begin{};
+inline constexpr detail::buffer_sequence::buffer_sequence_begin_t
+    buffer_sequence_begin{};
 #endif
 
 /// Returns the past-the-end iterator of the buffer sequence.
@@ -105,7 +98,8 @@ inline constexpr buffer_sequence_begin_t buffer_sequence_begin{};
 template <typename BufferSequence>
 auto buffer_sequence_end(const BufferSequence &buffers);
 #else
-inline constexpr buffer_sequence_end_t buffer_sequence_end{};
+inline constexpr detail::buffer_sequence::buffer_sequence_end_t
+    buffer_sequence_end{};
 #endif
 
 #ifndef GPCL_DOXYGEN

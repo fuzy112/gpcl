@@ -91,6 +91,7 @@ public:
   
   /// @}
 
+  /// @name Modifiers
   void swap(function & other) noexcept
   {
     using gpcl::swap;
@@ -109,8 +110,11 @@ public:
   
   /// @}
 
+  /// Determines whether the function owns a target.
   explicit operator bool() const noexcept { return data_.has_value(); }
 
+  /// Invokes the target function.
+  /// @throws bad_function_call if `bool(*this)` is false.
   result_type operator()(Args... args) const
   {
     if (const void *value = data_.raw_value())
