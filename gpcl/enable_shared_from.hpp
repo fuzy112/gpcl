@@ -16,18 +16,25 @@
 
 namespace gpcl {
 
-class enable_shared_from : public enable_shared_from_this<enable_shared_from>
+class enable_shared_from
+#ifndef GPCL_DOXYGEN
+    : public enable_shared_from_this<enable_shared_from>
+#endif
 {
 protected:
   ~enable_shared_from() = default;
 };
 
+/// @relates gpcl::enable_shared_from
+/// @tparam T should inherit enable_shared_from.
 template <class T>
 shared_ptr<T> shared_from(T *p)
 {
   return static_pointer_cast<T>(p->enable_shared_from::shared_from_this());
 }
 
+/// @relates gpcl::enable_shared_from
+/// @tparam T should inherit enable_shared_from.
 template <class T>
 weak_ptr<T> weak_from(T *p) noexcept
 {

@@ -45,11 +45,9 @@ namespace detail {
 class enable_shared_from_this_base;
 }
 
-/** @defgroup SmartPtr Smart Pointers.
+/** @addtogroup smart_pointer Smart Pointers
+ *  @{
  */
-
-/// @ingroup SmartPtr
-/// @{
 
 /// A Reference-counting based smart pointer.
 template <typename T>
@@ -73,6 +71,9 @@ class shared_ptr
 public:
   using element_type = std::remove_extent_t<T>;
   using weak_type = std::weak_ptr<T>;
+
+  /// @name Constructors and Destructor
+  /// @{
 
   /// Default constructor.
   constexpr shared_ptr() noexcept = default;
@@ -254,12 +255,19 @@ public:
   {
   }
 
+
+
   /// Destructs the owned object if no more `shared_ptr`s link to it.
   ~shared_ptr()
   {
     if (s_)
       s_->put();
   }
+
+  /// @}
+
+  /// @name Assignment Operators
+  /// @{
 
   /// Assigns the shared_ptr.
   shared_ptr &operator=(const shared_ptr &r) noexcept
@@ -298,6 +306,11 @@ public:
     shared_ptr(std::move(r)).swap(*this);
     return *this;
   }
+
+  /// @}
+
+  /// @name Modifiers
+  /// @{
 
   /// Releases the ownership of the managed object, if any.
   void reset() noexcept { shared_ptr().swap(*this); }
@@ -351,6 +364,11 @@ public:
     swap(s_, r.s_);
   }
 
+  /// @}
+
+  /// @name Observers
+  /// @{
+
   /// Returns the stored pointer.
   element_type *get() const noexcept { return p_; }
 
@@ -390,6 +408,8 @@ public:
 
   explicit operator bool() const noexcept { return get() != nullptr; }
 
+  /// @}
+
   template <typename Y>
   bool owner_before(const shared_ptr<Y> &other) const noexcept
   {
@@ -399,6 +419,10 @@ public:
   template <typename Y>
   bool owner_before(const weak_ptr<Y> &other) const noexcept;
 };
+
+/// @name Comparators
+/// @relates gpcl::shared_ptr
+/// @{
 
 template <class T1, class T2>
 bool operator==(const shared_ptr<T1> &x, const shared_ptr<T2> &y)
@@ -510,6 +534,8 @@ bool operator>=(std::nullptr_t, const shared_ptr<T> &y)
   return !(nullptr < y);
 }
 
+/// @}
+
 namespace swap_detail {
 template <typename T>
 void swap(shared_ptr<T> &x, shared_ptr<T> &y) noexcept
@@ -517,6 +543,10 @@ void swap(shared_ptr<T> &x, shared_ptr<T> &y) noexcept
   x.swap(y);
 }
 } // namespace swap_detail
+
+/// @name Generic Pointer Casts
+/// @relates gpcl::shared_ptr
+/// @{
 
 template <typename T, typename Y>
 shared_ptr<T> static_pointer_cast(const shared_ptr<Y> &p) noexcept
@@ -541,6 +571,8 @@ shared_ptr<T> reinterpret_pointer_cast(const shared_ptr<U> &p) noexcept
 {
   return shared_ptr<T>(p, reinterpret_cast<T *>(p.get()));
 }
+
+/// @}
 
 /// @}
 

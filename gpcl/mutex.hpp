@@ -16,7 +16,6 @@
 #include <gpcl/detail/posix_mutex.hpp>
 #include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/noncopyable.hpp>
-#include <gpcl/thread_annotations.hpp>
 #include <type_traits>
 
 namespace gpcl {
@@ -24,23 +23,18 @@ namespace gpcl {
 class condition_variable;
 
 /// Dummy mutex that does not synchronise any threads.
-class GPCL_CAPABILITY("mutex") null_mutex : noncopyable
+class null_mutex : noncopyable
 {
 public:
   constexpr null_mutex() = default;
   ~null_mutex() = default;
 
-  GPCL_ACQUIRE() auto lock() -> void
-  {
-    GPCL_ASSERT(!std::exchange(locked_, true));
-  }
+  auto lock() -> void { GPCL_ASSERT(!std::exchange(locked_, true)); }
 
-  GPCL_RELEASE() auto unlock() -> void
-  {
-    GPCL_ASSERT(std::exchange(locked_, false));
-  }
 
-  GPCL_TRY_ACQUIRE(true) auto try_lock() -> bool
+  auto unlock() -> void { GPCL_ASSERT(std::exchange(locked_, false)); }
+
+  auto try_lock() -> bool
   {
 #ifdef GPCL_DEBUG
     return !std::exchange(locked_, true);
@@ -55,7 +49,7 @@ private:
 };
 
 /// Normal mutex.
-class GPCL_CAPABILITY("mutex") mutex : noncopyable
+class mutex : noncopyable
 {
 public:
 #if defined(GPCL_DOXYGEN)
@@ -76,9 +70,9 @@ public:
   auto operator=(const mutex &) -> mutex & = delete;
   auto operator=(mutex &&) -> mutex & = delete;
 
-  GPCL_ACQUIRE() auto lock() -> void { return impl_.lock(); }
-  GPCL_RELEASE() auto unlock() -> void { return impl_.unlock(); }
-  GPCL_TRY_ACQUIRE(true) auto try_lock() -> bool { return impl_.try_lock(); }
+  auto lock() -> void { return impl_.lock(); }
+  auto unlock() -> void { return impl_.unlock(); }
+  auto try_lock() -> bool { return impl_.try_lock(); }
 
   auto native_handle() noexcept -> native_handle_type
   {
@@ -92,7 +86,7 @@ private:
 };
 
 /// Timed mutex.
-class GPCL_CAPABILITY("mutex") timed_mutex : noncopyable
+class timed_mutex : noncopyable
 {
 public:
 #if defined(GPCL_DOXYGEN)
@@ -113,14 +107,13 @@ public:
   auto operator=(const timed_mutex &) -> timed_mutex & = delete;
   auto operator=(timed_mutex &&) -> timed_mutex & = delete;
 
-  GPCL_ACQUIRE() auto lock() -> void { return impl_.lock(); }
-  GPCL_RELEASE() auto unlock() -> void { return impl_.unlock(); }
-  GPCL_TRY_ACQUIRE(true) auto try_lock() -> bool { return impl_.try_lock(); }
+  auto lock() -> void { return impl_.lock(); }
+  auto unlock() -> void { return impl_.unlock(); }
+  auto try_lock() -> bool { return impl_.try_lock(); }
 
   template <typename Clock, typename Duration,
             typename std::enable_if<std::is_same<Clock, system_clock>::value,
                                     int>::type = 0>
-  GPCL_TRY_ACQUIRE(true)
   auto try_lock_until(chrono::time_point<Clock, Duration> const &timeout_time)
       -> bool
   {
@@ -131,7 +124,6 @@ public:
   template <typename Clock, typename Duration,
             typename std::enable_if<!std::is_same<Clock, system_clock>::value,
                                     int>::type = 0>
-  GPCL_TRY_ACQUIRE(true)
   auto try_lock_until(chrono::time_point<Clock, Duration> const &timeout_time)
       -> bool
   {
@@ -139,7 +131,6 @@ public:
   }
 
   template <typename Rep, typename Period>
-  GPCL_TRY_ACQUIRE(true)
   auto try_lock_for(chrono::duration<Rep, Period> const &rel_time) -> bool
   {
     return impl_.try_lock_for(
@@ -177,9 +168,9 @@ public:
   auto operator=(const recursive_mutex &) -> recursive_mutex & = delete;
   auto operator=(recursive_mutex &&) -> recursive_mutex & = delete;
 
-  GPCL_ACQUIRE() auto lock() -> void { return impl_.lock(); }
-  GPCL_RELEASE() auto unlock() -> void { return impl_.unlock(); }
-  GPCL_TRY_ACQUIRE(true) auto try_lock() -> bool { return impl_.try_lock(); }
+  auto lock() -> void { return impl_.lock(); }
+  auto unlock() -> void { return impl_.unlock(); }
+  auto try_lock() -> bool { return impl_.try_lock(); }
 
   auto native_handle() noexcept -> native_handle_type
   {

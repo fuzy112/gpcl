@@ -29,6 +29,8 @@ struct unexpect_t
 
 GPCL_CXX17_INLINE_CONSTEXPR unexpect_t unexpect{};
 
+/// Used as a wrapper to store the unexpected value.
+/// @tparam E must not be void.
 template <typename E>
 class unexpected
 {
@@ -38,13 +40,19 @@ class unexpected
   E val_;
 
 public:
+  /// @name Constructors
+  /// @{
+
   unexpected() = delete;
 
+  /// Copies the unexpected value.
   inline constexpr unexpected(const unexpected &) = default;
 
+  /// Moves the unexpected value.
   inline constexpr unexpected(unexpected &&) noexcept(
       std::is_nothrow_move_constructible<E>::value) = default;
 
+  /// Constructs an unexpected value in place.
   template <typename... Args,
             std::enable_if_t<detail::is_constructible_v<E, Args...>, int> = 0>
   inline constexpr explicit unexpected(in_place_t, Args &&... args)
@@ -52,6 +60,7 @@ public:
   {
   }
 
+  /// Constructs an unexpected value in place.
   template <typename U, typename... Args,
             std::enable_if_t<detail::is_constructible_v<
                                  E, std::initializer_list<U> &, Args...>,
@@ -63,6 +72,7 @@ public:
   {
   }
 
+  /// Creates a wrapper for the given unexpected value.
   template <
       typename Err = E,
       std::enable_if_t<detail::is_constructible_v<E, Err> &&
@@ -74,6 +84,7 @@ public:
   {
   }
 
+  /// Converts the unexpected value.
   template <typename Err,
             std::enable_if_t<detail::is_convertible_v<Err, Err>, int> = 0,
             std::enable_if_t<
@@ -92,6 +103,7 @@ public:
   {
   }
 
+  /// Converts the unexpected value.
   template <typename Err,
             std::enable_if_t<!detail::is_convertible_v<Err, Err>, int> = 0,
             std::enable_if_t<
@@ -110,6 +122,7 @@ public:
   {
   }
 
+  /// Converts the unexpected value.
   template <typename Err,
             std::enable_if_t<detail::is_convertible_v<Err, Err>, int> = 0,
             std::enable_if_t<
@@ -128,6 +141,7 @@ public:
   {
   }
 
+  /// Converts the unexpected value.
   template <typename Err,
             std::enable_if_t<!detail::is_convertible_v<Err, Err>, int> = 0,
             std::enable_if_t<
@@ -147,10 +161,19 @@ public:
   {
   }
 
+  /// @}
+
+  /// @name Assignment Operators
+  /// @{
+
+  /// Copies the unexpected value.
   inline constexpr unexpected &operator=(const unexpected &) = default;
+
+  /// Moves the unexpected value.
   inline constexpr unexpected &operator=(unexpected &&) noexcept(
       detail::is_nothrow_swappable<E>::value) = default;
 
+  /// Converts the unexpected value.
   template <typename Err,
             std::enable_if_t<
                 detail::is_assignable_v<E, Err> &&
@@ -169,6 +192,7 @@ public:
     return *this;
   }
 
+  /// Converts the unexpected value.
   template <typename Err,
             std::enable_if_t<
                 detail::is_assignable_v<E, Err> &&
@@ -187,12 +211,21 @@ public:
     return *this;
   }
 
+  /// @}
+
+  /// @name Obversers
+  /// Accesses the unexpected value.
+  /// @{
+
   inline constexpr const E &value() const & { return val_; }
   inline constexpr E &value() & { return val_; }
 
   inline constexpr const E &&value() const && { return detail::move(val_); }
   inline constexpr E &&value() && { return detail::move(val_); }
 
+  /// @}
+
+  /// Swaps with another unexpected value.
   inline void
   swap(unexpected &other) noexcept(detail::is_nothrow_swappable<E>::value)
   {
@@ -205,6 +238,48 @@ template <typename E>
 unexpected(E) -> unexpected<E>;
 #endif
 
+/// @name Comparators
+/// Compares two unexpected objects by comparing their stored value.
+/// @relates gpcl::unexpected
+/// @{
+
+template <class E>
+constexpr bool operator==(const unexpected<E> &lhs, const unexpected<E> &rhs)
+{
+  return lhs.value() == rhs.value();
+}
+
+template <class E>
+constexpr bool operator!=(const unexpected<E> &lhs, const unexpected<E> &rhs)
+{
+  return lhs.value() != rhs.value();
+}
+
+template <class E>
+constexpr bool operator<(const unexpected<E> &lhs, const unexpected<E> &rhs)
+{
+  return lhs.value() < rhs.value();
+}
+
+template <class E>
+constexpr bool operator<=(const unexpected<E> &lhs, const unexpected<E> &rhs)
+{
+  return lhs.value() <= rhs.value();
+}
+template <class E>
+constexpr bool operator>(const unexpected<E> &lhs, const unexpected<E> &rhs)
+{
+  return lhs.value() > rhs.value();
+}
+
+template <class E>
+constexpr bool operator>=(const unexpected<E> &lhs, const unexpected<E> &rhs)
+{
+  return lhs.value() >= rhs.value();
+}
+
+/// @}
+
 namespace swap_detail {
 template <typename E, std::enable_if_t<detail::is_swappable<E>::value, int> = 0>
 inline void
@@ -216,6 +291,7 @@ swap(unexpected<E> &lhs,
 } // namespace swap_detail
 
 /// Create an unexpect value.
+/// @relates gpcl::unexpected
 template <typename E>
 unexpected<typename std::decay<E>::type> make_unexpected(E &&e)
 {
@@ -223,6 +299,7 @@ unexpected<typename std::decay<E>::type> make_unexpected(E &&e)
 }
 
 /// Create an unexpected<error_code> from error code enum.
+/// @relates gpcl::unexpected
 template <typename ErrC>
 unexpected<error_code> make_unexpected_error_code(ErrC e)
 {

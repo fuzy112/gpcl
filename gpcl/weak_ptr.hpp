@@ -19,7 +19,7 @@ namespace gpcl {
 template <typename T>
 class shared_ptr;
 
-/// @ingroup SmartPtr
+/// @addtogroup smart_pointer Smart Pointers
 /// @{
   
 template <typename T>

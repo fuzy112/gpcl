@@ -20,6 +20,10 @@ namespace gpcl {
 template <typename T>
 class shared_ptr;
 
+/** @addtogroup smart_pointer Smart Pointers
+ *  @{
+ */
+
 /// Creates a shared pointer that manages a new object.
 /**
  * @param args list of arguments with which an instance of T will be constructed.
@@ -30,12 +34,14 @@ class shared_ptr;
  * 
  * If any exception is thrown, the function has no effect.
  *
- * @see shared_ptr
- * @ingroup SmartPtr
+ * @relates gpcl::shared_ptr
  */
 template <typename T, typename... Args>
 auto make_shared(Args &&... args)
     -> std::enable_if_t<!std::is_array_v<T>, shared_ptr<T>>;
+
+/** @} */
+
 } // namespace gpcl
 
 #include <gpcl/impl/make_shared.hpp>

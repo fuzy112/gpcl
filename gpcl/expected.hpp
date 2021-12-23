@@ -52,6 +52,9 @@ public:
   template <typename G>
   using rebind_error = expected<T, G>; // extension
 
+  /// @name Constructors
+  /// @{
+
   constexpr expected() = default;
   constexpr expected(const expected &rhs) = default;
   constexpr expected(expected && rhs) = default;
@@ -243,6 +246,11 @@ public:
   {
   }
 
+  /// @}
+
+  /// @name Assignement Operators
+  /// @{
+
   expected &operator=(const expected &rhs) = default;
   expected &operator=(expected &&rhs) = default;
 
@@ -320,6 +328,9 @@ public:
           Dummy2 = 0>
   inline expected<T, E> &operator=(unexpected<G> &&e);
 
+  /// @}
+
+  /// @name Modifiers
   void swap(expected<T, E> & other) noexcept(
       std::is_nothrow_copy_assignable<expected<T, E>>::value)
   {
@@ -327,6 +338,10 @@ public:
     other = detail::move(*this);
     *this = detail::move(tmp);
   }
+
+  /// @name Extensions
+  /// Rust result like extensions.
+  /// @{
 
   /// Returns x if bool(*this) is true, otherwise returns
   /// unexpected(error())
@@ -805,6 +820,21 @@ public:
   {
     return detail::move(*this).error();
   }
+
+  /// @}
+
+  /// @name Observers
+  /// @{
+#ifdef GPCL_DOXYGEN
+  T &value();
+
+  E &error();
+
+  T &operator*();
+
+  T *operator->();
+#endif
+  /// @}
 };
 
 namespace swap_detail {
@@ -814,6 +844,10 @@ void swap(expected<T, E> &x, expected<T, E> &y) noexcept(noexcept(x.swap(y)))
   x.swap(y);
 }
 } // namespace swap_detail
+
+/// @name Relational Operators
+/// @relates gpcl::expected
+/// @{
 
 template <typename T, typename E>
 constexpr bool operator==(const expected<T, E> &x, const expected<T, E> &y)
@@ -893,14 +927,47 @@ constexpr bool operator!=(const unexpected<E> &x, const expected<T, E> &y)
   return !(x == y);
 }
 
-#define GPCL_EXPECTED_TRY(var, exp)                                            \
-  auto _gpcl_expected_##var = exp;                                             \
+/// @}
+
+/// A helper macro used to access unexpected objects.
+/// @relates gpcl::expected
+///
+/// @par Examples
+/// @code
+/// expected<int, error_code> get_value();
+/// void use_value(int);
+///
+/// expected<void, error_code> my_func()
+/// {
+///   GPCL_EXPECTED_TRY(a, get_value());
+///   use_value(a);
+///   return {};
+/// }
+/// @endcode
+#define GPCL_EXPECTED_TRY(var, ...)                                            \
+  auto _gpcl_expected_##var = __VA_ARGS__;                                     \
   if (!_gpcl_expected_##var)                                                   \
   {                                                                            \
     return ::gpcl::make_unexpected(std::move(_gpcl_expected_##var).error());   \
   }                                                                            \
   auto &&var = *_gpcl_expected_##var;
 
+/// A helper macro used to access unexpected objects.
+/// @relates gpcl::expected
+/// @note This requires compiler extensions.
+///
+/// @par Examples
+/// @code
+/// expected<int, error_code> get_value();
+/// void use_value(int);
+///
+/// expected<void, error_code> my_func()
+/// {
+///   auto a = GPCL_EXPECTED_TRY_RETURN(get_value());
+///   use_value(a);
+///   return {};
+/// }
+/// @endcode
 #define GPCL_EXPECTED_TRY_RETURN(exp)                                          \
   ({                                                                           \
     auto tmp = exp;                                                            \

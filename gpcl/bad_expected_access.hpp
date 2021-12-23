@@ -39,7 +39,6 @@ public:
   }
 
   /// Returns a string that describes the error.
-  /// The string is created using error_formatter.
   [[nodiscard]] czstring<> what() const noexcept override
   {
     return what_.c_str();
@@ -52,7 +51,7 @@ public:
 
 private:
   E val;
-  mutable std::string what_;
+  std::string what_;
 };
 
 } // namespace gpcl

@@ -47,6 +47,7 @@ class bad_narrow_cast : public std::exception
 public:
   bad_narrow_cast() = default;
 
+  /// @returns "bad_narrow_cast".
   czstring<> what() const noexcept final { return "bad_narrow_cast"; }
 };
 

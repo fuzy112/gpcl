@@ -36,9 +36,10 @@ struct is_cloneable<
 
 /// clone_ptr is a smart pointer that automatically clones the managed object.
 ///
-/// \requires T shall be *Cloneable*.
+/// @pre
+/// T shall be *Cloneable*.
 ///
-/// \requires Deleter Deleter must be *FunctionObject* or lvalue reference to a
+/// Deleter Deleter must be *FunctionObject* or lvalue reference to a
 /// *FunctionObject* or lvalue reference to function, callable with an argument
 /// of type `unique_ptr<T, Deleter>::pointer`.
 template <typename T, typename Deleter = std::default_delete<T>>
@@ -60,7 +61,7 @@ public:
   }
 
   /// Copy constructor.
-  /// \effects If `bool(other)` is true, the managed object will be cloned.
+  /// If `bool(other)` is true, the managed object will be cloned.
   template <bool Dummy = true,
             std::enable_if_t<Dummy && std::is_convertible_v<T, T>, int> = 0>
   clone_ptr(const clone_ptr &other)
@@ -68,6 +69,8 @@ public:
   {
   }
 
+  /// Copy constructor.
+  /// If `bool(other)` is true, the managed object will be cloned.
   template <bool Dummy = true,
             std::enable_if_t<Dummy && !std::is_convertible_v<T, T>, int> = 0>
   explicit clone_ptr(const clone_ptr &other)
@@ -96,7 +99,7 @@ public:
   }
 
   /// Copy assignment.
-  /// \effects If `bool(other)` is true, the managed object will be cloned.
+  /// If `bool(other)` is true, the managed object will be cloned.
   clone_ptr &operator=(const clone_ptr &other)
   {
     if (std::addressof(other) == this)
@@ -127,7 +130,7 @@ public:
   explicit operator bool() const noexcept { return ptr_ != nullptr; }
 
   /// Dereference operator.
-  /// \requires `bool(*this)` is `true`.
+  /// @pre `bool(*this)` is `true`.
   T &operator*() const
   {
     GPCL_ASSERT(*this);
@@ -135,7 +138,7 @@ public:
   }
 
   /// Member-access operator.
-  /// \requires `bool(*this)` is `true`.
+  /// @pre `bool(*this)` is `true`.
   T *operator->() const
   {
     GPCL_ASSERT(*this);

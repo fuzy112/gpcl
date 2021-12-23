@@ -19,12 +19,16 @@
 
 namespace gpcl {
 
+/// @relates gpcl::any
+/// @relates gpcl::basic_any
 template <typename T, typename... Args>
 any make_any(Args &&... args)
 {
   return make_basic_any<any, T>(std::forward<Args>(args)...);
 }
 
+/// @relates gpcl::any
+/// @relates gpcl::basic_any
 template <typename T, typename U, typename... Args>
 any make_any(std::initializer_list<U> il, Args &&... args)
 {

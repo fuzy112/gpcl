@@ -101,10 +101,6 @@
 /// Main namespace of GPCL
 namespace gpcl {
 
-/// Implementation details
-namespace detail {
-}
-
 } // namespace gpcl
 
 #endif

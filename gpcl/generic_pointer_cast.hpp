@@ -13,7 +13,7 @@
 
 namespace gpcl {
 
-/// @ingroup SmartPtr
+/// @addtogroup smart_pointer Smart Pointers
 /// @{
 template <class T, class U>
 T *static_pointer_cast(U *p) noexcept

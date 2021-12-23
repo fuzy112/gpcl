@@ -28,27 +28,38 @@ enum class schedule_policy
 class thread_attributes : noncopyable
 {
 public:
+
+  /// Schedule policy type.
   using schedule_policy_type = gpcl::schedule_policy;
 
+  /// Set stack size.
   auto stack_size(int s) noexcept -> thread_attributes &
   {
     stack_size_ = s;
     return *this;
   }
+
+  /// Get stack size.
   [[nodiscard]] auto stack_size() const noexcept -> int { return stack_size_; }
 
+  /// Set priority.
   auto priority(int p) noexcept -> thread_attributes &
   {
     priority_ = p;
     return *this;
   }
+
+  /// Get priority.
   [[nodiscard]] auto priority() const noexcept -> int { return priority_; }
 
+  /// Set schedule policy.
   auto schedule_policy(schedule_policy_type s) noexcept -> thread_attributes &
   {
     schedule_policy_ = s;
     return *this;
   }
+
+  /// Get schedule policy.
   [[nodiscard]] auto schedule_policy() const noexcept -> schedule_policy_type
   {
     return schedule_policy_;

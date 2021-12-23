@@ -82,8 +82,31 @@ struct buffer_sequence_end_t
 #endif
 };
 
+/// Returns iterator to the first buffer of the buffer sequence.
+/**
+ * @ingroup customization_point
+ *
+ * @param buffers a buffer sequence.
+ */
+#ifdef GPCL_DOXYGEN
+template <typename BufferSequence>
+auto buffer_sequence_begin(const BufferSequence &buffers);
+#else
 inline constexpr buffer_sequence_begin_t buffer_sequence_begin{};
+#endif
+
+/// Returns the past-the-end iterator of the buffer sequence.
+/**
+ * @ingroup customization_point
+ *
+ * @param buffers a buffer sequence.
+ */
+#ifdef GPCL_DOXYGEN
+template <typename BufferSequence>
+auto buffer_sequence_end(const BufferSequence &buffers);
+#else
 inline constexpr buffer_sequence_end_t buffer_sequence_end{};
+#endif
 
 #ifndef GPCL_DOXYGEN
 template <typename T, typename = void>

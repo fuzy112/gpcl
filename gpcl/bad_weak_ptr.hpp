@@ -17,13 +17,16 @@
 
 namespace gpcl {
 
+/// @see gpcl::weak_ptr
 class bad_weak_ptr : public std::exception
 {
 public:
   bad_weak_ptr() noexcept = default;
 
+  /// Copy constructor.
   bad_weak_ptr(const bad_weak_ptr &) noexcept = default;
 
+  /// @returns "bad_weak_ptr".
   const char *what() const noexcept override { return "bad_weak_ptr"; }
 };
 

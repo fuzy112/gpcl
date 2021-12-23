@@ -34,6 +34,7 @@ struct is_basic_any<basic_any<LocalSize, LocalAlign>> : std::true_type
 template <typename T>
 constexpr is_basic_any<T> is_basic_any_v{};
 
+/// @see gpcl::any
 template <std::size_t LocalSize, std::size_t LocalAlign>
 class basic_any
 {
@@ -48,14 +49,20 @@ class basic_any
   any_manage_func_t manage_ = nullptr;
 
 public:
+
+  /// @name Constructors
+  /// @{
+
   constexpr basic_any() = default;
 
+  /// Copy constructor.
   basic_any(const basic_any &other) : manage_(other.manage_)
   {
     if (manage_)
       manage_(&data_, &other.data_, any_manage_op::clone);
   }
 
+  /// Move constructor.
   basic_any(basic_any &&other) noexcept : manage_(other.manage_)
   {
     if (manage_)
@@ -63,6 +70,7 @@ public:
         other.manage_ = nullptr;
   }
 
+  /// Construct a new basic_any.
   template <typename ValueType,
             std::enable_if_t<!is_basic_any_v<std::decay_t<ValueType>>, int> = 0>
   basic_any(ValueType &&value)
@@ -77,6 +85,7 @@ public:
       data_.remote_addr = new decayed_value_t(std::forward<ValueType>(value));
   }
 
+  /// Construct a new basic_any.
   template <typename ValueType, typename... Args>
   explicit basic_any(in_place_type_t<ValueType>, Args &&... args)
       : manage_(&any_manager<std::decay_t<ValueType>>::manage)
@@ -90,6 +99,7 @@ public:
       data_.remote_addr = new decayed_value_t(std::forward<Args>(args)...);
   }
 
+  /// Construct a new basic_any.
   template <typename ValueType, typename U, typename... Args>
   explicit basic_any(in_place_type_t<ValueType>, std::initializer_list<U> il,
                      Args &&... args)
@@ -105,18 +115,26 @@ public:
       data_.remote_addr = new decayed_value_t(il, std::forward<Args>(args)...);
   }
 
+  /// @}
+
+  /// @name Destructor
   ~basic_any()
   {
     if (manage_)
       manage_(&data_, nullptr, any_manage_op::destroy);
   }
 
+  /// @name Assignment Operators
+  /// @{
+
+  /// Copy assignment.
   basic_any &operator=(const basic_any &other)
   {
     basic_any(other).swap(*this);
     return *this;
   }
 
+  /// Move assignment.
   basic_any &operator=(basic_any &&other) noexcept
   {
     if (manage_)
@@ -128,6 +146,7 @@ public:
     return *this;
   }
 
+  /// Replace the contained value.
   template <typename ValueType,
             std::enable_if_t<
                 std::is_copy_constructible<std::decay_t<ValueType>>::value &&
@@ -139,6 +158,12 @@ public:
     return *this;
   }
 
+  /// @}
+
+  /// @name Modifiers
+  /// @{
+
+  /// Swap two `basic_any`s.
   void swap(basic_any &other) noexcept
   {
     basic_any temp(std::move(other));
@@ -146,6 +171,7 @@ public:
     *this = std::move(temp);
   }
 
+  /// Destroyes the contained value.
   void reset() noexcept
   {
     if (manage_)
@@ -153,6 +179,7 @@ public:
     manage_ = nullptr;
   }
 
+  /// Constructs a contained value.
   template <typename ValueType, typename... Args>
   std::decay_t<ValueType> &emplace(Args &&... args)
   {
@@ -161,6 +188,7 @@ public:
     return *static_cast<std::decay_t<ValueType> *>(raw_value());
   }
 
+  /// Constructs a contained value.
   template <typename ValueType, typename U, typename... Args>
   std::decay_t<ValueType> &emplace(std::initializer_list<U> il, Args &&... args)
   {
@@ -168,6 +196,11 @@ public:
         .swap(*this);
     return *static_cast<std::decay_t<ValueType> *>(raw_value());
   }
+
+  /// @}
+
+  /// @name Observers
+  /// @{
 
 #ifndef GPCL_DOXYGEN
   const void *raw_value() const noexcept
@@ -181,10 +214,13 @@ public:
   }
 #endif
 
+  /// Determines if the basic_any is empty.
   bool empty() const noexcept { return !manage_; }
 
+  /// Determines if the basic_any contains a value.
   bool has_value() const noexcept { return manage_; }
 
+  /// Determines if the basic_any contains a value of type `T`.
   template <typename T>
   bool has_type() const
   {
@@ -196,6 +232,7 @@ public:
   }
 
 #ifndef GPCL_NO_RTTI
+  /// Returns the type info of the contained value.
   const std::type_info &type() const noexcept
   {
     if (manage_)
@@ -204,6 +241,8 @@ public:
     return typeid(void);
   }
 #endif
+
+  /// @}
 };
 
 namespace swap_detail {

@@ -19,17 +19,27 @@
 
 namespace gpcl {
 
+/** @addtogroup smart_pointer Smart Pointers
+ *  @{
+ */
+
+/// The default deleter used by unique_ptr.
 template <typename T>
 struct default_delete
 {
   constexpr default_delete() noexcept = default;
 
+  /// Converting copy constructor.
+  /** This does not participate in the resolution set unless `U *` is implicitly
+   * convertible to `T *`.
+   */
   template <class U, typename = typename std::enable_if<
                          std::is_convertible<U *, T *>::value>::type>
   default_delete(const default_delete<U> &) noexcept
   {
   }
 
+  /// Invokes `delete x`.
   void operator()(T *x) const noexcept { delete x; }
 };
 
@@ -38,8 +48,10 @@ struct default_delete<T[]>
 {
   constexpr default_delete() noexcept = default;
 
+  /// Copy constructor.
   default_delete(const default_delete &) noexcept = default;
 
+  /// Invokes `delete[] x`.
   void operator()(T *x) const noexcept { delete[] x; }
 };
 
@@ -55,7 +67,6 @@ struct pointer_type<T, Deleter, std::void_t<typename Deleter::pointer>>
   using type = typename Deleter::pointer;
 };
 
-/// @ingroup SmartPtr
 template <class T, class Deleter = default_delete<T>>
 class unique_ptr
 {
@@ -64,7 +75,13 @@ public:
   using element_type = T;
   using deleter_type = Deleter;
 
+private:
   detail::compressed_pair<pointer, deleter_type> _p;
+
+public:
+
+  /// @name Constructors and Destructor
+  /// @{
 
   template <typename D = Deleter,
             typename = std::enable_if_t<std::is_default_constructible<D>{} &&
@@ -85,7 +102,6 @@ public:
                                         !std::is_pointer<D>{}>>
   explicit unique_ptr(pointer p) noexcept : _p(p, D())
   {
-    static_assert(!std::is_pointer<deleter_type>(), "");
   }
 
   unique_ptr(pointer p, Deleter &d) noexcept
@@ -116,11 +132,34 @@ public:
     }
   }
 
+  /// @}
+
+  /// @name Observers
+  /// @{
+
   pointer get() const noexcept { return _p.first(); }
 
   deleter_type &get_deleter() noexcept { return _p.second(); }
 
   const deleter_type &get_deleter() const noexcept { return _p.second(); }
+
+  explicit operator bool() const noexcept { return get(); }
+
+  typename std::add_lvalue_reference<T>::type operator*() const
+  {
+    GPCL_ASSERT(get());
+    return *get();
+  }
+
+  pointer operator->() const noexcept
+  {
+    GPCL_ASSERT(get());
+    return get();
+  }
+  /// @}
+
+  /// @name Assignment Operators
+  /// @{
 
   unique_ptr &operator=(unique_ptr &&r) noexcept
   {
@@ -130,12 +169,16 @@ public:
   }
 
   template <class U, class E>
+#ifdef GPCL_DOXYGEN
+  unique_ptr &
+#else
   typename std::enable_if<
       !std::is_array<U>::value &&
           std::is_convertible<typename unique_ptr<U, E>::pointer,
                               pointer>::value &&
           std::is_assignable<Deleter &, E &&>::value,
       unique_ptr &>::type
+#endif
   operator=(unique_ptr<U, E> &&r) noexcept
   {
     reset(r.release());
@@ -145,6 +188,11 @@ public:
   }
 
   unique_ptr &operator=(std::nullptr_t) noexcept { reset(); }
+
+  /// @}
+
+  /// @name Modifiers
+  /// @{
 
   [[nodiscard]] pointer release() noexcept
   {
@@ -167,25 +215,17 @@ public:
     swap(_p, other._p);
   }
 
-  explicit operator bool() const noexcept { return get(); }
-
-  typename std::add_lvalue_reference<T>::type operator*() const
-  {
-    GPCL_ASSERT(get());
-    return *get();
-  }
-
-  pointer operator->() const noexcept
-  {
-    GPCL_ASSERT(get());
-    return get();
-  }
+  /// @}
 };
 
 template <class T, class Deleter>
 class unique_ptr<T[], Deleter>
 {
 };
+
+/// @name Comparators
+/// @relates gpcl::unique_ptr
+/// @{
 
 template <class T1, class D1, class T2, class D2>
 bool operator==(const unique_ptr<T1, D1> &x, const unique_ptr<T2, D2> &y)
@@ -298,6 +338,8 @@ bool operator>=(std::nullptr_t, const unique_ptr<T, D> &y)
   return !(nullptr < y);
 }
 
+/// @}
+
 namespace swap_detail {
 template <typename T, typename D>
 void swap(unique_ptr<T, D> &x, unique_ptr<T, D> &y) noexcept
@@ -346,6 +388,8 @@ unique_ptr<T, Deleter> wrap_unique(T *ptr, Deleter d = Deleter()) noexcept
 {
   return unique_ptr<T, Deleter>(ptr, std::move(d));
 }
+
+/** @} */
 
 } // namespace gpcl
 

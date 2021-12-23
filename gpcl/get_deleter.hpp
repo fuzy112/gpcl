@@ -27,6 +27,8 @@ class shared_ptr;
  * @note The returned pointer may outlive the last shared_ptr if, for example,
  * `weak_ptr`s remain and the implementation doesn't destroy the deleter until
  * the entire control block is destroyed.
+ * 
+ * @relates gpcl::shared_ptr
  */
 template <typename Deleter, typename T>
 Deleter *get_deleter(const shared_ptr<T> &p) noexcept;

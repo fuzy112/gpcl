@@ -18,6 +18,13 @@
 #include <cstdlib>
 
 namespace gpcl {
+
+/// @name any_cast
+/// @brief Type-safe access to the contained object 
+/// @relates gpcl::any
+/// @relates gpcl::basic_any
+/// @{
+
 template <typename T, std::size_t LocalSize, std::size_t LocalAlign>
 const T *any_cast_unchecked(const basic_any<LocalSize, LocalAlign> *x)
 {
@@ -79,6 +86,9 @@ T *any_cast(basic_any<LocalSize, LocalAlign> *x) noexcept
 
   return any_cast_unchecked<T>(x);
 }
+
+/// @}
+
 } // namespace gpcl
 
 #endif // GPCL_ANY_CAST_HPP

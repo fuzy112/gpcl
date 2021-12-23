@@ -73,15 +73,36 @@ buffer(const T &obj,
 
 struct buffer_t
 {
+  /// Calls user supplied buffer() functions if any, otherwise the default
+  /// version supplied by GPCL.
   template <typename... Args>
-  auto operator()(Args &&...args) const noexcept
+  auto operator()(Args &&... args) const noexcept
   {
     using buffer_detail::buffer;
     return buffer(std::forward<Args>(args)...);
   }
 };
 
+/// Factory for mutable_buffer and constant_buffer.
+/** Create a new mutable_buffer or constant_buffer.
+ *
+ *  @ingroup customization_point
+ *
+ *  @par Customization Point
+ *  This object is a customization point object.
+ *
+ *  @par Example
+ *  @code {.cpp}
+ *  char storage[4096];
+ *  auto b = buffer(storage);
+ *  @endcode
+ */
+#ifdef GPCL_DOXYGEN
+template <typename... Args>
+auto buffer(Args &&... args);
+#else
 inline constexpr buffer_t buffer{};
+#endif
 
 } // namespace gpcl
 

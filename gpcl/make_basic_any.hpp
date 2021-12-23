@@ -18,6 +18,8 @@
 #include <utility>
 
 namespace gpcl {
+
+/// @relates gpcl::basic_any
 template <typename BasicAnySpecialization, typename T, typename... Args>
 BasicAnySpecialization make_basic_any(Args &&... args)
 {
@@ -25,6 +27,7 @@ BasicAnySpecialization make_basic_any(Args &&... args)
   return BasicAnySpecialization(in_place_type<T>, std::forward<Args>(args)...);
 }
 
+/// @relates gpcl::basic_any
 template <typename BasicAnySpecialization, typename T, typename U,
           typename... Args>
 BasicAnySpecialization make_basic_any(std::initializer_list<U> il,

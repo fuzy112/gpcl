@@ -28,7 +28,7 @@ public:
 
 /// Represents an optional value: either some value T or null.
 ///
-/// \requires T shall be a type other than *cv* `in_place_t` or *cv* `nullopt_t`
+/// @tparam T shall be a type other than *cv* `in_place_t` or *cv* `nullopt_t`
 /// that meets the *Cpp17Destructible* requirements.
 template <typename T>
 class optional : public detail::optional_move_assign_base<T>
@@ -38,28 +38,31 @@ class optional : public detail::optional_move_assign_base<T>
 public:
   using value_type = T;
 
+  /// @{
+  /// @name Constructors
+
   /// Default constructor.
   ///
-  /// \postconditions *this does not contain a value.
-  /// \remarks No contained value is initialized.  For every object type T this
+  /// @post *this does not contain a value.
+  /// @remarks No contained value is initialized.  For every object type T this
   /// constructor is a constexpr constructor.
   inline constexpr optional() noexcept = default;
 
-  /// \postconditions *this does not contain a value.
-  /// \remarks No contained value is initialized.  For every object type T this
+  /// @post *this does not contain a value.
+  /// @remarks No contained value is initialized.  For every object type T this
   /// constructor is a constexpr constructor.
   inline constexpr optional(nullopt_t) noexcept {}
 
   /// Copy constructor.
   ///
-  /// \effects If rhs contains a value, initializes the contained value as if
+  /// @details If rhs contains a value, initializes the contained value as if
   /// direct-non-list-initializing an object of type T with the expression *rhs.
   ///
-  /// \postconditions bool(rhs) == bool(*this).
+  /// @post bool(rhs) == bool(*this).
   ///
-  /// \throws Any exception thrown by the selected constructor of T.
+  /// @throws Any exception thrown by the selected constructor of T.
   ///
-  /// \remarks This constructor is defined as deleted unless
+  /// @remarks This constructor is defined as deleted unless
   /// `is_copy_constructible_v<T>` is true.   If
   /// `is_trivially_copy_constructible_v<T>` is true, this constructor is
   /// trivial.
@@ -67,34 +70,34 @@ public:
 
   /// Move constructor.
   ///
-  /// \constraints `is_move_constructible_v<T>` is true.
+  /// @pre `is_move_constructible_v<T>` is true.
   ///
-  /// \effects If `rhs` contains a value, initializes the contained value as if
+  /// @details If `rhs` contains a value, initializes the contained value as if
   /// direct-non-list-initializing an object of type T with the expression
   /// `std::move(*rhs).`  `bool(rhs)` is unchanged.
   ///
-  /// \postconditions `bool(rhs) == bool(*this)`
+  /// @post `bool(rhs) == bool(*this)`
   ///
-  /// \throws Any exception thrown by the selected constructor of T.
+  /// @throws Any exception thrown by the selected constructor of T.
   ///
-  /// \remarks The expression inside `noexcept` is equivalent to
+  /// @remarks The expression inside `noexcept` is equivalent to
   /// `is_nothrow_move_constructible_v<T>`.  If
   /// `is_trivially_move_constructible_v<T>` is `true`, this constructor is
   /// trivial.
   inline constexpr optional(optional &&rhs) noexcept(
       std::is_nothrow_move_constructible<T>()) = default;
 
-  /// \constraints `is_constructible_v<T, Args...>` is `true`.
+  /// @pre `is_constructible_v<T, Args...>` is `true`.
   ///
-  /// \effects Initializes the contained value as if
+  /// @details Initializes the contained value as if
   /// direct-non-list-initializing an object of type T with the arguments
   /// `std::forward<Args>(args)...`.
   ///
-  /// \postconditions `*this` contains a value.
+  /// @post `*this` contains a value.
   ///
-  /// \throws Any exception thrown by the selected constructor of `T`.
+  /// @throws Any exception thrown by the selected constructor of `T`.
   ///
-  /// \remarks If `T`'s constructor selected for the initialization is a
+  /// @remarks If `T`'s constructor selected for the initialization is a
   /// constexpr constructor, this constructor is a constexpr constructor.
   template <typename... Args,
             typename std::enable_if<std::is_constructible<T, Args...>::value,
@@ -104,18 +107,18 @@ public:
   {
   }
 
-  /// \constraints `is_constructible_v<T, initializer_list<U>&, Args...>` is
+  /// @pre `is_constructible_v<T, initializer_list<U>&, Args...>` is
   /// `true`.
   ///
-  /// \effects Initializes the contained value as if
+  /// @details Initializes the contained value as if
   /// direct-non-list-initializing an object of type T with the arguments
   /// `il, std::forward<Args>(args)...`.
   ///
-  /// \postconditions `*this` contains a value.
+  /// @post `*this` contains a value.
   ///
-  /// \throws Any exception thrown by the selected constructor of `T`.
+  /// @throws Any exception thrown by the selected constructor of `T`.
   ///
-  /// \remarks If `T`'s constructor selected for the initialization is a
+  /// @remarks If `T`'s constructor selected for the initialization is a
   /// constexpr constructor, this constructor is a constexpr constructor.
   template <typename U, class... Args,
             std::enable_if_t<std::is_constructible<
@@ -128,19 +131,19 @@ public:
   {
   }
 
-  /// \constraints `is_constructible_v<T, U>` is `true`,
+  /// @pre `is_constructible_v<T, U>` is `true`,
   /// `is_same_v<remove_cvref_t<U>, in_place_t>` is `false`, and
   /// `is_same_v<remove_cvref_t<U>, optional>` is `false`.
   ///
-  /// \effects Initializes the contained value as if
+  /// @details Initializes the contained value as if
   /// direct-non-list-initializing an object of type T with the arguments
   /// `std::forward<U>(v)...`.
   ///
-  /// \postconditions `*this` contains a value.
+  /// @post `*this` contains a value.
   ///
-  /// \throws Any exception thrown by the selected constructor of `T`.
+  /// @throws Any exception thrown by the selected constructor of `T`.
   ///
-  /// \remarks If `T`'s constructor selected for the initialization is a
+  /// @remarks If `T`'s constructor selected for the initialization is a
   /// constexpr constructor, this constructor is a constexpr constructor.
   /// This constructor is explicit if `is_convertible_v<U, T>` is `false`.
   template <typename U = T,
@@ -157,19 +160,19 @@ public:
   {
   }
 
-  /// \constraints `is_constructible_v<T, U>` is `true`,
+  /// @pre `is_constructible_v<T, U>` is `true`,
   /// `is_same_v<remove_cvref_t<U>, in_place_t>` is `false`, and
   /// `is_same_v<remove_cvref_t<U>, optional>` is `false`.
   ///
-  /// \effects Initializes the contained value as if
+  /// @details Initializes the contained value as if
   /// direct-non-list-initializing an object of type T with the arguments
   /// `std::forward<U>(v)...`.
   ///
-  /// \postconditions `*this` contains a value.
+  /// @post `*this` contains a value.
   ///
-  /// \throws Any exception thrown by the selected constructor of `T`.
+  /// @throws Any exception thrown by the selected constructor of `T`.
   ///
-  /// \remarks If `T`'s constructor selected for the initialization is a
+  /// @remarks If `T`'s constructor selected for the initialization is a
   /// constexpr constructor, this constructor is a constexpr constructor.
   /// This constructor is explicit if `is_convertible_v<U, T>` is `false`.
   template <typename U = T,
@@ -184,7 +187,7 @@ public:
   {
   }
 
-  /// \constraints
+  /// @pre
   ///  `is_constructible_v<T, const U &>` is `true`,
   ///  `is_constructible_v<T, optional<U>&>` is `false`,
   ///  `is_constructible_v<T, optional<U>&&>` is `false`,
@@ -195,15 +198,15 @@ public:
   ///  `is_convertible_v<const optional<U>&, T>` is `false`, and
   ///  `is_convertible_v<const optional<U>&&, T>` is `false`.
   ///
-  /// \effects If `rhs` contains a value, initializes the contained value as if
+  /// @details If `rhs` contains a value, initializes the contained value as if
   /// direct-non-list-initializing an object of type `T` with the expression
   /// `*rhs`.
   ///
-  /// \postconditions `bool(rhs) == bool(*this)`.
+  /// @post `bool(rhs) == bool(*this)`.
   ///
-  /// \throws Any exception thrown by the selected constructor of T.
+  /// @throws Any exception thrown by the selected constructor of T.
   ///
-  /// \remarks This constructor is explicit iff `is_convertible_v<const U&, T>`
+  /// @remarks This constructor is explicit iff `is_convertible_v<const U&, T>`
   /// is `false`.
   template <
       typename U,
@@ -268,10 +271,14 @@ public:
     }
   }
 
-  /// destructor
+  /// @}
+
+  /// @name Destructor
   inline ~optional() = default;
 
-  /// \group optional.assignment
+  /// @name Assignment Operators
+  /// @{
+
   inline optional &operator=(nullopt_t) noexcept
   {
     if (detail::exchange(this->has_val_, false))
@@ -364,6 +371,11 @@ public:
     return *this;
   }
 
+  /// @}
+
+  /// @name Modifiers
+  /// @{
+
   template <typename... Args>
   T &emplace(Args &&... args)
   {
@@ -415,7 +427,11 @@ public:
     }
   }
 
-  /// \group optional.observers
+  /// @}
+
+  /// @name Observers
+  /// @{
+
   constexpr const T *operator->() const
   {
     GPCL_ASSERT_CONST(this->has_val_);
@@ -512,10 +528,16 @@ public:
                        : static_cast<T>(detail::forward<U>(default_value));
   }
 
-  /// \group optional.modifiers
-  void reset() noexcept { *this = nullopt; }
+  /// @}
 
-  /// \group optional.extensions
+  /// @name Modifiers
+  /// @{
+  void reset() noexcept { *this = nullopt; }
+  /// @}
+
+  /// @name Extensions
+  /// @{
+
   template <typename U>
   optional<U> and_(const optional<U> &x) const &;
 
@@ -527,6 +549,8 @@ public:
 
   template <typename U>
   optional<U> and_(optional<U> &&x) &&;
+
+  /// @}
 };
 
 #if __cplusplus >= 201703 && !defined(GPCL_STANDARDESE)
@@ -534,7 +558,9 @@ template <typename T>
 optional(T) -> optional<T>;
 #endif
 
-// relational operators
+/// @name Relational Operators
+/// @{
+
 template <typename T, class U>
 inline constexpr bool operator==(const optional<T> &x, const optional<U> &y)
 {
@@ -664,6 +690,8 @@ inline constexpr bool operator>=(const T &x, const optional<U> &y)
   return y && (x > *y);
 }
 
+/// @}
+
 namespace swap_detail {
 // specialized algorithms
 template <typename T>
@@ -673,18 +701,21 @@ void swap(optional<T> &x, optional<T> &y) noexcept(true)
 }
 } // namespace swap_detail
 
+/// @relates gpcl::optional
 template <typename T>
 constexpr optional<typename std::decay<T>::type> make_optional(T &&x)
 {
   return optional<typename std::decay<T>::type>(detail::forward<T>(x));
 }
 
+/// @relates gpcl::optional
 template <typename T, class... Args>
 constexpr optional<T> make_optional(Args &&... args)
 {
   return optional<T>(in_place, detail::forward<Args>(args)...);
 }
 
+/// @relates gpcl::optional
 template <typename T, class U, class... Args>
 constexpr optional<T> make_optional(std::initializer_list<U> il,
                                     Args &&... args)

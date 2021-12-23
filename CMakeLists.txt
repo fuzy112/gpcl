@@ -56,7 +56,17 @@ if (Doxygen_FOUND)
 	set (DOXYGEN_PREDEFINED GPCL_DOXYGEN)
 	set (DOXYGEN_JAVADOC_AUTOBRIEF YES)
 	set (DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
-    doxygen_add_docs(doc README.md gpcl)
+	set (DOXYGEN_EXCLUDE_SYMBOLS "*::detail::*;*_detail::*")
+	set (DOXYGEN_STRIP_FROM_INC_PATH ".")
+    doxygen_add_docs(doc README.md lib gpcl)
+
+	find_package(Python COMPONENTS Interpreter QUIET)
+	if (Python_FOUND)
+		add_custom_target(serv_doc
+			${Python_EXECUTABLE} -m http.server 3333
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
+			USES_TERMINAL)
+	endif ()
 endif ()
 
 

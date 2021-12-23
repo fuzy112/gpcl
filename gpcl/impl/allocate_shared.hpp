@@ -27,6 +27,9 @@ class sp_inplace_deleter
 public:
   constexpr sp_inplace_deleter() = default;
 
+  /// Copy constructor.
+  /// @note It is undefined behaviour to copy a sp_inplace_deleter thats holds
+  /// value.
   sp_inplace_deleter(const sp_inplace_deleter &other) noexcept
   {
     GPCL_ASSERT(!other.holds_value_);
@@ -34,6 +37,7 @@ public:
 
   ~sp_inplace_deleter() { destroy(); }
 
+  /// Destroys the held value.
   void destroy() noexcept
   {
     if (holds_value_)
@@ -43,10 +47,13 @@ public:
     }
   }
 
+  /// Destroys the held value.
   void operator()(void *) noexcept { destroy(); }
 
+  /// Returns the address for storing the held value.
   void *address() noexcept { return &storage_; }
 
+  /// Indicates that `this` holds a value.
   void holds_value() noexcept { holds_value_ = true; }
 };
 
@@ -61,7 +68,6 @@ shared_ptr<T> allocate_shared(const Alloc &alloc, Args &&... args)
   shared_ptr<T> rv(x, ::new (d->address()) T(std::forward<Args>(args)...),
                    true);
   d->holds_value();
-
   return rv;
 }
 

@@ -30,12 +30,28 @@ struct swap_impl
 };
 } // namespace swap_detail
 
-struct swap_t : swap_detail::swap_impl
-{
-  using swap_detail::swap_impl::operator();
-};
-
-inline constexpr swap_t swap{};
+/// Swap two objects.
+/**
+ * @ingroup customization_point
+ *
+ * @par Example
+ * @code{.cpp}
+ * using gpcl::swap;
+ *
+ * swap(x, y);
+ * @endcode
+ *
+ * or:
+ * @code{.cpp}
+ * gpcl::swap(x, y);
+ * @endcode
+ */
+#ifdef GPCL_DOXYGEN
+template <typename T>
+void swap(T &x, T &y);
+#else
+inline constexpr swap_detail::swap_impl swap{};
+#endif
 
 } // namespace gpcl
 

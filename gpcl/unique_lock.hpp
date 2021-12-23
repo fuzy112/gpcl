@@ -16,7 +16,6 @@
 #include <gpcl/is_basic_lockable.hpp>
 #include <gpcl/is_lockable.hpp>
 #include <gpcl/swap.hpp>
-#include <gpcl/thread_annotations.hpp>
 
 namespace gpcl {
 
@@ -38,7 +37,7 @@ GPCL_CXX17_INLINE_CONSTEXPR defer_lock_t defer_lock{};
 
 /// RAII type that automatically unlocks the mutex.
 template <typename MutexType>
-class GPCL_SCOPED_CAPABILITY unique_lock
+class unique_lock
 {
   static_assert(is_basic_lockable<MutexType>::value,
                 "MutexType should meet BasicLockable");
@@ -46,20 +45,20 @@ class GPCL_SCOPED_CAPABILITY unique_lock
 public:
   using mutex_type = MutexType;
 
-  explicit unique_lock(mutex_type &mtx) GPCL_ACQUIRE(mtx)
+  explicit unique_lock(mutex_type &mtx)
       : mtx_(&mtx),
         owns_lock_(false)
   {
     lock();
   }
 
-  unique_lock(mutex_type &mtx, defer_lock_t) noexcept GPCL_EXCLUDES(mtx)
+  unique_lock(mutex_type &mtx, defer_lock_t) noexcept
       : mtx_(&mtx),
         owns_lock_(false)
   {
   }
 
-  unique_lock(mutex_type &mtx, adopt_lock_t) noexcept GPCL_REQUIRES(mtx)
+  unique_lock(mutex_type &mtx, adopt_lock_t) noexcept
       : mtx_(&mtx),
         owns_lock_(true)
   {
@@ -82,7 +81,7 @@ public:
   {
   }
 
-  ~unique_lock() GPCL_RELEASE()
+  ~unique_lock()
   {
     if (owns_lock_)
       mtx_->unlock();
@@ -112,7 +111,7 @@ public:
     mtx_ = nullptr;
   }
 
-  GPCL_ACQUIRE() void lock()
+  void lock()
   {
     GPCL_ASSERT(owns_lock_ == false);
     mutex().lock();
@@ -121,7 +120,6 @@ public:
 
   template <typename T = mutex_type,
             typename std::enable_if<is_lockable<T>::value, int>::type = 0>
-  GPCL_TRY_ACQUIRE(true)
   bool try_lock()
   {
     GPCL_ASSERT(owns_lock_ == false);
@@ -129,7 +127,7 @@ public:
     return owns_lock_;
   }
 
-  GPCL_RELEASE() void unlock()
+  void unlock()
   {
     GPCL_ASSERT(owns_lock_);
     mutex().unlock();
