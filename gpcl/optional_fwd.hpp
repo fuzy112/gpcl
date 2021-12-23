@@ -13,18 +13,39 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/in_place.hpp>
-#include <initializer_list>
+
 #include <type_traits>
 
 namespace gpcl {
+
+namespace detail {
+struct optional_construct_helper
+{
+  explicit optional_construct_helper() = default;
+};
+}; // namespace detail
+
 template <typename T>
 class optional;
 
-enum class nullopt_t
+struct nullopt_t
 {
-  nullopt
+  constexpr nullopt_t(detail::optional_construct_helper) {}
 };
-constexpr nullopt_t nullopt = nullopt_t::nullopt;
+constexpr nullopt_t nullopt{detail::optional_construct_helper{}};
+
+template <typename T>
+struct is_optional : std::false_type
+{
+};
+
+template <typename T>
+struct is_optional<optional<T>> : std::true_type
+{
+};
+
+template <typename T>
+constexpr bool is_optional_v = is_optional<T>::value;
 
 // class bad_optional_access
 class bad_optional_access;

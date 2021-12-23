@@ -535,21 +535,64 @@ public:
   void reset() noexcept { *this = nullopt; }
   /// @}
 
-  /// @name Extensions
+  /// @name Monadic operations
   /// @{
 
-  template <typename U>
-  optional<U> and_(const optional<U> &x) const &;
+  template <typename F, typename U = std::invoke_result_t<F, T &>,
+            std::enable_if_t<is_optional_v<std::decay_t<U>>>>
+  constexpr auto and_then(F &&f) &
+  {
+    if (*this)
+    {
+      return std::invoke(std::forward<F>(f), value());
+    }
+    else
+    {
+      return std::decay_t<U>();
+    }
+  }
 
-  template <typename U>
-  optional<U> and_(optional<U> &&x) const &;
+  template <typename F, typename U = std::invoke_result_t<F, const T &>,
+            std::enable_if_t<is_optional_v<std::decay_t<U>>>>
+  constexpr auto and_(F &&f) const &
+  {
+    if (*this)
+    {
+      return std::invoke(std::forward<F>(f), value());
+    }
+    else
+    {
+      return std::decay_t<U>();
+    }
+  }
 
-  template <typename U>
-  optional<U> and_(const optional<U> &x) &&;
+  template <typename F, typename U = std::invoke_result_t<F, T &&>,
+            std::enable_if_t<is_optional_v<std::decay_t<U>>>>
+  constexpr auto and_then(F &&f) &&
+  {
+    if (*this)
+    {
+      return std::invoke(std::forward<F>(f), std::move(value()));
+    }
+    else
+    {
+      return std::decay_t<U>();
+    }
+  }
 
-  template <typename U>
-  optional<U> and_(optional<U> &&x) &&;
-
+  template <typename F, typename U = std::invoke_result_t<F, const T &&>,
+            std::enable_if_t<is_optional_v<std::decay_t<U>>>>
+  constexpr auto and_then(F &&f) const &&
+  {
+    if (*this)
+    {
+      return std::invoke(std::forward<F>(f), std::move(value()));
+    }
+    else
+    {
+      return std::decay_t<U>();
+    }
+  }
   /// @}
 };
 
