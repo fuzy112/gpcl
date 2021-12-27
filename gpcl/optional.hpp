@@ -18,6 +18,8 @@
 #include <gpcl/optional_fwd.hpp>
 #include <gpcl/swap.hpp>
 
+#include <functional>
+
 namespace gpcl {
 
 class bad_optional_access : public std::runtime_error
@@ -55,7 +57,7 @@ public:
 
   /// Copy constructor.
   ///
-  /// @details If rhs contains a value, initializes the contained value as if
+  /// @details If @c rhs contains a value, initializes the contained value as if
   /// direct-non-list-initializing an object of type T with the expression *rhs.
   ///
   /// @post bool(rhs) == bool(*this).
@@ -554,7 +556,7 @@ public:
 
   template <typename F, typename U = std::invoke_result_t<F, const T &>,
             std::enable_if_t<is_optional_v<std::decay_t<U>>>>
-  constexpr auto and_(F &&f) const &
+  constexpr auto and_then(F &&f) const &
   {
     if (*this)
     {
