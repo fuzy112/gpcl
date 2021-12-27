@@ -42,6 +42,7 @@
 #include <gpcl/future.hpp>
 #include <gpcl/generic_pointer_cast.hpp>
 #include <gpcl/get_deleter.hpp>
+#include <gpcl/getopt.hpp>
 #include <gpcl/in_place.hpp>
 #include <gpcl/in_place_type.hpp>
 #include <gpcl/intrusive_list.hpp>

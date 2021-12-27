@@ -23,7 +23,7 @@ struct optional_construct_helper
 {
   explicit optional_construct_helper() = default;
 };
-}; // namespace detail
+} // namespace detail
 
 template <typename T>
 class optional;
