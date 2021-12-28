@@ -1,6 +1,8 @@
 #include <gpcl/memory_mapped_region.hpp>
 #include <gpcl/shared_memory_object.hpp>
 
+#include <gpcl/anonymous_shared_memory.hpp>
+
 int main()
 {
   struct remove_shm
@@ -16,4 +18,10 @@ int main()
   gpcl::memory_mapped_region mapped(memory, gpcl::access_mode::read_write);
 
   std::memset(mapped.address(), 1, mapped.size());
+
+  gpcl::memory_mapped_region mapped2(
+      gpcl::anonymous_shared_memory(1024), gpcl::read_write);
+
+  std::memset(mapped2.address(), 1, mapped2.size());
+
 }
