@@ -11,6 +11,7 @@
 #ifndef GPCL_GETOPT_HPP
 #define GPCL_GETOPT_HPP
 
+#include <gpcl/detail/config.hpp>
 #include <gpcl/span.hpp>
 
 #include <iosfwd>

@@ -25,8 +25,12 @@ getopt::getopt(int argc, const char *const argv[],
       opts_(opts),
       optind_(),
       optpos_(),
-      optarg_()
+      optarg_(),
+      opt_()
 {
+  GPCL_ASSERT(argc);
+  GPCL_ASSERT(argv);
+  GPCL_ASSERT(!opts.empty());
 }
 
 int getopt::operator()()
@@ -41,6 +45,9 @@ int getopt::operator()()
     return -1;
 
   if (argv_[optind_][0] != '-')
+    return -1;
+
+  if (argv_[optind_][1] == '\0')
     return -1;
 
   if (argv_[optind_][1] == '-' && argv_[optind_][2] == '\0')
@@ -133,25 +140,26 @@ std::ostream &operator<<(std::ostream &out, const getopt &parser)
   {
     if (!opt.name && !opt.name_short)
       break;
-    out << "    ";
+    out << "  ";
     if (opt.name_short)
-    {
       out << '-' << opt.name_short;
-    }
 
     std::stringstream long_opt;
     if (opt.name)
     {
       if (opt.name_short)
-      {
-        out << ",";
-      }
-
-      long_opt << "\t--" << opt.name;
+        out << ", ";
+      else
+        out << "    ";
+      long_opt << "--" << opt.name;
     }
     if (opt.type == getopt_optional)
     {
+#if GPCL_CONFIG_GETOPT_LONG_OPT_EQUAL_SIZE
       long_opt << "[=";
+#else
+      long_opt << " [";
+#endif
       if (opt.value_desc)
         long_opt << opt.value_desc;
       else
@@ -160,7 +168,11 @@ std::ostream &operator<<(std::ostream &out, const getopt &parser)
     }
     if (opt.type == getopt_required)
     {
+#if GPCL_CONFIG_GETOPT_LONG_OPT_EQUAL_SIZE
       long_opt << "=";
+#else
+      long_opt << " ";
+#endif
       if (opt.value_desc)
         long_opt << opt.value_desc;
       else

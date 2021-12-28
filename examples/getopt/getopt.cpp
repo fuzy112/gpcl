@@ -31,6 +31,7 @@ int main(int argc, char **argv)
       break;
 
     default:
+      std::cerr << "unknown option: \n";
       break;
     }
   }

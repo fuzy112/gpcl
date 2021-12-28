@@ -95,6 +95,10 @@
 #  endif
 #endif
 
+#ifndef GPCL_CONFIG_GETOPT_LONG_OPT_EQUAL_SIZE
+#  define GPCL_CONFIG_GETOPT_LONG_OPT_EQUAL_SIZE 1
+#endif
+
 // #define GPCL_NO_RTTI 1
 // #undef GPCL_NO_RTTI
 

@@ -74,6 +74,8 @@ add_subdirectory(lib)
 add_subdirectory(tests)
 add_subdirectory(tools)
 
+add_subdirectory(examples)
+
 install(DIRECTORY gpcl DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES gpcl.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
