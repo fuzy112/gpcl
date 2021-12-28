@@ -21,6 +21,9 @@
 #include <gpcl/zstring.hpp>
 
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace gpcl {
 namespace detail {
@@ -141,6 +144,14 @@ public:
   GPCL_DECL expected<void, error_code> truncate(std::size_t size);
 
   GPCL_DECL static expected<void, error_code> unlink(czstring<> filename);
+
+  std::size_t size() const
+  {
+    struct ::stat s;
+    if (-1 == ::fstat(fd_, &s))
+      throw_system_error(__func__);
+    return s.st_size;
+  }
 
 private:
   native_handle_type fd_{-1};

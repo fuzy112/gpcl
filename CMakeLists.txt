@@ -45,6 +45,7 @@ if (UNIX)
 	target_link_libraries(gpcl
 		INTERFACE
 		pthread
+		rt
 		)
 
 	# target_compile_options(gpcl INTERFACE "-fno-exceptions")

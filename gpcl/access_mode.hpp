@@ -1,0 +1,18 @@
+#ifndef GPCL_ACCESS_MODE_HPP
+#define GPCL_ACCESS_MODE_HPP
+
+#include <gpcl/detail/config.hpp>
+
+namespace gpcl {
+enum class access_mode
+{
+  read_only,
+  read_write,
+};
+
+constexpr access_mode read_only = access_mode::read_only;
+constexpr access_mode read_write = access_mode::read_write;
+
+} // namespace gpcl
+
+#endif // GPCL_ACCESS_MODE_HPP
