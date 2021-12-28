@@ -11,7 +11,9 @@
 #ifndef GPCL_HPP
 #define GPCL_HPP
 
+#include <gpcl/access_mode.hpp>
 #include <gpcl/allocate_shared.hpp>
+#include <gpcl/anonymous_shared_memory.hpp>
 #include <gpcl/any.hpp>
 #include <gpcl/any_cast.hpp>
 #include <gpcl/assert.hpp>
@@ -53,6 +55,7 @@
 #include <gpcl/make_any.hpp>
 #include <gpcl/make_basic_any.hpp>
 #include <gpcl/make_shared.hpp>
+#include <gpcl/memory_mapped_region.hpp>
 #include <gpcl/message_queue.hpp>
 #include <gpcl/mutex.hpp>
 #include <gpcl/narrow_cast.hpp>
@@ -67,6 +70,7 @@
 #include <gpcl/pool_allocator.hpp>
 #include <gpcl/propagate_const.hpp>
 #include <gpcl/semaphore.hpp>
+#include <gpcl/shared_memory_object.hpp>
 #include <gpcl/shared_ptr.hpp>
 #include <gpcl/simple_segregated_storage.hpp>
 #include <gpcl/span.hpp>

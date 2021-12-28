@@ -1,3 +1,13 @@
+//
+// anonymous_shared_memory.hpp
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
 #ifndef GPCL_DETAIL_ANONYMOUS_SHARED_MEMORY_HPP
 #define GPCL_DETAIL_ANONYMOUS_SHARED_MEMORY_HPP
 
@@ -31,7 +41,7 @@ private:
 inline std::pair<void *, std::size_t>
 memory_map(const anonymous_shared_memory_impl &mem, access_mode mode,
            std::ptrdiff_t offset, std::size_t size, const void *address,
-           memory_map_options options)
+           posix_memory_map_options options)
 {
   GPCL_ASSERT(offset == 0);
   int prot;
