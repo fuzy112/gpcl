@@ -90,7 +90,7 @@ public:
   }
 
   /// Converts to raw pointer
-  inline explicit operator pointer() const noexcept { return get(); }
+  inline operator pointer() const noexcept { return get(); }
 
   /// Copy assignment
   inline offset_ptr &operator=(const offset_ptr &other);
@@ -103,9 +103,8 @@ public:
 
   /// Dereference
   /// @return reference to the value
-  template <typename U = T,
-            typename std::enable_if<!std::is_void<U>::value, int>::type = 0>
-  inline auto &operator*() const;
+  template <typename U = T>
+  inline typename std::enable_if<!std::is_void<U>::value, U>::type &operator*() const;
 
   /// Member access operator
   /// @return a raw pointer
@@ -233,8 +232,9 @@ public:
   friend inline bool operator<(const offset_ptr &x,
                                const offset_ptr &y) noexcept
   {
-    return std::addressof(*x) < std::addressof(*y);
+    return x.get() < y.get();
   }
+
 
   friend inline bool operator>(const offset_ptr &x,
                                const offset_ptr &y) noexcept

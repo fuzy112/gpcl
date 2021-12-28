@@ -20,33 +20,34 @@
 namespace gpcl {
 
 /// Simple segregated storage algorithm implementation.
-template <typename SizeType = std::size_t>
+template <typename SizeType = std::size_t, typename VoidPointer = void * >
 class simple_segregated_storage : noncopyable
 {
 public:
   using size_type = SizeType;
+  using void_pointer = void *;
 
   /// \effects Interleaves a free list through the memory block specified of
   /// `block` of size `sz` bytes, partitioning it into as many
   /// partition_sz-sized chunks as possible. The last chunk is set to point to
-  /// `end`. \preconditions partition_sz >= sizeof(void *), partition_sz ==
-  /// sizeof(void *) * i for some i, sz >= partition_sz, block is properly
+  /// `end`. \preconditions partition_sz >= sizeof(void_pointer ), partition_sz ==
+  /// sizeof(void_pointer ) * i for some i, sz >= partition_sz, block is properly
   /// aligned for an array of objects of size partition_sz, and block is
-  /// properly aligned for an array of void *. \param block pointer to the block
+  /// properly aligned for an array of void_pointer . \param block pointer to the block
   /// \param sz size in bytes
   /// \param partition_sz chunk size
   /// \param end the last chunk's next ptr
   /// \returns pointer to the first chunk (this is always equal to block).
   /// \complexity O(sz).
-  void *segregate(void *const block, size_type sz, size_type partition_sz,
-                  void *end = nullptr) noexcept
+  void_pointer segregate(void_pointer const block, size_type sz, size_type partition_sz,
+                  void_pointer end = nullptr) noexcept
   {
     GPCL_ASSERT(block);
     GPCL_ASSERT(sz >= partition_sz);
 
-    void *chunk = block;
-    void *block_end = reinterpret_cast<char *>(block) + sz - partition_sz;
-    while (reinterpret_cast<void *>(reinterpret_cast<char *>(chunk) +
+    void_pointer chunk = block;
+    void_pointer block_end = reinterpret_cast<char *>(block) + sz - partition_sz;
+    while (reinterpret_cast<void_pointer >(reinterpret_cast<char *>(chunk) +
                                     partition_sz) < block_end)
     {
       next_chunk(chunk) = reinterpret_cast<char *>(chunk) + partition_sz;
@@ -69,7 +70,7 @@ public:
   /// then it is **ordered** after this call.
   ///
   /// \complexity O(sz).
-  void add_block(void *const block, size_type sz,
+  void add_block(void_pointer const block, size_type sz,
                  size_type partition_sz) noexcept
   {
     free_list_ = segregate(block, sz, partition_sz, free_list_);
@@ -91,10 +92,10 @@ public:
   /// it will remain ordered after calling this function.
   ///
   /// \complexity O(sz).
-  void add_ordered_block(void *const block, size_type sz,
+  void add_ordered_block(void_pointer const block, size_type sz,
                          size_type partition_sz) noexcept
   {
-    void *&pos = upper_bound(block);
+    void_pointer &pos = upper_bound(block);
     pos = segregate(block, sz, partition_sz, pos);
     GPCL_VERIFY(free_list_);
   }
@@ -111,7 +112,7 @@ public:
   /// ordered after calling this function.
   ///
   /// \complexity O(1).
-  void *malloc(size_type partition_sz) noexcept
+  void_pointer malloc(size_type partition_sz) noexcept
   {
     (void)partition_sz;
     GPCL_ASSERT(!empty());
@@ -131,10 +132,10 @@ public:
   /// If `this` is ordered before calling this function, it will remain
   /// ordered after calling this function.
   /// \complexity O(N) where N is the size of the free list.
-  void *malloc_n(size_type n, size_type partition_sz) noexcept
+  void_pointer malloc_n(size_type n, size_type partition_sz) noexcept
   {
-    void **p = &free_list_;
-    void **start = p;
+    void_pointer *p = &free_list_;
+    void_pointer *start = p;
     size_type m = 0;
     while (*p)
     {
@@ -169,7 +170,7 @@ public:
   /// this->malloc().
   ///
   /// \complexity O(1).
-  void free(void *const chunk) noexcept
+  void free(void_pointer const chunk) noexcept
   {
     next_chunk(chunk) = free_list_;
     free_list_ = chunk;
@@ -181,7 +182,7 @@ public:
   /// this->malloc_n().
   ///
   /// \complexity O(1).
-  void free_n(void *const chunk, size_type partition_sz, size_type n) noexcept
+  void free_n(void_pointer const chunk, size_type partition_sz, size_type n) noexcept
   {
     add_block(chunk, partition_sz * n, partition_sz);
   }
@@ -195,9 +196,9 @@ public:
   /// it will remain ordered after calling this function.
   ///
   /// \complexity O(1).
-  void ordered_free(void *const chunk) noexcept
+  void ordered_free(void_pointer const chunk) noexcept
   {
-    void *&pos = upper_bound(chunk);
+    void_pointer &pos = upper_bound(chunk);
     next_chunk(chunk) = pos;
     pos = chunk;
   }
@@ -211,19 +212,19 @@ public:
   /// it will remain ordered after calling this function.
   ///
   /// \complexity O(1).
-  void ordered_free_n(void *const chunk, size_type n,
+  void ordered_free_n(void_pointer const chunk, size_type n,
                       size_type partition_sz) noexcept
   {
     add_ordered_block(chunk, partition_sz * n, partition_sz);
   }
 
 private:
-  void *&upper_bound(void *const p) noexcept
+  void_pointer &upper_bound(void_pointer const p) noexcept
   {
-    void **pp = &free_list_;
+    void_pointer *pp = &free_list_;
     while (*pp)
     {
-      void *&next = next_chunk(*pp);
+      void_pointer &next = next_chunk(*pp);
       if (next > p)
       {
         return next;
@@ -233,13 +234,13 @@ private:
     return *pp;
   }
 
-  static void *&next_chunk(void *chunk) noexcept
+  static void_pointer &next_chunk(void_pointer chunk) noexcept
   {
     GPCL_ASSERT(chunk);
-    return *reinterpret_cast<void **>(chunk);
+    return *reinterpret_cast<void_pointer *>(chunk);
   }
 
-  void *free_list_{};
+  void_pointer free_list_{};
 };
 
 } // namespace gpcl

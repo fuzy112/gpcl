@@ -61,7 +61,7 @@ typename offset_ptr<T>::pointer offset_ptr<T>::get() const
 #endif
   )
   {
-    GPCL_ASSERT(offset_ != 0 && "maybe using uninitialized value");
+    GPCL_ASSERT(offset_ != 0); // maybe using uninitialized value
   }
   return offset_ != invalid_offset
              ? reinterpret_cast<pointer>(detail::as_integer(this) + offset_)
@@ -79,14 +79,14 @@ template <typename T>
 constexpr typename offset_ptr<T>::difference_type
 offset_ptr<T>::offset_to_diff(offset_ptr::offset_type offset)
 {
-  GPCL_ASSERT(offset % sizeof(T) == 0);
+  GPCL_ASSERT_CONST(offset % sizeof(T) == 0);
   return static_cast<difference_type>(offset) / sizeof(T);
 }
 
 template <typename T>
-template <typename U,
-          typename std::enable_if<!std::is_void<U>::value, int>::type>
-auto &offset_ptr<T>::operator*() const
+template <typename U>
+typename std::enable_if<!std::is_void<U>::value, U>::type &
+offset_ptr<T>::operator*() const
 {
   GPCL_ASSERT(get() != 0);
   return *get();
