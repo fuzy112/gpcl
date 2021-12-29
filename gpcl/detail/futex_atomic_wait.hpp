@@ -84,7 +84,7 @@ struct futex_atomic_wait_state
 
     __atomic_load(wait_addr, &event, __ATOMIC_ACQUIRE);
 
-    __atomic_load(addr, &val, order);
+    __atomic_load(addr, &val, (int)order);
     if (0 != memcmp(&val, &old, sizeof(old)))
       return val;
 
@@ -93,7 +93,7 @@ struct futex_atomic_wait_state
     do
     {
       futex_wait(wait_addr, event);
-      __atomic_load(addr, &val, order);
+      __atomic_load(addr, &val, (int)order);
     } while (!memcmp(&val, &old, sizeof(old)));
     return val;
   }

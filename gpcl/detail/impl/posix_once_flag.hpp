@@ -56,7 +56,7 @@ void call_once(detail::posix_once_flag &flag, Callable &&callable,
       // Do a store_release indicating that initialization is not yet started.
       std::atomic_store_explicit(
           reinterpret_cast<std::atomic_int *>(&flag.data_),
-          initialization_not_started, std::memory_order::memory_order_release);
+          initialization_not_started, std::memory_order_release);
 
       // Wake up any waiters, if any.
       int s =
