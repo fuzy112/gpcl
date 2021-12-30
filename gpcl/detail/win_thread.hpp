@@ -48,7 +48,7 @@ public:
 
   auto swap(win_thread &other) noexcept -> void
   {
-    using std::gpcl;
+    using gpcl::swap;
     swap(thread_, other.thread_);
   }
 

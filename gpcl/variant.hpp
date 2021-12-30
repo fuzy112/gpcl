@@ -46,16 +46,6 @@ struct variant_size<variant<Types...>>
 };
 
 template <typename T>
-struct variant_size<T &> : variant_size<T>
-{
-};
-
-template <typename T>
-struct variant_size<T &&> : variant_size<T>
-{
-};
-
-template <typename T>
 struct variant_size<T const> : variant_size<T>
 {
 };
@@ -67,6 +57,16 @@ struct variant_size<T volatile> : variant_size<T>
 
 template <typename T>
 struct variant_size<T const volatile> : variant_size<T>
+{
+};
+
+template <typename T>
+struct variant_size<T &> : variant_size<T>
+{
+};
+
+template <typename T>
+struct variant_size<T &&> : variant_size<T>
 {
 };
 
@@ -88,10 +88,6 @@ struct variant_alternative<I, variant<T, Types...>>
 {
 };
 
-template <std::size_t I, typename T>
-struct variant_alternative<I, T &> : variant_alternative<I, T>
-{
-};
 
 template <std::size_t I, typename T>
 struct variant_alternative<I, T const> : variant_alternative<I, T>
@@ -105,6 +101,16 @@ struct variant_alternative<I, T volatile> : variant_alternative<I, T>
 
 template <std::size_t I, typename T>
 struct variant_alternative<I, T const volatile> : variant_alternative<I, T>
+{
+};
+
+template <std::size_t I, typename T>
+struct variant_alternative<I, T &> : variant_alternative<I, T>
+{
+};
+
+template <std::size_t I, typename T>
+struct variant_alternative<I, T &&> : variant_alternative<I, T>
 {
 };
 
@@ -141,9 +147,9 @@ struct find_type_index : find_type_index_impl<0, T, Types...>
 // clang-format off
 template <std::size_t MaxIndex>
 using variant_index_type_impl = 
-    std::conditional_t<MaxIndex < (std::size_t)std::numeric_limits<signed char>::max(), signed char,
-    std::conditional_t<MaxIndex < (std::size_t)std::numeric_limits<signed short>::max(), signed short,
-    std::conditional_t<MaxIndex < (std::size_t)std::numeric_limits<signed int>::max(), signed int, 
+    std::conditional_t<MaxIndex < (std::size_t)(std::numeric_limits<signed char>::max)(), signed char,
+    std::conditional_t<MaxIndex < (std::size_t)(std::numeric_limits<signed short>::max)(), signed short,
+    std::conditional_t<MaxIndex < (std::size_t)(std::numeric_limits<signed int>::max)(), signed int, 
     std::size_t>>>;
 // clang-format on
 

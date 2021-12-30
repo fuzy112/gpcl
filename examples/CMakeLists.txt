@@ -1,4 +1,8 @@
 add_subdirectory(getopt)
-add_subdirectory(shared_memory)
+
+if (NOT WIN32)
+    add_subdirectory(shared_memory)
+endif ()
+
 add_subdirectory(variant)
 add_subdirectory(lexical_cast)

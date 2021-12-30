@@ -17,6 +17,8 @@
 #include <gpcl/simple_segregated_storage.hpp>
 #include <gpcl/unique_lock.hpp>
 
+#include <cstddef>
+
 namespace gpcl {
 
 #ifndef GPCL_DOXYGEN

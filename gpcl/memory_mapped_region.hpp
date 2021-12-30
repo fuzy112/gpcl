@@ -16,6 +16,7 @@
 
 #if defined GPCL_POSIX
 #  include <gpcl/detail/posix_memory_map.hpp>
+#  define GPCL_MEMORY_MAPPED_REGION_SUPPORTED 1
 #endif
 
 namespace gpcl {
@@ -26,6 +27,8 @@ using memory_map_options = detail::posix_memory_map_options;
 #endif
 
 using offset_t = long;
+
+#if defined GPCL_MEMORY_MAPPED_REGION_SUPPORTED
 
 class memory_mapped_region
 {
@@ -64,6 +67,8 @@ inline void swap(memory_mapped_region &x, memory_mapped_region &y) noexcept
   x.swap(y);
 }
 } // namespace swap_detail
+
+#endif
 
 } // namespace gpcl
 
