@@ -46,16 +46,19 @@ public:
 namespace detail {
 
 template <typename Target>
-struct lexical_cast_str_impl
+struct lexical_cast_str_impl;
+
+template <typename CharType>
+struct lexical_cast_str_impl<std::basic_string<CharType>>
 {
-  template <typename Source, bool False = false>
-  Target operator()(const Source &arg) const
+  using target_type = std::basic_string<CharType>;
+
+  template <typename Source>
+  target_type operator()(const Source &arg) const
   {
-    if constexpr (is_output_streamable<
-                      Source,
-                      std::basic_ostream<typename Target::value_type>>())
+    if constexpr (is_output_streamable<Source, std::basic_ostream<CharType>>())
     {
-      std::basic_stringstream<typename Target::value_type> ss;
+      std::basic_stringstream<CharType> ss;
       ss << arg;
       if (!ss)
         GPCL_THROW(bad_lexical_cast());
@@ -66,6 +69,11 @@ struct lexical_cast_str_impl
     {
       GPCL_UNREACHABLE("cannot cast such type");
     }
+  }
+
+  target_type operator()(const CharType *s, std::size_t n) const
+  {
+    return target_type(s, n);
   }
 };
 
@@ -83,15 +91,7 @@ struct lexical_cast_impl
     {
       std::stringstream ss;
       ss << arg;
-      if (!ss)
-        GPCL_THROW(bad_lexical_cast());
-      Target result{};
-      ss >> result;
-      if (!ss)
-        GPCL_THROW(bad_lexical_cast());
-      if (ss.get() != std::stringstream::traits_type::eof())
-        GPCL_THROW(bad_lexical_cast());
-      return result;
+      return extract_result(ss);
     }
 
     else if constexpr (is_output_streamable<Source, std::wostream>() &&
@@ -99,21 +99,55 @@ struct lexical_cast_impl
     {
       std::wstringstream ss;
       ss << arg;
-      if (!ss)
-        GPCL_THROW(bad_lexical_cast());
-      Target result{};
-      ss >> result;
-      if (!ss)
-        GPCL_THROW(bad_lexical_cast());
-      if (ss.get() != std::wstringstream::traits_type::eof())
-        GPCL_THROW(bad_lexical_cast());
-      return result;
+      return extract_result(ss);
     }
 
     else
     {
       GPCL_UNREACHABLE("cannot cast such type");
     }
+  }
+
+  template <typename CharType>
+  Target operator()(const CharType *s, std::size_t n) const
+  {
+    class streambuf : public std::basic_streambuf<CharType>
+    {
+    public:
+      streambuf(const CharType *s, std::size_t n)
+      {
+        auto p = const_cast<CharType *>(s);
+        this->setg(p, p, p + n);
+      }
+    };
+
+    class istream : private streambuf, public std::basic_istream<CharType>
+    {
+    public:
+      istream(const CharType *s, std::size_t n)
+          : streambuf(s, n),
+            std::basic_istream<CharType>(this)
+      {
+      }
+    };
+
+    istream is(s, n);
+
+    return extract_result(is);
+  }
+
+  template <typename CharType>
+  static Target extract_result(std::basic_istream<CharType> &is)
+  {
+    if (is)
+    {
+      Target result{};
+      is >> result;
+
+      if (is && is.eof())
+        return result;
+    }
+    GPCL_THROW(bad_lexical_cast());
   }
 };
 

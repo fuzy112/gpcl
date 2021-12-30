@@ -36,4 +36,6 @@ int main()
     std::cout << e.what() << std::endl;
   }
   GPCL_CATCH_END
+
+  std::cout << lexical_cast<int>("123456", 3) << std::endl;
 }
