@@ -867,7 +867,7 @@ public:
   {
     using type = variant_alternative_t<I, variant>;
     base_type::reset();
-    void *address = detail::unsafe_get<type>(*this);
+    void *address = detail::unsafe_get<type>(this);
     auto pointer = new (address) type(std::forward<Args>(args)...);
     set_index(I);
     return *pointer;
@@ -879,7 +879,7 @@ public:
   {
     using type = variant_alternative_t<I, variant>;
     base_type::reset();
-    void *address = detail::unsafe_get<type>(*this);
+    void *address = detail::unsafe_get<type>(this);
     auto pointer = new (address) type(il, std::forward<Args>(args)...);
     set_index(I);
     return *pointer;
@@ -1184,6 +1184,18 @@ constexpr bool operator>=(const variant<Types...> &x,
 }
 
 /// @}
+
+struct monostate
+{
+};
+
+namespace detail {
+inline constexpr compare_result compare(const monostate &,
+                                        const monostate &) noexcept
+{
+  return compare_result::equal;
+}
+} // namespace detail
 
 #ifndef GPCL_DOXYGEN
 template <typename... Types>
