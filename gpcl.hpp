@@ -84,6 +84,7 @@
 #include <gpcl/unique_lock.hpp>
 #include <gpcl/unique_ptr.hpp>
 #include <gpcl/unique_resource.hpp>
+#include <gpcl/variant.hpp>
 #include <gpcl/vector.hpp>
 #include <gpcl/version.hpp>
 #include <gpcl/weak_ptr.hpp>
