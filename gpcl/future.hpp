@@ -20,7 +20,7 @@
 #include "gpcl/shared_ptr.hpp"
 #include "gpcl/thread.hpp"
 #include "gpcl/unique_lock.hpp"
-#include <variant>
+#include "gpcl/variant.hpp"
 
 namespace gpcl {
 
@@ -30,7 +30,7 @@ class shared_state
 {
   mutex mtx_;
   event ev_;
-  std::variant<std::monostate, T, error_code> result_;
+  variant<monostate, T, error_code> result_;
 
 public:
   unique_lock<mutex> lock() { return unique_lock<mutex>(mtx_); }
@@ -40,7 +40,7 @@ public:
     GPCL_ASSERT(lock.owns_lock());
     GPCL_ASSERT(&lock.mutex() == &mtx_);
     GPCL_ASSERT(result_.index() == 0);
-    result_.template emplace<1>(std::move(value));
+    result_.template emplace<1>(move(value));
     ev_.unlock_and_signal_one(lock);
   }
 
@@ -88,11 +88,11 @@ public:
     if (result_.index() == 1)
     {
       error = {};
-      return &std::get<T>(result_);
+      return &gpcl::get<T>(result_);
     }
     else if (result_.index() == 2)
     {
-      error = std::get<error_code>(result_);
+      error = gpcl::get<error_code>(result_);
     }
 
     GPCL_UNREACHABLE("invalid use of unlock and signal one");
