@@ -49,7 +49,6 @@ class basic_any
   any_manage_func_t manage_ = nullptr;
 
 public:
-
   /// @name Constructors
   /// @{
 
@@ -220,17 +219,6 @@ public:
   /// Determines if the basic_any contains a value.
   bool has_value() const noexcept { return manage_; }
 
-  /// Determines if the basic_any contains a value of type `T`.
-  template <typename T>
-  bool has_type() const
-  {
-#ifdef GPCL_NO_RTTI
-    return false;
-#else
-    return type() == typeid(T);
-#endif
-  }
-
 #ifndef GPCL_NO_RTTI
   /// Returns the type info of the contained value.
   const std::type_info &type() const noexcept
@@ -244,6 +232,18 @@ public:
 
   /// @}
 };
+
+/// Determines if the basic_any contains a value of type `T`.
+/// @relates gpcl::basic_any
+template <typename T, std::size_t S, std::size_t A>
+bool holds_type(const basic_any<S, A> &a)
+{
+#ifdef GPCL_NO_RTTI
+  GPCL_UNREACHABLE("unsupported");
+#else
+  return a.type() == typeid(T);
+#endif
+}
 
 namespace swap_detail {
 template <std::size_t LocalSize, std::size_t LocalAlign>

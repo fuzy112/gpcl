@@ -42,7 +42,7 @@ T *any_cast_unchecked(basic_any<LocalSize, LocalAlign> *x)
 template <typename T, std::size_t LocalSize, std::size_t LocalAlign>
 T any_cast(const basic_any<LocalSize, LocalAlign> &x)
 {
-  if (!x.template has_type<T>())
+  if (!holds_type<T>(x))
     GPCL_THROW(bad_any_cast());
   return *any_cast_unchecked<T>(&x);
 }
@@ -50,7 +50,7 @@ T any_cast(const basic_any<LocalSize, LocalAlign> &x)
 template <typename T, std::size_t LocalSize, std::size_t LocalAlign>
 T any_cast(basic_any<LocalSize, LocalAlign> &x)
 {
-  if (!x.template has_type<T>())
+  if (!holds_type<T>(x))
     GPCL_THROW(bad_any_cast());
   return *any_cast_unchecked<T>(&x);
 }
@@ -58,7 +58,7 @@ T any_cast(basic_any<LocalSize, LocalAlign> &x)
 template <typename T, std::size_t LocalSize, std::size_t LocalAlign>
 T any_cast(basic_any<LocalSize, LocalAlign> &&x)
 {
-  if (!x.template has_type<T>())
+  if (!holds_type<T>(x))
     GPCL_THROW(bad_any_cast());
   return std::move(*any_cast_unchecked<T>(&x));
 }
@@ -69,7 +69,7 @@ const T *any_cast(const basic_any<LocalSize, LocalAlign> *x) noexcept
   if (!x)
     return nullptr;
 
-  if (!x->template has_type<T>())
+  if (!holds_type<T>(*x))
     return nullptr;
 
   return any_cast_unchecked<T>(x);
@@ -81,7 +81,7 @@ T *any_cast(basic_any<LocalSize, LocalAlign> *x) noexcept
   if (!x)
     return nullptr;
 
-  if (!x->template has_type<T>())
+  if (!holds_type<T>(*x))
     return nullptr;
 
   return any_cast_unchecked<T>(x);
