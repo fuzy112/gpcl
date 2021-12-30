@@ -45,37 +45,79 @@ public:
 
 namespace detail {
 
-template <typename Target>
-struct lexical_cast_str_impl;
+template <typename CharType, typename Source>
+class lexical_cast_istream : public std::basic_stringstream<CharType>
+{
+public:
+  explicit lexical_cast_istream(const Source &arg) { (*this) << arg; }
+};
 
 template <typename CharType>
-struct lexical_cast_str_impl<std::basic_string<CharType>>
+class lexical_cast_istream<CharType, std::basic_string<CharType>>
+    : public std::basic_istringstream<CharType>
 {
-  using target_type = std::basic_string<CharType>;
-
-  template <typename Source>
-  target_type operator()(const Source &arg) const
+public:
+  explicit lexical_cast_istream(const std::basic_string<CharType> &s)
+      : std::basic_istringstream<CharType>(s)
   {
-    if constexpr (is_output_streamable<Source, std::basic_ostream<CharType>>())
-    {
-      std::basic_stringstream<CharType> ss;
-      ss << arg;
-      if (!ss)
-        GPCL_THROW(bad_lexical_cast());
-      return ss.str();
-    }
-
-    else
-    {
-      GPCL_UNREACHABLE("cannot cast such type");
-    }
-  }
-
-  target_type operator()(const CharType *s, std::size_t n) const
-  {
-    return target_type(s, n);
   }
 };
+
+template <typename CharType>
+class lexical_cast_streambuf : public std::basic_streambuf<CharType>
+{
+public:
+  lexical_cast_streambuf(const CharType *s, std::size_t n)
+  {
+    auto p = const_cast<CharType *>(s);
+    this->setg(p, p, p + n);
+  }
+
+  std::basic_string<CharType> str() const
+  {
+    return std::basic_string<CharType>(this->gptr(), this->egptr());
+  }
+};
+
+template <typename CharType>
+class lexical_cast_istringstream : private lexical_cast_streambuf<CharType>,
+                                   public std::basic_istream<CharType>
+{
+public:
+  lexical_cast_istringstream(const CharType *s, std::size_t n)
+      : lexical_cast_streambuf<CharType>(s, n),
+        std::basic_istream<CharType>(
+            static_cast<std::basic_streambuf<CharType> *>(this))
+  {
+  }
+};
+
+template <typename StrStream, typename CharType>
+void lexical_cast_extract_result(StrStream &is,
+                                 std::basic_string<CharType> &result)
+{
+  if (is)
+  {
+    result = is.str();
+    return;
+  }
+
+  GPCL_THROW(bad_lexical_cast());
+}
+
+template <typename Stream, typename Target>
+void lexical_cast_extract_result(Stream &is, Target &result)
+{
+  if (is)
+  {
+    is >> result;
+
+    if (is && is.eof())
+      return;
+  }
+
+  GPCL_THROW(bad_lexical_cast());
+}
 
 template <typename Target>
 struct lexical_cast_impl
@@ -86,78 +128,38 @@ struct lexical_cast_impl
   template <typename Source, bool False = false>
   Target operator()(const Source &arg) const
   {
+    Target result{};
+
     if constexpr (is_output_streamable<Source, std::ostream>() &&
                   is_input_streamable<Target, std::istream>())
     {
-      std::stringstream ss;
-      ss << arg;
-      return extract_result(ss);
+      lexical_cast_istream<char, Source> is(arg);
+      lexical_cast_extract_result(is, result);
     }
 
     else if constexpr (is_output_streamable<Source, std::wostream>() &&
                        is_input_streamable<Target, std::wistream>())
     {
-      std::wstringstream ss;
-      ss << arg;
-      return extract_result(ss);
+      lexical_cast_istream<wchar_t, Source> is(arg);
+      lexical_cast_extract_result(is, result);
     }
 
     else
     {
       GPCL_UNREACHABLE("cannot cast such type");
     }
+
+    return result;
   }
 
   template <typename CharType>
   Target operator()(const CharType *s, std::size_t n) const
   {
-    class streambuf : public std::basic_streambuf<CharType>
-    {
-    public:
-      streambuf(const CharType *s, std::size_t n)
-      {
-        auto p = const_cast<CharType *>(s);
-        this->setg(p, p, p + n);
-      }
-    };
-
-    class istream : private streambuf, public std::basic_istream<CharType>
-    {
-    public:
-      istream(const CharType *s, std::size_t n)
-          : streambuf(s, n),
-            std::basic_istream<CharType>(this)
-      {
-      }
-    };
-
-    istream is(s, n);
-
-    return extract_result(is);
+    Target result{};
+    lexical_cast_istringstream<CharType> is(s, n);
+    lexical_cast_extract_result(is, result);
+    return result;
   }
-
-  template <typename CharType>
-  static Target extract_result(std::basic_istream<CharType> &is)
-  {
-    if (is)
-    {
-      Target result{};
-      is >> result;
-
-      if (is && is.eof())
-        return result;
-    }
-    GPCL_THROW(bad_lexical_cast());
-  }
-};
-
-template <>
-struct lexical_cast_impl<std::string> : lexical_cast_str_impl<std::string>
-{
-};
-template <>
-struct lexical_cast_impl<std::wstring> : lexical_cast_str_impl<std::wstring>
-{
 };
 
 } // namespace detail
