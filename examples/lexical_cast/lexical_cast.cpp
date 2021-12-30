@@ -26,4 +26,14 @@ int main()
   std::cout << variant_to<int>(v) << std::endl;
   std::cout << variant_to<float>(v) << std::endl;
   std::cout << variant_to<std::string>(v) << std::endl;
+
+  GPCL_TRY 
+  { 
+    std::cout << variant_to<char>(v) << std::endl; 
+  }
+  GPCL_CATCH(gpcl::bad_lexical_cast const &e)
+  {
+    std::cout << e.what() << std::endl;
+  }
+  GPCL_CATCH_END
 }

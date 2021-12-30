@@ -89,6 +89,8 @@ struct lexical_cast_impl
       ss >> result;
       if (!ss)
         GPCL_THROW(bad_lexical_cast());
+      if (ss.get() != std::stringstream::traits_type::eof())
+        GPCL_THROW(bad_lexical_cast());
       return result;
     }
 
@@ -102,6 +104,8 @@ struct lexical_cast_impl
       Target result{};
       ss >> result;
       if (!ss)
+        GPCL_THROW(bad_lexical_cast());
+      if (ss.get() != std::wstringstream::traits_type::eof())
         GPCL_THROW(bad_lexical_cast());
       return result;
     }
