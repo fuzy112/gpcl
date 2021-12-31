@@ -2,6 +2,7 @@
 #define GPCL_BASIC_SYNCBUF_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/error.hpp>
 #include <gpcl/mutex.hpp>
 #include <gpcl/swap.hpp>
 #include <gpcl/unique_lock.hpp>
@@ -175,9 +176,12 @@ protected:
     return 0;
   }
 
-  typename Traits::int_type
-  overflow(typename Traits::int_type ch = Traits::eof()) override
+  using int_type = typename Traits::int_type;
+
+  /// Appends a character to the internal buffer.
+  int_type overflow(int_type ch = Traits::eof()) override 
   {
+    // clang-format off
     GPCL_TRY
     {
       if (Traits::eq_int_type(ch, Traits::eof()))
@@ -186,7 +190,22 @@ protected:
       buffer_.push_back(ch);
       return Traits::eof() + 1;
     }
-    GPCL_CATCH(...) { return Traits::eof(); }
+    GPCL_CATCH(...)
+    {
+      return Traits::eof();
+    }
+    GPCL_CATCH_END
+    // clang-format on
+  }
+
+  std::streamsize xsputn(const CharType *s, std::streamsize count) noexcept override 
+  {
+    GPCL_TRY
+    {
+      buffer_.append(s, count);
+      return count;
+    }
+    GPCL_CATCH(...) { return 0; }
     GPCL_CATCH_END
   }
 };
