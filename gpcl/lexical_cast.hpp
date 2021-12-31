@@ -1,7 +1,18 @@
+//
+// lexical_cast.hpp
+// ~~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
 #ifndef GPCL_LEXICAL_CAST_HPP
 #define GPCL_LEXICAL_CAST_HPP
 
 #include <gpcl/error.hpp>
+#include <gpcl/basic_spanstream.hpp>
 
 #include <cstring>
 #include <exception>
@@ -64,38 +75,7 @@ public:
 };
 
 template <typename CharType>
-class lexical_cast_streambuf : public std::basic_streambuf<CharType>
-{
-public:
-  lexical_cast_streambuf(const CharType *s, std::size_t n)
-  {
-    auto p = const_cast<CharType *>(s);
-    this->setg(p, p, p + n);
-  }
-
-  std::basic_string<CharType> str() const
-  {
-    return std::basic_string<CharType>(this->gptr(), this->egptr());
-  }
-};
-
-template <typename CharType>
-class lexical_cast_istringstream : private lexical_cast_streambuf<CharType>,
-                                   public std::basic_istream<CharType>
-{
-public:
-  lexical_cast_istringstream(const CharType *s, std::size_t n)
-      : lexical_cast_streambuf<CharType>(s, n),
-        std::basic_istream<CharType>(
-            static_cast<std::basic_streambuf<CharType> *>(this))
-  {
-  }
-
-  using lexical_cast_streambuf<CharType>::str;
-};
-
-template <typename StrStream, typename CharType>
-void lexical_cast_extract_result(StrStream &is,
+void lexical_cast_extract_result(std::basic_istringstream<CharType> &is,
                                  std::basic_string<CharType> &result)
 {
   if (is)
@@ -107,8 +87,39 @@ void lexical_cast_extract_result(StrStream &is,
   GPCL_THROW(bad_lexical_cast());
 }
 
-template <typename Stream, typename Target>
-void lexical_cast_extract_result(Stream &is, Target &result)
+template <typename CharType>
+void lexical_cast_extract_result(std::basic_istream<CharType> &is,
+                                 std::basic_string<CharType> &result)
+{
+  if (is)
+  {
+    std::basic_stringbuf<CharType> buf;
+    is >> &buf;
+    result = buf.str();
+    return;
+  }
+
+  GPCL_THROW(bad_lexical_cast());
+}
+
+
+template <typename CharType>
+void lexical_cast_extract_result(basic_ispanstream<CharType> &is,
+                                 std::basic_string<CharType> &result)
+{
+  if (is)
+  {
+    auto span = is.span();
+    result.assign(span.data(), span.size());
+    return;
+  }
+
+  GPCL_THROW(bad_lexical_cast());
+}
+
+
+template <typename CharType, typename Target>
+void lexical_cast_extract_result(std::basic_istream<CharType> &is, Target &result)
 {
   if (is)
   {
@@ -158,7 +169,7 @@ struct lexical_cast_impl
   Target operator()(const CharType *s, std::size_t n) const
   {
     Target result{};
-    lexical_cast_istringstream<CharType> is(s, n);
+    basic_ispanstream<CharType> is(span<CharType>(const_cast<CharType *>(s), n));
     lexical_cast_extract_result(is, result);
     return result;
   }

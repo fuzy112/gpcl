@@ -38,4 +38,6 @@ int main()
   GPCL_CATCH_END
 
   std::cout << lexical_cast<int>("123456", 3) << std::endl;
+
+  std::cout << lexical_cast<std::string>("123456", 3) << std::endl;
 }
