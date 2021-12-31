@@ -90,6 +90,8 @@ public:
             static_cast<std::basic_streambuf<CharType> *>(this))
   {
   }
+
+  using lexical_cast_streambuf<CharType>::str;
 };
 
 template <typename StrStream, typename CharType>
