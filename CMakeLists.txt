@@ -51,9 +51,24 @@ if (UNIX)
 	# target_compile_options(gpcl INTERFACE "-fno-exceptions")
 endif ()
 
+
+include (FetchContent)
+FetchContent_Declare(
+	cppref
+	URL https://upload.cppreference.com/mwiki/images/1/16/html_book_20190607.tar.xz
+)
+
 find_package(Doxygen)
 
+option (GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE "link to external cppreference documentation" TRUE)
+
 if (Doxygen_FOUND)
+	FetchContent_MakeAvailable(cppref)
+	if (GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE)
+		list (APPEND DOXYGEN_TAGFILES "${cppref_SOURCE_DIR}/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/")
+	else ()
+		list (APPEND DOXYGEN_TAGFILES "${cppref_SOURCE_DIR}/cppreference-doxygen-local.tag.xml=${cppref_SOURCE_DIR}/reference/en/")
+	endif ()
 	set (DOXYGEN_PREDEFINED GPCL_DOXYGEN)
 	set (DOXYGEN_JAVADOC_AUTOBRIEF YES)
 	set (DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
