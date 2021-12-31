@@ -23,7 +23,7 @@ class basic_spanbuf : public std::basic_streambuf<CharType, Traits>
 {
   std::ios_base::openmode openmode_;
 
-  using span_type = class span<CharType>;
+  using span_type = gpcl::span<CharType>;
 
   span_type span_;
 
