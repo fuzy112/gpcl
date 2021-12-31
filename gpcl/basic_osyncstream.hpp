@@ -80,7 +80,7 @@ public:
   void emit()
   {
     if (!rdbuf()->emit())
-      this->set_state(std::ios_base::failbit);
+      this->setstate(std::ios_base::failbit);
   }
 };
 

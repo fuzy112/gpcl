@@ -17,6 +17,7 @@ inline static std::unordered_map<Streambuf *, mutex> streambuf_mutex_map{};
 
 }
 
+/// basic_syncbuf is a synchronized wrapper for a @ref std::basic_streambuf.
 template <typename CharType, typename Traits = std::char_traits<CharType>,
           typename Allocator = std::allocator<CharType>>
 class basic_syncbuf : public std::basic_streambuf<CharType, Traits>
@@ -26,6 +27,7 @@ public:
   using streambuf_type = std::basic_streambuf<CharType, Traits>;
 
 private:
+  // state flags.
   enum flags
   {
     none = 0,
@@ -34,17 +36,24 @@ private:
     pending_flush = 1 << 1,
   };
 
+  // the wrapped streambuf.
   std::basic_streambuf<CharType, Traits> *wrapped_;
 
   unsigned char flag_;
 
+  // internal buffer for temporary storage.
   std::basic_string<CharType, Traits, Allocator> buffer_;
 
+  // mutex which protects the wrapped buffer.
   mutex *mutex_;
 
 public:
+  /// Construct a basic_syncbuf with no wrapped streambuf.
   basic_syncbuf() : basic_syncbuf(nullptr) {}
 
+  /// @brief Construct a basic_syncbuf with emit-on-sync policy set to false,
+  /// wrapped streambuf set to @c buffer, and using @c alloc as the allocator
+  /// for temporary storage.
   explicit basic_syncbuf(streambuf_type *buffer,
                          const Allocator &alloc = Allocator())
       : wrapped_(buffer),
@@ -52,9 +61,11 @@ public:
         buffer_(alloc),
         mutex_(&detail::streambuf_mutex_map<streambuf_type>[buffer])
   {
-    this->setp(&buffer_[0], &buffer_[0] + buffer_.size());
   }
 
+  /// Move constructor.
+  ///
+  /// @post other.get_wrapped() == nullptr.
   basic_syncbuf(basic_syncbuf &&other)
       : streambuf_type(other),
         wrapped_(other.wrapped_),
@@ -67,6 +78,9 @@ public:
     other.mutex_ = nullptr;
   }
 
+  /// Move assignment.
+  ///
+  /// @post other.get_wrapped() == nullptr.
   basic_syncbuf &operator=(basic_syncbuf &&other)
   {
     emit();
@@ -84,6 +98,7 @@ public:
     return *this;
   }
 
+  /// Swaps two `basic_syncbuf` objects.
   void swap(basic_syncbuf &other) noexcept
   {
     streambuf_type::swap(other);
@@ -93,6 +108,9 @@ public:
     gpcl::swap(mutex_, other.mutex_);
   }
 
+  /// Destructor.
+  ///
+  /// Destroys the basic_syncbuf and emits its internal buffer .
   ~basic_syncbuf()
   {
     GPCL_TRY { emit(); }
@@ -100,6 +118,8 @@ public:
     GPCL_CATCH_END
   }
 
+  ///  Atomically transmits the entire internal buffer to the wrapped streambuf
+  ///  .
   bool emit()
   {
     if (!wrapped_)
@@ -114,19 +134,22 @@ public:
     if (flag_ & pending_flush)
     {
       flag_ &= ~pending_flush;
-      if (this->pubsync() != 0)
+      if (wrapped_->pubsync() != 0)
         return false;
     }
     return buffer_.empty();
   }
 
+  /// Retrieves the wrapped streambuf pointer.
   streambuf_type *get_wrapped() const noexcept { return wrapped_; }
 
+  /// Retrieves the allocator used by this basic_syncbuf.
   allocator_type get_allocator() const noexcept
   {
     return buffer_.get_allocator();
   }
 
+  /// Changes the current emit-on-sync policy.
   void set_emit_on_sync(bool b) noexcept
   {
     if (b)
@@ -136,19 +159,36 @@ public:
   }
 
 protected:
+  /// Either emits, or records a pending flush, depending on the current
+  /// emit-on-sync policy.
   int sync() override
   {
     flag_ |= pending_flush;
 
-    if (flag_ & emit_on_sync)
-      return emit() ? 0 : -1;
-
+    GPCL_TRY
+    {
+      if (flag_ & emit_on_sync)
+        return emit() ? 0 : -1;
+    }
+    GPCL_CATCH(...) { return -1; }
+    GPCL_CATCH_END
     return 0;
   }
 
-//   typename
-//   Traits::int_type
-//   overflow()
+  typename Traits::int_type
+  overflow(typename Traits::int_type ch = Traits::eof()) override
+  {
+    GPCL_TRY
+    {
+      if (Traits::eq_int_type(ch, Traits::eof()))
+        return Traits::eof() + 1;
+
+      buffer_.push_back(ch);
+      return Traits::eof() + 1;
+    }
+    GPCL_CATCH(...) { return Traits::eof(); }
+    GPCL_CATCH_END
+  }
 };
 
 using syncbuf = basic_syncbuf<char>;
