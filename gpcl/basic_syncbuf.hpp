@@ -4,8 +4,10 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/mutex.hpp>
+#include <gpcl/shared_ptr.hpp>
 #include <gpcl/swap.hpp>
 #include <gpcl/unique_lock.hpp>
+#include <gpcl/weak_ptr.hpp>
 
 #include <streambuf>
 #include <unordered_map>
@@ -13,10 +15,50 @@
 namespace gpcl {
 namespace detail {
 
-template <typename Streambuf>
-inline static std::unordered_map<Streambuf *, mutex> streambuf_mutex_map{};
+template <typename CharType, typename Traits>
+shared_ptr<mutex>
+get_mutex_for(std::basic_streambuf<CharType, Traits> const *streambuf)
+{
+  using streambuf_type = std::basic_streambuf<CharType, Traits>;
 
+  static recursive_mutex map_mutex;
+  static std::unordered_map<const streambuf_type *, weak_ptr<mutex>> map;
+
+  unique_lock<recursive_mutex> lock(map_mutex);
+
+  auto &wp = map[streambuf];
+  if (auto sp = wp.lock())
+    return sp;
+
+  struct mutex_deleter
+  {
+    const streambuf_type *streambuf_;
+
+    mutex mutex_;
+
+    explicit mutex_deleter(streambuf_type const *s) : streambuf_(s), mutex_() {}
+
+    ~mutex_deleter()
+    {
+      unique_lock<recursive_mutex> lock(map_mutex);
+      auto it = map.find(streambuf_);
+      if (it != map.cend())
+      {
+        GPCL_ASSERT(it->second.lock().get() == &mutex_);
+      }
+    }
+  };
+  auto sp_mutex_deleter = make_shared<mutex_deleter>(streambuf);
+  shared_ptr<mutex> sp(sp_mutex_deleter, &sp_mutex_deleter->mutex_);
+
+#if defined GPCL_POSIX
+  unique_lock<mutex> lock_dummy(*sp); // ensure the mutex is initialized
+#endif
+  wp = sp;
+  return sp;
 }
+
+} // namespace detail
 
 /// basic_syncbuf is a synchronized wrapper for a @ref std::basic_streambuf.
 template <typename CharType, typename Traits = std::char_traits<CharType>,
@@ -38,15 +80,15 @@ private:
   };
 
   // the wrapped streambuf.
-  std::basic_streambuf<CharType, Traits> *wrapped_;
+  std::basic_streambuf<CharType, Traits> *wrapped_ = nullptr;
 
-  unsigned char flag_;
+  unsigned char flag_ = none;
 
   // internal buffer for temporary storage.
   std::basic_string<CharType, Traits, Allocator> buffer_;
 
   // mutex which protects the wrapped buffer.
-  mutex *mutex_;
+  shared_ptr<mutex> mutex_ = detail::get_mutex_for(wrapped_);
 
 public:
   /// Construct a basic_syncbuf with no wrapped streambuf.
@@ -58,9 +100,7 @@ public:
   explicit basic_syncbuf(streambuf_type *buffer,
                          const Allocator &alloc = Allocator())
       : wrapped_(buffer),
-        flag_(none),
-        buffer_(alloc),
-        mutex_(&detail::streambuf_mutex_map<streambuf_type>[buffer])
+        buffer_(alloc)
   {
   }
 
@@ -179,26 +219,23 @@ protected:
   using int_type = typename Traits::int_type;
 
   /// Appends a character to the internal buffer.
-  int_type overflow(int_type ch = Traits::eof()) override 
+  int_type overflow(int_type ch = Traits::eof()) override
   {
-    // clang-format off
     GPCL_TRY
     {
       if (Traits::eq_int_type(ch, Traits::eof()))
-        return Traits::eof() + 1;
+        return ~Traits::eof();
 
       buffer_.push_back(ch);
-      return Traits::eof() + 1;
+      return ~Traits::eof();
     }
-    GPCL_CATCH(...)
-    {
-      return Traits::eof();
-    }
+    GPCL_CATCH(...) { return Traits::eof(); }
     GPCL_CATCH_END
-    // clang-format on
+    return 0;
   }
 
-  std::streamsize xsputn(const CharType *s, std::streamsize count) noexcept override 
+  std::streamsize xsputn(const CharType *s,
+                         std::streamsize count) noexcept override
   {
     GPCL_TRY
     {
