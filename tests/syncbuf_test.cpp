@@ -7,5 +7,5 @@ TEST_CASE("syncbuf mutex map test")
   auto pm1 = gpcl::detail::get_mutex_for_address(p);
   auto pm2 = gpcl_syncbuf_test::get_mutex_for_address(p);
 
-  REQUIRE(pm1.get() == pm2.get());
+  REQUIRE(pm1 == pm2);
 }

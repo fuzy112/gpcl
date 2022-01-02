@@ -35,8 +35,8 @@ private:
   /// destroy the ref_count itself then deallocate the memory.
   inline void delete_this() noexcept
   {
-    GPCL_ASSERT(this->use_count() == 0);
-    GPCL_ASSERT(this->weak_count() == 0);
+    GPCL_ASSERT_CONST(this->use_count() == 0);
+    GPCL_ASSERT_CONST(this->weak_count() == 0);
     rebind_allocator alloc{*this};
     auto p = static_cast<Derived *>(this);
     p->~Derived();
@@ -127,7 +127,7 @@ public:
   /// Delete the managed object.
   inline void delete_managed_object() noexcept
   {
-    GPCL_ASSERT(base_type::use_count() == 0);
+    GPCL_ASSERT_CONST(base_type::use_count() == 0);
     if (p_.first())
     {
       p_.second()(p_.first());

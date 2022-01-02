@@ -15,8 +15,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/ref_count_operation.hpp>
 
-#include <winbase.h>
-#include <winnt.h>
+#include <windows.h>
 
 namespace gpcl {
 namespace detail {
@@ -39,7 +38,7 @@ public:
   void put() noexcept
   {
     LONG prev_use_count = InterlockedDecrement(&use_count_) + 1;
-    GPCL_ASSERT(prev_use_count > 0);
+    GPCL_ASSERT_CONST(prev_use_count > 0);
     if (prev_use_count == 1)
     {
       operate(destroy_managed_object);
@@ -67,7 +66,7 @@ public:
   {
     if (InterlockedDecrement(&weak_count_) == 0)
     {
-      GPCL_ASSERT(use_count() == 0);
+      GPCL_ASSERT_CONST(use_count() == 0);
       operate(delete_control_block);
     }
   }

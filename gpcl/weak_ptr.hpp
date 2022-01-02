@@ -83,6 +83,9 @@ public:
   {
     if (s_)
       s_->weak_put();
+    
+    p_ = nullptr;
+    s_ = nullptr;
   }
 
   /// Copy assignment.

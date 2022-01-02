@@ -2,44 +2,73 @@
 #define GPCL_DETAIL_IMPL_GET_MUTEX_FOR_ADDRESS_IPP
 
 #include <gpcl/detail/get_mutex_for_address.hpp>
+#include <gpcl/pool_allocator.hpp>
 #include <gpcl/unique_lock.hpp>
 #include <gpcl/weak_ptr.hpp>
 
 #include <unordered_map>
 
 namespace gpcl::detail {
-    
+
+class mt_map
+{
+  recursive_mutex mutex_;
+  std::unordered_map<const void *, weak_ptr<mutex>> map_;
+
+public:
+  shared_ptr<std::unordered_map<const void *, weak_ptr<mutex>>> lock()
+  {
+    unique_lock<recursive_mutex> lk(mutex_);
+    shared_ptr<std::unordered_map<const void *, weak_ptr<mutex>>> result(
+        &map_, [this](void *) mutable { this->mutex_.unlock(); });
+    lk.release();
+    return result;
+  }
+};
+
+struct mutex_deleter
+{
+  const void *key_;
+
+  shared_ptr<mt_map> mutex_map_;
+  mutex mutex_;
+
+  explicit mutex_deleter(shared_ptr<mt_map> mutex_map, void const *s)
+      : mutex_map_(std::move(mutex_map)),
+        key_(s),
+        mutex_()
+  {
+  }
+
+  ~mutex_deleter()
+  {
+    GPCL_TRY
+    {
+      auto map = mutex_map_->lock();
+      auto it = map->find(key_);
+      if (it != map->cend())
+      {
+        if (it->second.lock().get() == &mutex_)
+          map->erase(it);
+      }
+    }
+    GPCL_CATCH(...) {}
+    GPCL_CATCH_END
+  }
+};
+
 shared_ptr<mutex> get_mutex_for_address(void const *key)
 {
-  static recursive_mutex map_mutex;
-  static std::unordered_map<const void *, weak_ptr<mutex>> map;
+  static const shared_ptr<mt_map> mutex_map = make_shared<mt_map>();
+  if (!mutex_map)
+    return shared_ptr<mutex>();
 
-  unique_lock<recursive_mutex> lock(map_mutex);
-
-  auto &wp = map[key];
+  auto map = mutex_map->lock();
+  auto &wp = (*map)[key];
   if (auto sp = wp.lock())
     return sp;
 
-  struct mutex_deleter
-  {
-    const void *key_;
-
-    mutex mutex_;
-
-    explicit mutex_deleter(void const *s) : key_(s), mutex_() {}
-
-    ~mutex_deleter()
-    {
-      unique_lock<recursive_mutex> lock(map_mutex);
-      auto it = map.find(key_);
-      if (it != map.cend())
-      {
-        GPCL_ASSERT(it->second.lock().get() == &mutex_);
-        map.erase(it);
-      }
-    }
-  };
-  auto sp_mutex_deleter = gpcl::make_shared<mutex_deleter>(key);
+  auto sp_mutex_deleter = gpcl::make_shared<mutex_deleter>(mutex_map, key);
   shared_ptr<mutex> sp(sp_mutex_deleter, &sp_mutex_deleter->mutex_);
 
 #if defined GPCL_POSIX

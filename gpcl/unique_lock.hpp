@@ -105,15 +105,15 @@ public:
 
   auto release() noexcept -> void
   {
-    GPCL_ASSERT(owns_lock_);
-    GPCL_ASSERT(mtx_);
+    GPCL_ASSERT_CONST(owns_lock_);
+    GPCL_ASSERT_CONST(mtx_);
     owns_lock_ = false;
     mtx_ = nullptr;
   }
 
   void lock()
   {
-    GPCL_ASSERT(owns_lock_ == false);
+    GPCL_ASSERT_CONST(owns_lock_ == false);
     mutex().lock();
     owns_lock_ = true;
   }
@@ -122,14 +122,14 @@ public:
             typename std::enable_if<is_lockable<T>::value, int>::type = 0>
   bool try_lock()
   {
-    GPCL_ASSERT(owns_lock_ == false);
+    GPCL_ASSERT_CONST(owns_lock_ == false);
     owns_lock_ = mutex().try_lock();
     return owns_lock_;
   }
 
   void unlock()
   {
-    GPCL_ASSERT(owns_lock_);
+    GPCL_ASSERT_CONST(owns_lock_);
     mutex().unlock();
     owns_lock_ = false;
   }

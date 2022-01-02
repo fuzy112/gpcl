@@ -8,18 +8,18 @@
 struct Foo
 {
   Foo(int num) : num_(num) {}
-  void print_add(int i) const { std::cout << num_ + i << '\n'; }
+  void print_add(int i) const { }
   int num_;
 };
 
 void print_num(int i)
 {
-  std::cout << i << '\n';
+  // std::cout << i << '\n';
 }
 
 struct PrintNum
 {
-  void operator()(int i) const { std::cout << i << '\n'; }
+  void operator()(int i) const {  }
 };
 
 TEST_CASE("function")

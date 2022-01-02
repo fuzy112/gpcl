@@ -15,6 +15,8 @@
 #include <gpcl/detail/ref_count.hpp>
 #include <gpcl/swap.hpp>
 
+#include <ostream>
+
 namespace gpcl {
 
 template <typename T>
@@ -255,13 +257,13 @@ public:
   {
   }
 
-
-
   /// Destructs the owned object if no more `shared_ptr`s link to it.
   ~shared_ptr()
   {
     if (s_)
       s_->put();
+    s_ = nullptr;
+    p_ = nullptr;
   }
 
   /// @}
@@ -381,7 +383,7 @@ public:
   template <typename U = T>
   std::enable_if_t<!std::is_void_v<U>, element_type> &operator*() const noexcept
   {
-    GPCL_ASSERT(get());
+    GPCL_ASSERT_CONST(get());
     return *get();
   }
 
@@ -393,7 +395,7 @@ public:
    */
   element_type *operator->() const noexcept
   {
-    GPCL_ASSERT(get());
+    GPCL_ASSERT_CONST(get());
     return get();
   }
 
@@ -573,6 +575,16 @@ shared_ptr<T> reinterpret_pointer_cast(const shared_ptr<U> &p) noexcept
 }
 
 /// @}
+
+template <typename CharType, typename Traits, typename T,
+          typename = std::void_t<
+              decltype(std::declval<std::basic_ostream<CharType, Traits> &>()
+                       << std::declval<T *>())>>
+std::basic_ostream<CharType, Traits> &
+operator<<(std::basic_ostream<CharType, Traits> &os, const shared_ptr<T> &p)
+{
+  return os << p.get();
+}
 
 /// @}
 

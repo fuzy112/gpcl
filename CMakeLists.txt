@@ -12,21 +12,25 @@ cmake_minimum_required(VERSION 3.16)
 
 project(GPCL CXX)
 
-include(GNUInstallDirs)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
 
-if (MINGW)
-    add_compile_options(-Wa,-mbig-obj)
-endif ()
-
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_SUFFIX})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_SUFFIX})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+option(GPCL_BUILD_TESTING "enable testing support" ON)
+set (BUILD_TESTING ${GPCL_BUILD_TESTING})
+
+include(CTest)
+include(GNUInstallDirs)
+
+if (MINGW)
+    add_compile_options(-Wa,-mbig-obj)
+endif ()
 
 find_package(Boost
     COMPONENTS system
@@ -87,10 +91,13 @@ endif ()
 
 
 add_subdirectory(lib)
-add_subdirectory(tests)
 add_subdirectory(tools)
 
 add_subdirectory(examples)
+
+if (BUILD_TESTING)
+	add_subdirectory(tests)
+endif ()
 
 install(DIRECTORY gpcl DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES gpcl.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
