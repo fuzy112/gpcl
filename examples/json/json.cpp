@@ -24,10 +24,13 @@ int main()
   m["3"] = 3;
   std::cout << m << std::endl;
 
-  m1.insert(
-      {"4", json::value_type::array({1, 2, "3", 4.0, true, false, nullptr})});
+  m1.insert("4", json::value_type::array({1, 2, "3", 4.5, true, nullptr}));
   m1.erase("2");
-
+  m1["4"].erase(1);
+  m1["integer"] = 100000;
+  m1["bool"] = false;
+  m1["string"] = "string";
+  m1["array"] = json::value_type::array();
   for (auto iter = m1.begin(); iter != m1.end(); ++iter)
   {
     std::cout << iter.key() << ": " << iter.value() << std::endl;

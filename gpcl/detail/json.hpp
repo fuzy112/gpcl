@@ -366,7 +366,13 @@ struct basic_json
 
     void operator()(integer_type i) const { get_ostream() << i; }
 
-    void operator()(float_type f) const { get_ostream() << f; }
+    void operator()(float_type f) const
+    {
+      typename ostream_type::sentry s(get_ostream());
+      if (!s)
+        return;
+      get_ostream() << std::setprecision(6) << f;
+    }
 
     void operator()(const string_type &s) const
     {
@@ -675,18 +681,23 @@ struct basic_json
 
     constexpr value_type(std::nullptr_t) {}
 
-    constexpr value_type(integer_type v) : value_type(integer_tag{}, v) {}
+    template <typename T,
+              std::enable_if_t<
+                  std::is_integral_v<T> && !std::is_same_v<T, bool>, int> = 0>
+    constexpr value_type(T v) //: value_type(integer_tag{}, v)
+    {
+      GPCL_TRY { data_ = narrow<integer_type>(v); }
+      GPCL_CATCH(...) { data_.template emplace<float_type>(v); }
+      GPCL_CATCH_END
+    }
 
     template <typename T,
-              std::enable_if_t<std::is_convertible_v<T, float_type> &&
-                                   !std::is_convertible_v<T, integer_type>,
-                               int> = 0>
+              std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
     constexpr value_type(T v) : value_type(float_tag{}, v)
     {
     }
 
-    template <typename B,
-              std::enable_if_t<std::is_same_v<std::decay_t<B>, bool>, int> = 0>
+    template <typename B, std::enable_if_t<std::is_same_v<B, bool>, int> = 0>
     constexpr value_type(B v) : value_type(boolean_tag{}, v)
     {
     }
@@ -746,21 +757,21 @@ struct basic_json
     {
     }
 
-    template <typename T, typename Allocator,
+    template <typename T, typename A,
               typename std::enable_if<std::is_convertible<T, value_type>::value,
                                       int>::type = 0>
-    constexpr explicit value_type(VectorType<T, Allocator> const &vec)
+    constexpr explicit value_type(VectorType<T, A> const &vec)
         : value_type(array_tag{}, vec.begin(), vec.end())
     {
     }
 
-    template <typename K, typename V, typename Allocator,
+    template <typename K, typename V, typename A,
               typename std::enable_if<
                   std::is_convertible<
                       std::pair<const K, V>,
                       std::pair<const string_type, value_type>>::value,
                   int>::type = 0>
-    constexpr explicit value_type(MapType<K, V, Allocator> const &vec)
+    constexpr explicit value_type(MapType<K, V, A> const &vec)
         : value_type(object_tag{}, vec.begin(), vec.end())
     {
     }
@@ -1082,7 +1093,7 @@ struct basic_json
     void pop_back()
     {
       if (auto p = value_ptr<array_type>())
-        p->pop_back();
+        return p->pop_back();
 
       value<string_type>().push_back();
     }
@@ -1099,12 +1110,31 @@ struct basic_json
       return value<object_type>().insert(std::move(v));
     }
 
-    void erase(std::size_t pos)
+    template <typename T>
+    std::pair<const_iterator, bool> insert(const string_type &key, T &&mapped)
+    {
+      return insert(std::pair<const string_type, value_type>(
+          key, std::forward<T>(mapped)));
+    }
+
+    void erase(std::size_t pos, std::size_t count = 1)
     {
       if (auto p = value_ptr<array_type>())
-        p->erase(pos);
+      {
+        auto it = p->cbegin();
+        auto first = it + pos;
+        auto last = first + count;
+        p->erase(first, last);
+        return;
+      }
 
-      value<string_type>().erase(pos);
+      value<string_type>().erase(pos, count);
+    }
+
+    void erase(const_iterator it, std::size_t count)
+    {
+      value<array_type>().erase(
+          get<typename array_type::const_iterator>(it.data_), count);
     }
 
     void erase(const string_type &s) { value<object_type>().erase(s); }
@@ -1112,10 +1142,10 @@ struct basic_json
     void erase(const_iterator it)
     {
       if (auto p = value_ptr<array_type>())
-        p->erase(get<typename array_type::const_iterator>(it.data_));
+        return p->erase(get<typename array_type::const_iterator>(it.data_));
 
       if (auto p = value_ptr<object_type>())
-        p->erase(get<typename object_type::const_iterator>(it.data_));
+        return p->erase(get<typename object_type::const_iterator>(it.data_));
 
       GPCL_THROW(bad_json_access());
     }
