@@ -13,6 +13,7 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
+#include <gpcl/in_place_type.hpp>
 #include <gpcl/swap.hpp>
 
 #include <cstddef>
@@ -87,7 +88,6 @@ struct variant_alternative<I, variant<T, Types...>>
     : variant_alternative<I - 1, variant<Types...>>
 {
 };
-
 
 template <std::size_t I, typename T>
 struct variant_alternative<I, T const> : variant_alternative<I, T>
@@ -305,7 +305,7 @@ protected:
     if (other.index_ == I)
     {
       using type = variant_alternative_t<I, variant<Types...>>;
-      new (unsafe_get<type>(*this)) type{std::move(*(unsafe_get<type>(other)))};
+      new (unsafe_get<type>(this)) type{std::move(*(unsafe_get<type>(&other)))};
       this->index_ = I;
       return;
     }
@@ -392,7 +392,7 @@ protected:
     if (other.index_ == I)
     {
       using type = variant_alternative_t<I, variant<Types...>>;
-      new (unsafe_get<type>(*this)) type(*(unsafe_get<type>(other)));
+      new (unsafe_get<type>(this)) type(*(unsafe_get<type>(&other)));
       this->index_ = I;
       return;
     }
@@ -647,7 +647,7 @@ protected:
     if (other.index_ == I)
     {
       using type = variant_alternative_t<I, variant<Types...>>;
-      *(unsafe_get<type>(*this)) = *(unsafe_get<type>(other));
+      *(unsafe_get<type>(this)) = *(unsafe_get<type>(&other));
     }
     else
     {
@@ -684,6 +684,15 @@ public:
       : base_type()
   {
   }
+
+  constexpr variant_default_construct_base(
+      const variant_default_construct_base &) = default;
+  constexpr variant_default_construct_base(variant_default_construct_base &&) =
+      default;
+  constexpr variant_default_construct_base &
+  operator=(const variant_default_construct_base &) = default;
+  constexpr variant_default_construct_base &
+  operator=(variant_default_construct_base &&) = default;
 };
 
 template <typename... Types>
@@ -712,9 +721,18 @@ public:
   constexpr variant_default_construct_base() : base_type()
   {
     if constexpr (!std::is_trivially_default_constructible_v<first_type>)
-      new (unsafe_get<first_type>(*this)) first_type();
+      new (unsafe_get<first_type>(this)) first_type();
     this->index_ = 0;
   }
+
+  constexpr variant_default_construct_base(
+      const variant_default_construct_base &) = default;
+  constexpr variant_default_construct_base(variant_default_construct_base &&) =
+      default;
+  constexpr variant_default_construct_base &
+  operator=(const variant_default_construct_base &) = default;
+  constexpr variant_default_construct_base &
+  operator=(variant_default_construct_base &&) = default;
 };
 
 // ------------------ Convert Constructor --------------------------
@@ -759,6 +777,7 @@ class variant : public detail::variant_base<Types...>
   {
     GPCL_ASSERT_CONST(base_type::index_ == -1);
     base_type::index_ = i;
+    GPCL_ASSERT_CONST(base_type::index_ > -1);
   }
 
 public:
@@ -790,12 +809,21 @@ public:
       : base_type(detail::variant_noinit_tag{})
   {
     if constexpr (std::is_trivial_v<U>)
-      *static_cast<T *>(unsafe_get<U>(this)) = t;
+      *static_cast<U *>(unsafe_get<U>(this)) = t;
     else
       new (unsafe_get<U>(this)) U(std::forward<T>(t));
     set_index(detail::find_type_index<U, Types...>());
   }
 #endif
+
+  template <typename T, typename... Args>
+  constexpr variant(in_place_type_t<T>, Args &&...args)
+      : base_type(detail::variant_noinit_tag{})
+  {
+    new (unsafe_get<T>(this)) T(std::forward<Args>(args)...);
+    set_index(detail::find_type_index<T, Types...>());
+  }
+
   /// @}
 
   /// @name Assignment operators
@@ -827,7 +855,7 @@ public:
 
     this->reset();
     if constexpr (std::is_trivial_v<U>)
-      *static_cast<T *>(unsafe_get<U>(this)) = t;
+      *static_cast<U *>(unsafe_get<U>(this)) = t;
     else
       new (unsafe_get<U>(this)) U(std::forward<T>(t));
     set_index(detail::find_type_index<U, Types...>());
@@ -841,6 +869,7 @@ public:
   /// @{
   constexpr std::size_t index() const noexcept
   {
+    GPCL_ASSERT_CONST(base_type::index_ > -1);
     if (base_type::index_ == -1)
       return variant_npos;
     return base_type::index_;
@@ -855,21 +884,21 @@ public:
   /// @name Modifiers
   /// @{
   template <typename T, typename... Args>
-  constexpr T &emplace(Args &&... args)
+  constexpr T &emplace(Args &&...args)
   {
     return emplace<detail::find_type_index<T, Types...>::value>(
         std::forward<Args>(args)...);
   }
 
   template <typename T, typename U, typename... Args>
-  constexpr T &emplace(std::initializer_list<U> il, Args &&... args)
+  constexpr T &emplace(std::initializer_list<U> il, Args &&...args)
   {
     return emplace<detail::find_type_index<T, Types...>::value>(
         il, std::forward<Args>(args)...);
   }
 
   template <typename std::size_t I, typename... Args>
-  constexpr variant_alternative_t<I, variant> &emplace(Args &&... args)
+  constexpr variant_alternative_t<I, variant> &emplace(Args &&...args)
   {
     using type = variant_alternative_t<I, variant>;
     base_type::reset();
@@ -881,7 +910,7 @@ public:
 
   template <typename std::size_t I, typename U, typename... Args>
   constexpr variant_alternative_t<I, variant> &
-  emplace(std::initializer_list<U> il, Args &&... args)
+  emplace(std::initializer_list<U> il, Args &&...args)
   {
     using type = variant_alternative_t<I, variant>;
     base_type::reset();
@@ -1030,12 +1059,12 @@ struct visit_impl
 
   template <typename Visitor, typename Variant1, typename... Variants>
   constexpr decltype(auto) operator()(Visitor &&visitor, Variant1 &&variant1,
-                                      Variants &&... variants) const
+                                      Variants &&...variants) const
   {
     return (*this)(
-        [&](auto &&... values) {
+        [&](auto &&... values) -> decltype(auto) {
           return apply_visitor(
-              [&](auto &&value1) {
+              [&](auto &&value1) -> decltype(auto) {
                 return std::invoke(std::forward<Visitor>(visitor),
                                    std::forward<decltype(value1)>(value1),
                                    std::forward<decltype(values)>(values)...);
@@ -1046,45 +1075,71 @@ struct visit_impl
   }
 
 private:
-  template <typename R, typename Visitor, typename Variant, bool False = false>
-  static constexpr R apply_visitor_impl(Visitor &&, Variant &&,
-                                        std::index_sequence<>)
-  {
-    GPCL_THROW(bad_variant_access());
-  }
-
-  template <typename R, typename Visitor, typename Variant, std::size_t I,
-            std::size_t... Is>
-  static constexpr R apply_visitor_impl(Visitor &&visitor, Variant &&variant_,
-                                        std::index_sequence<I, Is...>)
+  template <typename Visitor, typename Variant, std::size_t I>
+  static constexpr decltype(auto) apply_visitor_impl(Visitor &&visitor,
+                                                     Variant &&variant_,
+                                                     std::index_sequence<I>)
   {
     if (variant_.index() == I)
       return std::invoke(std::forward<Visitor>(visitor),
                          get<I>(std::forward<Variant>(variant_)));
-    return apply_visitor_impl<R>(std::forward<Visitor>(visitor),
-                                 std::forward<Variant>(variant_),
-                                 std::index_sequence<Is...>{});
+
+    GPCL_THROW(bad_variant_access());
   }
 
-  template <typename Visitor, typename Variant>
-  static constexpr decltype(auto) apply_visitor(Visitor &&visitor,
-                                                Variant &&variant_)
+  template <typename Visitor, typename Variant, std::size_t I, std::size_t J,
+            std::size_t... Is>
+  static constexpr decltype(auto)
+  apply_visitor_impl(Visitor &&visitor, Variant &&variant_,
+                     std::index_sequence<I, J, Is...>)
   {
-    using type_0 = variant_alternative_t<0, Variant>;
-    using result_type = std::invoke_result_t<Visitor, type_0>;
-    constexpr auto index_sequence =
-        std::make_index_sequence<variant_size_v<Variant>>();
+    if (variant_.index() == I)
+      return std::invoke(std::forward<Visitor>(visitor),
+                         get<I>(std::forward<Variant>(variant_)));
+    return apply_visitor_impl(std::forward<Visitor>(visitor),
+                              std::forward<Variant>(variant_),
+                              std::index_sequence<J, Is...>{});
+  }
 
-    return apply_visitor_impl<result_type>(std::forward<Visitor>(visitor),
-                                           std::forward<Variant>(variant_),
-                                           index_sequence);
+  template <typename Visitor, typename... Types>
+  static constexpr decltype(auto) apply_visitor(Visitor &&visitor,
+                                                variant<Types...> &variant_)
+  {
+    return apply_visitor_impl(std::forward<Visitor>(visitor), variant_,
+                              std::index_sequence_for<Types...>{});
+  }
+
+  template <typename Visitor, typename... Types>
+  static constexpr decltype(auto)
+  apply_visitor(Visitor &&visitor, const variant<Types...> &variant_)
+  {
+    return apply_visitor_impl(std::forward<Visitor>(visitor), variant_,
+                              std::index_sequence_for<Types...>{});
+  }
+
+  template <typename Visitor, typename... Types>
+  static constexpr decltype(auto) apply_visitor(Visitor &&visitor,
+                                                variant<Types...> &&variant_)
+  {
+    return apply_visitor_impl(std::forward<Visitor>(visitor),
+                              std::move(variant_),
+                              std::index_sequence_for<Types...>{});
+  }
+
+  template <typename Visitor, typename... Types>
+  static constexpr decltype(auto)
+  apply_visitor(Visitor &&visitor, variant<Types...> const &&variant_)
+  {
+    return apply_visitor_impl(std::forward<Visitor>(visitor),
+                              std::move(variant_),
+                              std::index_sequence_for<Types...>{});
   }
 };
 } // namespace detail
 
 #if defined GPCL_DOXYGEN
 template <typename Visitor, typename... Variants>
-constexpr decltype(auto) visit(Visitor &&visitor, Variants &&... variants);
+constexpr decltype(auto) visit(Visitor &&visitor, Variants &&...variants);
 #else
 constexpr detail::visit_impl visit{};
 #endif
@@ -1111,14 +1166,27 @@ enum class compare_result
   greater = 1,
 };
 
+template <typename T, typename = void>
+struct is_less_than_comparable : std::false_type
+{
+};
+
+template <typename T>
+struct is_less_than_comparable<
+    T, std::void_t<decltype(bool(std::declval<const T &>() <
+                                 std::declval<const T &>()))>> : std::true_type
+{
+};
+
 template <typename T>
 constexpr compare_result compare(const T &x, const T &y)
 {
   if (x == y)
     return compare_result::equal;
 
-  if (x < y)
-    return compare_result::less;
+  if constexpr (is_less_than_comparable<T>{})
+    if (x < y)
+      return compare_result::less;
 
   return compare_result::greater;
 }
@@ -1140,9 +1208,10 @@ constexpr compare_result compare(const variant<Types...> &x,
     return compare(x.index(), y.index());
 
   return visit(
-      [](auto const &a, auto const &b) {
+      [](auto const &a, auto const &b) -> compare_result {
         if constexpr (std::is_same_v<decltype(a), decltype(b)>)
           return compare(a, b);
+
         GPCL_UNREACHABLE("x and y should holds the same type");
       },
       x, y);
