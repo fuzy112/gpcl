@@ -23,6 +23,7 @@
 #include <gpcl/pmr/impl/new_delete_resource.ipp>
 #include <gpcl/pmr/impl/null_memory_resource.ipp>
 #include <gpcl/pmr/impl/tlsf_resource.ipp>
+#include <gpcl/impl/getopt.ipp>
 
 #ifdef GPCL_POSIX
 #  include <gpcl/detail/impl/futex.ipp>

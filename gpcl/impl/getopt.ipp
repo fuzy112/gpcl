@@ -135,6 +135,10 @@ handle_option:
 
 std::ostream &operator<<(std::ostream &out, const getopt &parser)
 {
+  std::ostream::sentry sentry(out);
+  if (!sentry)
+    return out;
+
   out << "Options:\n";
   for (auto &opt : parser.all_options())
   {

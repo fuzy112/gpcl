@@ -1,5 +1,7 @@
 #include <gpcl/getopt.hpp>
 
+#include <iostream>
+
 inline int verbosity = 0;
 
 constexpr const gpcl::getopt_option options[] = {
