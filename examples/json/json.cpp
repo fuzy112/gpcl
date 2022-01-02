@@ -12,7 +12,7 @@ int main()
 
   for (auto iter = v.begin(); iter != v.end(); ++iter)
   {
-    std::cout << *iter << std::endl;;
+    std::cout << *iter << std::endl;
   }
 
   json::value_type m = json::value_type::object({
@@ -23,6 +23,10 @@ int main()
   auto m1 = m;
   m["3"] = 3;
   std::cout << m << std::endl;
+
+  m1.insert(
+      {"4", json::value_type::array({1, 2, "3", 4.0, true, false, nullptr})});
+  m1.erase("2");
 
   for (auto iter = m1.begin(); iter != m1.end(); ++iter)
   {

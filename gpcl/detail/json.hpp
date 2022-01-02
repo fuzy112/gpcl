@@ -375,7 +375,7 @@ struct basic_json
 
     void operator()(const boolean_type &b) const
     {
-      ostream_type::sentry sentry(get_ostream());
+      typename ostream_type::sentry sentry(get_ostream());
       if (!sentry)
         return;
       get_ostream() << std::boolalpha << b;
@@ -383,7 +383,7 @@ struct basic_json
 
     void operator()(const array_type &a) const
     {
-      ostream_type::sentry sentry(get_ostream());
+      typename ostream_type::sentry sentry(get_ostream());
       if (!sentry)
         return;
 
@@ -405,7 +405,7 @@ struct basic_json
 
     void operator()(const object_type &o) const
     {
-      ostream_type::sentry sentry(get_ostream());
+      typename ostream_type::sentry sentry(get_ostream());
       if (!sentry)
         return;
 
@@ -528,6 +528,104 @@ struct basic_json
     // bool operator<(iterator const &rhs) const { return data_ < rhs.data_; }
   };
 
+  struct const_iterator
+  {
+    const_iterator_data_type data_;
+
+    using iterator_category = std::common_type_t<
+        typename std::iterator_traits<
+            typename array_type::const_iterator>::iterator_category,
+        typename std::iterator_traits<
+            typename object_type::const_iterator>::iterator_category>;
+
+    constexpr const_iterator() = default;
+
+    constexpr const_iterator(typename array_type::const_iterator it) : data_(it)
+    {
+    }
+
+    constexpr const_iterator(typename object_type::const_iterator it)
+        : data_(it)
+    {
+    }
+
+    // constexpr iterator(const iterator &) = default;
+
+    // constexpr iterator &operator=(const iterator &) = default;
+
+    constexpr const_iterator &operator=(typename array_type::const_iterator it)
+    {
+      data_ = it;
+      return *this;
+    }
+
+    constexpr const_iterator &operator=(typename object_type::const_iterator it)
+    {
+      data_ = it;
+      return *this;
+    }
+
+    decltype(auto) operator*() const
+    {
+      if (auto *p = get_if<typename array_type::const_iterator>(&data_))
+        return **p;
+
+      GPCL_THROW(bad_json_access());
+    }
+
+    decltype(auto) operator->() const { return std::addressof(**this); }
+
+    decltype(auto) pair() const
+    {
+      if (auto *p = get_if<typename object_type::const_iterator>(&data_))
+        return **p;
+
+      GPCL_THROW(bad_json_access());
+    }
+
+    decltype(auto) key() const { return pair().first; }
+
+    decltype(auto) value() const { return pair().second; }
+
+    decltype(auto) operator++()
+    {
+      visit([](auto &it) { ++it; }, data_);
+      return *this;
+    }
+
+    decltype(auto) operator++(int)
+    {
+      auto result = *this;
+      ++*this;
+      return result;
+    }
+
+    decltype(auto) operator--()
+    {
+      visit([](auto &it) { --it; }, data_);
+      return *this;
+    }
+
+    decltype(auto) operator--(int)
+    {
+      auto result = *this;
+      --*this;
+      return result;
+    }
+
+    bool operator==(const_iterator const &rhs) const
+    {
+      return data_ == rhs.data_;
+    }
+
+    bool operator!=(const_iterator const &rhs) const
+    {
+      return data_ != rhs.data_;
+    }
+
+    // bool operator<(iterator const &rhs) const { return data_ < rhs.data_; }
+  };
+
   struct value_type
   {
     using data_type = basic_json::data_type;
@@ -616,15 +714,54 @@ struct basic_json
     {
     }
 
-    static value_type
-    object(std::initializer_list<std::pair<const string_type, value_type>> il)
+    template <typename... Args>
+    static value_type object(Args &&...args)
     {
-      return value_type(object_tag{}, il);
+      return value_type(object_tag{}, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    static value_type
+    object(std::initializer_list<std::pair<const string_type, value_type>> il,
+           Args &&...args)
+    {
+      return value_type(object_tag{}, il, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    static value_type array(Args &&...args)
+    {
+      return value_type(array_tag{}, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    static value_type array(std::initializer_list<value_type> il,
+                            Args &&...args)
+    {
+      return value_type(array_tag{}, il, std::forward<Args>(args)...);
     }
 
     template <std::size_t S>
-    constexpr value_type(const typename string_type::value_type (&s)[S])
-        : value_type(string_tag{}, s)
+    constexpr value_type(const CharType (&s)[S]) : value_type(string_tag{}, s)
+    {
+    }
+
+    template <typename T, typename Allocator,
+              typename std::enable_if<std::is_convertible<T, value_type>::value,
+                                      int>::type = 0>
+    constexpr explicit value_type(VectorType<T, Allocator> const &vec)
+        : value_type(array_tag{}, vec.begin(), vec.end())
+    {
+    }
+
+    template <typename K, typename V, typename Allocator,
+              typename std::enable_if<
+                  std::is_convertible<
+                      std::pair<const K, V>,
+                      std::pair<const string_type, value_type>>::value,
+                  int>::type = 0>
+    constexpr explicit value_type(MapType<K, V, Allocator> const &vec)
+        : value_type(object_tag{}, vec.begin(), vec.end())
     {
     }
 
@@ -679,7 +816,7 @@ struct basic_json
     template <std::size_t S>
     value_type &operator=(const typename string_type::value_type (&a)[S])
     {
-      data_.emplace<string_type>(a);
+      data_.template emplace<string_type>(a);
       return *this;
     }
 
@@ -805,10 +942,10 @@ struct basic_json
 
     iterator begin()
     {
-      if (auto p = get_if<array_type>(&data_))
+      if (auto p = value_ptr<array_type>())
         return p->begin();
 
-      if (auto p = get_if<object_type>(&data_))
+      if (auto p = value_ptr<object_type>())
         return p->begin();
 
       return iterator();
@@ -816,14 +953,40 @@ struct basic_json
 
     iterator end()
     {
-      if (auto p = get_if<array_type>(&data_))
+      if (auto p = value_ptr<array_type>())
         return p->end();
 
-      if (auto p = get_if<object_type>(&data_))
+      if (auto p = value_ptr<object_type>())
         return p->end();
 
       return iterator();
     }
+
+    const_iterator begin() const
+    {
+      if (auto p = const_value_ptr<array_type>())
+        return p->begin();
+
+      if (auto p = const_value_ptr<object_type>())
+        return p->begin();
+
+      return const_iterator();
+    }
+
+    const_iterator end() const
+    {
+      if (auto p = const_value_ptr<array_type>())
+        return p->end();
+
+      if (auto p = const_value_ptr<object_type>())
+        return p->end();
+
+      return const_iterator();
+    }
+
+    const_iterator cbegin() const { return begin(); }
+
+    const_iterator cend() const { return end(); }
 
     std::size_t size() const
     {
@@ -833,7 +996,7 @@ struct basic_json
     void clear() noexcept
     {
       return visit(make_const_visitor([&](auto const &x) {
-                     data_.emplace<std::decay_t<decltype(x)>>();
+                     data_.template emplace<std::decay_t<decltype(x)>>();
                    }),
                    data_);
     }
@@ -875,10 +1038,92 @@ struct basic_json
                    data_);
     }
 
+    value_type &front()
+    {
+      auto &v = value<array_type>();
+      if (v.empty())
+        GPCL_THROW(bad_json_access());
+      return v.front();
+    }
+
+    value_type const &front() const
+    {
+      auto &v = value<array_type>();
+      if (v.empty())
+        GPCL_THROW(bad_json_access());
+      return v.front();
+    }
+
+    value_type &back()
+    {
+      auto &v = value<array_type>();
+      if (v.empty())
+        GPCL_THROW(bad_json_access());
+      return v.back();
+    }
+
+    value_type const &back() const
+    {
+      auto &v = value<array_type>();
+      if (v.empty())
+        GPCL_THROW(bad_json_access());
+      return v.back();
+    }
+
+    void push_back(value_type const &v) { value<array_type>().push_back(v); }
+
+    void push_back(value_type &&v)
+    {
+      value<array_type>().push_back(std::move(v));
+    }
+
+    void push_back(CharType ch) { value<string_type>().push_back(ch); }
+
+    void pop_back()
+    {
+      if (auto p = value_ptr<array_type>())
+        p->pop_back();
+
+      value<string_type>().push_back();
+    }
+
+    std::pair<const_iterator, bool>
+    insert(std::pair<const string_type, value_type> const &v)
+    {
+      return value<object_type>().insert(v);
+    }
+
+    std::pair<const_iterator, bool>
+    insert(std::pair<const string_type, value_type> &&v)
+    {
+      return value<object_type>().insert(std::move(v));
+    }
+
+    void erase(std::size_t pos)
+    {
+      if (auto p = value_ptr<array_type>())
+        p->erase(pos);
+
+      value<string_type>().erase(pos);
+    }
+
+    void erase(const string_type &s) { value<object_type>().erase(s); }
+
+    void erase(const_iterator it)
+    {
+      if (auto p = value_ptr<array_type>())
+        p->erase(get<typename array_type::const_iterator>(it.data_));
+
+      if (auto p = value_ptr<object_type>())
+        p->erase(get<typename object_type::const_iterator>(it.data_));
+
+      GPCL_THROW(bad_json_access());
+    }
+
     friend inline ostream_type &operator<<(ostream_type &os,
                                            value_type const &v)
     {
-      ostream_type::sentry sentry(os);
+      typename ostream_type::sentry sentry(os);
       if (!sentry)
         return os;
 
