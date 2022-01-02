@@ -24,6 +24,7 @@ class shared_ptr;
  *  @{
  */
 
+#if defined GPCL_DOXYGEN
 /// Creates a shared pointer that manages a new object.
 /**
  * @param args list of arguments with which an instance of T will be constructed.
@@ -39,6 +40,8 @@ class shared_ptr;
 template <typename T, typename... Args>
 auto make_shared(Args &&... args)
     -> std::enable_if_t<!std::is_array_v<T>, shared_ptr<T>>;
+
+#endif
 
 /** @} */
 
