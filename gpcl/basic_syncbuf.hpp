@@ -8,57 +8,12 @@
 #include <gpcl/swap.hpp>
 #include <gpcl/unique_lock.hpp>
 #include <gpcl/weak_ptr.hpp>
+#include <gpcl/detail/get_mutex_for_address.hpp>
 
 #include <streambuf>
 #include <unordered_map>
 
 namespace gpcl {
-namespace detail {
-
-template <typename CharType, typename Traits>
-shared_ptr<mutex>
-get_mutex_for(std::basic_streambuf<CharType, Traits> const *streambuf)
-{
-  using streambuf_type = std::basic_streambuf<CharType, Traits>;
-
-  static recursive_mutex map_mutex;
-  static std::unordered_map<const streambuf_type *, weak_ptr<mutex>> map;
-
-  unique_lock<recursive_mutex> lock(map_mutex);
-
-  auto &wp = map[streambuf];
-  if (auto sp = wp.lock())
-    return sp;
-
-  struct mutex_deleter
-  {
-    const streambuf_type *streambuf_;
-
-    mutex mutex_;
-
-    explicit mutex_deleter(streambuf_type const *s) : streambuf_(s), mutex_() {}
-
-    ~mutex_deleter()
-    {
-      unique_lock<recursive_mutex> lock(map_mutex);
-      auto it = map.find(streambuf_);
-      if (it != map.cend())
-      {
-        GPCL_ASSERT(it->second.lock().get() == &mutex_);
-      }
-    }
-  };
-  auto sp_mutex_deleter = gpcl::make_shared<mutex_deleter>(streambuf);
-  shared_ptr<mutex> sp(sp_mutex_deleter, &sp_mutex_deleter->mutex_);
-
-#if defined GPCL_POSIX
-  unique_lock<mutex> lock_dummy(*sp); // ensure the mutex is initialized
-#endif
-  wp = sp;
-  return sp;
-}
-
-} // namespace detail
 
 /// basic_syncbuf is a synchronized wrapper for a @ref std::basic_streambuf.
 template <typename CharType, typename Traits = std::char_traits<CharType>,
@@ -88,7 +43,7 @@ private:
   std::basic_string<CharType, Traits, Allocator> buffer_;
 
   // mutex which protects the wrapped buffer.
-  shared_ptr<mutex> mutex_ = detail::get_mutex_for(wrapped_);
+  shared_ptr<mutex> mutex_ = detail::get_mutex_for_address(wrapped_);
 
 public:
   /// Construct a basic_syncbuf with no wrapped streambuf.
