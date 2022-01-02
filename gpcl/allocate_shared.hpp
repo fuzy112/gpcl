@@ -13,6 +13,8 @@
 
 #include <gpcl/detail/config.hpp>
 
+#include <type_traits>
+
 namespace gpcl {
 
 template <typename T>
@@ -42,7 +44,24 @@ class shared_ptr;
  * @relates gpcl::shared_ptr
  */
 template <typename T, typename Alloc, typename... Args>
-shared_ptr<T> allocate_shared(const Alloc &alloc, Args &&... args);
+shared_ptr<T> allocate_shared(const Alloc &alloc, Args &&...args);
+
+#else
+
+namespace detail {
+template <typename T>
+struct allocate_shared_impl
+{
+  template <typename Alloc, typename... Args>
+  auto operator()(const Alloc &alloc, Args &&...args) const
+      -> std::enable_if_t<!std::is_array_v<T>, shared_ptr<T>>;
+};
+
+} // namespace detail
+
+template <typename T>
+constexpr detail::allocate_shared_impl<T> allocate_shared{};
+
 #endif
 
 /** @} */

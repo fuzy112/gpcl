@@ -58,26 +58,21 @@ public:
 };
 
 template <typename T>
-struct allocate_shared_impl
+template <typename Alloc, typename... Args>
+auto allocate_shared_impl<T>::operator()(const Alloc &alloc,
+                                         Args &&...args) const
+    -> std::enable_if_t<!std::is_array_v<T>, shared_ptr<T>>
 {
-  template <typename Alloc, typename... Args>
-  shared_ptr<T> operator()(const Alloc &alloc, Args &&...args) const
-  {
-    const shared_ptr<void> x(nullptr, sp_inplace_deleter<T>(), alloc);
-    auto *d = gpcl::get_deleter<sp_inplace_deleter<T>>(x);
-    GPCL_ASSERT(!!d);
-    shared_ptr<T> rv(x, ::new (d->address()) T(std::forward<Args>(args)...),
-                     true);
-    d->holds_value();
-    return rv;
-  }
-};
+  const shared_ptr<void> x(nullptr, sp_inplace_deleter<T>(), alloc);
+  auto *d = gpcl::get_deleter<sp_inplace_deleter<T>>(x);
+  GPCL_ASSERT(!!d);
+  shared_ptr<T> rv(x, ::new (d->address()) T(std::forward<Args>(args)...),
+                   true);
+  d->holds_value();
+  return rv;
+}
 
 } // namespace detail
-
-template <typename T>
-constexpr detail::allocate_shared_impl<T> allocate_shared{};
-
 } // namespace gpcl
 
 #endif //

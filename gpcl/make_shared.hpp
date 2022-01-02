@@ -27,19 +27,34 @@ class shared_ptr;
 #if defined GPCL_DOXYGEN
 /// Creates a shared pointer that manages a new object.
 /**
- * @param args list of arguments with which an instance of T will be constructed.
+ * @param args list of arguments with which an instance of T will be
+ * constructed.
  * @return shared_ptr of an instance of type T.
- * 
+ *
  * @exception std::bad_alloc if failed to allocate memory.
  * @exception any-exception thrown by the constructor.
- * 
+ *
  * If any exception is thrown, the function has no effect.
  *
  * @relates gpcl::shared_ptr
  */
 template <typename T, typename... Args>
-auto make_shared(Args &&... args)
+auto make_shared(Args &&...args)
     -> std::enable_if_t<!std::is_array_v<T>, shared_ptr<T>>;
+
+#else
+namespace detail {
+template <typename T>
+struct make_shared_impl
+{
+  template <typename... Args>
+  auto operator()(Args &&...args) const
+      -> std::enable_if_t<!std::is_array_v<T>, shared_ptr<T>>;
+};
+} // namespace detail
+
+template <typename T>
+constexpr detail::make_shared_impl<T> make_shared{};
 
 #endif
 

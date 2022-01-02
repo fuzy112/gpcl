@@ -17,22 +17,16 @@
 namespace gpcl {
 
 namespace detail {
+
 template <typename T>
-struct make_shared_impl
+template <typename... Args>
+auto make_shared_impl<T>::operator()(Args &&...args) const
+    -> std::enable_if_t<!std::is_array_v<T>, shared_ptr<T>>
 {
-  template <typename... Args>
-  auto operator()(Args &&...args) const
-      -> std::enable_if_t<!std::is_array_v<T>, shared_ptr<T>>
-  {
-    return gpcl::allocate_shared<T>(
-        std::allocator<T>(), std::forward<Args>(args)...);
-  }
-};
+  return allocate_shared<T>(std::allocator<T>(), std::forward<Args>(args)...);
+}
+
 } // namespace detail
-
-template <typename T>
-constexpr detail::make_shared_impl<T> make_shared{};
-
 } // namespace gpcl
 
 #endif // GPCL_IMPL_MAKE_SHARED_HPP
