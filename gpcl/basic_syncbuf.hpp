@@ -166,18 +166,17 @@ public:
     if (!wrapped_)
       return false;
 
-    std::streamsize n;
-    {
-      gpcl::unique_lock<mutex> lock(*mutex_);
-      n = wrapped_->sputn(buffer_.data(), buffer_.size());
-    }
+    gpcl::unique_lock<mutex> lock(*mutex_);
+    auto n = wrapped_->sputn(buffer_.data(), buffer_.size());
     buffer_.erase(buffer_.begin(), buffer_.begin() + n);
+
     if (flag_ & pending_flush)
     {
       flag_ &= ~pending_flush;
       if (wrapped_->pubsync() != 0)
         return false;
     }
+
     return buffer_.empty();
   }
 
