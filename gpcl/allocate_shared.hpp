@@ -22,7 +22,6 @@ class shared_ptr;
  *  @{
  */
 
-#if defined GPCL_DOXYGEN
 /// Creates a shared pointer that manages a new object.
 /**
  * @tparam T the managed object type.
@@ -43,7 +42,6 @@ class shared_ptr;
  */
 template <typename T, typename Alloc, typename... Args>
 shared_ptr<T> allocate_shared(const Alloc &alloc, Args &&... args);
-#endif
 
 /** @} */
 

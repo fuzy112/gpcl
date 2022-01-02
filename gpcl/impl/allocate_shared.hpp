@@ -57,26 +57,19 @@ public:
   void holds_value() noexcept { holds_value_ = true; }
 };
 
-template <typename T>
-struct allocate_shared_impl
-{
-  template <typename Alloc, typename... Args>
-  shared_ptr<T> operator()(const Alloc &alloc, Args &&...args) const
-  {
-    const shared_ptr<void> x(nullptr, sp_inplace_deleter<T>(), alloc);
-    auto *d = gpcl::get_deleter<sp_inplace_deleter<T>>(x);
-    GPCL_ASSERT(!!d);
-    shared_ptr<T> rv(x, ::new (d->address()) T(std::forward<Args>(args)...),
-                     true);
-    d->holds_value();
-    return rv;
-  }
-};
-
 } // namespace detail
 
-template <typename T>
-constexpr detail::allocate_shared_impl<T> allocate_shared{};
+template <typename T, typename Alloc, typename... Args>
+shared_ptr<T> allocate_shared(const Alloc &alloc, Args &&... args)
+{
+  const shared_ptr<void> x(nullptr, detail::sp_inplace_deleter<T>(), alloc);
+  auto *d = gpcl::get_deleter<detail::sp_inplace_deleter<T>>(x);
+  GPCL_ASSERT(!!d);
+  shared_ptr<T> rv(x, ::new (d->address()) T(std::forward<Args>(args)...),
+                   true);
+  d->holds_value();
+  return rv;
+}
 
 } // namespace gpcl
 
