@@ -48,7 +48,7 @@ get_mutex_for(std::basic_streambuf<CharType, Traits> const *streambuf)
       }
     }
   };
-  auto sp_mutex_deleter = make_shared<mutex_deleter>(streambuf);
+  auto sp_mutex_deleter = gpcl::make_shared<mutex_deleter>(streambuf);
   shared_ptr<mutex> sp(sp_mutex_deleter, &sp_mutex_deleter->mutex_);
 
 #if defined GPCL_POSIX
