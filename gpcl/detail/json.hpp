@@ -12,7 +12,8 @@
 #include <type_traits>
 #include <vector>
 
-namespace gpcl::detail {
+namespace gpcl {
+inline namespace json_detail {
 
 class bad_json_access : public std::exception
 {
@@ -216,7 +217,7 @@ struct basic_json
   using boolean_type = bool;
   using null_type = monostate;
 
-  struct value_type;
+  struct value;
 
   using allocator_type = Allocator;
 
@@ -233,9 +234,9 @@ struct basic_json
   using string_type =
       StringType<CharType, CharTraits, rebind_allocator_type<CharType>>;
   using object_type =
-      MapType<string_type, value_type,
-              rebind_allocator_type<std::pair<const string_type, value_type>>>;
-  using array_type = VectorType<value_type, rebind_allocator_type<value_type>>;
+      MapType<string_type, value,
+              rebind_allocator_type<std::pair<const string_type, value>>>;
+  using array_type = VectorType<value, rebind_allocator_type<value>>;
 
   struct null_tag : in_place_type_t<null_type>
   {
@@ -729,7 +730,7 @@ struct basic_json
     // bool operator<(iterator const &rhs) const { return data_ < rhs.data_; }
   };
 
-  struct value_type
+  struct value
   {
     using data_type = basic_json::data_type;
     using string_type = basic_json::string_type;
@@ -739,141 +740,125 @@ struct basic_json
     data_type data_;
 
     /// Construct a null json value.
-    constexpr value_type() = default;
+    constexpr value() = default;
 
-    constexpr value_type(value_type &&) noexcept = default;
+    constexpr value(value &&) noexcept = default;
 
-    value_type(const value_type &other)
-    {
-      visit(clone_visitor{data_}, other.data_);
-    }
+    value(const value &other) { visit(clone_visitor{data_}, other.data_); }
 
     /// Construct a null json value.
-    constexpr explicit value_type(null_tag) {}
+    constexpr explicit value(null_tag) {}
 
     template <typename Type, typename... Args>
-    constexpr explicit value_type(in_place_type_t<Type> tag, Args &&...args)
+    constexpr explicit value(in_place_type_t<Type> tag, Args &&...args)
         : data_(tag, std::forward<Args>(args)...)
     {
     }
 
     template <typename... Args>
-    constexpr explicit value_type(array_tag tag,
-                                  std::initializer_list<value_type> il,
-                                  Args &&...args)
+    constexpr explicit value(array_tag tag, std::initializer_list<value> il,
+                             Args &&...args)
         : data_(tag, il, std::forward<Args>(args)...)
     {
     }
 
     template <typename... Args>
-    constexpr explicit value_type(
+    constexpr explicit value(
         object_tag tag,
-        std::initializer_list<std::pair<const string_type, value_type>> il,
+        std::initializer_list<std::pair<const string_type, value>> il,
         Args &&...args)
         : data_(tag, il, std::forward<Args>(args)...)
     {
     }
 
-    constexpr value_type(monostate) {}
+    constexpr value(monostate) {}
 
-    constexpr value_type(std::nullptr_t) {}
+    constexpr value(std::nullptr_t) {}
 
     template <typename T,
               std::enable_if_t<
                   std::is_integral_v<T> && !std::is_same_v<T, bool>, int> = 0>
-    constexpr value_type(T v)
-        : value_type(integer_tag{}, narrow_cast<integer_type>(v))
+    constexpr value(T v) : value(integer_tag{}, narrow_cast<integer_type>(v))
     {
     }
 
     template <typename T,
               std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
-    constexpr value_type(T v) : value_type(float_tag{}, v)
+    constexpr value(T v) : value(float_tag{}, v)
     {
     }
 
     template <typename B, std::enable_if_t<std::is_same_v<B, bool>, int> = 0>
-    constexpr value_type(B v) : value_type(boolean_tag{}, v)
+    constexpr value(B v) : value(boolean_tag{}, v)
     {
     }
 
-    constexpr value_type(string_type s) : value_type(string_tag{}, std::move(s))
-    {
-    }
+    constexpr value(string_type s) : value(string_tag{}, std::move(s)) {}
 
-    constexpr value_type(object_type o) : value_type(object_tag{}, std::move(o))
-    {
-    }
+    constexpr value(object_type o) : value(object_tag{}, std::move(o)) {}
 
-    constexpr value_type(array_type a) : value_type(array_tag{}, std::move(a))
-    {
-    }
+    constexpr value(array_type a) : value(array_tag{}, std::move(a)) {}
 
-    value_type(std::initializer_list<value_type> il)
-        : value_type(array_tag{}, il)
-    {
-    }
+    value(std::initializer_list<value> il) : value(array_tag{}, il) {}
 
-    value_type(
-        std::initializer_list<std::pair<const string_type, value_type>> il)
-        : value_type(object_tag{}, il)
+    value(std::initializer_list<std::pair<const string_type, value>> il)
+        : value(object_tag{}, il)
     {
     }
 
     template <typename... Args>
-    static value_type object(Args &&...args)
+    static value object(Args &&...args)
     {
-      return value_type(object_tag{}, std::forward<Args>(args)...);
+      return value(object_tag{}, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
-    static value_type
-    object(std::initializer_list<std::pair<const string_type, value_type>> il,
+    static value
+    object(std::initializer_list<std::pair<const string_type, value>> il,
            Args &&...args)
     {
-      return value_type(object_tag{}, il, std::forward<Args>(args)...);
+      return value(object_tag{}, il, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
-    static value_type array(Args &&...args)
+    static value array(Args &&...args)
     {
-      return value_type(array_tag{}, std::forward<Args>(args)...);
+      return value(array_tag{}, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
-    static value_type array(std::initializer_list<value_type> il,
-                            Args &&...args)
+    static value array(std::initializer_list<value> il, Args &&...args)
     {
-      return value_type(array_tag{}, il, std::forward<Args>(args)...);
+      return value(array_tag{}, il, std::forward<Args>(args)...);
     }
 
     template <std::size_t S>
-    constexpr value_type(const CharType (&s)[S]) : value_type(string_tag{}, s)
+    constexpr value(const CharType (&s)[S]) : value(string_tag{}, s)
     {
     }
 
     template <typename T, typename A,
-              typename std::enable_if<std::is_convertible<T, value_type>::value,
+              typename std::enable_if<std::is_convertible<T, value>::value,
                                       int>::type = 0>
-    constexpr explicit value_type(VectorType<T, A> const &vec)
-        : value_type(array_tag{}, vec.begin(), vec.end())
+    constexpr explicit value(VectorType<T, A> const &vec)
+        : value(array_tag{}, vec.begin(), vec.end())
     {
     }
 
-    template <typename K, typename V, typename A,
-              typename std::enable_if<
-                  std::is_convertible<
-                      std::pair<const K, V>,
-                      std::pair<const string_type, value_type>>::value,
-                  int>::type = 0>
-    constexpr explicit value_type(MapType<K, V, A> const &vec)
-        : value_type(object_tag{}, vec.begin(), vec.end())
+    template <
+        typename K, typename V, typename A,
+        typename std::enable_if<
+            std::is_convertible<std::pair<const K, V>,
+                                std::pair<const string_type, value>>::value,
+            int>::type = 0>
+    constexpr explicit value(MapType<K, V, A> const &vec)
+        : value(object_tag{}, vec.begin(), vec.end())
     {
     }
 
-    value_type &operator=(value_type &&) noexcept = default;
+    value &operator=(value &&) noexcept = default;
 
-    value_type &operator=(const value_type &other)
+    value &operator=(const value &other)
     {
       if (this == &other)
         return *this;
@@ -881,15 +866,15 @@ struct basic_json
       return *this;
     }
 
-    value_type &operator=(monostate)
+    value &operator=(monostate)
     {
       data_ = monostate{};
       return *this;
     }
 
-    value_type &operator=(std::nullptr_t) { return *this = monostate{}; }
+    value &operator=(std::nullptr_t) { return *this = monostate{}; }
 
-    value_type &operator=(integer_type n)
+    value &operator=(integer_type n)
     {
       data_ = n;
       return *this;
@@ -897,7 +882,7 @@ struct basic_json
 
     template <typename B,
               std::enable_if_t<std::is_same_v<std::decay_t<B>, bool>, int> = 0>
-    value_type &operator=(B b)
+    value &operator=(B b)
     {
       data_ = b;
       return *this;
@@ -907,39 +892,39 @@ struct basic_json
               std::enable_if_t<std::is_convertible_v<T, float_type> &&
                                    !std::is_convertible_v<T, integer_type>,
                                int> = 0>
-    value_type &operator=(T v)
+    value &operator=(T v)
     {
       data_ = v;
       return *this;
     }
 
-    value_type &operator=(string_type s)
+    value &operator=(string_type s)
     {
       data_ = std::move(s);
       return *this;
     }
 
     template <std::size_t S>
-    value_type &operator=(const typename string_type::value_type (&a)[S])
+    value &operator=(const CharType (&a)[S])
     {
       data_.template emplace<string_type>(a);
       return *this;
     }
 
-    value_type &operator=(array_type a)
+    value &operator=(array_type a)
     {
       data_ = std::move(a);
       return *this;
     }
 
-    value_type &operator=(object_type o)
+    value &operator=(object_type o)
     {
       data_ = std::move(o);
       return *this;
     }
 
     template <typename T>
-    T *value_ptr()
+    T *get_if()
     {
       (void)holds_alternative<T>(data_); // to use static_assert
 
@@ -955,7 +940,7 @@ struct basic_json
     }
 
     template <typename T>
-    T const *value_ptr() const noexcept
+    T const *get_if() const noexcept
     {
       (void)holds_alternative<T>(data_); // to use static_assert
 
@@ -968,31 +953,31 @@ struct basic_json
     }
 
     template <typename T>
-    T const *const_value_ptr() const noexcept
+    T const *const_get_if() const noexcept
     {
-      return this->template value_ptr<T>();
+      return this->template get_if<T>();
     }
 
     template <typename T>
-    T &value()
+    T &get()
     {
-      if (auto p = this->template value_ptr<T>())
+      if (auto p = this->template get_if<T>())
         return *p;
       GPCL_THROW(bad_json_access());
     }
 
     template <typename T>
-    const T &value() const
+    const T &get() const
     {
-      if (auto p = this->template value_ptr<T>())
+      if (auto p = this->template get_if<T>())
         return *p;
       GPCL_THROW(bad_json_access());
     }
 
     template <typename T>
-    const T &const_value() const
+    const T &const_get() const
     {
-      return this->template value<T>();
+      return this->template get<T>();
     }
 
     template <typename T>
@@ -1048,10 +1033,10 @@ struct basic_json
 
     iterator begin()
     {
-      if (auto p = value_ptr<array_type>())
+      if (auto p = get_if<array_type>())
         return p->begin();
 
-      if (auto p = value_ptr<object_type>())
+      if (auto p = get_if<object_type>())
         return p->begin();
 
       return iterator();
@@ -1059,10 +1044,10 @@ struct basic_json
 
     iterator end()
     {
-      if (auto p = value_ptr<array_type>())
+      if (auto p = get_if<array_type>())
         return p->end();
 
-      if (auto p = value_ptr<object_type>())
+      if (auto p = get_if<object_type>())
         return p->end();
 
       return iterator();
@@ -1070,10 +1055,10 @@ struct basic_json
 
     const_iterator begin() const
     {
-      if (auto p = const_value_ptr<array_type>())
+      if (auto p = const_get_if<array_type>())
         return p->begin();
 
-      if (auto p = const_value_ptr<object_type>())
+      if (auto p = const_get_if<object_type>())
         return p->begin();
 
       return const_iterator();
@@ -1081,10 +1066,10 @@ struct basic_json
 
     const_iterator end() const
     {
-      if (auto p = const_value_ptr<array_type>())
+      if (auto p = const_get_if<array_type>())
         return p->end();
 
-      if (auto p = const_value_ptr<object_type>())
+      if (auto p = const_get_if<object_type>())
         return p->end();
 
       return const_iterator();
@@ -1107,114 +1092,107 @@ struct basic_json
                    data_);
     }
 
-    value_type &at(std::size_t index)
+    value &at(std::size_t index)
     {
-      return visit(make_cow_visitor(json_at<value_type &>(index), data_),
-                   data_);
+      return visit(make_cow_visitor(json_at<value &>(index), data_), data_);
     }
 
-    value_type const &at(std::size_t index) const
+    value const &at(std::size_t index) const
     {
-      return visit(make_const_visitor(json_at<value_type const &>(index)),
-                   data_);
+      return visit(make_const_visitor(json_at<value const &>(index)), data_);
     }
 
-    value_type &at(const string_type &s)
+    value &at(const string_type &s)
     {
-      return visit(make_cow_visitor(json_at<value_type &>(s), data_), data_);
+      return visit(make_cow_visitor(json_at<value &>(s), data_), data_);
     }
 
-    value_type const &at(const string_type &s) const
+    value const &at(const string_type &s) const
     {
-      return visit(make_const_visitor(json_at<value_type const &>(s)), data_);
+      return visit(make_const_visitor(json_at<value const &>(s)), data_);
     }
 
-    value_type &operator[](std::size_t index) { return at(index); }
+    value &operator[](std::size_t index) { return at(index); }
 
-    value_type const &operator[](std::size_t index) const { return at(index); }
+    value const &operator[](std::size_t index) const { return at(index); }
 
-    value_type &operator[](const string_type &s)
+    value &operator[](const string_type &s)
     {
-      return visit(make_cow_visitor(json_index<value_type &>(s), data_), data_);
+      return visit(make_cow_visitor(json_index<value &>(s), data_), data_);
     }
 
-    value_type const &operator[](const string_type &s) const
+    value const &operator[](const string_type &s) const
     {
-      return visit(make_const_visitor(json_index<value_type const &>(s)),
-                   data_);
+      return visit(make_const_visitor(json_index<value const &>(s)), data_);
     }
 
-    value_type &front()
+    value &front()
     {
-      auto &v = value<array_type>();
+      auto &v = get<array_type>();
       if (v.empty())
         GPCL_THROW(bad_json_access());
       return v.front();
     }
 
-    value_type const &front() const
+    value const &front() const
     {
-      auto &v = value<array_type>();
+      auto &v = get<array_type>();
       if (v.empty())
         GPCL_THROW(bad_json_access());
       return v.front();
     }
 
-    value_type &back()
+    value &back()
     {
-      auto &v = value<array_type>();
+      auto &v = get<array_type>();
       if (v.empty())
         GPCL_THROW(bad_json_access());
       return v.back();
     }
 
-    value_type const &back() const
+    value const &back() const
     {
-      auto &v = value<array_type>();
+      auto &v = get<array_type>();
       if (v.empty())
         GPCL_THROW(bad_json_access());
       return v.back();
     }
 
-    void push_back(value_type const &v) { value<array_type>().push_back(v); }
+    void push_back(value const &v) { get<array_type>().push_back(v); }
 
-    void push_back(value_type &&v)
-    {
-      value<array_type>().push_back(std::move(v));
-    }
+    void push_back(value &&v) { get<array_type>().push_back(std::move(v)); }
 
-    void push_back(CharType ch) { value<string_type>().push_back(ch); }
+    void push_back(CharType ch) { get<string_type>().push_back(ch); }
 
     void pop_back()
     {
-      if (auto p = value_ptr<array_type>())
+      if (auto p = get_if<array_type>())
         return p->pop_back();
 
-      value<string_type>().push_back();
+      get<string_type>().push_back();
     }
 
     std::pair<iterator, bool>
-    insert(std::pair<const string_type, value_type> const &v)
+    insert(std::pair<const string_type, value> const &v)
     {
-      return value<object_type>().insert(v);
+      return get<object_type>().insert(v);
     }
 
-    std::pair<iterator, bool>
-    insert(std::pair<const string_type, value_type> &&v)
+    std::pair<iterator, bool> insert(std::pair<const string_type, value> &&v)
     {
-      return value<object_type>().insert(std::move(v));
+      return get<object_type>().insert(std::move(v));
     }
 
     template <typename T>
     std::pair<iterator, bool> insert(const string_type &key, T &&mapped)
     {
-      return insert(std::pair<const string_type, value_type>(
-          key, std::forward<T>(mapped)));
+      return insert(
+          std::pair<const string_type, value>(key, std::forward<T>(mapped)));
     }
 
     void erase(std::size_t pos, std::size_t count = 1)
     {
-      if (auto p = value_ptr<array_type>())
+      if (auto p = get_if<array_type>())
       {
         auto it = p->cbegin();
         auto first = it + pos;
@@ -1223,30 +1201,29 @@ struct basic_json
         return;
       }
 
-      value<string_type>().erase(pos, count);
+      get<string_type>().erase(pos, count);
     }
 
     void erase(const_iterator it, std::size_t count)
     {
-      value<array_type>().erase(
+      get<array_type>().erase(
           get<typename array_type::const_iterator>(it.data_), count);
     }
 
-    void erase(const string_type &s) { value<object_type>().erase(s); }
+    void erase(const string_type &s) { get<object_type>().erase(s); }
 
     void erase(const_iterator it)
     {
-      if (auto p = value_ptr<array_type>())
+      if (auto p = get_if<array_type>())
         return p->erase(get<typename array_type::const_iterator>(it.data_));
 
-      if (auto p = value_ptr<object_type>())
+      if (auto p = get_if<object_type>())
         return p->erase(get<typename object_type::const_iterator>(it.data_));
 
       GPCL_THROW(bad_json_access());
     }
 
-    friend inline ostream_type &operator<<(ostream_type &os,
-                                           value_type const &v)
+    friend inline ostream_type &operator<<(ostream_type &os, value const &v)
     {
       typename ostream_type::sentry sentry(os);
       if (!sentry)
@@ -1258,7 +1235,7 @@ struct basic_json
       return os;
     }
 
-    friend inline bool operator==(const value_type &x, const value_type &y)
+    friend inline bool operator==(const value &x, const value &y)
     {
       return visit(make_const_visitor([](const auto &w, const auto &z) {
                      if constexpr (std::is_same_v<decltype(w), decltype(z)>)
@@ -1268,27 +1245,27 @@ struct basic_json
                    x.data_, y.data_);
     }
 
-    friend inline bool operator!=(const value_type &x, const value_type &y)
+    friend inline bool operator!=(const value &x, const value &y)
     {
       return !(x == y);
     }
 
-    // friend inline bool operator<(const value_type &x, const value_type &y)
+    // friend inline bool operator<(const value &x, const value &y)
     // {
     //   return x.data_ < y.data_;
     // }
 
-    // friend inline bool operator>(const value_type &x, const value_type &y)
+    // friend inline bool operator>(const value &x, const value &y)
     // {
     //   return x.data_ > y.data_;
     // }
 
-    // friend inline bool operator<=(const value_type &x, const value_type &y)
+    // friend inline bool operator<=(const value &x, const value &y)
     // {
     //   return x.data_ <= x.data_;
     // }
 
-    // friend inline bool operator>=(const value_type &x, const value_type &y)
+    // friend inline bool operator>=(const value &x, const value &y)
     // {
     //   return x.data_ >= x.data_;
     // }
@@ -1536,7 +1513,7 @@ struct basic_json
   {
     struct toplevel_context
     {
-      value_type value;
+      value value;
     };
 
     struct array_context
@@ -1602,30 +1579,30 @@ struct basic_json
       handle_value(std::move(object));
     }
 
-    void handle_value(toplevel_context &ctx, value_type v)
+    void handle_value(toplevel_context &ctx, value v)
     {
       ctx.value = std::move(v);
     }
 
-    void handle_value(array_context &ctx, value_type v)
+    void handle_value(array_context &ctx, value v)
     {
       ctx.array.emplace_back(std::move(v));
     }
 
-    void handle_value(object_context &ctx, value_type v)
+    void handle_value(object_context &ctx, value v)
     {
       GPCL_ASSERT(!ctx.key.empty());
       ctx.object.insert(
           typename object_type::value_type(std::move(ctx.key), std::move(v)));
     }
 
-    void handle_value(value_type v)
+    void handle_value(value v)
     {
       visit([v, this](auto &ctx) mutable { handle_value(ctx, std::move(v)); },
             stack_.back());
     }
 
-    value_type get_value()
+    value get_value()
     {
       if (stack_.size() != 1)
       {
@@ -1648,8 +1625,8 @@ struct basic_json
   };
 
   template <typename Allocator1 = std::allocator<char>>
-  static value_type parse(std::basic_string_view<CharType, CharTraits> text,
-                          Allocator1 const &alloc = Allocator1())
+  static value parse(std::basic_string_view<CharType, CharTraits> text,
+                     Allocator1 const &alloc = Allocator1())
   {
     parser p;
     value_builder builder(alloc);
@@ -1661,7 +1638,7 @@ struct basic_json
 };
 
 template <typename K, typename V, typename A>
-class my_map : public std::map<K, V, std::less<K>, A>
+class json_std_map_adaptor : public std::map<K, V, std::less<K>, A>
 {
   using base_type = std::map<K, V, std::less<K>, A>;
 
@@ -1670,14 +1647,15 @@ public:
 
   using std::map<K, V, std::less<K>, A>::operator=;
 
-  my_map(base_type const &b) : base_type(b) {}
+  json_std_map_adaptor(base_type const &b) : base_type(b) {}
 
-  my_map(base_type &&b) noexcept : base_type(std::move(b)) {}
+  json_std_map_adaptor(base_type &&b) noexcept : base_type(std::move(b)) {}
 };
 
-using json =
-    basic_json<std::int64_t, double, std::basic_string, my_map, std::vector>;
+using json = basic_json<std::int64_t, double, std::basic_string,
+                        json_std_map_adaptor, std::vector>;
 
-} // namespace gpcl::detail
+} // namespace json_detail
+} // namespace gpcl
 
 #endif // GPCL_DETAIL_JSON_HPP

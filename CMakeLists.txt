@@ -78,7 +78,7 @@ if (Doxygen_FOUND AND GPCL_BUILD_DOC)
 	set (DOXYGEN_PREDEFINED GPCL_DOXYGEN)
 	set (DOXYGEN_JAVADOC_AUTOBRIEF YES)
 	set (DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
-	set (DOXYGEN_EXCLUDE_SYMBOLS "*::detail::*;*_detail::*")
+	# set (DOXYGEN_EXCLUDE_SYMBOLS "*::detail::*;*_detail::*")
 	set (DOXYGEN_STRIP_FROM_INC_PATH ".")
     doxygen_add_docs(doc README.md lib gpcl)
 

@@ -1,10 +1,11 @@
-#include <gpcl/detail/json.hpp>
+#include <gpcl/json.hpp>
+#include <iostream>
 
-using gpcl::detail::json;
+using gpcl::json;
 
 int main()
 {
-  json::value_type v{1, 2, 3, 4};
+  json::value v{1, 2, 3, 4};
   std::cout << v.at(0) << std::endl;
 
   v.at(0) = 3;
@@ -15,7 +16,7 @@ int main()
     std::cout << *iter << std::endl;
   }
 
-  json::value_type m = json::value_type::object({
+  json::value m = json::value::object({
       {"1", 1},
       {"2", 2},
       {"3", "3"},
@@ -24,13 +25,13 @@ int main()
   m["3"] = 3;
   std::cout << m << std::endl;
 
-  m1.insert("4", json::value_type::array({1, 2, "3", 4.5, true, nullptr}));
+  m1.insert("4", json::value::array({1, 2, "3", 4.5, true, nullptr}));
   m1.erase("2");
   m1["4"].erase(1);
   m1["integer"] = 100000;
   m1["bool"] = false;
   m1["string"] = "string";
-  m1["array"] = json::value_type::array();
+  m1["array"] = json::value::array();
   for (auto iter = m1.begin(); iter != m1.end(); ++iter)
   {
     std::cout << iter.key() << ": " << iter.value() << std::endl;
@@ -43,7 +44,8 @@ int main()
 
   auto const j = json::parse(R"({ "a": 1, "b": [1, 2, "3"] })");
 
-  std::cout << (j == json::value_type::object({{"a", 1}, {"b", {1, 2, "3"}}})) << std::endl;
+  std::cout << (j == json::value::object({{"a", 1}, {"b", {1, 2, "3"}}}))
+            << std::endl;
 
   std::cout << json::print_style::pretty_print << j << std::endl;
 }
