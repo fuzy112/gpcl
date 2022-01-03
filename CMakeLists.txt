@@ -25,6 +25,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 option(GPCL_BUILD_TESTING "enable testing support" ON)
 set (BUILD_TESTING ${GPCL_BUILD_TESTING})
 
+option(GPCL_BUILD_DOC "enable document generation" ON)
+
 include(CTest)
 include(GNUInstallDirs)
 
@@ -66,7 +68,7 @@ find_package(Doxygen)
 
 option (GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE "link to external cppreference documentation" TRUE)
 
-if (Doxygen_FOUND)
+if (Doxygen_FOUND AND GPCL_BUILD_DOC)
 	FetchContent_MakeAvailable(cppref)
 	if (GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE)
 		list (APPEND DOXYGEN_TAGFILES "${cppref_SOURCE_DIR}/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/")

@@ -684,11 +684,9 @@ struct basic_json
     template <typename T,
               std::enable_if_t<
                   std::is_integral_v<T> && !std::is_same_v<T, bool>, int> = 0>
-    constexpr value_type(T v) //: value_type(integer_tag{}, v)
+    constexpr value_type(T v)
+        : value_type(integer_tag{}, narrow_cast<integer_type>(v))
     {
-      GPCL_TRY { data_ = narrow<integer_type>(v); }
-      GPCL_CATCH(...) { data_.template emplace<float_type>(v); }
-      GPCL_CATCH_END
     }
 
     template <typename T,
