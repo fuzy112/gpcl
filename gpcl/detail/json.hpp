@@ -212,10 +212,10 @@ template <
     typename Allocator = std::allocator<char>>
 struct basic_json
 {
-  using integer_type = IntegerType;
-  using float_type = FloatType;
-  using boolean_type = bool;
-  using null_type = monostate;
+  using integer = IntegerType;
+  using floating = FloatType;
+  using boolean = bool;
+  using null = monostate;
 
   struct value;
 
@@ -231,39 +231,38 @@ struct basic_json
   using rebind_allocator_traits =
       typename std::allocator_traits<Allocator>::template rebind_traits<T>;
 
-  using string_type =
+  using string =
       StringType<CharType, CharTraits, rebind_allocator_type<CharType>>;
-  using object_type =
-      MapType<string_type, value,
-              rebind_allocator_type<std::pair<const string_type, value>>>;
-  using array_type = VectorType<value, rebind_allocator_type<value>>;
+  using object = MapType<string, value,
+                         rebind_allocator_type<std::pair<const string, value>>>;
+  using array = VectorType<value, rebind_allocator_type<value>>;
 
-  struct null_tag : in_place_type_t<null_type>
+  struct null_tag : in_place_type_t<null>
   {
   };
   struct boolean_tag : in_place_type_t<bool>
   {
   };
-  struct integer_tag : in_place_type_t<integer_type>
+  struct integer_tag : in_place_type_t<integer>
   {
   };
-  struct float_tag : in_place_type_t<float_type>
+  struct float_tag : in_place_type_t<floating>
   {
   };
-  struct string_tag : in_place_type_t<string_type>
+  struct string_tag : in_place_type_t<string>
   {
   };
-  struct object_tag : in_place_type_t<object_type>
+  struct object_tag : in_place_type_t<object>
   {
   };
-  struct array_tag : in_place_type_t<array_type>
+  struct array_tag : in_place_type_t<array>
   {
   };
 
-  using data_type = variant<null_type, boolean_type, integer_type, float_type,
-                            string_type, shared_ptr<const string_type>,
-                            object_type, shared_ptr<const object_type>,
-                            array_type, shared_ptr<const array_type>>;
+private:
+  using data_type =
+      variant<null, bool, integer, floating, string, shared_ptr<const string>,
+              object, shared_ptr<const object>, array, shared_ptr<const array>>;
 
   struct clone_visitor
   {
@@ -275,19 +274,19 @@ struct basic_json
       dest_ = x;
     }
 
-    void operator()(string_type const &x) const
+    void operator()(string const &x) const
     {
-      dest_ = allocate_shared<const string_type>(allocator_type(), x);
+      dest_ = allocate_shared<const string>(allocator_type(), x);
     }
 
-    void operator()(object_type const &x) const
+    void operator()(object const &x) const
     {
-      dest_ = allocate_shared<const object_type>(allocator_type(), x);
+      dest_ = allocate_shared<const object>(allocator_type(), x);
     }
 
-    void operator()(array_type const &x) const
+    void operator()(array const &x) const
     {
-      dest_ = allocate_shared<const array_type>(allocator_type(), x);
+      dest_ = allocate_shared<const array>(allocator_type(), x);
     }
   };
 
@@ -364,6 +363,7 @@ struct basic_json
     return cow_visitor<std::decay_t<F>>{std::forward<F>(f), dest};
   }
 
+public:
   using ostream_type = std::basic_ostream<CharType, CharTraits>;
 
   using istream_type = std::basic_istream<CharType, CharTraits>;
@@ -374,6 +374,7 @@ struct basic_json
     pretty_print = 1,
   };
 
+private:
   static int print_style_xalloc()
   {
     static std::ios_base::Init init;
@@ -381,6 +382,7 @@ struct basic_json
     return index;
   }
 
+public:
   friend inline ostream_type &operator<<(ostream_type &os, print_style style)
   {
     os.iword(print_style_xalloc()) = static_cast<long>(style);
@@ -391,11 +393,10 @@ struct basic_json
   {
     ostream_type &os_;
 
-    string_type indent_item_;
+    string indent_item_;
     int indent_;
 
-    explicit serializer(ostream_type &os,
-                        const string_type &indent_item = "    ")
+    explicit serializer(ostream_type &os, const string &indent_item = "    ")
         : os_(os),
           indent_item_(indent_item),
           indent_(0)
@@ -436,7 +437,7 @@ struct basic_json
 
     int &indent() const { return ser_.indent_; }
 
-    const string_type &indent_item() const { return ser_.indent_item_; }
+    const string &indent_item() const { return ser_.indent_item_; }
 
     void newline() const
     {
@@ -463,18 +464,15 @@ struct basic_json
 
     ostream_type &get_ostream() const { return ser_.os_; }
 
-    void operator()(null_type) const { get_ostream() << "null"; }
+    void operator()(null) const { get_ostream() << "null"; }
 
-    void operator()(integer_type i) const { get_ostream() << i; }
+    void operator()(integer i) const { get_ostream() << i; }
 
-    void operator()(float_type f) const { get_ostream() << f; }
+    void operator()(floating f) const { get_ostream() << f; }
 
-    void operator()(const string_type &s) const
-    {
-      get_ostream() << std::quoted(s);
-    }
+    void operator()(const string &s) const { get_ostream() << std::quoted(s); }
 
-    void operator()(const boolean_type &b) const
+    void operator()(const bool &b) const
     {
       typename ostream_type::sentry sentry(get_ostream());
       if (!sentry)
@@ -482,7 +480,7 @@ struct basic_json
       get_ostream() << std::boolalpha << b;
     }
 
-    void operator()(const array_type &a) const
+    void operator()(const array &a) const
     {
       get_ostream() << '[';
 
@@ -504,7 +502,7 @@ struct basic_json
       get_ostream() << ']';
     }
 
-    void operator()(const object_type &o) const
+    void operator()(const object &o) const
     {
       get_ostream() << '{';
 
@@ -539,39 +537,38 @@ struct basic_json
   };
 
   using iterator_data_type =
-      variant<typename array_type::iterator, typename object_type::iterator>;
+      variant<typename array::iterator, typename object::iterator>;
 
   using const_iterator_data_type =
-      variant<typename array_type::const_iterator,
-              typename object_type::const_iterator>;
+      variant<typename array::const_iterator, typename object::const_iterator>;
 
   struct iterator
   {
     iterator_data_type data_;
 
-    using iterator_category = std::common_type_t<
-        typename std::iterator_traits<
-            typename array_type::iterator>::iterator_category,
-        typename std::iterator_traits<
-            typename object_type::iterator>::iterator_category>;
+    using iterator_category =
+        std::common_type_t<typename std::iterator_traits<
+                               typename array::iterator>::iterator_category,
+                           typename std::iterator_traits<
+                               typename object::iterator>::iterator_category>;
 
     constexpr iterator() = default;
 
-    constexpr iterator(typename array_type::iterator it) : data_(it) {}
+    constexpr iterator(typename array::iterator it) : data_(it) {}
 
-    constexpr iterator(typename object_type::iterator it) : data_(it) {}
+    constexpr iterator(typename object::iterator it) : data_(it) {}
 
     // constexpr iterator(const iterator &) = default;
 
     // constexpr iterator &operator=(const iterator &) = default;
 
-    constexpr iterator &operator=(typename array_type::iterator it)
+    constexpr iterator &operator=(typename array::iterator it)
     {
       data_ = it;
       return *this;
     }
 
-    constexpr iterator &operator=(typename object_type::iterator it)
+    constexpr iterator &operator=(typename object::iterator it)
     {
       data_ = it;
       return *this;
@@ -579,7 +576,7 @@ struct basic_json
 
     decltype(auto) operator*() const
     {
-      if (auto *p = get_if<typename array_type::iterator>(&data_))
+      if (auto *p = get_if<typename array::iterator>(&data_))
         return **p;
 
       GPCL_THROW(bad_json_access());
@@ -589,7 +586,7 @@ struct basic_json
 
     decltype(auto) pair() const
     {
-      if (auto *p = get_if<typename object_type::iterator>(&data_))
+      if (auto *p = get_if<typename object::iterator>(&data_))
         return **p;
 
       GPCL_THROW(bad_json_access());
@@ -638,32 +635,27 @@ struct basic_json
 
     using iterator_category = std::common_type_t<
         typename std::iterator_traits<
-            typename array_type::const_iterator>::iterator_category,
+            typename array::const_iterator>::iterator_category,
         typename std::iterator_traits<
-            typename object_type::const_iterator>::iterator_category>;
+            typename object::const_iterator>::iterator_category>;
 
     constexpr const_iterator() = default;
 
-    constexpr const_iterator(typename array_type::const_iterator it) : data_(it)
-    {
-    }
+    constexpr const_iterator(typename array::const_iterator it) : data_(it) {}
 
-    constexpr const_iterator(typename object_type::const_iterator it)
-        : data_(it)
-    {
-    }
+    constexpr const_iterator(typename object::const_iterator it) : data_(it) {}
 
     // constexpr iterator(const iterator &) = default;
 
     // constexpr iterator &operator=(const iterator &) = default;
 
-    constexpr const_iterator &operator=(typename array_type::const_iterator it)
+    constexpr const_iterator &operator=(typename array::const_iterator it)
     {
       data_ = it;
       return *this;
     }
 
-    constexpr const_iterator &operator=(typename object_type::const_iterator it)
+    constexpr const_iterator &operator=(typename object::const_iterator it)
     {
       data_ = it;
       return *this;
@@ -671,7 +663,7 @@ struct basic_json
 
     decltype(auto) operator*() const
     {
-      if (auto *p = get_if<typename array_type::const_iterator>(&data_))
+      if (auto *p = get_if<typename array::const_iterator>(&data_))
         return **p;
 
       GPCL_THROW(bad_json_access());
@@ -733,9 +725,12 @@ struct basic_json
   struct value
   {
     using data_type = basic_json::data_type;
-    using string_type = basic_json::string_type;
-    using object_type = basic_json::object_type;
-    using array_type = basic_json::array_type;
+    using string_type = basic_json::string;
+    using object_type = basic_json::object;
+    using array_type = basic_json::array;
+    using boolean_type = bool;
+    using integer_type = basic_json::integer;
+    using floating_type = basic_json::floating;
 
     data_type data_;
 
@@ -797,7 +792,7 @@ struct basic_json
 
     constexpr value(object_type o) : value(object_tag{}, std::move(o)) {}
 
-    constexpr value(array_type a) : value(array_tag{}, std::move(a)) {}
+    constexpr value(array a) : value(array_tag{}, std::move(a)) {}
 
     value(std::initializer_list<value> il) : value(array_tag{}, il) {}
 
@@ -889,7 +884,7 @@ struct basic_json
     }
 
     template <typename T,
-              std::enable_if_t<std::is_convertible_v<T, float_type> &&
+              std::enable_if_t<std::is_convertible_v<T, floating_type> &&
                                    !std::is_convertible_v<T, integer_type>,
                                int> = 0>
     value &operator=(T v)
@@ -1005,7 +1000,7 @@ struct basic_json
 
     constexpr bool is_float() const noexcept
     {
-      return holds_alternative<float_type>(data_);
+      return holds_alternative<floating_type>(data_);
     }
 
     constexpr bool is_number() const noexcept
@@ -1222,54 +1217,54 @@ struct basic_json
 
       GPCL_THROW(bad_json_access());
     }
-
-    friend inline ostream_type &operator<<(ostream_type &os, value const &v)
-    {
-      typename ostream_type::sentry sentry(os);
-      if (!sentry)
-        return os;
-
-      serializer ser(os);
-
-      gpcl::visit(make_const_visitor(serializing_visitor(ser)), v.data_);
-      return os;
-    }
-
-    friend inline bool operator==(const value &x, const value &y)
-    {
-      return visit(make_const_visitor([](const auto &w, const auto &z) {
-                     if constexpr (std::is_same_v<decltype(w), decltype(z)>)
-                       return w == z;
-                     return false;
-                   }),
-                   x.data_, y.data_);
-    }
-
-    friend inline bool operator!=(const value &x, const value &y)
-    {
-      return !(x == y);
-    }
-
-    // friend inline bool operator<(const value &x, const value &y)
-    // {
-    //   return x.data_ < y.data_;
-    // }
-
-    // friend inline bool operator>(const value &x, const value &y)
-    // {
-    //   return x.data_ > y.data_;
-    // }
-
-    // friend inline bool operator<=(const value &x, const value &y)
-    // {
-    //   return x.data_ <= x.data_;
-    // }
-
-    // friend inline bool operator>=(const value &x, const value &y)
-    // {
-    //   return x.data_ >= x.data_;
-    // }
   };
+
+  friend inline ostream_type &operator<<(ostream_type &os, value const &v)
+  {
+    typename ostream_type::sentry sentry(os);
+    if (!sentry)
+      return os;
+
+    serializer ser(os);
+
+    gpcl::visit(make_const_visitor(serializing_visitor(ser)), v.data_);
+    return os;
+  }
+
+  friend inline bool operator==(const value &x, const value &y)
+  {
+    return visit(make_const_visitor([](const auto &w, const auto &z) {
+                   if constexpr (std::is_same_v<decltype(w), decltype(z)>)
+                     return w == z;
+                   return false;
+                 }),
+                 x.data_, y.data_);
+  }
+
+  friend inline bool operator!=(const value &x, const value &y)
+  {
+    return !(x == y);
+  }
+
+  // friend inline bool operator<(const value &x, const value &y)
+  // {
+  //   return x.data_ < y.data_;
+  // }
+
+  // friend inline bool operator>(const value &x, const value &y)
+  // {
+  //   return x.data_ > y.data_;
+  // }
+
+  // friend inline bool operator<=(const value &x, const value &y)
+  // {
+  //   return x.data_ <= x.data_;
+  // }
+
+  // friend inline bool operator>=(const value &x, const value &y)
+  // {
+  //   return x.data_ >= x.data_;
+  // }
 
   struct parser
   {
@@ -1283,23 +1278,23 @@ struct basic_json
     };
     struct true_event
     {
-      static constexpr boolean_type value{true};
+      static constexpr bool value{true};
     };
     struct false_event
     {
-      static constexpr boolean_type value{false};
+      static constexpr bool value{false};
     };
     struct integer_event
     {
-      integer_type value;
+      integer value;
     };
-    struct float_event
+    struct floating_event
     {
-      float_type value;
+      floating value;
     };
     struct string_event
     {
-      string_type value;
+      string value;
     };
     struct start_array_event
     {
@@ -1314,7 +1309,7 @@ struct basic_json
     };
     struct object_key_event
     {
-      string_type value;
+      string value;
     };
     struct end_object_event
     {
@@ -1322,26 +1317,27 @@ struct basic_json
 
     using event_type =
         variant<error_event, null_event, true_event, false_event, integer_event,
-                float_event, string_event, start_array_event, end_array_event,
-                start_object_event, object_key_event, end_object_event>;
+                floating_event, string_event, start_array_event,
+                end_array_event, start_object_event, object_key_event,
+                end_object_event>;
 
     struct parsing_literal
     {
-      string_type chars;
+      string chars;
 
       explicit parsing_literal(CharType ch) { chars.push_back(ch); }
     };
 
     struct parsing_number
     {
-      string_type chars;
+      string chars;
 
       explicit parsing_number(CharType ch) { chars.push_back(ch); }
     };
 
     struct parsing_string
     {
-      string_type chars;
+      string chars;
 
       bool quote_closed = false;
     };
@@ -1444,10 +1440,10 @@ struct basic_json
         return true;
       }
 
-      if (s.chars.find('.') != string_type::npos)
-        visitor(float_event{json_cast<float_type>(s.chars)});
+      if (s.chars.find('.') != string::npos)
+        visitor(floating_event{json_cast<floating>(s.chars)});
       else
-        visitor(integer_event{json_cast<integer_type>(s.chars)});
+        visitor(integer_event{json_cast<integer>(s.chars)});
 
       state_ = indeterminate_state{};
       return false;
@@ -1518,13 +1514,13 @@ struct basic_json
 
     struct array_context
     {
-      array_type array;
+      array array;
     };
 
     struct object_context
     {
-      object_type object;
-      string_type key;
+      object object;
+      string key;
     };
 
     using context_type =
@@ -1593,7 +1589,7 @@ struct basic_json
     {
       GPCL_ASSERT(!ctx.key.empty());
       ctx.object.insert(
-          typename object_type::value_type(std::move(ctx.key), std::move(v)));
+          typename object::value_type(std::move(ctx.key), std::move(v)));
     }
 
     void handle_value(value v)
@@ -1624,16 +1620,31 @@ struct basic_json
     }
   };
 
-  template <typename Allocator1 = std::allocator<char>>
-  static value parse(std::basic_string_view<CharType, CharTraits> text,
+  template <typename InputIt, typename Allocator1 = std::allocator<char>>
+  static value parse(InputIt first, InputIt last,
                      Allocator1 const &alloc = Allocator1())
   {
     parser p;
     value_builder builder(alloc);
 
-    p.put(text.begin(), text.end(), builder);
+    p.put(first, last, builder);
 
     return builder.get_value();
+  }
+
+  template <typename Allocator1 = std::allocator<char>>
+  static value parse(std::basic_string_view<CharType, CharTraits> string,
+                     Allocator1 const &alloc = Allocator1())
+  {
+    return parse(string.begin(), string.end(), alloc);
+  }
+
+  template <typename Allocator1 = std::allocator<char>>
+  static value parse(std::basic_istream<CharType, CharTraits> &stream,
+                     Allocator1 const &alloc = Allocator1())
+  {
+    return parse(std::istreambuf_iterator<CharType, CharTraits>(stream),
+                 std::istreambuf_iterator<CharType, CharTraits>(), alloc);
   }
 };
 
