@@ -18,7 +18,6 @@
 
 #include <cstddef>
 #include <exception>
-#include <functional>
 #include <utility>
 
 namespace gpcl {
@@ -1063,6 +1062,7 @@ struct visit_impl
   {
     return (*this)(
         [&](auto &&... values) -> decltype(auto) {
+          GPCL_ASSERT_CONST(!variant1.valueless_by_exception());
           return apply_visitor(
               [&](auto &&value1) -> decltype(auto) {
                 return std::forward<Visitor>(visitor)(
@@ -1080,11 +1080,11 @@ private:
                                                      Variant &&variant_,
                                                      std::index_sequence<I>)
   {
-    if (variant_.index() == I)
-      return std::forward<Callable>(callable)(
-          get<I>(std::forward<Variant>(variant_)));
+    GPCL_ASSERT_CONST(variant_.index() == I);
+    return std::forward<Callable>(callable)(
+        get<I>(std::forward<Variant>(variant_)));
 
-    GPCL_THROW(bad_variant_access());
+    // GPCL_THROW(bad_variant_access());
   }
 
   template <typename Callable, typename Variant, std::size_t I, std::size_t J,
