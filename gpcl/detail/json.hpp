@@ -201,6 +201,7 @@ struct json_index_impl
 template <typename R>
 constexpr json_index_detail::json_index_impl<R> json_index{};
 
+// This class template is used as a namespace which can be parameterized.
 template <
     typename IntegerType, typename FloatType,
     template <typename CharType, typename CharTraits, typename Allocator>
@@ -220,7 +221,7 @@ struct basic_json
   using boolean_type = bool;
   using null_type = monostate;
 
-  struct value;
+  class value;
 
   using allocator_type = Allocator;
 
@@ -374,6 +375,8 @@ public:
 
   using istream_type = std::basic_istream<CharType, CharTraits>;
 
+  /// This enum type can be used as an IO manipulator to control the output
+  /// style of JSON values.
   enum print_style : long
   {
     compressed = 0,
@@ -389,12 +392,14 @@ private:
   }
 
 public:
+  /// Change JSON value output style.
   friend inline ostream_type &operator<<(ostream_type &os, print_style style)
   {
     os.iword(print_style_xalloc()) = static_cast<long>(style);
     return os;
   }
 
+  /// Shared state of serializing_visitor.
   struct serializer
   {
     ostream_type &os_;
@@ -411,11 +416,13 @@ public:
     }
   };
 
+  /// Used to serialize a JSON value.
   class serializing_visitor
   {
   private:
     serializer &ser_;
 
+    /// A sentry class used to generate indentation.
     class indent_sentry
     {
       const serializing_visitor &vis_;
@@ -743,6 +750,7 @@ private:
   struct access;
 
 public:
+  /// JSON value type.
   class value
   {
   public:
@@ -754,6 +762,7 @@ public:
     using floating_type = basic_json::floating_type;
     using null_type = basic_json::null_type;
 
+  private:
     friend struct basic_json::access;
     friend struct basic_json::serializer;
     friend struct basic_json::serializing_visitor;
@@ -765,22 +774,30 @@ public:
     data_type data_;
 
   public:
+
+    /// @name Constructors
+    /// @{
+
     /// Construct a null json value.
     constexpr value() = default;
 
+    /// Move constructor.
     constexpr value(value &&) noexcept = default;
 
+    /// Copy constructor.
     value(const value &other) { visit(clone_visitor{data_}, other.data_); }
 
     /// Construct a null json value.
     constexpr explicit value(null_tag) {}
 
+    /// Tagged constructor.
     template <typename Type, typename... Args>
     constexpr explicit value(in_place_type_t<Type> tag, Args &&...args)
         : data_(tag, std::forward<Args>(args)...)
     {
     }
 
+    /// Constructs an array.
     template <typename... Args>
     constexpr explicit value(array_tag tag, std::initializer_list<value> il,
                              Args &&...args)
@@ -788,6 +805,7 @@ public:
     {
     }
 
+    /// Construct an object.
     template <typename... Args>
     constexpr explicit value(
         object_tag tag,
@@ -797,10 +815,13 @@ public:
     {
     }
 
+    /// Construct a null.
     constexpr value(monostate) {}
 
+    /// Construct a null.
     constexpr value(std::nullptr_t) {}
 
+    /// Construct an integer.
     template <typename T,
               std::enable_if_t<
                   std::is_integral_v<T> && !std::is_same_v<T, bool>, int> = 0>
@@ -808,25 +829,32 @@ public:
     {
     }
 
+    /// Construct a floating pointer number.
     template <typename T,
               std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
     constexpr value(T v) : value(floating_tag{}, v)
     {
     }
 
+    /// Construct a boolean value.
     template <typename B, std::enable_if_t<std::is_same_v<B, bool>, int> = 0>
     constexpr value(B v) : value(boolean_tag{}, v)
     {
     }
 
+    /// Construct a string.
     constexpr value(string_type s) : value(string_tag{}, std::move(s)) {}
 
+    /// Construct an object.
     constexpr value(object_type o) : value(object_tag{}, std::move(o)) {}
 
+    /// Construct an array.
     constexpr value(array_type a) : value(array_tag{}, std::move(a)) {}
 
+    /// Construct an array.
     value(std::initializer_list<value> il) : value(array_tag{}, il) {}
 
+    /// Construct an object.
     value(std::initializer_list<std::pair<const string_type, value>> il)
         : value(object_tag{}, il)
     {
@@ -866,11 +894,11 @@ public:
       return value(object_tag{}, il, std::forward<Args>(args)...);
     }
 
-    // template <typename... Args>
-    // static value array(Args &&...args)
-    // {
-    //   return value(array_tag{}, std::forward<Args>(args)...);
-    // }
+    template <typename... Args>
+    static value array(Args &&...args)
+    {
+      return value(array_tag{}, std::forward<Args>(args)...);
+    }
 
     template <typename... Args>
     static value array(std::initializer_list<value> il, Args &&...args)
@@ -901,6 +929,11 @@ public:
         : value(object_tag{}, vec.begin(), vec.end())
     {
     }
+
+    /// @}
+
+    /// @name Assignment operators
+    /// @{
 
     value &operator=(value &&) noexcept = default;
 
@@ -969,6 +1002,11 @@ public:
       return *this;
     }
 
+    /// @}
+
+    /// @name Accessing JSON value.
+    /// @{
+
     template <typename T>
     T *get_if()
     {
@@ -1034,6 +1072,11 @@ public:
                    data_);
     }
 
+    /// @}
+
+    /// @name Type checking functions
+    /// @{
+
     constexpr bool is_null() const noexcept
     {
       return holds_alternative<null_type>(data_);
@@ -1076,6 +1119,11 @@ public:
       return holds_alternative<array_type>(data_) ||
              holds_alternative<shared_ptr<const array_type>>(data_);
     }
+
+    /// @}
+
+    /// @name Iterators
+    /// @{
 
     iterator begin()
     {
@@ -1124,6 +1172,11 @@ public:
     const_iterator cbegin() const { return begin(); }
 
     const_iterator cend() const { return end(); }
+
+    /// @}
+
+    /// @name STL-like accesses
+    /// @{
 
     std::size_t size() const
     {
@@ -1268,6 +1321,8 @@ public:
 
       GPCL_THROW(bad_json_access());
     }
+
+    /// @}
   };
 
 private:
@@ -1281,6 +1336,11 @@ private:
   };
 
 public:
+
+  /// @name Serializing
+  /// @{
+    
+  /// Serializes a JSON value.
   friend inline ostream_type &operator<<(ostream_type &os, value const &v)
   {
     typename ostream_type::sentry sentry(os);
@@ -1292,6 +1352,12 @@ public:
     return os;
   }
 
+  /// @}
+
+  /// @name Equality operators
+  /// @relates gpcl::basic_json::value
+  /// @{
+
   friend inline bool operator==(const value &x, const value &y)
   {
     return visit(make_const_visitor([](const auto &w, const auto &z) {
@@ -1301,6 +1367,13 @@ public:
                  }),
                  access::data(x), access::data(y));
   }
+
+  friend inline bool operator!=(const value &x, const value &y)
+  {
+    return !(x == y);
+  }
+
+  /// @}
 
   // friend inline bool operator>(const value &x, const value &y)
   // {
@@ -1317,8 +1390,12 @@ public:
   //   return x.data_ >= x.data_;
   // }
 
+  /// JSON parser.
   struct parser
   {
+    /// @name Events
+    /// @{
+
     struct error_event
     {
     };
@@ -1366,10 +1443,11 @@ public:
     {
     };
 
-    using event_type =
-        variant<error_event, null_event, true_event, false_event, integer_event,
-                float_event, string_event, start_array_event, end_array_event,
-                start_object_event, object_key_event, end_object_event>;
+    /// @}
+
+  private:
+    /// @name Parser states
+    /// @{
 
     struct parsing_literal
     {
@@ -1395,6 +1473,8 @@ public:
     struct indeterminate_state
     {
     };
+
+    /// @}
 
     using parsing_state = variant<indeterminate_state, parsing_literal,
                                   parsing_number, parsing_string>;
@@ -1533,6 +1613,8 @@ public:
       }
     }
 
+  public:
+    /// Consume a sequence of characters and emit events to the visitor.
     template <typename InputIt, typename Visitor>
     void put(InputIt first, InputIt last, Visitor &&visitor)
     {
@@ -1554,9 +1636,16 @@ public:
     }
   };
 
+  /// JSON value builder.
+  /// This class can be used as an EventVisitor of @c parser.
   template <typename Allocator1 = std::allocator<char>>
   struct value_builder
   {
+
+  private:
+    /// Context states.
+    /// @{
+
     struct toplevel_context
     {
       value value_;
@@ -1573,6 +1662,8 @@ public:
       string_type key;
     };
 
+    /// @}
+
     using context_type =
         variant<toplevel_context, array_context, object_context>;
 
@@ -1582,12 +1673,16 @@ public:
 
     stack_type stack_;
 
+  public:
+
+    /// Construct a value_builder
     explicit value_builder(Allocator1 const &alloc = Allocator1())
         : stack_(alloc)
     {
       stack_.emplace_back(toplevel_context{});
     }
 
+  private:
     template <typename Event>
     void handle_event(Event &&e)
     {
@@ -1625,6 +1720,11 @@ public:
       handle_value(std::move(object));
     }
 
+    void handle_event(typename parser::error_event)
+    {
+      GPCL_THROW(bad_json_access());
+    }
+
     void handle_value(toplevel_context &ctx, value v)
     {
       ctx.value_ = std::move(v);
@@ -1648,6 +1748,8 @@ public:
             stack_.back());
     }
 
+  public:
+    /// Retrieve the result value.
     value get_value()
     {
       if (stack_.size() != 1)
@@ -1658,11 +1760,7 @@ public:
       return get<toplevel_context>(stack_[0]).value_;
     }
 
-    void handle_event(typename parser::error_event)
-    {
-      GPCL_THROW(bad_json_access());
-    }
-
+    /// Consume an event.
     template <typename E>
     void operator()(E &&e)
     {
@@ -1670,6 +1768,10 @@ public:
     }
   };
 
+  /// @name Parsing
+  /// @{ 
+
+  /// Parses a JSON text using @c parser and @c value_builder.
   template <typename InputIt, typename Allocator1 = std::allocator<char>>
   static value parse(InputIt first, InputIt last,
                      Allocator1 const &alloc = Allocator1())
@@ -1682,6 +1784,7 @@ public:
     return builder.get_value();
   }
 
+  /// Parses a JSON text using @c parser and @c value_builder.
   template <typename Allocator1 = std::allocator<char>>
   static value parse(std::basic_string_view<CharType, CharTraits> string,
                      Allocator1 const &alloc = Allocator1())
@@ -1689,6 +1792,7 @@ public:
     return parse(string.begin(), string.end(), alloc);
   }
 
+  /// Parses a JSON text using @c parser and @c value_builder.
   template <typename Allocator1 = std::allocator<char>>
   static value parse(std::basic_istream<CharType, CharTraits> &stream,
                      Allocator1 const &alloc = Allocator1())
@@ -1696,6 +1800,8 @@ public:
     return parse(std::istreambuf_iterator<CharType, CharTraits>(stream),
                  std::istreambuf_iterator<CharType, CharTraits>(), alloc);
   }
+
+  /// @}
 };
 
 template <typename K, typename V, typename A>
