@@ -676,7 +676,7 @@ public:
 
     decltype(auto) pair() const
     {
-      if (auto *p = get_if<typename object_type::const_iterator>(&data_))
+      if (auto *p = get_if<typename object::const_iterator>(&data_))
         return **p;
 
       GPCL_THROW(bad_json_access());
@@ -1557,17 +1557,17 @@ public:
   {
     struct toplevel_context
     {
-      value value;
+      value value_;
     };
 
     struct array_context
     {
-      array array;
+      array array_;
     };
 
     struct object_context
     {
-      object object;
+      object object_;
       string key;
     };
 
@@ -1595,13 +1595,13 @@ public:
     void handle_event(typename parser::start_array_event e)
     {
       array_context ctx;
-      ctx.array.reserve(e.size_hint);
+      ctx.array_.reserve(e.size_hint);
       stack_.push_back(std::move(ctx));
     }
 
     void handle_event(typename parser::end_array_event)
     {
-      auto array = get<array_context>(std::move(stack_.back())).array;
+      auto array = get<array_context>(std::move(stack_.back())).array_;
       stack_.pop_back();
       handle_value(std::move(array));
     }
@@ -1618,25 +1618,25 @@ public:
 
     void handle_event(typename parser::end_object_event)
     {
-      auto object = get<object_context>(std::move(stack_.back())).object;
+      auto object = get<object_context>(std::move(stack_.back())).object_;
       stack_.pop_back();
       handle_value(std::move(object));
     }
 
     void handle_value(toplevel_context &ctx, value v)
     {
-      ctx.value = std::move(v);
+      ctx.value_ = std::move(v);
     }
 
     void handle_value(array_context &ctx, value v)
     {
-      ctx.array.emplace_back(std::move(v));
+      ctx.array_.emplace_back(std::move(v));
     }
 
     void handle_value(object_context &ctx, value v)
     {
       GPCL_ASSERT(!ctx.key.empty());
-      ctx.object.insert(
+      ctx.object_.insert(
           typename object::value_type(std::move(ctx.key), std::move(v)));
     }
 
@@ -1653,7 +1653,7 @@ public:
         GPCL_THROW(bad_json_access());
       }
 
-      return get<toplevel_context>(stack_[0]).value;
+      return get<toplevel_context>(stack_[0]).value_;
     }
 
     void handle_event(typename parser::error_event)
