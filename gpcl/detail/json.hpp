@@ -220,6 +220,8 @@ struct basic_json
 
   using allocator_type = Allocator;
 
+  static_assert(std::is_same_v<CharType, typename CharTraits::char_type>);
+
   template <typename T>
   using rebind_allocator_type =
       typename std::allocator_traits<Allocator>::template rebind_alloc<T>;
@@ -351,6 +353,8 @@ struct basic_json
   }
 
   using ostream_type = std::basic_ostream<CharType, CharTraits>;
+
+  using istream_type = std::basic_istream<CharType, CharTraits>;
 
   class serializing_visitor
   {
@@ -1159,6 +1163,359 @@ struct basic_json
       return os;
     }
   };
+
+  struct parser
+  {
+    struct error_event
+    {
+    };
+
+    struct null_event
+    {
+      static constexpr monostate value{};
+    };
+    struct true_event
+    {
+      static constexpr boolean_type value{true};
+    };
+    struct false_event
+    {
+      static constexpr boolean_type value{false};
+    };
+    struct integer_event
+    {
+      integer_type value;
+    };
+    struct float_event
+    {
+      float_type value;
+    };
+    struct string_event
+    {
+      string_type value;
+    };
+    struct start_array_event
+    {
+      std::size_t size_hint = 0;
+    };
+    struct end_array_event
+    {
+    };
+    struct start_object_event
+    {
+      std::size_t size_hint = 0;
+    };
+    struct object_key_event
+    {
+      string_type value;
+    };
+    struct end_object_event
+    {
+    };
+
+    using event_type =
+        variant<error_event, null_event, true_event, false_event, integer_event,
+                float_event, string_event, start_array_event, end_array_event,
+                start_object_event, object_key_event, end_object_event>;
+
+    struct parsing_literal
+    {
+      string_type chars;
+
+      explicit parsing_literal(char ch) { chars.push_back(ch); }
+    };
+
+    struct parsing_number
+    {
+      string_type chars;
+
+      explicit parsing_number(char ch) { chars.push_back(ch); }
+    };
+
+    struct parsing_string
+    {
+      string_type chars;
+
+      bool quote_closed = false;
+    };
+
+    struct indeterminate_state
+    {
+    };
+
+    using parsing_state = variant<indeterminate_state, parsing_literal,
+                                  parsing_number, parsing_string>;
+
+    parsing_state state_;
+
+    template <typename Visitor>
+    bool put(indeterminate_state, char ch, Visitor &&visitor)
+    {
+      if (std::isspace(ch))
+        return true;
+
+      if (std::isalpha(ch))
+      {
+        state_ = parsing_literal(ch);
+        return true;
+      }
+
+      if (std::isdigit(ch) || ch == '+' || ch == '-')
+      {
+        state_ = parsing_number(ch);
+        return true;
+      }
+
+      if (ch == '"')
+      {
+        state_ = parsing_string();
+        return true;
+      }
+
+      if (ch == '[')
+      {
+        visitor(start_array_event{});
+        return true;
+      }
+
+      if (ch == ',')
+      {
+        return true;
+      }
+
+      if (ch == ']')
+      {
+        visitor(end_array_event{});
+        return true;
+      }
+
+      if (ch == '{')
+      {
+        visitor(start_object_event{});
+        return true;
+      }
+
+      if (ch == '}')
+      {
+        visitor(end_object_event{});
+        return true;
+      }
+
+      visitor(error_event{});
+      return false;
+    }
+
+    template <typename Visitor>
+    bool put(parsing_literal &s, char ch, Visitor &&visitor)
+    {
+      if (std::isalnum(ch))
+      {
+        s.chars.push_back(ch);
+        return true;
+      }
+
+      if (s.chars == "null")
+        visitor(null_event{});
+      else if (s.chars == "true")
+        visitor(true_event{});
+      else if (s.chars == "false")
+        visitor(false_event{});
+      else
+        visitor(error_event{});
+
+      state_ = indeterminate_state{};
+      return false;
+    }
+
+    template <typename Visitor>
+    bool put(parsing_number &s, char ch, Visitor &&visitor)
+    {
+      if (std::isdigit(ch) || ch == '.')
+      {
+        s.chars.push_back(ch);
+        return true;
+      }
+
+      if (s.chars.find('.') != string_type::npos)
+        visitor(float_event{json_cast<float_type>(s.chars)});
+      else
+        visitor(integer_event{json_cast<integer_type>(s.chars)});
+
+      state_ = indeterminate_state{};
+      return false;
+    }
+
+    template <typename Visitor>
+    bool put(parsing_string &s, char ch, Visitor &&visitor)
+    {
+      if (!s.quote_closed)
+      {
+        if (ch != '"')
+        {
+          s.chars.push_back(ch);
+          return true;
+        }
+        else
+        {
+          s.quote_closed = true;
+          return true;
+        }
+      }
+      else
+      {
+        if (std::isspace(ch))
+          return true;
+
+        if (ch == ':')
+        {
+          visitor(object_key_event{s.chars});
+          return true;
+        }
+
+        visitor(string_event{s.chars});
+        state_ = indeterminate_state{};
+        return false;
+      }
+    }
+
+    template <typename InputIt, typename Visitor>
+    void put(InputIt first, InputIt last, Visitor &&visitor)
+    {
+      while (first != last)
+      {
+        char ch = *first++;
+        bool consumed;
+
+        do
+        {
+          consumed = visit(
+              [this, ch, &visitor](auto &state) -> bool {
+                return put(state, ch, std::forward<Visitor>(visitor));
+              },
+              state_);
+
+        } while (!consumed);
+      }
+    }
+  };
+
+  struct value_builder
+  {
+    struct toplevel_context
+    {
+      value_type value;
+    };
+
+    struct array_context
+    {
+      array_type array;
+    };
+
+    struct object_context
+    {
+      object_type object;
+      string_type key;
+    };
+
+    using context_type = variant<toplevel_context, array_context, object_context>;
+
+    std::vector<context_type> stack_ { };
+
+    value_builder()
+    {
+      stack_.emplace_back( toplevel_context{} );
+    }
+
+    template <typename Event>
+    void handle_event(Event &&e)
+    {
+      handle_value(std::forward<Event>(e).value);
+    }
+
+    void handle_event(typename parser::start_array_event e)
+    {
+      array_context ctx;
+      ctx.array.reserve(e.size_hint);
+      stack_.push_back ( std::move(ctx) );
+    }
+
+    void handle_event(typename parser::end_array_event)
+    {
+      auto array = get<array_context>(std::move(stack_.back())).array;
+      stack_.pop_back();
+      handle_value(std::move(array));
+    }
+
+    void handle_event(typename parser::start_object_event)
+    {
+      stack_.push_back( object_context{} );
+    }
+
+    void handle_event(typename parser::object_key_event key)
+    {
+      get<object_context>(stack_.back()).key = std::move(key).value;
+    }
+
+    void handle_event(typename parser::end_object_event)
+    {
+      auto object = get<object_context>(std::move(stack_.back())).object;
+      stack_.pop_back();
+      handle_value( std::move(object) );
+    }
+
+    void handle_value ( toplevel_context &ctx, value_type v )
+    {
+      ctx.value = std::move(v);
+    }
+
+    void handle_value ( array_context &ctx, value_type v )
+    {
+      ctx.array.push_back( std::move(v) );
+    }
+
+    void handle_value ( object_context &ctx, value_type v )
+    {
+      ctx.object[ctx.key] = std::move(v);
+    }
+
+    void handle_value (value_type v)
+    {
+      visit([v, this](auto &ctx) mutable {
+        handle_value(ctx, std::move(v));
+      }, stack_.back());
+    }
+
+    value_type get_value()
+    {
+      if (stack_.size() != 1)
+      {
+        GPCL_THROW(bad_json_access());
+      }
+
+      return get<toplevel_context>(stack_[0]).value;
+    }
+
+    void handle_event(typename parser::error_event)
+    {
+      GPCL_THROW(bad_json_access());
+    }
+
+    template <typename E>
+    void operator()(E &&e)
+    {
+      handle_event(std::forward<E>(e));
+    }
+  };
+
+  static value_type parse(const std::string &text)
+  {
+    parser p;
+    value_builder b;
+
+    p.put(text.begin(), text.end(), b);
+
+    return b.get_value();
+  }
 };
 
 template <typename K, typename V, typename A>

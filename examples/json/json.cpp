@@ -35,4 +35,11 @@ int main()
   {
     std::cout << iter.key() << ": " << iter.value() << std::endl;
   }
+
+  auto obj = json::object_type{
+      {"2", "2 "},
+  };
+  std::cout << obj << std::endl;
+
+  std::cout << json::parse(R"({ "a": 1, "b": [1, 2, "3"] })") << std::endl;
 }
