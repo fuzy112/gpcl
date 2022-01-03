@@ -214,7 +214,7 @@ struct basic_json
 {
   using char_type = CharType;
   using char_traits = CharTraits;
-  
+
   using integer = IntegerType;
   using floating = FloatType;
   using boolean = bool;
@@ -249,7 +249,7 @@ struct basic_json
   struct integer_tag : in_place_type_t<integer>
   {
   };
-  struct float_tag : in_place_type_t<floating>
+  struct floating_tag : in_place_type_t<floating>
   {
   };
   struct string_tag : in_place_type_t<string>
@@ -735,9 +735,10 @@ public:
     using string_type = basic_json::string;
     using object_type = basic_json::object;
     using array_type = basic_json::array;
-    using boolean_type = bool;
+    using boolean_type = basic_json::boolean;
     using integer_type = basic_json::integer;
     using floating_type = basic_json::floating;
+    using null_type = basic_json::null;
 
     friend struct basic_json::access;
     friend struct basic_json::serializer;
@@ -795,7 +796,7 @@ public:
 
     template <typename T,
               std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
-    constexpr value(T v) : value(float_tag{}, v)
+    constexpr value(T v) : value(floating_tag{}, v)
     {
     }
 
@@ -815,6 +816,26 @@ public:
     value(std::initializer_list<std::pair<const string_type, value>> il)
         : value(object_tag{}, il)
     {
+    }
+
+    static value null(null_type = null_type()) { return value(); }
+
+    static value boolean(boolean_type b) { return value(boolean_tag{}, b); }
+
+    static value integer(integer_type i) { return value(integer_tag{}, i); }
+
+    static value floating(floating_type f) { return value(floating_tag{}, f); }
+
+    template <typename... Args>
+    static value string(Args &&...args)
+    {
+      return value(string_tag{}, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    static value string(std::initializer_list<CharType> il, Args &&...args)
+    {
+      return value(string_tag{}, il, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
