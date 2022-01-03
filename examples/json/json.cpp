@@ -37,7 +37,7 @@ int main()
     std::cout << iter.key() << ": " << iter.value() << std::endl;
   }
 
-  auto obj = json::object{
+  auto obj = json::object_type{
       {"2", "2 "},
   };
   std::cout << obj << std::endl;
