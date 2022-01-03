@@ -685,7 +685,7 @@ struct basic_json
 
     decltype(auto) pair() const
     {
-      if (auto *p = get_if<typename object::const_iterator>(&data_))
+      if (auto *p = get_if<typename object_type::const_iterator>(&data_))
         return **p;
 
       GPCL_THROW(bad_json_access());
