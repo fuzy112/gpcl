@@ -263,6 +263,7 @@ struct basic_json
   {
   };
 
+private:
   using data_type =
       variant<null_type, boolean_type, integer_type, floating_type, string_type,
               shared_ptr<const string_type>, object_type,
@@ -368,6 +369,7 @@ struct basic_json
     return cow_visitor<std::decay_t<F>>{std::forward<F>(f), dest};
   }
 
+public:
   using ostream_type = std::basic_ostream<CharType, CharTraits>;
 
   using istream_type = std::basic_istream<CharType, CharTraits>;
@@ -378,6 +380,7 @@ struct basic_json
     pretty_print = 1,
   };
 
+private:
   static int print_style_xalloc()
   {
     static std::ios_base::Init init;
@@ -385,6 +388,7 @@ struct basic_json
     return index;
   }
 
+public:
   friend inline ostream_type &operator<<(ostream_type &os, print_style style)
   {
     os.iword(print_style_xalloc()) = static_cast<long>(style);
@@ -549,6 +553,7 @@ struct basic_json
       variant<typename array_type::const_iterator,
               typename object_type::const_iterator>;
 
+public:
   struct iterator
   {
     iterator_data_type data_;
@@ -1665,16 +1670,31 @@ public:
     }
   };
 
-  template <typename Allocator1 = std::allocator<char>>
-  static value parse(std::basic_string_view<CharType, CharTraits> text,
+  template <typename InputIt, typename Allocator1 = std::allocator<char>>
+  static value parse(InputIt first, InputIt last,
                      Allocator1 const &alloc = Allocator1())
   {
     parser p;
     value_builder builder(alloc);
 
-    p.put(text.begin(), text.end(), builder);
+    p.put(first, last, builder);
 
     return builder.get_value();
+  }
+
+  template <typename Allocator1 = std::allocator<char>>
+  static value parse(std::basic_string_view<CharType, CharTraits> string,
+                     Allocator1 const &alloc = Allocator1())
+  {
+    return parse(string.begin(), string.end(), alloc);
+  }
+
+  template <typename Allocator1 = std::allocator<char>>
+  static value parse(std::basic_istream<CharType, CharTraits> &stream,
+                     Allocator1 const &alloc = Allocator1())
+  {
+    return parse(std::istreambuf_iterator<CharType, CharTraits>(stream),
+                 std::istreambuf_iterator<CharType, CharTraits>(), alloc);
   }
 };
 
