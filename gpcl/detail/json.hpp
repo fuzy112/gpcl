@@ -290,6 +290,23 @@ struct basic_json
     }
   };
 
+  struct dereference_ptr_impl
+  {
+    template <typename T>
+    T &&operator()(T &&x) const
+    {
+      return std::forward<T>(x);
+    }
+
+    template <typename T>
+    T &operator()(const shared_ptr<T> &ptr) const
+    {
+      return *ptr;
+    }
+  };
+
+  constexpr static const dereference_ptr_impl dereference_ptr{};
+
   template <typename F>
   struct const_visitor
   {
@@ -300,16 +317,10 @@ struct basic_json
     {
     }
 
-    template <typename T>
-    decltype(auto) operator()(const T &x) const
+    template <typename... Ts>
+    decltype(auto) operator()(const Ts &...xs) const
     {
-      return f_(x);
-    }
-
-    template <typename T>
-    decltype(auto) operator()(const shared_ptr<const T> &x) const
-    {
-      return f_(*x);
+      return f_(dereference_ptr(xs)...);
     }
   };
 
@@ -356,27 +367,106 @@ struct basic_json
 
   using istream_type = std::basic_istream<CharType, CharTraits>;
 
+  enum print_style : long
+  {
+    compressed = 0,
+    pretty_print = 1,
+  };
+
+  static int print_style_xalloc()
+  {
+    static std::ios_base::Init init;
+    static const int index = std::ios_base::xalloc();
+    return index;
+  }
+
+  friend inline ostream_type &operator<<(ostream_type &os, print_style style)
+  {
+    os.iword(print_style_xalloc()) = static_cast<long>(style);
+    return os;
+  }
+
+  struct serializer
+  {
+    ostream_type &os_;
+
+    string_type indent_item_;
+    int indent_;
+
+    explicit serializer(ostream_type &os,
+                        const string_type &indent_item = "    ")
+        : os_(os),
+          indent_item_(indent_item),
+          indent_(0)
+    {
+    }
+  };
+
   class serializing_visitor
   {
   private:
-    ostream_type *os_;
+    serializer &ser_;
+
+    class indent_sentry
+    {
+      const serializing_visitor &vis_;
+
+    public:
+      explicit indent_sentry(const serializing_visitor &vis) : vis_(vis)
+      {
+        if (vis_.get_ostream().iword(print_style_xalloc()) ==
+            print_style::compressed)
+          return;
+
+        ++vis_.indent();
+        vis_.newline();
+      }
+
+      ~indent_sentry()
+      {
+        if (vis_.get_ostream().iword(print_style_xalloc()) ==
+            print_style::compressed)
+          return;
+
+        --vis_.indent();
+        vis_.newline();
+      }
+    };
+
+    int &indent() const { return ser_.indent_; }
+
+    const string_type &indent_item() const { return ser_.indent_item_; }
+
+    void newline() const
+    {
+      if (get_ostream().iword(print_style_xalloc()) == print_style::compressed)
+        return;
+
+      get_ostream() << '\n';
+      for (int i = 0; i != indent(); ++i)
+      {
+        get_ostream() << indent_item();
+      }
+    }
+
+    void space() const
+    {
+      if (get_ostream().iword(print_style_xalloc()) == print_style::compressed)
+        return;
+
+      get_ostream() << ' ';
+    }
 
   public:
-    explicit serializing_visitor(ostream_type &os) : os_(&os) {}
+    explicit serializing_visitor(serializer &ser) : ser_(ser) {}
 
-    ostream_type &get_ostream() const { return *os_; }
+    ostream_type &get_ostream() const { return ser_.os_; }
 
     void operator()(null_type) const { get_ostream() << "null"; }
 
     void operator()(integer_type i) const { get_ostream() << i; }
 
-    void operator()(float_type f) const
-    {
-      typename ostream_type::sentry s(get_ostream());
-      if (!s)
-        return;
-      get_ostream() << std::setprecision(6) << f;
-    }
+    void operator()(float_type f) const { get_ostream() << f; }
 
     void operator()(const string_type &s) const
     {
@@ -393,21 +483,21 @@ struct basic_json
 
     void operator()(const array_type &a) const
     {
-      typename ostream_type::sentry sentry(get_ostream());
-      if (!sentry)
-        return;
-
       get_ostream() << '[';
+
       auto iter = a.cbegin();
       auto const end = a.cend();
       if (iter != end)
       {
-        get_ostream() << *iter;
+        indent_sentry ind(*this);
+
+        visit(*this, iter->data_);
 
         while (++iter != end && get_ostream())
         {
           get_ostream() << ',';
-          get_ostream() << *iter;
+          newline();
+          visit(*this, iter->data_);
         }
       }
       get_ostream() << ']';
@@ -415,23 +505,26 @@ struct basic_json
 
     void operator()(const object_type &o) const
     {
-      typename ostream_type::sentry sentry(get_ostream());
-      if (!sentry)
-        return;
-
       get_ostream() << '{';
+
       auto iter = o.cbegin();
       auto const end = o.cend();
       if (iter != end)
       {
+        indent_sentry ind2(*this);
+
         get_ostream() << std::quoted(iter->first) << ':';
-        get_ostream() << iter->second;
+        space();
+        visit(*this, iter->second.data_);
 
         while (++iter != end && get_ostream())
         {
           get_ostream() << ',';
+          newline();
+
           get_ostream() << std::quoted(iter->first) << ':';
-          get_ostream() << iter->second;
+          space();
+          visit(*this, iter->second.data_);
         }
       }
       get_ostream() << '}';
@@ -1159,9 +1252,46 @@ struct basic_json
       if (!sentry)
         return os;
 
-      gpcl::visit(make_const_visitor(serializing_visitor{os}), v.data_);
+      serializer ser(os);
+
+      gpcl::visit(make_const_visitor(serializing_visitor(ser)), v.data_);
       return os;
     }
+
+    friend inline bool operator==(const value_type &x, const value_type &y)
+    {
+      return visit(make_const_visitor([](const auto &w, const auto &z) {
+                     if constexpr (std::is_same_v<decltype(w), decltype(z)>)
+                       return w == z;
+                     return false;
+                   }),
+                   x.data_, y.data_);
+    }
+
+    friend inline bool operator!=(const value_type &x, const value_type &y)
+    {
+      return !(x == y);
+    }
+
+    // friend inline bool operator<(const value_type &x, const value_type &y)
+    // {
+    //   return x.data_ < y.data_;
+    // }
+
+    // friend inline bool operator>(const value_type &x, const value_type &y)
+    // {
+    //   return x.data_ > y.data_;
+    // }
+
+    // friend inline bool operator<=(const value_type &x, const value_type &y)
+    // {
+    //   return x.data_ <= x.data_;
+    // }
+
+    // friend inline bool operator>=(const value_type &x, const value_type &y)
+    // {
+    //   return x.data_ >= x.data_;
+    // }
   };
 
   struct parser
@@ -1222,14 +1352,14 @@ struct basic_json
     {
       string_type chars;
 
-      explicit parsing_literal(char ch) { chars.push_back(ch); }
+      explicit parsing_literal(CharType ch) { chars.push_back(ch); }
     };
 
     struct parsing_number
     {
       string_type chars;
 
-      explicit parsing_number(char ch) { chars.push_back(ch); }
+      explicit parsing_number(CharType ch) { chars.push_back(ch); }
     };
 
     struct parsing_string
@@ -1249,7 +1379,7 @@ struct basic_json
     parsing_state state_;
 
     template <typename Visitor>
-    bool put(indeterminate_state, char ch, Visitor &&visitor)
+    bool put(indeterminate_state, CharType ch, Visitor &&visitor)
     {
       if (std::isspace(ch))
         return true;
@@ -1260,42 +1390,43 @@ struct basic_json
         return true;
       }
 
-      if (std::isdigit(ch) || ch == '+' || ch == '-')
+      if (std::isdigit(ch) || CharTraits::eq(ch, '+') ||
+          CharTraits::eq(ch, '+'))
       {
         state_ = parsing_number(ch);
         return true;
       }
 
-      if (ch == '"')
+      if (CharTraits::eq(ch, '"'))
       {
         state_ = parsing_string();
         return true;
       }
 
-      if (ch == '[')
+      if (CharTraits::eq(ch, '['))
       {
         visitor(start_array_event{});
         return true;
       }
 
-      if (ch == ',')
+      if (CharTraits::eq(ch, ','))
       {
         return true;
       }
 
-      if (ch == ']')
+      if (CharTraits::eq(ch, ']'))
       {
         visitor(end_array_event{});
         return true;
       }
 
-      if (ch == '{')
+      if (CharTraits::eq(ch, '{'))
       {
         visitor(start_object_event{});
         return true;
       }
 
-      if (ch == '}')
+      if (CharTraits::eq(ch, '}'))
       {
         visitor(end_object_event{});
         return true;
@@ -1306,7 +1437,7 @@ struct basic_json
     }
 
     template <typename Visitor>
-    bool put(parsing_literal &s, char ch, Visitor &&visitor)
+    bool put(parsing_literal &s, CharType ch, Visitor &&visitor)
     {
       if (std::isalnum(ch))
       {
@@ -1328,9 +1459,9 @@ struct basic_json
     }
 
     template <typename Visitor>
-    bool put(parsing_number &s, char ch, Visitor &&visitor)
+    bool put(parsing_number &s, CharType ch, Visitor &&visitor)
     {
-      if (std::isdigit(ch) || ch == '.')
+      if (std::isdigit(ch) || CharTraits::eq(ch, '.'))
       {
         s.chars.push_back(ch);
         return true;
@@ -1346,11 +1477,11 @@ struct basic_json
     }
 
     template <typename Visitor>
-    bool put(parsing_string &s, char ch, Visitor &&visitor)
+    bool put(parsing_string &s, CharType ch, Visitor &&visitor)
     {
       if (!s.quote_closed)
       {
-        if (ch != '"')
+        if (!CharTraits::eq(ch, '"'))
         {
           s.chars.push_back(ch);
           return true;
@@ -1366,13 +1497,14 @@ struct basic_json
         if (std::isspace(ch))
           return true;
 
-        if (ch == ':')
+        if (CharTraits::eq(ch, ':'))
         {
-          visitor(object_key_event{s.chars});
+          visitor(object_key_event{std::move(s).chars});
+          state_ = indeterminate_state{};
           return true;
         }
 
-        visitor(string_event{s.chars});
+        visitor(string_event{std::move(s).chars});
         state_ = indeterminate_state{};
         return false;
       }
@@ -1383,7 +1515,7 @@ struct basic_json
     {
       while (first != last)
       {
-        char ch = *first++;
+        CharType ch = *first++;
         bool consumed;
 
         do
@@ -1399,6 +1531,7 @@ struct basic_json
     }
   };
 
+  template <typename Allocator1 = std::allocator<char>>
   struct value_builder
   {
     struct toplevel_context
@@ -1417,13 +1550,19 @@ struct basic_json
       string_type key;
     };
 
-    using context_type = variant<toplevel_context, array_context, object_context>;
+    using context_type =
+        variant<toplevel_context, array_context, object_context>;
 
-    std::vector<context_type> stack_ { };
+    using stack_type =
+        std::vector<context_type, typename std::allocator_traits<Allocator1>::
+                                      template rebind_alloc<context_type>>;
 
-    value_builder()
+    stack_type stack_;
+
+    explicit value_builder(Allocator1 const &alloc = Allocator1())
+        : stack_(alloc)
     {
-      stack_.emplace_back( toplevel_context{} );
+      stack_.emplace_back(toplevel_context{});
     }
 
     template <typename Event>
@@ -1436,7 +1575,7 @@ struct basic_json
     {
       array_context ctx;
       ctx.array.reserve(e.size_hint);
-      stack_.push_back ( std::move(ctx) );
+      stack_.push_back(std::move(ctx));
     }
 
     void handle_event(typename parser::end_array_event)
@@ -1448,7 +1587,7 @@ struct basic_json
 
     void handle_event(typename parser::start_object_event)
     {
-      stack_.push_back( object_context{} );
+      stack_.push_back(object_context{});
     }
 
     void handle_event(typename parser::object_key_event key)
@@ -1460,29 +1599,30 @@ struct basic_json
     {
       auto object = get<object_context>(std::move(stack_.back())).object;
       stack_.pop_back();
-      handle_value( std::move(object) );
+      handle_value(std::move(object));
     }
 
-    void handle_value ( toplevel_context &ctx, value_type v )
+    void handle_value(toplevel_context &ctx, value_type v)
     {
       ctx.value = std::move(v);
     }
 
-    void handle_value ( array_context &ctx, value_type v )
+    void handle_value(array_context &ctx, value_type v)
     {
-      ctx.array.push_back( std::move(v) );
+      ctx.array.emplace_back(std::move(v));
     }
 
-    void handle_value ( object_context &ctx, value_type v )
+    void handle_value(object_context &ctx, value_type v)
     {
-      ctx.object[ctx.key] = std::move(v);
+      GPCL_ASSERT(!ctx.key.empty());
+      ctx.object.insert(
+          typename object_type::value_type(std::move(ctx.key), std::move(v)));
     }
 
-    void handle_value (value_type v)
+    void handle_value(value_type v)
     {
-      visit([v, this](auto &ctx) mutable {
-        handle_value(ctx, std::move(v));
-      }, stack_.back());
+      visit([v, this](auto &ctx) mutable { handle_value(ctx, std::move(v)); },
+            stack_.back());
     }
 
     value_type get_value()
@@ -1507,14 +1647,16 @@ struct basic_json
     }
   };
 
-  static value_type parse(const std::string &text)
+  template <typename Allocator1 = std::allocator<char>>
+  static value_type parse(std::basic_string_view<CharType, CharTraits> text,
+                          Allocator1 const &alloc = Allocator1())
   {
     parser p;
-    value_builder b;
+    value_builder builder(alloc);
 
-    p.put(text.begin(), text.end(), b);
+    p.put(text.begin(), text.end(), builder);
 
-    return b.get_value();
+    return builder.get_value();
   }
 };
 

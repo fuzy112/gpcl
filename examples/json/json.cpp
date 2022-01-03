@@ -41,5 +41,9 @@ int main()
   };
   std::cout << obj << std::endl;
 
-  std::cout << json::parse(R"({ "a": 1, "b": [1, 2, "3"] })") << std::endl;
+  auto const j = json::parse(R"({ "a": 1, "b": [1, 2, "3"] })");
+
+  std::cout << (j == json::value_type::object({{"a", 1}, {"b", {1, 2, "3"}}})) << std::endl;
+
+  std::cout << json::print_style::pretty_print << j << std::endl;
 }
