@@ -1264,13 +1264,35 @@ struct monostate
 {
 };
 
-namespace detail {
-inline constexpr compare_result compare(const monostate &,
-                                        const monostate &) noexcept
+constexpr bool operator==(const monostate &, const monostate &)
 {
-  return compare_result::equal;
+  return true;
 }
-} // namespace detail
+
+constexpr bool operator!=(const monostate &, const monostate &)
+{
+  return false;
+}
+
+constexpr bool operator<(const monostate &, const monostate &)
+{
+  return false;
+}
+
+constexpr bool operator>(const monostate &, const monostate &)
+{
+  return false;
+}
+
+constexpr bool operator<=(const monostate &, const monostate &)
+{
+  return true;
+}
+
+constexpr bool operator>=(const monostate &, const monostate &)
+{
+  return true;
+}
 
 #ifndef GPCL_DOXYGEN
 template <typename... Types>
