@@ -31,7 +31,7 @@ int main()
   m1["integer"] = 100000;
   m1["bool"] = false;
   m1["string"] = "string";
-  m1["array"] = json::value::array();
+  // m1["array"] = json::value::array();
   for (auto iter = m1.begin(); iter != m1.end(); ++iter)
   {
     std::cout << iter.key() << ": " << iter.value() << std::endl;

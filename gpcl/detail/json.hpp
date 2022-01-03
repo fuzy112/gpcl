@@ -852,11 +852,11 @@ public:
       return value(object_tag{}, il, std::forward<Args>(args)...);
     }
 
-    template <typename... Args>
-    static value array(Args &&...args)
-    {
-      return value(array_tag{}, std::forward<Args>(args)...);
-    }
+    // template <typename... Args>
+    // static value array(Args &&...args)
+    // {
+    //   return value(array_tag{}, std::forward<Args>(args)...);
+    // }
 
     template <typename... Args>
     static value array(std::initializer_list<value> il, Args &&...args)
