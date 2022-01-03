@@ -1054,7 +1054,7 @@ struct visit_impl
   template <typename Visitor>
   constexpr decltype(auto) operator()(Visitor &&visitor) const
   {
-    return std::invoke(std::forward<Visitor>(visitor));
+    return std::forward<Visitor>(visitor)();
   }
 
   template <typename Visitor, typename Variant1, typename... Variants>
@@ -1065,7 +1065,7 @@ struct visit_impl
         [&](auto &&... values) -> decltype(auto) {
           return apply_visitor(
               [&](auto &&value1) -> decltype(auto) {
-                return std::invoke(std::forward<Visitor>(visitor),
+                return std::forward<Visitor>(visitor)(
                                    std::forward<decltype(value1)>(value1),
                                    std::forward<decltype(values)>(values)...);
               },
@@ -1075,62 +1075,62 @@ struct visit_impl
   }
 
 private:
-  template <typename Visitor, typename Variant, std::size_t I>
-  static constexpr decltype(auto) apply_visitor_impl(Visitor &&visitor,
+  template <typename Callable, typename Variant, std::size_t I>
+  static constexpr decltype(auto) apply_visitor_impl(Callable &&callable,
                                                      Variant &&variant_,
                                                      std::index_sequence<I>)
   {
     if (variant_.index() == I)
-      return std::invoke(std::forward<Visitor>(visitor),
-                         get<I>(std::forward<Variant>(variant_)));
+      return std::forward<Callable>(callable)(
+          get<I>(std::forward<Variant>(variant_)));
 
     GPCL_THROW(bad_variant_access());
   }
 
-  template <typename Visitor, typename Variant, std::size_t I, std::size_t J,
+  template <typename Callable, typename Variant, std::size_t I, std::size_t J,
             std::size_t... Is>
   static constexpr decltype(auto)
-  apply_visitor_impl(Visitor &&visitor, Variant &&variant_,
+  apply_visitor_impl(Callable &&callable, Variant &&variant_,
                      std::index_sequence<I, J, Is...>)
   {
     if (variant_.index() == I)
-      return std::invoke(std::forward<Visitor>(visitor),
-                         get<I>(std::forward<Variant>(variant_)));
-    return apply_visitor_impl(std::forward<Visitor>(visitor),
+      return std::forward<Callable>(callable)(
+          get<I>(std::forward<Variant>(variant_)));
+    return apply_visitor_impl(std::forward<Callable>(callable),
                               std::forward<Variant>(variant_),
                               std::index_sequence<J, Is...>{});
   }
 
-  template <typename Visitor, typename... Types>
-  static constexpr decltype(auto) apply_visitor(Visitor &&visitor,
+  template <typename Callable, typename... Types>
+  static constexpr decltype(auto) apply_visitor(Callable &&callable,
                                                 variant<Types...> &variant_)
   {
-    return apply_visitor_impl(std::forward<Visitor>(visitor), variant_,
+    return apply_visitor_impl(std::forward<Callable>(callable), variant_,
                               std::index_sequence_for<Types...>{});
   }
 
-  template <typename Visitor, typename... Types>
+  template <typename Callable, typename... Types>
   static constexpr decltype(auto)
-  apply_visitor(Visitor &&visitor, const variant<Types...> &variant_)
+  apply_visitor(Callable &&callable, const variant<Types...> &variant_)
   {
-    return apply_visitor_impl(std::forward<Visitor>(visitor), variant_,
+    return apply_visitor_impl(std::forward<Callable>(callable), variant_,
                               std::index_sequence_for<Types...>{});
   }
 
-  template <typename Visitor, typename... Types>
-  static constexpr decltype(auto) apply_visitor(Visitor &&visitor,
+  template <typename Callable, typename... Types>
+  static constexpr decltype(auto) apply_visitor(Callable &&callable,
                                                 variant<Types...> &&variant_)
   {
-    return apply_visitor_impl(std::forward<Visitor>(visitor),
+    return apply_visitor_impl(std::forward<Callable>(callable),
                               std::move(variant_),
                               std::index_sequence_for<Types...>{});
   }
 
-  template <typename Visitor, typename... Types>
+  template <typename Callable, typename... Types>
   static constexpr decltype(auto)
-  apply_visitor(Visitor &&visitor, variant<Types...> const &&variant_)
+  apply_visitor(Callable &&callable, variant<Types...> const &&variant_)
   {
-    return apply_visitor_impl(std::forward<Visitor>(visitor),
+    return apply_visitor_impl(std::forward<Callable>(callable),
                               std::move(variant_),
                               std::index_sequence_for<Types...>{});
   }
