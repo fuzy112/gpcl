@@ -1096,20 +1096,20 @@ struct basic_json
       value<string_type>().push_back();
     }
 
-    std::pair<const_iterator, bool>
+    std::pair<iterator, bool>
     insert(std::pair<const string_type, value_type> const &v)
     {
       return value<object_type>().insert(v);
     }
 
-    std::pair<const_iterator, bool>
+    std::pair<iterator, bool>
     insert(std::pair<const string_type, value_type> &&v)
     {
       return value<object_type>().insert(std::move(v));
     }
 
     template <typename T>
-    std::pair<const_iterator, bool> insert(const string_type &key, T &&mapped)
+    std::pair<iterator, bool> insert(const string_type &key, T &&mapped)
     {
       return insert(std::pair<const string_type, value_type>(
           key, std::forward<T>(mapped)));
