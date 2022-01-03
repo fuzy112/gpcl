@@ -212,6 +212,9 @@ template <
     typename Allocator = std::allocator<char>>
 struct basic_json
 {
+  using char_type = CharType;
+  using char_traits = CharTraits;
+  
   using integer = IntegerType;
   using floating = FloatType;
   using boolean = bool;
@@ -722,9 +725,13 @@ public:
     // bool operator<(iterator const &rhs) const { return data_ < rhs.data_; }
   };
 
-  struct value
+private:
+  struct access;
+
+public:
+  class value
   {
-    using data_type = basic_json::data_type;
+  public:
     using string_type = basic_json::string;
     using object_type = basic_json::object;
     using array_type = basic_json::array;
@@ -732,8 +739,17 @@ public:
     using integer_type = basic_json::integer;
     using floating_type = basic_json::floating;
 
+    friend struct basic_json::access;
+    friend struct basic_json::serializer;
+    friend struct basic_json::serializing_visitor;
+    friend struct basic_json::parser;
+    friend struct basic_json::iterator;
+    friend struct basic_json::const_iterator;
+
+  private:
     data_type data_;
 
+  public:
     /// Construct a null json value.
     constexpr value() = default;
 
@@ -1219,6 +1235,17 @@ public:
     }
   };
 
+private:
+  struct access
+  {
+    template <typename T>
+    static auto &&data(T &&x)
+    {
+      return std::forward<T>(x).data_;
+    }
+  };
+
+public:
   friend inline ostream_type &operator<<(ostream_type &os, value const &v)
   {
     typename ostream_type::sentry sentry(os);
@@ -1227,7 +1254,7 @@ public:
 
     serializer ser(os);
 
-    gpcl::visit(make_const_visitor(serializing_visitor(ser)), v.data_);
+    gpcl::visit(make_const_visitor(serializing_visitor(ser)), access::data(v));
     return os;
   }
 
@@ -1238,7 +1265,7 @@ public:
                      return w == z;
                    return false;
                  }),
-                 x.data_, y.data_);
+                 access::data(x), access::data(y));
   }
 
   friend inline bool operator!=(const value &x, const value &y)
