@@ -65,6 +65,36 @@ namespace errc = boost::system::errc;
 using errc::make_error_code;
 using errc::make_error_condition;
 
+#  define GPCL_SPECIALIZE_IS_ERROR_CODE_ENUM(enum_type, value)                 \
+    template <>                                                                \
+    struct ::boost::system::is_error_code_enum<enum_type>                      \
+        : std::bool_constant<value>                                            \
+    {                                                                          \
+    };
+
+#  define GPCL_SPECIALIZE_IS_ERROR_CONDITION_ENUM(enum_type, value)            \
+    template <>                                                                \
+    struct ::boost::system::is_error_condition_enum<enum_type>                 \
+        : std::bool_constant<value>                                            \
+    {                                                                          \
+    };
+
+#  define GPCL_DEFINE_MAKE_ERROR_CODE(enum_type, category)                     \
+    namespace boost::system {                                                  \
+    inline error_code make_error_code(enum_type e) noexcept                    \
+    {                                                                          \
+      return error_code(static_cast<int>(e), category);                        \
+    }                                                                          \
+    }
+
+#  define GPCL_DEFINE_MAKE_ERROR_CONDITION(enum_type, category)                \
+    namespace boost::system {                                                  \
+    inline error_code make_error_code(enum_type e) noexcept                    \
+    {                                                                          \
+      return error_condition(static_cast<int>(e), category);                   \
+    }                                                                          \
+    }
+
 } // namespace errors
 
 } // namespace detail
@@ -89,6 +119,35 @@ using std::system_category;
 using errc = std::errc;
 using error_condition = std::error_condition;
 
+#  define GPCL_SPECIALIZE_IS_ERROR_CODE_ENUM(enum_type, value)                 \
+    template <>                                                                \
+    struct ::std::is_error_code_enum<enum_type> : std::bool_constant<value>    \
+    {                                                                          \
+    };
+
+#  define GPCL_IS_DECLARE_ERROR_CONDITION_ENUM(enum_type, value)               \
+    template <>                                                                \
+    struct ::std::is_error_condition_enum<enum_type>                           \
+        : std::bool_constant<value>                                            \
+    {                                                                          \
+    };
+
+#  define GPCL_DEFINE_MAKE_ERROR_CODE(enum_type, category)                     \
+    namespace std {                                                            \
+    inline error_code make_error_code(enum_type e) noexcept                    \
+    {                                                                          \
+      return error_code(static_cast<int>(e), category);                        \
+    }                                                                          \
+    }
+
+#  define GPCL_DEFINE_MAKE_ERROR_CONDITION(enum_type, category)                \
+    namespace std {                                                            \
+    inline error_code make_error_code(enum_type e) noexcept                    \
+    {                                                                          \
+      return error_condition(static_cast<int>(e), category);                   \
+    }                                                                          \
+    }
+
 } // namespace errors
 
 } // namespace detail
@@ -100,6 +159,7 @@ namespace gpcl {
 namespace detail {
 
 inline namespace errors {
+
 class interrupted : public std::exception
 {
 public:
