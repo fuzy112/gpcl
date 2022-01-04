@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-namespace gpcl { namespace detail { namespace tlsf_v3_1 {
+namespace gpcl { namespace detail { inline namespace tlsf_v3_1 {
 
 /*
 ** Architecture-specific bit manipulation routines.
@@ -980,15 +980,8 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 
 	if (pool_bytes < block_size_min || pool_bytes > block_size_max)
 	{
-#if defined (GPCL_DETAIL_TLSF_64BIT)
-		printf("tlsf_add_pool: Memory size must be between 0x%x and 0x%x00 bytes.\n", 
-			(unsigned int)(pool_overhead + block_size_min),
-			(unsigned int)((pool_overhead + block_size_max) / 256));
-#else
-		printf("tlsf_add_pool: Memory size must be between %u and %u bytes.\n", 
-			(unsigned int)(pool_overhead + block_size_min),
-			(unsigned int)(pool_overhead + block_size_max));
-#endif
+		GPCL_UNREACHABLE("memory size must be between (pool_overhead + block_size_min)"
+		 	"and (pool_overhead + block_size_max) bytes");
 		return 0;
 	}
 

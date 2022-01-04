@@ -21,8 +21,10 @@
 #include <gpcl/bad_expected_access.hpp>
 #include <gpcl/bad_weak_ptr.hpp>
 #include <gpcl/basic_any.hpp>
+#include <gpcl/basic_osyncstream.hpp>
 #include <gpcl/basic_spanbuf.hpp>
 #include <gpcl/basic_spanstream.hpp>
+#include <gpcl/basic_syncbuf.hpp>
 #include <gpcl/buffer.hpp>
 #include <gpcl/buffer_iterator.hpp>
 #include <gpcl/buffer_sequence.hpp>
@@ -54,6 +56,7 @@
 #include <gpcl/is_basic_lockable.hpp>
 #include <gpcl/is_lockable.hpp>
 #include <gpcl/ispanstream.hpp>
+#include <gpcl/json.hpp>
 #include <gpcl/lexical_cast.hpp>
 #include <gpcl/lock_file.hpp>
 #include <gpcl/make_any.hpp>
@@ -70,6 +73,7 @@
 #include <gpcl/optional.hpp>
 #include <gpcl/optional_fwd.hpp>
 #include <gpcl/ospanstream.hpp>
+#include <gpcl/osyncstream.hpp>
 #include <gpcl/pid_file.hpp>
 #include <gpcl/pool.hpp>
 #include <gpcl/pool_allocator.hpp>
@@ -82,6 +86,7 @@
 #include <gpcl/spanbuf.hpp>
 #include <gpcl/spanstream.hpp>
 #include <gpcl/swap.hpp>
+#include <gpcl/syncbuf.hpp>
 #include <gpcl/thread.hpp>
 #include <gpcl/thread_annotations.hpp>
 #include <gpcl/thread_attributes.hpp>

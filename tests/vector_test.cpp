@@ -166,7 +166,7 @@ TEST_CASE("[vector]"
 
     SUBCASE("front and back should be the same element")
     {
-      CHECK(v.back() == v.front());
+      CHECK(&v.back() == &v.front());
     }
 
     v.emplace_back();
@@ -180,7 +180,7 @@ TEST_CASE("[vector]"
   {
     CHECK(v.at(1) == 2);
     CHECK(v.at(2) == 3);
-#if !GPCL_NO_EXCEPTIONS
+#if !defined GPCL_NO_EXCEPTIONS
     CHECK_THROWS_AS(v.at(v.size() + 1), std::out_of_range);
 #endif
   }

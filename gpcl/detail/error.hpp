@@ -34,7 +34,7 @@
 #  define GPCL_THROW(x)                                                        \
     do                                                                         \
     {                                                                          \
-      (void)x;                                                                 \
+      (void)sizeof((x));                                                       \
       std::abort();                                                            \
     } while (false)
 #endif

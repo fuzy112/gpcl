@@ -39,7 +39,9 @@
 // =================================================================================================
 // =================================================================================================
 
+#if !__cpp_exceptions
 #define DOCTEST_CONFIG_NO_EXCEPTIONS_BUT_WITH_ALL_ASSERTS
+#endif
 
 #ifndef DOCTEST_LIBRARY_INCLUDED
 #define DOCTEST_LIBRARY_INCLUDED

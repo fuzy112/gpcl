@@ -23,7 +23,7 @@ set(changed_files "")
 foreach(file ${SOURCES})
   file(READ "${file}" content)
 
-  string(REGEX MATCH "tlsf\\.hpp$" match_result "${file}")
+  string(REGEX MATCH "tlsf\\..pp$" match_result "${file}")
   if(NOT "${match_result}" STREQUAL "")
     continue()
   endif()

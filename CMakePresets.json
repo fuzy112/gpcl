@@ -18,6 +18,17 @@
             }
         },
         {
+            "name": "gcc-noexceptions-nortti",
+            "displayName": "GCC w/o Exceptions and RTTI",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -std=c++17 -fno-exceptions -fno-rtti"
+            }
+        },
+        {
             "name": "clang",
             "displayName": "Clang",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
@@ -26,6 +37,18 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
                 "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Wdocumentation -ggdb3",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+            }
+        },
+        {
+            "name": "clang-noexceptions-nortti",
+            "displayName": "Clang w/o Exceptions and RTTI",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
+                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Wdocumentation -ggdb3 -fno-exceptions -fno-rtti",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
             }
         },
