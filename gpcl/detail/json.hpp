@@ -177,7 +177,7 @@ T json_cast(const S &s)
 
 template <typename T, typename S,
           std::enable_if_t<!is_lexical_castable<T, S>::value, int> = 0>
-T json_cast(const S &s)
+T json_cast(const S &)
 {
   throw_json_error(json_errc::bad_json_cast, "json_cast", true);
 }
@@ -886,6 +886,9 @@ public:
 
 private:
   struct access;
+
+public:
+  struct parser;
 
 public:
   /// JSON value type.
@@ -1785,7 +1788,7 @@ public:
         {
           consumed = visit(
               [this, ch, &visitor](auto &state) -> bool {
-                return put(state, ch, std::forward<Visitor>(visitor));
+                return this->put(state, ch, std::forward<Visitor>(visitor));
               },
               state_);
 
@@ -1901,7 +1904,7 @@ public:
 
     void handle_value(value v)
     {
-      visit([v, this](auto &ctx) mutable { handle_value(ctx, std::move(v)); },
+      visit([v, this](auto &ctx) mutable { this->handle_value(ctx, std::move(v)); },
             stack_.back());
     }
 
@@ -1936,7 +1939,7 @@ public:
                      Allocator1 const &alloc = Allocator1())
   {
     parser p;
-    value_builder builder(alloc);
+    value_builder<Allocator1> builder(alloc);
 
     p.put(first, last, builder);
 

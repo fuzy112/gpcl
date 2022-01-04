@@ -34,8 +34,8 @@ struct mutex_deleter
   mutex mutex_;
 
   explicit mutex_deleter(shared_ptr<mt_map> mutex_map, void const *s)
-      : mutex_map_(std::move(mutex_map)),
-        key_(s),
+      : key_(s),
+        mutex_map_(std::move(mutex_map)),
         mutex_()
   {
   }
