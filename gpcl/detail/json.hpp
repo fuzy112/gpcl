@@ -14,6 +14,8 @@
 #include <vector>
 
 namespace gpcl {
+
+/// JSON details.
 inline namespace json_detail {
 
 /// JSON error code enum type.
@@ -32,7 +34,7 @@ enum class json_errc
 
 /// Returns a reference to the static error category object for errors reported
 /// when processing JSON data.
-/// The override version of error_category::name() returns "json".
+/// The override version of `error_category::name()` returns `"json"`.
 /// @sa json_errc defines error codes of this category.
 inline error_category const &json_category() noexcept
 {
@@ -103,16 +105,6 @@ inline error_category const &json_category() noexcept
   const static json_category_impl instance = {};
   return instance;
 };
-} // namespace json_detail
-} // namespace gpcl
-
-GPCL_SPECIALIZE_IS_ERROR_CODE_ENUM(::gpcl::json_detail::json_errc, true)
-
-GPCL_DEFINE_MAKE_ERROR_CODE(::gpcl::json_detail::json_errc,
-                            ::gpcl::json_detail::json_category())
-
-namespace gpcl {
-inline namespace json_detail {
 
 /// The class json_error defines an exception object thrown when processing JSON
 /// data.
@@ -121,15 +113,18 @@ class json_error : public system_error
   const char *const_message_ = nullptr;
 
 public:
-  explicit json_error(json_errc errc) : system_error(errc) {}
+  explicit json_error(json_errc errc)
+      : system_error(static_cast<int>(errc), json_category())
+  {
+  }
 
   explicit json_error(json_errc errc, const std::string &what)
-      : system_error(errc, what)
+      : system_error(static_cast<int>(errc), json_category(), what)
   {
   }
 
   explicit json_error(json_errc errc, const char *what)
-      : system_error(errc, what)
+      : system_error(static_cast<int>(errc), json_category(), what)
   {
   }
 
@@ -138,7 +133,7 @@ public:
   };
 
   json_error(json_errc errc, const char *what, const_string_tag)
-      : system_error(errc),
+      : system_error(static_cast<int>(errc), json_category()),
         const_message_(what)
   {
   }
@@ -340,7 +335,7 @@ struct json_index_impl
 template <typename R>
 constexpr json_index_detail::json_index_impl<R> json_index{};
 
-// This class template is used as a namespace which can be parameterized.
+/// JSON data types.
 template <
     typename IntegerType, typename FloatType,
     template <typename CharType, typename CharTraits, typename Allocator>
@@ -909,7 +904,6 @@ public:
     friend struct basic_json::access;
     friend struct basic_json::serializer;
     friend struct basic_json::serializing_visitor;
-    friend struct basic_json::parser;
     friend struct basic_json::iterator;
     friend struct basic_json::const_iterator;
 
@@ -1445,23 +1439,35 @@ public:
       get<string_type>().erase(pos, count);
     }
 
+    /// Erases @c count elements from an array.
+    /// @pre is_array().
     void erase(const_iterator it, std::size_t count)
     {
+      GPCL_ASSERT(is_array());
       get<array_type>().erase(
           get<typename array_type::const_iterator>(it.data_), count);
     }
 
-    void erase(const string_type &s) { get<object_type>().erase(s); }
+    /// Erases a property from an object.
+    /// @pre is_object().
+    void erase(const string_type &s)
+    {
+      GPCL_ASSERT(is_object());
+      get<object_type>().erase(s);
+    }
 
+    /// Erases an element.
+    /// @pre is_array() || is_object().
     void erase(const_iterator it)
     {
+      GPCL_ASSERT(is_array() || is_object());
       if (auto p = get_if<array_type>())
         return p->erase(get<typename array_type::const_iterator>(it.data_));
 
       if (auto p = get_if<object_type>())
         return p->erase(get<typename object_type::const_iterator>(it.data_));
 
-      throw_json_error(json_errc::out_of_range,
+      throw_json_error(json_errc::type_mismatch,
                        "value<[Array|Object]>::erase(const_iterator)", true);
     }
 
@@ -1469,6 +1475,9 @@ public:
   };
 
 private:
+  /// The access is used to access the private data member of @c value.
+  /// Since @c access is a internal class of basic_json, it is accessible
+  /// in other internal classes of basic_json's.
   struct access
   {
     template <typename T>
@@ -1757,6 +1766,13 @@ public:
 
   public:
     /// Consume a sequence of characters and emit events to the visitor.
+    /// @param first begin of the character sequence.
+    /// @param last end of the character sequence.
+    /// @param visitor an event visitor.
+    ///
+    /// @tparam Visitor a type that is callable with all the event types.
+    ///
+    /// @sa value_builder is a typical Visitor.
     template <typename InputIt, typename Visitor>
     void put(InputIt first, InputIt last, Visitor &&visitor)
     {
@@ -1903,6 +1919,7 @@ public:
     }
 
     /// Consume an event.
+    /// @tparam E an event type.
     template <typename E>
     void operator()(E &&e)
     {
@@ -1966,5 +1983,11 @@ using json = basic_json<std::int64_t, double, std::basic_string,
 
 } // namespace json_detail
 } // namespace gpcl
+
+/// Specialization of is_error_code_enum<json_errc>.
+GPCL_SPECIALIZE_IS_ERROR_CODE_ENUM(::gpcl::json_detail::json_errc, true)
+
+GPCL_DEFINE_MAKE_ERROR_CODE(::gpcl::json_detail::json_errc,
+                            ::gpcl::json_detail::json_category())
 
 #endif // GPCL_DETAIL_JSON_HPP
