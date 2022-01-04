@@ -1,6 +1,7 @@
 #ifndef GPCL_DETAIL_JSON_HPP
 #define GPCL_DETAIL_JSON_HPP
 
+#include <gpcl/error.hpp>
 #include <gpcl/lexical_cast.hpp>
 #include <gpcl/shared_ptr.hpp>
 #include <gpcl/variant.hpp>
@@ -15,9 +16,148 @@
 namespace gpcl {
 inline namespace json_detail {
 
-class bad_json_access : public std::exception
+/// JSON error code enum type.
+/// `is_error_code_enum<json_errc>` is specialized to have a const static member
+/// variable `bool value = true`, and `make_error_code(json_errc)` is overloaded
+/// to create `error_code` from `json_errc`. Thus `json_errc` is implicitly
+/// convertible to `error_code`.
+enum class json_errc
 {
+  bad_json_cast = 1,
+  type_mismatch,
+  operation_not_supported,
+  out_of_range,
+  failed_to_parse,
 };
+
+/// Returns a reference to the static error category object for errors reported
+/// when processing JSON data.
+/// The override version of error_category::name() returns "json".
+/// @sa json_errc defines error codes of this category.
+inline error_category const &json_category() noexcept
+{
+  class json_category_impl final : public error_category
+  {
+    struct error_info
+    {
+      const char *message;
+      errc condition = errc();
+    };
+
+    static inline constexpr error_info info(json_errc code) noexcept
+    {
+      switch (code)
+      {
+      case json_errc::bad_json_cast:
+        return {
+            "bad json cast",
+        };
+
+      case json_errc::type_mismatch:
+        return {
+            "type mismatch",
+        };
+
+      case json_errc::operation_not_supported:
+        return {
+            "operation not supported",
+            errc::operation_not_supported,
+        };
+
+      case json_errc::out_of_range:
+        return {
+            "out of range",
+            errc::invalid_argument,
+        };
+
+      case json_errc::failed_to_parse:
+        return {
+            "failed to parse",
+        };
+
+      default:
+        GPCL_UNREACHABLE("invalid error code");
+      }
+    }
+
+  public:
+    json_category_impl() {}
+
+    const char *name() const noexcept { return "json"; }
+
+    std::string message(int code) const noexcept
+    {
+      return std::string(info(json_errc(code)).message);
+    }
+
+    error_condition default_error_condition(int code) const noexcept
+    {
+      if (auto condition = info(json_errc(code)).condition; condition != errc())
+      {
+        return condition;
+      }
+      return error_category::default_error_condition(code);
+    }
+  };
+
+  const static json_category_impl instance = {};
+  return instance;
+};
+} // namespace json_detail
+} // namespace gpcl
+
+GPCL_SPECIALIZE_IS_ERROR_CODE_ENUM(::gpcl::json_detail::json_errc, true)
+
+GPCL_DEFINE_MAKE_ERROR_CODE(::gpcl::json_detail::json_errc,
+                            ::gpcl::json_detail::json_category())
+
+namespace gpcl {
+inline namespace json_detail {
+
+/// The class json_error defines an exception object thrown when processing JSON
+/// data.
+class json_error : public system_error
+{
+  const char *const_message_ = nullptr;
+
+public:
+  explicit json_error(json_errc errc) : system_error(errc) {}
+
+  explicit json_error(json_errc errc, const std::string &what)
+      : system_error(errc, what)
+  {
+  }
+
+  explicit json_error(json_errc errc, const char *what)
+      : system_error(errc, what)
+  {
+  }
+
+  struct const_string_tag
+  {
+  };
+
+  json_error(json_errc errc, const char *what, const_string_tag)
+      : system_error(errc),
+        const_message_(what)
+  {
+  }
+
+  const char *what() const noexcept
+  {
+    if (const_message_)
+      return const_message_;
+
+    return system_error::what();
+  }
+};
+
+/// Throws a json_error with a static message.
+[[noreturn]] inline void throw_json_error(json_errc errc, const char *message,
+                                          bool)
+{
+  GPCL_THROW(json_error(errc, message, json_error::const_string_tag{}));
+}
 
 namespace json_cast_detail {
 
@@ -44,7 +184,7 @@ template <typename T, typename S,
           std::enable_if_t<!is_lexical_castable<T, S>::value, int> = 0>
 T json_cast(const S &s)
 {
-  GPCL_THROW(bad_json_access());
+  throw_json_error(json_errc::bad_json_cast, "json_cast", true);
 }
 
 template <typename T>
@@ -75,16 +215,15 @@ struct is_sized<T, std::void_t<decltype(std::size(std::declval<T const &>()))>>
 };
 
 template <typename T, std::enable_if_t<is_sized<T>::value, int> = 0>
-auto json_size(const T &x)
+std::size_t json_size(const T &x)
 {
   return std::size(x);
 }
 
 template <typename T, std::enable_if_t<!is_sized<T>::value, int> = 0>
-auto json_size(const T &)
+[[noreturn]] std::size_t json_size(const T &)
 {
-  GPCL_THROW(bad_json_access());
-  return 0;
+  throw_json_error(json_errc::operation_not_supported, "json_size", true);
 }
 
 struct json_size_impl
@@ -123,9 +262,9 @@ R json_at(T &x, A1 const &a1)
 
 template <typename R, typename T, typename A1,
           std::enable_if_t<!is_at_indexable<R, T, A1>::value, int> = 0>
-R json_at(T &x, A1 const &a1)
+[[noreturn]] R json_at(T &x, A1 const &a1)
 {
-  GPCL_THROW(bad_json_access());
+  throw_json_error(json_errc::operation_not_supported, "json_at", true);
 }
 
 template <typename R>
@@ -173,9 +312,9 @@ R json_index(T &x, const A1 &a1)
 
 template <typename R, typename T, typename A1,
           std::enable_if_t<!is_indexable<R, T, A1>::value, int> = 0>
-R json_index(T &x, const A1 &a1)
+[[noreturn]] R json_index(T &x, const A1 &a1)
 {
-  GPCL_THROW(bad_json_access());
+  throw_json_error(json_errc::operation_not_supported, "json_index", true);
 }
 
 template <typename R>
@@ -598,7 +737,8 @@ public:
       if (auto *p = get_if<typename array_type::iterator>(&data_))
         return **p;
 
-      GPCL_THROW(bad_json_access());
+      throw_json_error(json_errc::operation_not_supported,
+                       "iterator<[Array]>::operator*:", true);
     }
 
     decltype(auto) operator->() const { return std::addressof(**this); }
@@ -608,7 +748,8 @@ public:
       if (auto *p = get_if<typename object_type::iterator>(&data_))
         return **p;
 
-      GPCL_THROW(bad_json_access());
+      throw_json_error(json_errc::operation_not_supported,
+                       "iterator<[Object]>::pair", true);
     }
 
     decltype(auto) key() const { return pair().first; }
@@ -690,7 +831,8 @@ public:
       if (auto *p = get_if<typename array_type::const_iterator>(&data_))
         return **p;
 
-      GPCL_THROW(bad_json_access());
+      throw_json_error(json_errc::operation_not_supported,
+                       "const_iterator<[Array]>::operator*:", true);
     }
 
     decltype(auto) operator->() const { return std::addressof(**this); }
@@ -700,7 +842,8 @@ public:
       if (auto *p = get_if<typename object_type::const_iterator>(&data_))
         return **p;
 
-      GPCL_THROW(bad_json_access());
+      throw_json_error(json_errc::operation_not_supported,
+                       "const_iterator<[Object]>::pair:", true);
     }
 
     decltype(auto) key() const { return pair().first; }
@@ -774,7 +917,6 @@ public:
     data_type data_;
 
   public:
-
     /// @name Constructors
     /// @{
 
@@ -1047,7 +1189,7 @@ public:
     {
       if (auto p = this->template get_if<T>())
         return *p;
-      GPCL_THROW(bad_json_access());
+      throw_json_error(json_errc::type_mismatch, "value::get<T>()", true);
     }
 
     template <typename T>
@@ -1055,7 +1197,7 @@ public:
     {
       if (auto p = this->template get_if<T>())
         return *p;
-      GPCL_THROW(bad_json_access());
+      throw_json_error(json_errc::type_mismatch, "value::get<T>() const", true);
     }
 
     template <typename T>
@@ -1229,7 +1371,7 @@ public:
     {
       auto &v = get<array_type>();
       if (v.empty())
-        GPCL_THROW(bad_json_access());
+        throw_json_error(json_errc::out_of_range, "value::front()", true);
       return v.front();
     }
 
@@ -1237,7 +1379,7 @@ public:
     {
       auto &v = get<array_type>();
       if (v.empty())
-        GPCL_THROW(bad_json_access());
+        throw_json_error(json_errc::out_of_range, "value::front() const", true);
       return v.front();
     }
 
@@ -1245,7 +1387,7 @@ public:
     {
       auto &v = get<array_type>();
       if (v.empty())
-        GPCL_THROW(bad_json_access());
+        throw_json_error(json_errc::out_of_range, "value::back()", true);
       return v.back();
     }
 
@@ -1253,7 +1395,7 @@ public:
     {
       auto &v = get<array_type>();
       if (v.empty())
-        GPCL_THROW(bad_json_access());
+        throw_json_error(json_errc::out_of_range, "value::back() const", true);
       return v.back();
     }
 
@@ -1319,7 +1461,8 @@ public:
       if (auto p = get_if<object_type>())
         return p->erase(get<typename object_type::const_iterator>(it.data_));
 
-      GPCL_THROW(bad_json_access());
+      throw_json_error(json_errc::out_of_range,
+                       "value<[Array|Object]>::erase(const_iterator)", true);
     }
 
     /// @}
@@ -1336,10 +1479,9 @@ private:
   };
 
 public:
-
   /// @name Serializing
   /// @{
-    
+
   /// Serializes a JSON value.
   friend inline ostream_type &operator<<(ostream_type &os, value const &v)
   {
@@ -1674,7 +1816,6 @@ public:
     stack_type stack_;
 
   public:
-
     /// Construct a value_builder
     explicit value_builder(Allocator1 const &alloc = Allocator1())
         : stack_(alloc)
@@ -1722,7 +1863,7 @@ public:
 
     void handle_event(typename parser::error_event)
     {
-      GPCL_THROW(bad_json_access());
+      throw_json_error(json_errc::failed_to_parse, "parser", true);
     }
 
     void handle_value(toplevel_context &ctx, value v)
@@ -1754,7 +1895,8 @@ public:
     {
       if (stack_.size() != 1)
       {
-        GPCL_THROW(bad_json_access());
+        throw_json_error(json_errc::failed_to_parse,
+                         "value_builder::get_value()", true);
       }
 
       return get<toplevel_context>(stack_[0]).value_;
@@ -1769,7 +1911,7 @@ public:
   };
 
   /// @name Parsing
-  /// @{ 
+  /// @{
 
   /// Parses a JSON text using @c parser and @c value_builder.
   template <typename InputIt, typename Allocator1 = std::allocator<char>>
