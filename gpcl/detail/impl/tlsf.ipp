@@ -1,12 +1,7 @@
-//
-// tlsf.ipp
-// ~~~~~~~~
-//
-// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
+#ifndef GPCL_DETAIL_IMPL_TLSF_IPP
+#define GPCL_DETAIL_IMPL_TLSF_IPP
+
+#include <gpcl/detail/tlsf.hpp>
 
 #include <assert.h>
 #include <limits.h>
@@ -15,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <gpcl/detail/tlsf.hpp>
+namespace gpcl { namespace detail { namespace tlsf_v3_1 {
 
 /*
 ** Architecture-specific bit manipulation routines.
@@ -44,7 +39,6 @@
 #define GPCL_DETAIL_TLSF_64BIT
 #endif
 
-namespace gpcl { namespace detail {
 
 /*
 ** gcc 3.4 and above have builtin support, specialized for architecture.
@@ -1255,4 +1249,7 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 	return p;
 }
 
-} }
+} } }
+
+
+#endif // GPCL_DETAIL_IMPL_TLSF_IPP
