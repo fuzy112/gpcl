@@ -62,8 +62,10 @@ protected:
     case ref_count_operation_t::get_deleter:
       return s->get_deleter();
 
+#if !defined GPCL_NO_RTTI
     case ref_count_operation_t::get_deleter_type_info:
       return s->get_deleter_type_info();
+#endif
 
     default:
       GPCL_UNREACHABLE("invalid ref_count operation");
@@ -137,10 +139,12 @@ public:
 
   inline Deleter *get_deleter() noexcept { return &p_.second(); }
 
+#if !defined GPCL_NO_RTTI
   static inline std::type_info *get_deleter_type_info() noexcept
   {
     return const_cast<std::type_info *>(std::addressof(typeid(Deleter)));
   }
+#endif
 
 public:
   explicit inline ref_count_ptr(ref_count_base::operation_func_t op_func,

@@ -99,8 +99,11 @@
 #  define GPCL_CONFIG_GETOPT_LONG_OPT_EQUAL_SIZE 1
 #endif
 
-// #define GPCL_NO_RTTI 1
-// #undef GPCL_NO_RTTI
+#if __cpp_rtti
+#  undef GPCL_NO_RTTI
+#else
+#  define GPCL_NO_RTTI 1
+#endif
 
 /// Main namespace of GPCL
 namespace gpcl {
