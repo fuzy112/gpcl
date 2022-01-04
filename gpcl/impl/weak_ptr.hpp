@@ -40,6 +40,7 @@ bool weak_ptr<T>::owner_before(const shared_ptr<Y> &other) const noexcept
   return s_ < other.s_;
 }
 
+#if !defined GPCL_NO_RTTI
 template <typename T, typename U>
 weak_ptr<T> dynamic_pointer_cast(const weak_ptr<U> &p) noexcept
 {
@@ -47,6 +48,7 @@ weak_ptr<T> dynamic_pointer_cast(const weak_ptr<U> &p) noexcept
     return dynamic_pointer_cast<T>(sp);
   return weak_ptr<T>();
 }
+#endif
 
 } // namespace gpcl
 

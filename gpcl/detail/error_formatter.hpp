@@ -15,8 +15,8 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/output_iterator_streambuf.hpp>
 
-#include <ostream>
 #include <exception>
+#include <ostream>
 #include <string_view>
 #include <type_traits>
 
@@ -96,6 +96,7 @@ public:
     GPCL_CATCH_END
     GPCL_UNREACHABLE("failed to throw exception");
 #else
+    (void)eptr;
     std::string_view str = "unknown exception";
     return std::copy(str.begin(), str.end(), out);
 #endif

@@ -86,7 +86,7 @@ public:
 
   /// Construct a new basic_any.
   template <typename ValueType, typename... Args>
-  explicit basic_any(in_place_type_t<ValueType>, Args &&... args)
+  explicit basic_any(in_place_type_t<ValueType>, Args &&...args)
       : manage_(&any_manager<std::decay_t<ValueType>>::manage)
   {
     using decayed_value_t = std::decay_t<ValueType>;
@@ -101,7 +101,7 @@ public:
   /// Construct a new basic_any.
   template <typename ValueType, typename U, typename... Args>
   explicit basic_any(in_place_type_t<ValueType>, std::initializer_list<U> il,
-                     Args &&... args)
+                     Args &&...args)
       : manage_(&any_manager<std::decay_t<ValueType>>::manage)
   {
     using decayed_value_t = std::decay_t<ValueType>;
@@ -180,7 +180,7 @@ public:
 
   /// Constructs a contained value.
   template <typename ValueType, typename... Args>
-  std::decay_t<ValueType> &emplace(Args &&... args)
+  std::decay_t<ValueType> &emplace(Args &&...args)
   {
     basic_any(in_place_type<ValueType>, std::forward<Args>(args)...)
         .swap(*this);
@@ -189,7 +189,7 @@ public:
 
   /// Constructs a contained value.
   template <typename ValueType, typename U, typename... Args>
-  std::decay_t<ValueType> &emplace(std::initializer_list<U> il, Args &&... args)
+  std::decay_t<ValueType> &emplace(std::initializer_list<U> il, Args &&...args)
   {
     basic_any(in_place_type<ValueType>, il, std::forward<Args>(args)...)
         .swap(*this);
@@ -239,6 +239,7 @@ template <typename T, std::size_t S, std::size_t A>
 bool holds_type(const basic_any<S, A> &a)
 {
 #ifdef GPCL_NO_RTTI
+  (void)a;
   GPCL_UNREACHABLE("unsupported");
 #else
   return a.type() == typeid(T);

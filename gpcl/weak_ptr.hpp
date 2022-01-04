@@ -21,7 +21,7 @@ class shared_ptr;
 
 /// @addtogroup smart_pointer Smart Pointers
 /// @{
-  
+
 template <typename T>
 class weak_ptr
 {
@@ -83,7 +83,7 @@ public:
   {
     if (s_)
       s_->weak_put();
-    
+
     p_ = nullptr;
     s_ = nullptr;
   }
@@ -169,10 +169,10 @@ public:
 
     if (!s_->lock())
       return rv;
-    
+
     rv.p_ = p_;
     rv.s_ = s_;
-    
+
     return rv;
   }
 
@@ -212,8 +212,10 @@ weak_ptr<T> static_pointer_cast(const weak_ptr<U> &p) noexcept
   return p.generic_pointer_cast_helper(static_cast<T *>(p.get_unchecked()));
 }
 
+#if !defined GPCL_NO_RTTI
 template <typename T, typename U>
 weak_ptr<T> dynamic_pointer_cast(const weak_ptr<U> &p) noexcept;
+#endif
 
 template <typename T, typename U>
 weak_ptr<T> const_pointer_cast(const weak_ptr<U> &p) noexcept
@@ -224,7 +226,8 @@ weak_ptr<T> const_pointer_cast(const weak_ptr<U> &p) noexcept
 template <typename T, typename U>
 weak_ptr<T> reinterpret_pointer_cast(const weak_ptr<U> &p) noexcept
 {
-  return p.generic_pointer_cast_helper(reinterpret_cast<T *>(p.get_unchecked()));
+  return p.generic_pointer_cast_helper(
+      reinterpret_cast<T *>(p.get_unchecked()));
 }
 
 /// @}

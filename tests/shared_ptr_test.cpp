@@ -18,7 +18,8 @@ TEST_CASE("shared_ptr constructors")
     shared_ptr<decltype(not_default_construtible)> p3(
         nullptr, [](decltype(not_default_construtible) *p) { delete p; });
     shared_ptr<decltype(not_default_construtible)> p4(
-        nullptr, [](decltype(not_default_construtible) *p) { delete p; }, std::allocator<char>());
+        nullptr, [](decltype(not_default_construtible) *p) { delete p; },
+        std::allocator<char>());
 
     REQUIRE(!p1);
     REQUIRE(!p2);
@@ -217,6 +218,7 @@ TEST_CASE("weak_ptr")
     }
   }
 
+#if !defined GPCL_NO_RTTI
   SUBCASE("dynamic_pointer_cast")
   {
     class A
@@ -245,4 +247,5 @@ TEST_CASE("weak_ptr")
       REQUIRE(!p.lock());
     }
   }
+#endif
 }

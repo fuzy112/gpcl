@@ -556,11 +556,13 @@ shared_ptr<T> static_pointer_cast(const shared_ptr<Y> &p) noexcept
   return shared_ptr<T>(p, static_cast<T *>(p.get()));
 }
 
+#if !defined GPCL_NO_RTTI
 template <typename T, typename U>
 shared_ptr<T> dynamic_pointer_cast(const shared_ptr<U> &p) noexcept
 {
   return shared_ptr<T>(p, dynamic_cast<T *>(p.get()));
 }
+#endif
 
 template <typename T, typename U>
 shared_ptr<T> const_pointer_cast(const shared_ptr<U> &p) noexcept

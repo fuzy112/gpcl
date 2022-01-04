@@ -39,6 +39,8 @@
 // =================================================================================================
 // =================================================================================================
 
+#define DOCTEST_CONFIG_NO_EXCEPTIONS_BUT_WITH_ALL_ASSERTS
+
 #ifndef DOCTEST_LIBRARY_INCLUDED
 #define DOCTEST_LIBRARY_INCLUDED
 
