@@ -20,11 +20,11 @@
 namespace gpcl {
 namespace detail {
 
-template <typename T, typename Tag, bool IsEmpty = std::is_empty<T>::value>
+template <typename T, std::size_t I, bool IsEmpty = std::is_empty<T>::value>
 class compressed_storage;
 
-template <typename T, typename Tag>
-class compressed_storage<T, Tag, false>
+template <typename T, std::size_t I>
+class compressed_storage<T, I, false>
 {
   T data_;
 
@@ -32,7 +32,7 @@ public:
   using type = T;
 
   template <typename... Args>
-  explicit constexpr compressed_storage(Args &&... args)
+  explicit constexpr compressed_storage(Args &&...args)
       : data_(std::forward<Args>(args)...)
   {
   }
@@ -50,14 +50,14 @@ public:
   T const &&get() const &&noexcept { return data_; }
 };
 
-template <typename T, typename Tag>
-class compressed_storage<T, Tag, true> : private T
+template <typename T, std::size_t I>
+class compressed_storage<T, I, true> : private T
 {
 public:
   using type = T;
 
   template <typename... Args>
-  explicit constexpr compressed_storage(Args &&... args)
+  explicit constexpr compressed_storage(Args &&...args)
       : T(std::forward<Args>(args)...)
   {
   }
@@ -81,11 +81,11 @@ enum piecewise_construct_t
 };
 
 template <typename T1, typename T2>
-class compressed_pair : private compressed_storage<T1, class tag1>,
-                        private compressed_storage<T2, class tag2>
+class compressed_pair : private compressed_storage<T1, 1>,
+                        private compressed_storage<T2, 2>
 {
-  using base_type_1 = compressed_storage<T1, tag1>;
-  using base_type_2 = compressed_storage<T2, tag2>;
+  using base_type_1 = compressed_storage<T1, 1>;
+  using base_type_2 = compressed_storage<T2, 2>;
 
   template <typename Tuple1, typename Tuple2, std::size_t... Is,
             std::size_t... Js>
