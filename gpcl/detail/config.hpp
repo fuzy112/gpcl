@@ -105,6 +105,13 @@
 #  define GPCL_NO_RTTI 1
 #endif
 
+// #undef GPCL_DISABLE_AUTO_LINKING
+
+#if defined _MSC_VER && defined GPCL_SEPARATE_COMPILATION &&  \
+    !defined GPCL_SOURCE && !defined GPCL_DISABLE_AUTO_LINKING
+#  pragma comment(lib, "gpcl")
+#endif
+
 /// Main namespace of GPCL
 namespace gpcl {
 
