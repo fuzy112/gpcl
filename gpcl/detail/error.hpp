@@ -67,14 +67,14 @@ using errc::make_error_condition;
 
 #  define GPCL_SPECIALIZE_IS_ERROR_CODE_ENUM(enum_type, value)                 \
     template <>                                                                \
-    struct ::boost::system::is_error_code_enum<enum_type>                      \
+    struct boost::system::is_error_code_enum<enum_type>                      \
         : std::bool_constant<value>                                            \
     {                                                                          \
     };
 
 #  define GPCL_SPECIALIZE_IS_ERROR_CONDITION_ENUM(enum_type, value)            \
     template <>                                                                \
-    struct ::boost::system::is_error_condition_enum<enum_type>                 \
+    struct boost::system::is_error_condition_enum<enum_type>                 \
         : std::bool_constant<value>                                            \
     {                                                                          \
     };
@@ -121,13 +121,13 @@ using error_condition = std::error_condition;
 
 #  define GPCL_SPECIALIZE_IS_ERROR_CODE_ENUM(enum_type, value)                 \
     template <>                                                                \
-    struct ::std::is_error_code_enum<enum_type> : std::bool_constant<value>    \
+    struct std::is_error_code_enum<enum_type> : std::bool_constant<value>    \
     {                                                                          \
     };
 
 #  define GPCL_IS_DECLARE_ERROR_CONDITION_ENUM(enum_type, value)               \
     template <>                                                                \
-    struct ::std::is_error_condition_enum<enum_type>                           \
+    struct std::is_error_condition_enum<enum_type>                           \
         : std::bool_constant<value>                                            \
     {                                                                          \
     };
