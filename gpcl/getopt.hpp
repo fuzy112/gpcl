@@ -2,7 +2,7 @@
 // getopt.hpp
 // ~~~~~~~~~~
 //
-// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2021-2022 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -136,7 +136,7 @@ class getopt
   gpcl::span<const char *const>::size_type optind_;
 
   // position of short options in a string.
-  int optpos_;
+  std::string::size_type optpos_;
 
   // argument of an option.
   const char *optarg_;

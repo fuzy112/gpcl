@@ -39,6 +39,7 @@ public:
   template <typename F, typename... Args>
   explicit win_thread(thread_attributes const &attr, F &&f, Args... args)
   {
+    (void)attr;
     start_thread(std::bind(f, args...));
   }
 

@@ -7,14 +7,51 @@
     },
     "configurePresets": [
         {
-            "name": "gcc",
-            "displayName": "GCC",
+            "name": "gcc-dynamic-debug",
+            "displayName": "GCC Dynamic Debug",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -std=c++17"
+                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -std=c++17",
+                "BUILD_SHARED_LIBS": "ON"
+            }
+        },
+        {
+            "name": "gcc-dynamic-release",
+            "displayName": "GCC Dynamic Release",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -std=c++17",
+                "BUILD_SHARED_LIBS": "ON"
+            }
+        },
+        {
+            "name": "gcc-static-debug",
+            "displayName": "GCC Static Debug",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -std=c++17",
+                "BUILD_SHARED_LIBS": "OFF"
+            }
+        },
+        {
+            "name": "gcc-static-release",
+            "displayName": "GCC Static Release",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -std=c++17",
+                "BUILD_SHARED_LIBS": "OFF"
             }
         },
         {
@@ -77,25 +114,55 @@
             }
         },
         {
-            "name": "msvc",
-            "displayName": "MSVC",
+            "name": "msvc-dynamic-debug",
+            "displayName": "MSVC Dynamic Debug",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "BUILD_SHARED_LIBS": "ON",
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_CXX_FLAGS": "/W4 /EHsc",
+                "GPCL_BUILD_DOC": "OFF"
             }
         },
         {
-            "name": "msvc-release",
-            "displayName": "MSVC Release",
+            "name": "msvc-dynamic-release",
+            "displayName": "MSVC Dynamic Release",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "BUILD_SHARED_LIBS": "ON"
+                "BUILD_SHARED_LIBS": "ON",
+                "CMAKE_CXX_FLAGS": "/W4 /EHsc",
+                "GPCL_BUILD_DOC": "OFF"
+            }
+        },
+        {
+            "name": "msvc-static-debug",
+            "displayName": "MSVC Static Debug",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "BUILD_SHARED_LIBS": "OFF",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_CXX_FLAGS": "/W4 /EHsc",
+                "GPCL_BUILD_DOC": "OFF"
+            }
+        },
+        {
+            "name": "msvc-static-release",
+            "displayName": "MSVC Static Release",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "BUILD_SHARED_LIBS": "OFF",
+                "CMAKE_CXX_FLAGS": "/W4 /EHsc",
+                "GPCL_BUILD_DOC": "OFF"
             }
         }
     ]

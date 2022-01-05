@@ -9,9 +9,6 @@ if (UNIX)
 		pthread
 		rt
 		)
-
-	# target_compile_options(gpcl-separate INTERFACE "-fno-exceptions")
-
 endif ()
 
 target_compile_definitions(separate PUBLIC GPCL_SEPARATE_COMPILATION=1)

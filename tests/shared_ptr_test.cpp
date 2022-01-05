@@ -165,33 +165,37 @@ TEST_CASE("enable_shared_from")
 
 TEST_CASE("weak_ptr")
 {
-  auto sp = gpcl::make_shared<int>(42);
 
-  std::vector<std::thread> threads;
-
-  for (int i = 0; i != 10; ++i)
+  SUBCASE("not-expired")
   {
-    threads.emplace_back([sp]() mutable {
-      REQUIRE(*sp == 42);
-      sp.reset();
-    });
-  }
+    auto sp = gpcl::make_shared<int>(42);
 
-  for (int i = 0; i != 10; ++i)
-  {
-    threads.emplace_back([wp = gpcl::weak_ptr<int>(sp)]() mutable {
-      if (auto sp = wp.lock())
-      {
+    std::vector<std::thread> threads;
+
+    for (int i = 0; i != 10; ++i)
+    {
+      threads.emplace_back([sp]() mutable {
         REQUIRE(*sp == 42);
-      }
-    });
-  }
+        sp.reset();
+      });
+    }
 
-  sp.reset();
+    for (int i = 0; i != 10; ++i)
+    {
+      threads.emplace_back([wp = gpcl::weak_ptr<int>(sp)]() mutable {
+        if (auto sp = wp.lock())
+        {
+          REQUIRE(*sp == 42);
+        }
+      });
+    }
 
-  for (auto &t : threads)
-  {
-    t.join();
+    sp.reset();
+
+    for (auto &t : threads)
+    {
+      t.join();
+    }
   }
 
   SUBCASE("expired")

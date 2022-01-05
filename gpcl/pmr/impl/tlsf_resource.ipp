@@ -13,13 +13,13 @@
 namespace gpcl {
 namespace pmr {
 
-tlsf_resource::tlsf_resource(void *buffer, std::size_t size,
+tlsf_resource::tlsf_resource(void *user_provided_buffer, std::size_t size,
                              memory_resource *upstream)
     : pool_list_{nullptr},
       upstream_{upstream}
 {
   GPCL_ASSERT(size > gpcl::detail::tlsf_size());
-  tlsf_ = gpcl::detail::tlsf_create_with_pool(buffer, size);
+  tlsf_ = gpcl::detail::tlsf_create_with_pool(user_provided_buffer, size);
   if (!tlsf_)
   {
     GPCL_THROW(std::runtime_error(__func__));

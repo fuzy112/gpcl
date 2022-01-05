@@ -17,13 +17,13 @@
 namespace gpcl {
 namespace pmr {
 
-monotonic_buffer_resource::monotonic_buffer_resource(void *buffer,
+monotonic_buffer_resource::monotonic_buffer_resource(void *user_provided_buffer,
                                                      std::size_t size,
                                                      memory_resource *upstream)
-    : buffer_(gpcl::buffer(buffer, size)),
+    : buffer_(gpcl::buffer(user_provided_buffer, size)),
       upstream_(upstream)
 {
-  GPCL_ASSERT(buffer);
+  GPCL_ASSERT(user_provided_buffer);
   GPCL_ASSERT(upstream);
 }
 

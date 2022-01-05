@@ -10,6 +10,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+// clang-format off
+#if defined _MSC_VER
+# pragma warning(push)
+# pragma warning(disable : 4245 4459)
+#endif
+
 namespace gpcl { namespace detail { inline namespace tlsf_v3_1 {
 
 /*
@@ -963,6 +969,11 @@ size_t tlsf_alloc_overhead(void)
 	return block_header_overhead;
 }
 
+#if defined _MSC_VER
+# pragma warning(push)
+# pragma warning(disable : 4702)
+#endif
+
 pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 {
 	block_header_t* block;
@@ -1004,6 +1015,10 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 
 	return mem;
 }
+
+#if defined _MSC_VER
+# pragma warning(pop)
+#endif
 
 void tlsf_remove_pool(tlsf_t tlsf, pool_t pool)
 {
@@ -1244,5 +1259,10 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 
 } } }
 
+
+#if defined _MSC_VER
+# pragma warning(pop)
+#endif
+// clang-format on
 
 #endif // GPCL_DETAIL_IMPL_TLSF_IPP

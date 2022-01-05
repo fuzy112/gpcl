@@ -2,7 +2,7 @@
 // json.hpp
 // ~~~~~~~~
 //
-// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2021-2022 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -163,6 +163,16 @@ public:
 {
   GPCL_THROW(json_error(errc, message, json_error::const_string_tag{}));
 }
+
+/// This enum type can be used as an IO manipulator to control the output
+/// style of JSON values.
+enum json_print_style : long
+{
+  compressed = 0,
+  pretty_print = 1,
+};
+
+inline const int json_style_xalloc = std::ios_base::xalloc();
 
 namespace json_cast_detail {
 
@@ -408,6 +418,8 @@ struct basic_json
   {
   };
 
+  using print_style = gpcl::json_detail::json_print_style;
+
 private:
   using data_type =
       variant<null_type, boolean_type, integer_type, floating_type, string_type,
@@ -519,27 +531,11 @@ public:
 
   using istream_type = std::basic_istream<CharType, CharTraits>;
 
-  /// This enum type can be used as an IO manipulator to control the output
-  /// style of JSON values.
-  enum print_style : long
-  {
-    compressed = 0,
-    pretty_print = 1,
-  };
-
-private:
-  static int print_style_xalloc()
-  {
-    static std::ios_base::Init init;
-    static const int index = std::ios_base::xalloc();
-    return index;
-  }
-
 public:
   /// Change JSON value output style.
   friend inline ostream_type &operator<<(ostream_type &os, print_style style)
   {
-    os.iword(print_style_xalloc()) = static_cast<long>(style);
+    os.iword(json_style_xalloc) = static_cast<long>(style);
     return os;
   }
 
@@ -561,7 +557,7 @@ public:
   };
 
   /// Used to serialize a JSON value.
-  class serializing_visitor
+  struct serializing_visitor
   {
   private:
     serializer &ser_;
@@ -574,7 +570,7 @@ public:
     public:
       explicit indent_sentry(const serializing_visitor &vis) : vis_(vis)
       {
-        if (vis_.get_ostream().iword(print_style_xalloc()) ==
+        if (vis_.get_ostream().iword(json_style_xalloc) ==
             print_style::compressed)
           return;
 
@@ -584,7 +580,7 @@ public:
 
       ~indent_sentry()
       {
-        if (vis_.get_ostream().iword(print_style_xalloc()) ==
+        if (vis_.get_ostream().iword(json_style_xalloc) ==
             print_style::compressed)
           return;
 
@@ -599,7 +595,7 @@ public:
 
     void newline() const
     {
-      if (get_ostream().iword(print_style_xalloc()) == print_style::compressed)
+      if (get_ostream().iword(json_style_xalloc) == print_style::compressed)
         return;
 
       get_ostream() << '\n';
@@ -611,7 +607,7 @@ public:
 
     void space() const
     {
-      if (get_ostream().iword(print_style_xalloc()) == print_style::compressed)
+      if (get_ostream().iword(json_style_xalloc) == print_style::compressed)
         return;
 
       get_ostream() << ' ';
@@ -1156,6 +1152,11 @@ public:
     /// @name Accessing JSON value.
     /// @{
 
+#if defined _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4702)
+#endif
+
     template <typename T>
     T *get_if()
     {
@@ -1184,6 +1185,10 @@ public:
                    }),
                    data_);
     }
+
+#if defined _MSC_VER
+#  pragma warning(pop)
+#endif
 
     template <typename T>
     T const *const_get_if() const noexcept
@@ -1522,6 +1527,13 @@ public:
   /// @relates gpcl::basic_json::value
   /// @{
 
+// clang-format off
+#if defined _MSC_VER
+# pragma warning(push)
+# pragma warning(disable : 4702)
+#endif
+  // clang-format on
+
   friend inline bool operator==(const value &x, const value &y)
   {
     return visit(make_const_visitor([](const auto &w, const auto &z) {
@@ -1531,6 +1543,12 @@ public:
                  }),
                  access::data(x), access::data(y));
   }
+
+// clang-format off
+#if defined _MSC_VER
+# pragma warning(pop)
+#endif
+  // clang-format on
 
   friend inline bool operator!=(const value &x, const value &y)
   {
@@ -1914,7 +1932,8 @@ public:
 
     void handle_value(value v)
     {
-      visit([v, this](auto &ctx) mutable { this->handle_value(ctx, std::move(v)); },
+      visit([v, this](
+                auto &ctx) mutable { this->handle_value(ctx, std::move(v)); },
             stack_.back());
     }
 

@@ -29,7 +29,16 @@ namespace gpcl {
 // introduced.
 //
 
+// clang-format off
+#if defined _MSC_VER
+# pragma warning(push)
+# pragma warning(disable : 4245)
+#endif
 inline constexpr const std::size_t dynamic_extent = -1;
+#if defined _MSC_VER
+# pragma warning(pop)
+#endif
+// clang-format on
 
 template <typename CharT, std::size_t Extent = dynamic_extent>
 using basic_zstring = CharT *;

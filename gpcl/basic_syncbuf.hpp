@@ -190,7 +190,7 @@ protected:
       if (Traits::eq_int_type(ch, Traits::eof()))
         return ~Traits::eof();
 
-      buffer_.push_back(ch);
+      buffer_.push_back(Traits::to_char_type(ch));
       return ~Traits::eof();
     }
     GPCL_CATCH(...) { return Traits::eof(); }

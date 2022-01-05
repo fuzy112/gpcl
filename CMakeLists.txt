@@ -2,7 +2,7 @@
 # CMakeLists.txt
 # ~~~~~~~~~~~~~~
 #
-# Copyright (c) 2020 Zhengyi Fu (tsingyat at outlook dot com)
+# Copyright (c) 2020-2022 Zhengyi Fu (tsingyat at outlook dot com)
 #
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -69,6 +69,7 @@ find_package(Doxygen)
 option (GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE "link to external cppreference documentation" TRUE)
 
 if (Doxygen_FOUND AND GPCL_BUILD_DOC)
+
 	FetchContent_MakeAvailable(cppref)
 	if (GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE)
 		list (APPEND DOXYGEN_TAGFILES "${cppref_SOURCE_DIR}/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/")
@@ -76,8 +77,10 @@ if (Doxygen_FOUND AND GPCL_BUILD_DOC)
 		list (APPEND DOXYGEN_TAGFILES "${cppref_SOURCE_DIR}/cppreference-doxygen-local.tag.xml=${cppref_SOURCE_DIR}/reference/en/")
 	endif ()
 	set (DOXYGEN_PREDEFINED GPCL_DOXYGEN)
+
 	set (DOXYGEN_JAVADOC_AUTOBRIEF YES)
 	set (DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
+	SET (DOXYGEN_EXTRACT_PRIVATE YES)
 	# set (DOXYGEN_EXCLUDE_SYMBOLS "*::detail::*;*_detail::*")
 	set (DOXYGEN_STRIP_FROM_INC_PATH ".")
     doxygen_add_docs(doc README.md lib gpcl)

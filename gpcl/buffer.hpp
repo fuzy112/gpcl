@@ -69,9 +69,7 @@ buffer(const T &obj,
   return buffer(obj.data(), obj.size() * sizeof(*obj.data()));
 }
 
-} // namespace buffer_detail
-
-struct buffer_t
+struct buffer_impl
 {
   /// Calls user supplied buffer() functions if any, otherwise the default
   /// version supplied by GPCL.
@@ -82,6 +80,7 @@ struct buffer_t
     return buffer(std::forward<Args>(args)...);
   }
 };
+}
 
 /// Factory for mutable_buffer and constant_buffer.
 /** Create a new mutable_buffer or constant_buffer.
@@ -101,7 +100,7 @@ struct buffer_t
 template <typename... Args>
 auto buffer(Args &&... args);
 #else
-inline constexpr buffer_t buffer{};
+inline constexpr buffer_detail::buffer_impl buffer{};
 #endif
 
 } // namespace gpcl

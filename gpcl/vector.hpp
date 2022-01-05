@@ -91,8 +91,8 @@ private:
   static void destroy(pointer data, size_type count,
                       allocator_type &allocator) noexcept
   {
-    if (!std::is_trivially_destructible_v<value_type> &&
-        !std::is_fundamental_v<value_type>)
+    if constexpr (!std::is_trivially_destructible_v<value_type> &&
+                  !std::is_fundamental_v<value_type>)
 
       for (size_type i = 0; i != count; ++i)
         alloc_traits::destroy(allocator, &data[i]);
@@ -143,7 +143,7 @@ private:
       while (i < count)
       {
         std::apply(
-            [&allocator, ptr = data + i](auto &&... args) {
+            [&allocator, ptr = data + i](auto &&...args) {
               alloc_traits::construct(allocator, ptr,
                                       std::forward<decltype(args)>(args)...);
             },
@@ -222,7 +222,7 @@ private:
   }
 
   template <typename... Args>
-  static decltype(auto) forward_args(Args &&... args) noexcept
+  static decltype(auto) forward_args(Args &&...args) noexcept
   {
     return std::tuple<Args &&...>(std::forward<Args>(args)...);
   }
@@ -335,6 +335,12 @@ public:
         alloc_and_construct(other.size_, other.storage(), stored_allocator());
   }
 
+// clang-format off
+#if defined _MSC_VER
+# pragma warning(push)
+# pragma warning(disable : 4127)
+#endif
+// clang-format on
   vector(vector &&other, const type_identity_t<Allocator> &allocator)
       : p_(allocator, nullptr)
   {
@@ -356,6 +362,11 @@ public:
     other.cap_ = 0;
     other.size_ = 0;
   }
+// clang-format off
+#if defined _MSC_VER
+# pragma warning(pop)
+#endif
+// clang-format on
 
   vector(std::initializer_list<value_type> il,
          const allocator_type &allocator = Allocator())
@@ -678,7 +689,7 @@ public:
 
   // 26.3.11.5, modifiers
   template <typename... Args>
-  reference emplace_back(Args &&... args)
+  reference emplace_back(Args &&...args)
   {
     reserve(size_ + 1);
     alloc_traits::construct(stored_allocator(), &storage()[size_],
@@ -708,7 +719,7 @@ public:
   }
 
   template <typename... Args>
-  iterator emplace(const_iterator position, Args &&... args)
+  iterator emplace(const_iterator position, Args &&...args)
   {
     auto ptr = insert_impl(position - begin(), 1,
                            forward_args(std::forward<Args>(args)...));

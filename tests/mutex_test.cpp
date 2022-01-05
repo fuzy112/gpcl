@@ -32,11 +32,11 @@ TEST_CASE("mutex")
     t.join();
 }
 
-static gpcl::mutex mtx1;
-static gpcl::mutex mtx2;
+static gpcl::mutex g_mtx1;
+static gpcl::mutex g_mtx2;
 
-const int i = [] {
-  assert(mtx1.native_handle());
-  assert(mtx2.native_handle());
+const int g_i = [] {
+  assert(g_mtx1.native_handle());
+  assert(g_mtx2.native_handle());
   return 0;
 }();

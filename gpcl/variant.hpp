@@ -2,7 +2,7 @@
 // variant.hpp
 // ~~~~~~~~~~~
 //
-// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2021-2022 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -14,6 +14,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/in_place_type.hpp>
+#include <gpcl/narrow_cast.hpp>
 #include <gpcl/swap.hpp>
 
 #include <cstddef>
@@ -31,7 +32,16 @@ public:
   const char *what() const noexcept final { return "bad variant access"; }
 };
 
+// clang-format off
+#if defined _MSC_VER
+# pragma warning(push)
+# pragma warning(disable : 4245)
+#endif
 constexpr std::size_t variant_npos = -1;
+#if defined _MSC_VER
+# pragma warning(pop)
+#endif
+// clang-format on
 
 template <typename... Types>
 class variant;
@@ -265,9 +275,11 @@ class variant_move_construct_base<false, Types...>
 public:
   constexpr variant_move_construct_base() = default;
 
+#if !defined _MSC_VER
   template <bool True = true,
             std::enable_if_t<
                 True && (std::is_move_constructible_v<Types> && ...), int> = 0>
+#endif
   constexpr variant_move_construct_base(
       variant_move_construct_base &&other) noexcept(nothrow)
   {
@@ -355,9 +367,16 @@ public:
   constexpr variant_copy_construct_base(variant_copy_construct_base &&other) =
       default;
 
+  // Because variant_copy_construct_base has a user-defined
+  // (explicitly deleted) move constructor, the copy constructor will be
+  // implicitly deleted. On Clang, the following template function could be used
+  // a copy constructor, but this does not work on MSVC.
+
+#if !defined _MSC_VER
   template <bool True = true,
             std::enable_if_t<
                 True && (std::is_copy_constructible_v<Types> && ...), int> = 0>
+#endif
   constexpr variant_copy_construct_base(
       const variant_copy_construct_base &other)
   {
@@ -379,13 +398,13 @@ public:
   operator=(variant_copy_construct_base &&) = default;
 
 protected:
-  constexpr void copy_helper(variant_copy_construct_base &,
+  constexpr void copy_helper(const variant_copy_construct_base &,
                              std::index_sequence<>) noexcept
   {
   }
 
   template <std::size_t I, std::size_t... Is>
-  constexpr void copy_helper(variant_copy_construct_base &other,
+  constexpr void copy_helper(const variant_copy_construct_base &other,
                              std::index_sequence<I, Is...>)
   {
     if (other.index_ == I)
@@ -634,13 +653,13 @@ public:
   }
 
 protected:
-  constexpr void copy_assign_helper(variant_copy_assign_base &,
+  constexpr void copy_assign_helper(const variant_copy_assign_base &,
                                     std::index_sequence<>) noexcept
   {
   }
 
   template <std::size_t I, std::size_t... Is>
-  constexpr void copy_assign_helper(variant_copy_assign_base &other,
+  constexpr void copy_assign_helper(const variant_copy_assign_base &other,
                                     std::index_sequence<I, Is...>)
   {
     if (other.index_ == I)
@@ -775,7 +794,7 @@ class variant : public detail::variant_base<Types...>
   constexpr void set_index(std::size_t i) noexcept
   {
     GPCL_ASSERT_CONST(base_type::index_ == -1);
-    base_type::index_ = i;
+    base_type::index_ = narrow_cast<detail::variant_index_type<Types...>>(i);
     GPCL_ASSERT_CONST(base_type::index_ > -1);
   }
 
@@ -1191,6 +1210,11 @@ constexpr compare_result compare(const T &x, const T &y)
   return compare_result::greater;
 }
 
+#if defined _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4702)
+#endif
+
 template <typename... Types>
 constexpr compare_result compare(const variant<Types...> &x,
                                  const variant<Types...> &y)
@@ -1216,6 +1240,11 @@ constexpr compare_result compare(const variant<Types...> &x,
       },
       x, y);
 }
+
+#if defined _MSC_VER
+#  pragma warning(pop)
+#endif
+
 } // namespace detail
 
 template <typename... Types>

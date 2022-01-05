@@ -32,6 +32,7 @@ public:
   /// value.
   sp_inplace_deleter(const sp_inplace_deleter &other) noexcept
   {
+    (void)other;
     GPCL_ASSERT(!other.holds_value_);
   }
 
