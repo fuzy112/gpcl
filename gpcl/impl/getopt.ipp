@@ -8,8 +8,8 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_GETOPT_IPP
-#define GPCL_GETOPT_IPP
+#ifndef GPCL_IMPL_GETOPT_IPP
+#define GPCL_IMPL_GETOPT_IPP
 
 #include <gpcl/getopt.hpp>
 
@@ -176,7 +176,7 @@ std::ostream &operator<<(std::ostream &out, const getopt &parser)
       long_opt << "=";
 #else
       long_opt << " ";
-#endif
+#endif // GPCL_IMPL_GETOPT_IPP
       if (opt.value_desc)
         long_opt << opt.value_desc;
       else

@@ -114,7 +114,7 @@ inline error_category const &json_category() noexcept
 
   const static json_category_impl instance = {};
   return instance;
-};
+}
 
 /// The class json_error defines an exception object thrown when processing JSON
 /// data.
@@ -267,7 +267,7 @@ R json_at(T &x, A1 const &a1)
 
 template <typename R, typename T, typename A1,
           std::enable_if_t<!is_at_indexable<R, T, A1>::value, int> = 0>
-[[noreturn]] R json_at(T &x, A1 const &a1)
+[[noreturn]] R json_at(T &, A1 const &)
 {
   throw_json_error(json_errc::operation_not_supported, "json_at", true);
 }
@@ -317,7 +317,7 @@ R json_index(T &x, const A1 &a1)
 
 template <typename R, typename T, typename A1,
           std::enable_if_t<!is_indexable<R, T, A1>::value, int> = 0>
-[[noreturn]] R json_index(T &x, const A1 &a1)
+[[noreturn]] R json_index(T &, const A1 &)
 {
   throw_json_error(json_errc::operation_not_supported, "json_index", true);
 }
@@ -721,9 +721,9 @@ public:
 
     constexpr iterator(typename object_type::iterator it) : data_(it) {}
 
-    // constexpr iterator(const iterator &) = default;
+    constexpr iterator(const iterator &) = default;
 
-    // constexpr iterator &operator=(const iterator &) = default;
+    constexpr iterator &operator=(const iterator &) = default;
 
     constexpr iterator &operator=(typename array_type::iterator it)
     {
@@ -815,9 +815,9 @@ public:
     {
     }
 
-    // constexpr iterator(const iterator &) = default;
+    constexpr const_iterator(const const_iterator &) = default;
 
-    // constexpr iterator &operator=(const iterator &) = default;
+    constexpr const_iterator &operator=(const const_iterator &) = default;
 
     constexpr const_iterator &operator=(typename array_type::const_iterator it)
     {
