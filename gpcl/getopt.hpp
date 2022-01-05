@@ -64,18 +64,18 @@ struct getopt_option
 
   /// Pointer to a flag effected by this option.
   /// @see getopt_option_type.
-  int *flag;
+  int *flag = nullptr;
 
   /// Option value. 
   /// @see getopt_option_type
   /// @see flag
-  int value;
+  int value = 1;
 
   /// Description text of the option.
-  const char *desc;
+  const char *desc = nullptr;
 
   /// Description text of the option argument.
-  const char *value_desc;
+  const char *value_desc = nullptr;
 };
 
 /// Command line parser.
