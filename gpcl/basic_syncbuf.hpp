@@ -62,9 +62,9 @@ public:
   /// @brief Construct a basic_syncbuf with emit-on-sync policy set to false,
   /// wrapped streambuf set to @c buffer, and using @c alloc as the allocator
   /// for temporary storage.
-  explicit basic_syncbuf(streambuf_type *buffer,
+  explicit basic_syncbuf(streambuf_type *streambuf,
                          const Allocator &alloc = Allocator())
-      : wrapped_(buffer),
+      : wrapped_(streambuf),
         buffer_(alloc)
   {
   }
