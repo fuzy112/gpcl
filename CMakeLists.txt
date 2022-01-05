@@ -38,8 +38,6 @@ find_package(Boost
     COMPONENTS system
     )
 
-set(GPCL_HEADERS)
-
 add_library(gpcl INTERFACE)
 add_library(gpcl::gpcl ALIAS gpcl)
 target_include_directories(gpcl
@@ -103,6 +101,11 @@ add_subdirectory(examples)
 if (BUILD_TESTING)
 	add_subdirectory(tests)
 endif ()
+
+configure_file(gpcl-config.cmake.in gpcl-config.cmake @ONLY)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/gpcl-config.cmake" 
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
 
 install(DIRECTORY gpcl DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES gpcl.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

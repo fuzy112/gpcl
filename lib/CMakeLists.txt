@@ -3,17 +3,11 @@ add_library(gpcl::separate ALIAS separate)
 
 target_link_libraries(separate PUBLIC gpcl::gpcl)
 
-if (UNIX)
-	target_link_libraries(separate
-		PUBLIC
-		pthread
-		rt
-		)
-endif ()
-
 target_compile_definitions(separate PUBLIC GPCL_SEPARATE_COMPILATION=1)
 
-if (BUILD_SHARED_LIBS)
+get_target_property(separate_library_type separate TYPE)
+
+if ("${separate_library_type}" STREQUAL "SHARED_LIBRARY")
 	target_compile_definitions(separate PUBLIC GPCL_DYN_LINK=1)
 endif ()
 
