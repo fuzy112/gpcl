@@ -34,9 +34,3 @@ TEST_CASE("mutex")
 
 static gpcl::mutex g_mtx1;
 static gpcl::mutex g_mtx2;
-
-const int g_i = [] {
-  assert(g_mtx1.native_handle());
-  assert(g_mtx2.native_handle());
-  return 0;
-}();

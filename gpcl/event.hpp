@@ -34,6 +34,7 @@ public:
   template <typename Lock>
   void reset(Lock &lock) noexcept
   {
+    (void)lock;
     GPCL_ASSERT(lock.owns_lock());
     signaled_ = 0;
   }

@@ -29,7 +29,7 @@ posix_condition_variable::posix_condition_variable()
 posix_condition_variable::~posix_condition_variable()
 {
   int err = pthread_cond_destroy(&cond_);
-  GPCL_ASSERT(err == 0); // "failed to destroy the condition variable"
+  GPCL_VERIFY(err == 0); // "failed to destroy the condition variable"
 }
 
 void posix_condition_variable::wait(gpcl::unique_lock<posix_normal_mutex> &lock)

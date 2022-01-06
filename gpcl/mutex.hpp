@@ -45,7 +45,7 @@ public:
   auto native_handle() noexcept -> std::nullptr_t { return nullptr; }
 
 private:
-  bool locked_{};
+  [[maybe_unused]] bool locked_{};
 };
 
 /// Normal mutex.

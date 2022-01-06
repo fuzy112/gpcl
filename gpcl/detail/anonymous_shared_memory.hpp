@@ -43,6 +43,7 @@ memory_map(const anonymous_shared_memory_impl &mem, access_mode mode,
            std::ptrdiff_t offset, std::size_t size, const void *address,
            posix_memory_map_options options)
 {
+  (void)offset;
   GPCL_ASSERT(offset == 0);
   int prot;
   if (mode == access_mode::read_write)
