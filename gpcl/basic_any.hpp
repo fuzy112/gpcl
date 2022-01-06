@@ -2,7 +2,7 @@
 // basic_any.hpp
 // ~~~~~~~~~~~~~
 //
-// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2021-2022 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -220,8 +220,9 @@ public:
   bool has_value() const noexcept { return manage_; }
 
 #ifndef GPCL_NO_RTTI
-  /// Returns the type info of the contained value.
-  const std::type_info &type() const noexcept
+/// Returns the type info of the contained value.
+  const std::type_info &
+  type() const noexcept
   {
     if (manage_)
       return *static_cast<const std::type_info *>(
@@ -236,6 +237,9 @@ public:
 /// Determines if the basic_any contains a value of type `T`.
 /// @relates gpcl::basic_any
 template <typename T, std::size_t S, std::size_t A>
+#if defined GPCL_NO_RTTI
+    [[deprecated("Calling holds_type<T>() when RTTI disabled is deprecated.")]]
+#endif
 bool holds_type(const basic_any<S, A> &a)
 {
 #ifdef GPCL_NO_RTTI

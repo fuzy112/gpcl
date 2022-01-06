@@ -2,7 +2,7 @@
 // any_manager.hpp
 // ~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2021-2022 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -18,6 +18,10 @@
 #include <memory>
 #include <new>
 #include <type_traits>
+
+#if !defined GPCL_NO_RTTI
+#include <typeinfo>
+#endif
 
 namespace gpcl {
 namespace detail {
@@ -52,9 +56,6 @@ template <std::size_t LocalSize, std::size_t LocalAlign>
 using any_manage_func_t = void *(*)(any_data<LocalSize, LocalAlign> *,
                                     const any_data<LocalSize, LocalAlign> *,
                                     any_manage_op);
-
-inline char dummy[1];
-
 
 template <typename T, std::size_t LocalSize, std::size_t LocalAlign>
 struct any_manager
@@ -93,13 +94,13 @@ struct any_manager
   // clone the data.
   static void clone(any_data_t *dest, const any_data_t *source, std::true_type)
   {
-    new (&dest->local_buffer) T(*get_pointer(source, std::true_type{}));
+    ::new (&dest->local_buffer) T(*get_pointer(source, std::true_type{}));
   }
 
   // clone the data.
   static void clone(any_data_t *dest, const any_data_t *source, std::false_type)
   {
-    dest->remote_addr = new T(*get_pointer(source, std::false_type{}));
+    dest->remote_addr = ::new T(*get_pointer(source, std::false_type{}));
   }
 
   // move the data.
@@ -107,7 +108,7 @@ struct any_manager
   move(any_data_t *dest, const any_data_t *source,
        std::true_type) noexcept(std::is_nothrow_move_constructible<T>::value)
   {
-    new (&dest->local_buffer)
+    ::new (&dest->local_buffer)
         T(std::move(*get_pointer(source, std::true_type{})));
     return {};
   }
@@ -153,7 +154,7 @@ struct any_manager
 
     case any_manage_op::move:
       if (move(dest, source, local_storage))
-        return dummy;
+        return dest;
       else
         return nullptr;
 
