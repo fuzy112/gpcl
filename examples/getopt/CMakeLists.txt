@@ -1,2 +1,1 @@
-add_executable(getopt getopt.cpp)
-target_link_libraries(getopt PRIVATE gpcl::separate)
+add_example_executable(getopt getopt.cpp)
