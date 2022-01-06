@@ -139,7 +139,7 @@ private:
     unique_lock<mutex::impl_type> &get_impl_lock() { return lock_mutex_impl_; }
 
   private:
-    unique_lock<mutex> &lock_;
+    [[maybe_unused]] unique_lock<mutex> &lock_;
     unique_lock<mutex::impl_type> lock_mutex_impl_;
   };
 

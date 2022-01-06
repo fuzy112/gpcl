@@ -75,6 +75,7 @@ public:
 
   bool is_pending(unique_lock<mutex> &lock)
   {
+    (void)lock;
     GPCL_ASSERT(lock.owns_lock());
     GPCL_ASSERT(&lock.mutex() == &mtx_);
     return result_.index() == 0;
@@ -82,6 +83,7 @@ public:
 
   T *get(unique_lock<mutex> &lock, error_code &error)
   {
+    (void)lock;
     GPCL_ASSERT(lock.owns_lock());
     GPCL_ASSERT(&lock.mutex() == &mtx_);
     GPCL_ASSERT(result_.index() != 0);
