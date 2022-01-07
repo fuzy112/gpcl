@@ -27,6 +27,8 @@ int main()
   std::cout << variant_to<float>(v) << std::endl;
   std::cout << variant_to<std::string>(v) << std::endl;
 
+#if !defined GPCL_NO_EXCEPTIONS
+  // This will crash without exception support.
   GPCL_TRY 
   { 
     std::cout << variant_to<char>(v) << std::endl; 
@@ -36,6 +38,7 @@ int main()
     std::cout << "bad_lexical_cast\n";
   }
   GPCL_CATCH_END
+#endif
 
   std::cout << lexical_cast<int>("123456", 3) << std::endl;
 
