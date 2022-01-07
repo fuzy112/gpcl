@@ -135,6 +135,7 @@ private:
     ~unique_lock_adaptor()
     {
       GPCL_ASSERT(lock_mutex_impl_.owns_lock());
+      GPCL_ASSERT(lock_.owns_lock());
       lock_mutex_impl_.release();
     }
 
@@ -156,4 +157,4 @@ private:
 #  include <gpcl/detail/posix_condition_variable.hpp>
 #endif
 
-#endif
+#endif // GPCL_CONDITION_VARIABLE_HPP

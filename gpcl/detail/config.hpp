@@ -63,19 +63,21 @@
 #  define GPCL_USE_BOOST_ASSERT
 #endif
 
-#ifndef GPCL_CXX17_INLINE_CONSTEXPR
-#  if __cplusplus < 201703
-#    define GPCL_CXX17_INLINE_CONSTEXPR constexpr
-#  else
-#    define GPCL_CXX17_INLINE_CONSTEXPR inline constexpr
-#  endif
+#if __cplusplus < 201100
+#  error "C++11 or better is required"
+#endif
+
+#ifdef __has_include
+# if __has_include(<version>)
+#   include <version>
+# endif
 #endif
 
 #ifndef GPCL_CXX17_IF_CONSTEXPR
-#  if __cplusplus < 201703
-#    define GPCL_CXX17_IF_CONSTEXPR if
-#  else
+#  ifdef __cpp_if_constexpr
 #    define GPCL_CXX17_IF_CONSTEXPR if constexpr
+#  else
+#    define GPCL_CXX17_IF_CONSTEXPR if
 #  endif
 #endif
 
@@ -117,4 +119,4 @@ namespace gpcl {
 
 } // namespace gpcl
 
-#endif
+#endif // GPCL_DETAIL_CONFIG_HPP

@@ -312,4 +312,4 @@ unexpected<error_code> make_unexpected_error_code(ErrC e)
 
 } // namespace gpcl
 
-#endif
+#endif // GPCL_UNEXPECTED_HPP

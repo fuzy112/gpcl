@@ -29,12 +29,19 @@ public:
   constexpr null_mutex() = default;
   ~null_mutex() = default;
 
-  auto lock() -> void { locked_ = true; }
+  auto lock() -> void
+  {
+    GPCL_ASSERT(!locked_);
+    locked_ = true;
+  }
 
-  auto unlock() -> void { locked_ = false; }
+  auto unlock() -> void
+  {
+    GPCL_ASSERT(locked_);
+    locked_ = false;
+  }
 
   auto try_lock() -> bool { return !std::exchange(locked_, true); }
-  auto native_handle() noexcept -> std::nullptr_t { return nullptr; }
 
 private:
   bool locked_{};

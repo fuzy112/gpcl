@@ -1086,7 +1086,7 @@ struct expected_convert_constructible<
 };
 
 template <typename T, typename E, typename U, typename G>
-GPCL_CXX17_INLINE_CONSTEXPR bool expected_convert_constructible_v =
+constexpr bool expected_convert_constructible_v =
     expected_convert_constructible<T, E, U, G>();
 
 #endif
