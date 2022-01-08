@@ -596,6 +596,14 @@ public:
     }
   }
   /// @}
+
+  template <typename U>
+  optional<U> and_(optional<U> &&x) &&;
+
+    template<class F> constexpr auto transform(F&& f) &;
+    template<class F> constexpr auto transform(F&& f) &&;
+    template<class F> constexpr auto transform(F&& f) const&;
+    template<class F> constexpr auto transform(F&& f) const&&;
 };
 
 #if __cplusplus >= 201703 && !defined(GPCL_STANDARDESE)
