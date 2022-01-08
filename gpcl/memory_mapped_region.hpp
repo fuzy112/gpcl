@@ -52,7 +52,11 @@ public:
 
   ~memory_mapped_region() { memory_map.unmap(p_); }
 
-  void swap(memory_mapped_region &other) noexcept { swap(p_, other.p_); }
+  void swap(memory_mapped_region &other) noexcept
+  {
+    using gpcl::swap;
+    swap(p_, other.p_);
+  }
 
   void *address() const noexcept { return p_.first; }
 
