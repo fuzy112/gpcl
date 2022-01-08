@@ -21,7 +21,7 @@
 #include <string>
 #include <system_error>
 
-#ifdef GPCL_EXT_ENABLE_MOSQUITTO
+#if defined GPCL_EXT_ENABLE_MOSQUITTO || defined GPCL_DOXYGEN
 #  include <mosquitto.h>
 
 #  ifdef GPCL_EXT_MQTT_ENABLE_SSL_HPP

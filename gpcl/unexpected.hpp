@@ -229,7 +229,7 @@ public:
   inline void
   swap(unexpected &other) noexcept(detail::is_nothrow_swappable<E>::value)
   {
-    gpcl::swap(val_, other.val_);
+    swap(val_, other.val_);
   }
 };
 
@@ -280,7 +280,7 @@ constexpr bool operator>=(const unexpected<E> &lhs, const unexpected<E> &rhs)
 
 /// @}
 
-namespace swap_detail {
+namespace detail {
 template <typename E, std::enable_if_t<detail::is_swappable<E>::value, int> = 0>
 inline void
 swap(unexpected<E> &lhs,
@@ -288,7 +288,7 @@ swap(unexpected<E> &lhs,
 {
   lhs.swap(rhs);
 }
-} // namespace swap_detail
+} // namespace detail
 
 /// Create an unexpect value.
 /// @relates gpcl::unexpected

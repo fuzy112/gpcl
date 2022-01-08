@@ -102,7 +102,8 @@ auto statement::reset() -> void
     throw_system_error(err, __FUNCTION__);
 }
 
-auto gpcl_sqlite_bind(const bind_proxy &proxy, int col, int number) -> void
+namespace detail {
+auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, int number) -> void
 {
   int err = sqlite3_bind_int(proxy.statement_handle(), col, number);
 
@@ -110,7 +111,7 @@ auto gpcl_sqlite_bind(const bind_proxy &proxy, int col, int number) -> void
     throw_system_error(err, __func__);
 }
 
-auto gpcl_sqlite_bind(const bind_proxy &proxy, int col, sqlite3_int64 number)
+auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, sqlite3_int64 number)
     -> void
 {
   int err = sqlite3_bind_int64(proxy.statement_handle(), col, number);
@@ -119,7 +120,8 @@ auto gpcl_sqlite_bind(const bind_proxy &proxy, int col, sqlite3_int64 number)
     throw_system_error(err, __func__);
 }
 
-auto gpcl_sqlite_bind(const bind_proxy &proxy, int col, double number) -> void
+auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, double number)
+    -> void
 {
   int err = sqlite3_bind_double(proxy.statement_handle(), col, number);
 
@@ -127,7 +129,7 @@ auto gpcl_sqlite_bind(const bind_proxy &proxy, int col, double number) -> void
     throw_system_error(err, __func__);
 }
 
-auto gpcl_sqlite_bind(const bind_proxy &proxy, int col, const char *text)
+auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, const char *text)
     -> void
 {
   int err = sqlite3_bind_text(proxy.statement_handle(), col, text,
@@ -137,8 +139,7 @@ auto gpcl_sqlite_bind(const bind_proxy &proxy, int col, const char *text)
     throw_system_error(err, __func__);
 }
 
-void detail::bind_static_string(const bind_proxy &proxy, int col,
-                                const char *str)
+void bind_static_string(const bind_proxy &proxy, int col, const char *str)
 {
   int err = sqlite3_bind_text(proxy.statement_handle(), col, str,
                               std::strlen(str), SQLITE_STATIC);
@@ -147,22 +148,25 @@ void detail::bind_static_string(const bind_proxy &proxy, int col,
     throw_system_error(err, __func__);
 }
 
-auto cpp_sqlite_get(const step_result &result, int col, int &number) -> void
+auto tag_invoke(get_fn, const step_result &result, int col, int &number) -> void
 {
   number = sqlite3_column_int(result.statement_handle(), col);
 }
 
-auto cpp_sqlite_get(const step_result &result, int col, double &number) -> void
+auto tag_invoke(get_fn, const step_result &result, int col, double &number)
+    -> void
 {
   number = sqlite3_column_double(result.statement_handle(), col);
 }
 
-auto cpp_sqlite_get(const step_result &result, int col, std::string &text)
+auto tag_invoke(get_fn, const step_result &result, int col, std::string &text)
     -> void
 {
   const auto *str = sqlite3_column_text(result.statement_handle(), col);
   text.assign(reinterpret_cast<const char *>(str));
 }
+
+} // namespace detail
 
 void transaction::rollback() noexcept
 {

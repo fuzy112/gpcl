@@ -124,7 +124,7 @@ public:
   }
 
   /// Swap the pointers.
-  void swap(clone_ptr &other) noexcept { gpcl::swap(ptr_, other.ptr_); }
+  void swap(clone_ptr &other) noexcept { swap(ptr_, other.ptr_); }
 
   /// Determine whether this clone_ptr is empty.
   explicit operator bool() const noexcept { return ptr_ != nullptr; }
@@ -163,14 +163,13 @@ private:
   Deleter deleter_{};
 };
 
-namespace swap_detail {
 /// Swap the pointers.
+/// @relates clone_ptr
 template <typename T>
 inline void swap(clone_ptr<T> &x, clone_ptr<T> &y) noexcept
 {
   return x.swap(y);
 }
-} // namespace swap_detail
 
 } // namespace gpcl
 

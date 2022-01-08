@@ -411,7 +411,7 @@ public:
   {
     if (this->has_val_ && other.has_val_)
     {
-      gpcl::swap(this->val_, other.val_);
+      swap(this->val_, other.val_);
     }
     else if (this->has_val_ && !other.has_val_)
     {
@@ -737,14 +737,13 @@ inline constexpr bool operator>=(const T &x, const optional<U> &y)
 
 /// @}
 
-namespace swap_detail {
-// specialized algorithms
+/// @name specialized algorithms
+/// @relates optional
 template <typename T>
 void swap(optional<T> &x, optional<T> &y) noexcept(true)
 {
   x.swap(y);
 }
-} // namespace swap_detail
 
 /// @relates gpcl::optional
 template <typename T>

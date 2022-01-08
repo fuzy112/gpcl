@@ -538,13 +538,12 @@ bool operator>=(std::nullptr_t, const shared_ptr<T> &y)
 
 /// @}
 
-namespace swap_detail {
+/// @relates shared_ptr
 template <typename T>
 void swap(shared_ptr<T> &x, shared_ptr<T> &y) noexcept
 {
   x.swap(y);
 }
-} // namespace swap_detail
 
 /// @name Generic Pointer Casts
 /// @relates gpcl::shared_ptr

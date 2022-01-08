@@ -206,6 +206,11 @@ public:
 #endif
 };
 
+
+/// @name Generic pointer casts
+/// @relates weak_ptr
+/// @{
+
 template <typename T, typename U>
 weak_ptr<T> static_pointer_cast(const weak_ptr<U> &p) noexcept
 {
@@ -228,6 +233,15 @@ weak_ptr<T> reinterpret_pointer_cast(const weak_ptr<U> &p) noexcept
 {
   return p.generic_pointer_cast_helper(
       reinterpret_cast<T *>(p.get_unchecked()));
+}
+
+/// @}
+
+/// @relates weak_ptr
+template <typename T>
+void swap(weak_ptr<T> &x, weak_ptr<T> &y) noexcept
+{
+  x.swap(y);
 }
 
 /// @}

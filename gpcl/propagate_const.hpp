@@ -102,7 +102,7 @@ public:
   constexpr void
   swap(propagate_const &other) noexcept(std::is_nothrow_swappable_v<T>)
   {
-    gpcl::swap(t_, other.t_);
+    swap(t_, other.t_);
   }
 
   constexpr element_type *get()
@@ -280,14 +280,13 @@ constexpr bool operator>=(const T &t, const propagate_const<U> &pu)
   return t >= pu.get();
 }
 
-namespace swap_detail {
+/// @relates propagate_connst
 template <typename T, std::enable_if_t<std::is_swappable_v<T>, int> = 0>
 void swap(propagate_const<T> &x,
           propagate_const<T> &y) noexcept(noexcept(x.swap(y)))
 {
   x.swap(y);
 }
-} // namespace swap_detail
 
 } // namespace gpcl
 

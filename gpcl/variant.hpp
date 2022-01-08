@@ -1339,7 +1339,7 @@ constexpr void variant<Types...>::swap(variant &other) noexcept(
         [](auto &x, auto &y) {
           if constexpr (std::is_same_v<decltype(x), decltype(y)>)
           {
-            gpcl::swap(x, y);
+            swap(x, y);
             return;
           }
           GPCL_UNREACHABLE("x and y should be the same type");
@@ -1359,14 +1359,13 @@ constexpr void variant<Types...>::swap(variant &other) noexcept(
 }
 #endif
 
-namespace swap_detail {
+/// @relates variant
 template <typename... Types>
 void swap(variant<Types...> &x,
           variant<Types...> &y) noexcept(noexcept(x.swap(y)))
 {
   x.swap(y);
 }
-} // namespace swap_detail
 
 } // namespace gpcl
 

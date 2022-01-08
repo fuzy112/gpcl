@@ -13,7 +13,9 @@
 
 #include <gpcl/detail/utility.hpp>
 #include <gpcl/ext/detail/config.hpp>
+#include <gpcl/tag_invoke.hpp>
 #include <gpcl/zstring.hpp>
+
 #include <system_error>
 
 #ifdef GPCL_EXT_ENABLE_SQLITE
@@ -22,7 +24,7 @@
 
 namespace gpcl::ext::sqlite {
 
-#ifdef GPCL_EXT_ENABLE_SQLITE
+#if defined GPCL_EXT_ENABLE_SQLITE || defined GPCL_DOXYGEN
 
 class database;
 class query;
@@ -61,52 +63,88 @@ private:
   sqlite3 *db_;
 };
 
-/// \fn gpcl_sqlite_bind
-///
-/// These functions are a customization point.
-///
-/// In order to be able to *bind* user customized types,
-/// you can define `gpcl_sqlite_bind` function in your namespace.
-/// This function will be called through ADL.
-///
-
-GPCL_DECL auto gpcl_sqlite_bind(const bind_proxy &proxy, int col,
-                                sqlite3_int64 number) -> void;
-GPCL_DECL auto gpcl_sqlite_bind(const bind_proxy &proxy, int col, int number)
-    -> void;
-GPCL_DECL auto gpcl_sqlite_bind(const bind_proxy &proxy, int col,
-                                const char *str) -> void;
-GPCL_DECL auto gpcl_sqlite_bind(const bind_proxy &proxy, int col, double number)
-    -> void;
-
-inline auto gpcl_sqlite_bind(const bind_proxy &proxy, int col,
-                             unsigned long long number) -> void
-{
-  gpcl_sqlite_bind(proxy, col, static_cast<sqlite3_int64>(number));
-}
-
-inline auto gpcl_sqlite_bind(const bind_proxy &proxy, int col,
-                             unsigned int number) -> void
-{
-  gpcl_sqlite_bind(proxy, col, static_cast<sqlite3_int64>(number));
-}
-
 namespace detail {
+
+struct bind_fn
+{
+  template <typename T,
+            std::enable_if_t<std::is_void_v<tag_invoke_result_t<
+                                 bind_fn, const bind_proxy &, int, T &&>>,
+                             int> = 0>
+  void operator()(const bind_proxy &proxy, int col, T &&value) const
+  {
+    return gpcl::cpo::tag_invoke(*this, proxy, col, static_cast<T &&>(value));
+  }
+};
+
+GPCL_DECL auto tag_invoke(bind_fn, const bind_proxy &proxy, int col,
+                          sqlite3_int64 number) -> void;
+GPCL_DECL auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, int number)
+    -> void;
+GPCL_DECL auto tag_invoke(bind_fn, const bind_proxy &proxy, int col,
+                          const char *str) -> void;
+GPCL_DECL auto tag_invoke(bind_fn, const bind_proxy &proxy, int col,
+                          double number) -> void;
+
+inline auto tag_invoke(bind_fn, const bind_proxy &proxy, int col,
+                       unsigned long long number) -> void
+{
+  tag_invoke(bind_fn, proxy, col, static_cast<sqlite3_int64>(number));
+}
+
+inline auto tag_invoke(bind_fn, const bind_proxy &proxy, int col,
+                       unsigned int number) -> void
+{
+  tag_invoke(bind_fn, proxy, col, static_cast<sqlite3_int64>(number));
+}
+
 GPCL_DECL void bind_static_string(const bind_proxy &proxy, int col,
                                   const char *str);
-} // namespace detail
 
 template <std::size_t N>
-inline auto gpcl_sqlite_bind(const bind_proxy &proxy, int col,
-                             const char(&&str)[N]) -> void
+inline auto tag_invoke(bind_fn, const bind_proxy &proxy, int col,
+                       const char(&&str)[N]) -> void
 {
-  detail::bind_static_string(proxy, col, str);
+  bind_static_string(proxy, col, str);
 }
 
-auto cpp_sqlite_get(const step_result &result, int col, int &number) -> void;
-auto cpp_sqlite_get(const step_result &result, int col, double &number) -> void;
-auto cpp_sqlite_get(const step_result &result, int col, std::string &number)
+} // namespace detail
+
+using bind_fn = detail::bind_fn;
+
+/// Binds a value to a column.
+///
+/// @ingroup customisation_point
+/// @remark This is a customisation point.
+///
+constexpr bind_fn bind{};
+
+namespace detail {
+
+struct get_fn
+{
+  template <typename T,
+            std::enable_if_t<std::is_void_v<tag_invoke_result_t<
+                                 get_fn, const step_result &, int, T &>>,
+                             int> = 0>
+  void operator()(const step_result &result, int column, T &value) const
+  {
+    return gpcl::cpo::tag_invoke(*this, column, value);
+  }
+};
+
+auto tag_invoke(get_fn, const step_result &result, int col, int &number)
     -> void;
+auto tag_invoke(get_fn, const step_result &result, int col, double &number)
+    -> void;
+auto tag_invoke(get_fn, const step_result &result, int col, std::string &number)
+    -> void;
+
+} // namespace detail
+
+using get_fn = detail::get_fn;
+
+constexpr get_fn get{};
 
 class bind_proxy final
 {
@@ -126,8 +164,7 @@ public:
   template <typename T>
   inline auto operator<<(T &&x) && -> bind_proxy
   {
-    using sqlite::gpcl_sqlite_bind;
-    gpcl_sqlite_bind(*this, col_++, gpcl::detail::forward<T>(x));
+    bind(*this, col_++, gpcl::detail::forward<T>(x));
     return gpcl::detail::move(*this);
   }
 
@@ -156,7 +193,7 @@ public:
   template <typename T>
   inline auto operator>>(T &x) && -> step_result
   {
-    cpp_sqlite_get(*this, col_, x);
+    get(*this, col_, x);
     col_++;
     return gpcl::detail::move(*this);
   }
