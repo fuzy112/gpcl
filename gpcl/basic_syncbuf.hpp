@@ -108,10 +108,10 @@ public:
   void swap(basic_syncbuf &other) noexcept
   {
     streambuf_type::swap(other);
-    gpcl::swap(wrapped_, other.wrapped_);
-    gpcl::swap(flag_, other.flag_);
-    gpcl::swap(buffer_, other.buffer_);
-    gpcl::swap(mutex_, other.mutex_);
+    swap(wrapped_, other.wrapped_);
+    swap(flag_, other.flag_);
+    swap(buffer_, other.buffer_);
+    swap(mutex_, other.mutex_);
   }
 
   /// Destructor.
@@ -211,18 +211,16 @@ protected:
   }
 };
 
-using syncbuf = basic_syncbuf<char>;
-using wsyncbuf = basic_syncbuf<wchar_t>;
-
-namespace swap_detail {
-
 template <typename CharType, typename Traits, typename Allocator>
 void swap(basic_syncbuf<CharType, Traits, Allocator> &x,
           basic_syncbuf<CharType, Traits, Allocator> &y) noexcept
 {
   x.swap(y);
 }
-} // namespace swap_detail
+
+using syncbuf = basic_syncbuf<char>;
+using wsyncbuf = basic_syncbuf<wchar_t>;
+
 
 } // namespace gpcl
 

@@ -11,30 +11,24 @@
 #ifndef GPCL_BUFFER_HPP
 #define GPCL_BUFFER_HPP
 
-#include <gpcl/detail/config.hpp>
-#include <gpcl/span.hpp>
+#include <gpcl/buffer_sequence.hpp>
+#include <gpcl/tag_invoke.hpp>
 
 namespace gpcl {
 
-/// Constant buffer.
-using const_buffer = span<const unsigned char>;
+namespace detail {
 
-/// Mutable buffer.
-using mutable_buffer = span<unsigned char>;
-
-/// Consume some bytes of the buffer.
-inline const_buffer &operator+=(const_buffer &buf, std::size_t sz)
+struct buffer_fn
 {
-  return buf = buf.subspan(sz);
-}
-
-/// Consume some bytes of the buffer.
-inline mutable_buffer &operator+=(mutable_buffer &buf, std::size_t sz)
-{
-  return buf = buf.subspan(sz);
-}
-
-namespace buffer_detail {
+  template <typename... Args>
+  auto operator()(Args &&...args) const
+      -> std::enable_if_t<is_const_buffer_sequence<tag_invoke_result_t<
+                              buffer_fn, Args &&...>>::value,
+                          tag_invoke_result_t<buffer_fn, Args &&...>>
+  {
+    return gpcl::tag_invoke(*this, static_cast<Args &&>(args)...);
+  }
+};
 
 // Create a buffer from raw memory.
 inline const_buffer buffer(const void *data, std::size_t size) noexcept
@@ -69,26 +63,26 @@ buffer(const T &obj,
   return buffer(obj.data(), obj.size() * sizeof(*obj.data()));
 }
 
-struct buffer_impl
+template <typename... Args>
+auto tag_invoke(buffer_fn, Args &&...args)
+    -> std::enable_if_t<is_const_buffer_sequence<decltype(buffer(
+                            static_cast<Args &&>(args)...))>::value,
+                        decltype(buffer(static_cast<Args &&>(args)...))>
 {
-  /// Calls user supplied buffer() functions if any, otherwise the default
-  /// version supplied by GPCL.
-  template <typename... Args>
-  auto operator()(Args &&... args) const noexcept
-  {
-    using buffer_detail::buffer;
-    return buffer(std::forward<Args>(args)...);
-  }
-};
+  return buffer(static_cast<Args &&>(args)...);
 }
+
+} // namespace detail
+
+using buffer_fn = detail::buffer_fn;
 
 /// Factory for mutable_buffer and constant_buffer.
 /** Create a new mutable_buffer or constant_buffer.
  *
- *  @ingroup customization_point
+ *  @ingroup customisation_point
  *
- *  @par Customization Point
- *  This object is a customization point object.
+ *  @par customisation Point
+ *  This object is a customisation point object.
  *
  *  @par Example
  *  @code {.cpp}
@@ -98,9 +92,9 @@ struct buffer_impl
  */
 #ifdef GPCL_DOXYGEN
 template <typename... Args>
-auto buffer(Args &&... args);
+auto buffer(Args &&...args);
 #else
-inline constexpr buffer_detail::buffer_impl buffer{};
+inline constexpr buffer_fn buffer{};
 #endif
 
 } // namespace gpcl

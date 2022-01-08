@@ -77,8 +77,8 @@ public:
   void swap(basic_spanbuf &other)
   {
     std::basic_streambuf<CharType, Traits>::swap(other);
-    gpcl::swap(openmode_, other.openmode_);
-    gpcl::swap(span_, other.span_);
+    swap(openmode_, other.openmode_);
+    swap(span_, other.span_);
   }
 
   void span(span<CharType> buf) noexcept
@@ -189,14 +189,12 @@ protected:
 using spanbuf = basic_spanbuf<char>;
 using wspanbuf = basic_spanbuf<wchar_t>;
 
-namespace swap_detail {
 template <typename CharType, typename Traits>
 void swap(basic_spanbuf<CharType, Traits> &x,
           basic_spanbuf<CharType, Traits> &y)
 {
   x.swap(y);
 }
-} // namespace swap_detail
 
 } // namespace gpcl
 

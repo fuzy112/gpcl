@@ -17,6 +17,21 @@
 namespace gpcl {
 namespace detail {
 
+struct buffer_size_fn
+{
+  template <
+      typename T,
+      std::enable_if_t<
+          is_const_buffer_sequence<T>::value &&
+              std::is_same_v<tag_invoke_result_t<buffer_size_fn, const T &>,
+                             std::size_t>,
+          int> = 0>
+  std::size_t operator()(const T &x) const
+  {
+    return gpcl::tag_invoke(*this, x);
+  }
+};
+
 inline std::size_t buffer_size(const_buffer b) noexcept
 {
   return b.size();
@@ -33,18 +48,19 @@ std::size_t buffer_size(const BufferSequence &bs) noexcept
   return total_bytes;
 }
 
-struct buffer_size_impl
+template <typename T>
+auto tag_invoke(buffer_size_fn, const T &x)
+    -> std::enable_if_t<std::is_same_v<decltype(buffer_size(x)), std::size_t>,
+                        std::size_t>
 {
-  template <typename BufferSequence>
-  constexpr std::size_t operator()(const BufferSequence &bs) const noexcept
-  {
-    return buffer_size(bs);
-  }
-};
+  return buffer_size(x);
+}
 
 } // namespace detail
 
-inline constexpr detail::buffer_size_impl buffer_size{};
+using buffer_size_fn = detail::buffer_size_fn;
+
+constexpr buffer_size_fn buffer_size{};
 
 } // namespace gpcl
 

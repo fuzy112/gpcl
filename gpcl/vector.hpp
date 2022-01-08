@@ -999,15 +999,14 @@ bool operator<=(const vector<Tp, Allocator> &x, const vector<Tp, Allocator> &y)
   return !(y < x);
 }
 
-namespace swap_detail {
-// 26.3.11.6, specialized algorithms
+/// @name specialized algorithms
+/// @relates vector
 template <typename Tp, typename Allocator>
 void swap(vector<Tp, Allocator> &x,
           vector<Tp, Allocator> &y) noexcept(noexcept(x.swap(y)))
 {
   x.swap(y);
 }
-} // namespace swap_detail
 
 } // namespace gpcl
 

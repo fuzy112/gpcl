@@ -89,7 +89,7 @@ public:
 
   auto operator=(unique_lock &&other) noexcept -> unique_lock &
   {
-    gpcl::swap(other);
+    swap(other);
   }
 
   auto swap(unique_lock &other) noexcept -> void
@@ -139,13 +139,11 @@ private:
   bool owns_lock_{};
 };
 
-namespace swap_detail {
 template <typename L>
 inline auto swap(unique_lock<L> &x, unique_lock<L> &y) noexcept -> void
 {
   x.swap(y);
 }
-} // namespace swap_detail
 
 } // namespace gpcl
 

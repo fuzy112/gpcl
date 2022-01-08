@@ -85,12 +85,12 @@ private:
 
 #endif
 
-namespace swap_detail {
+namespace detail {
 inline auto swap(thread &y, thread &x) noexcept -> void
 {
   x.swap(y);
 }
-} // namespace swap_detail
+} // namespace detail
 
 namespace this_thread {
 

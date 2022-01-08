@@ -11,7 +11,7 @@
 #ifndef GPCL_DETAIL_POSIX_FILE_HPP
 #define GPCL_DETAIL_POSIX_FILE_HPP
 
-#include <gpcl/buffer_sequence.hpp>
+#include <gpcl/buffer.hpp>
 #include <gpcl/creation_tag.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/utility.hpp>
@@ -157,12 +157,10 @@ private:
   native_handle_type fd_{-1};
 };
 
-namespace swap_detail {
 inline void swap(posix_file &x, posix_file &y) noexcept
 {
   x.swap(y);
 }
-} // namespace swap_detail
 
 } // namespace detail
 } // namespace gpcl

@@ -340,13 +340,16 @@ bool operator>=(std::nullptr_t, const unique_ptr<T, D> &y)
 
 /// @}
 
-namespace swap_detail {
+/// @relates unique_ptr
 template <typename T, typename D>
 void swap(unique_ptr<T, D> &x, unique_ptr<T, D> &y) noexcept
 {
   x.swap(y);
 }
-} // namespace swap_detail
+
+/// @name Generic pointer casts
+/// @relates unique_ptr
+/// @{
 
 template <typename T, typename U>
 unique_ptr<T> static_pointer_cast(unique_ptr<U> &&p) noexcept
@@ -377,12 +380,17 @@ unique_ptr<T> reinterpret_pointer_cast(unique_ptr<U> &&p) noexcept
   return unique_ptr<T>(reinterpret_cast<T *>(p.release()));
 }
 
+/// @}
+
+/// @relates unique_ptr
 template <typename T, typename... Args>
 unique_ptr<T> make_unique(Args &&... args)
 {
   return unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
+/// @relates unique_ptr
+/// @todo deprecate this function.
 template <typename T, typename Deleter = gpcl::default_delete<T>>
 unique_ptr<T, Deleter> wrap_unique(T *ptr, Deleter d = Deleter()) noexcept
 {

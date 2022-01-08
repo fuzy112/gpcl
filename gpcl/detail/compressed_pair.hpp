@@ -166,14 +166,12 @@ public:
   }
 };
 
-namespace swap_detail {
 template <typename T1, typename T2>
 inline void swap(compressed_pair<T1, T2> &x,
                  compressed_pair<T1, T2> &y) noexcept(noexcept(x.swap(y)))
 {
   x.swap(y);
 }
-} // namespace swap_detail
 
 } // namespace detail
 } // namespace gpcl

@@ -47,21 +47,21 @@ public:
 
   void swap(intrusive_list_node_base &other) noexcept
   {
-    gpcl::swap(prev, other.prev);
-    gpcl::swap(next, other.next);
+    using gpcl::swap;
+    swap(prev, other.prev);
+    swap(next, other.next);
   }
 
   intrusive_list_node_base *prev;
   intrusive_list_node_base *next;
 };
 
-namespace swap_detail {
 inline void swap(intrusive_list_node_base &x,
                  intrusive_list_node_base &y) noexcept
 {
   x.swap(y);
 }
-}
+
 
 inline void insert_between(intrusive_list_node_base *node,
                            intrusive_list_node_base *prev,
@@ -316,7 +316,7 @@ public:
 
   void exchange(reference x, reference y) noexcept
   {
-    gpcl::swap(static_cast<node_type &>(x), static_cast<node_type &>(y));
+    swap(static_cast<node_type &>(x), static_cast<node_type &>(y));
   }
 
   void exchange(iterator x, iterator y) noexcept { exchange(*x, *y); }

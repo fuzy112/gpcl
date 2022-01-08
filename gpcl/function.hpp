@@ -35,8 +35,12 @@ public:
 template <typename Signature, std::size_t LocalSize = 3 * sizeof(void *)>
 class function;
 
+template <typename Signature, std::size_t LocalSize>
+void swap(function<Signature, LocalSize> &x,
+          function<Signature, LocalSize> &y) noexcept;
+
 /** @tparam LocalSize the maximum size of target that be stored locally.
- * 
+ *
  *  @todo support member function pointer
  */
 template <typename Result, typename... Args, std::size_t LocalSize>
@@ -58,7 +62,7 @@ public:
 
   function(const function &other) = default;
 
-  function(function && other) noexcept
+  function(function &&other) noexcept
       : data_(std::move(other.data_)),
         invoke_(gpcl::detail::exchange(other.invoke_, nullptr))
   {
@@ -67,7 +71,7 @@ public:
   function(std::nullptr_t) noexcept {}
 
   template <typename F>
-  function(F && f) : data_(std::forward<F>(f))
+  function(F &&f) : data_(std::forward<F>(f))
   {
     invoke_ = [](const void *pf, Args... args) -> Result {
       auto f = static_cast<const std::decay_t<F> *>(pf);
@@ -88,11 +92,11 @@ public:
     invoke_ = detail::exchange(other.invoke_, nullptr);
     return *this;
   }
-  
+
   /// @}
 
   /// @name Modifiers
-  void swap(function & other) noexcept
+  void swap(function &other) noexcept
   {
     using gpcl::swap;
     swap(data_, other.data_);
@@ -107,7 +111,7 @@ public:
   const void *target() const noexcept { return data_.raw_value(); }
 
   void *target() noexcept { return data_.raw_value(); }
-  
+
   /// @}
 
   /// Determines whether the function owns a target.
@@ -121,6 +125,10 @@ public:
       return invoke_(value, std::move(args)...);
     GPCL_THROW(bad_function_call());
   }
+
+  template <typename Signature, std::size_t LocalSize1>
+  friend inline void swap(function<Signature, LocalSize1> &x,
+                   function<Signature, LocalSize1> &y) noexcept;
 };
 
 /// @name Relational Operators
@@ -128,40 +136,43 @@ public:
 /// @relates {gpcl::function< Result(Args...), LocalSize >}
 /// @{
 
-template <typename R, typename ...Args, std::size_t LocalSize>
-bool operator==(const function<R (Args ...), LocalSize> &f, std::nullptr_t) noexcept
+template <typename R, typename... Args, std::size_t LocalSize>
+bool operator==(const function<R(Args...), LocalSize> &f,
+                std::nullptr_t) noexcept
 {
   return !f;
 }
 
-template <typename R, typename ...Args, std::size_t LocalSize>
-bool operator==(std::nullptr_t, const function<R (Args ...), LocalSize> &f) noexcept
+template <typename R, typename... Args, std::size_t LocalSize>
+bool operator==(std::nullptr_t,
+                const function<R(Args...), LocalSize> &f) noexcept
 {
   return !f;
 }
 
-template <typename R, typename ...Args, std::size_t LocalSize>
-bool operator!=(const function<R (Args ...), LocalSize> &f, std::nullptr_t) noexcept
+template <typename R, typename... Args, std::size_t LocalSize>
+bool operator!=(const function<R(Args...), LocalSize> &f,
+                std::nullptr_t) noexcept
 {
   return f;
 }
 
-template <typename R, typename ...Args, std::size_t LocalSize>
-bool operator!=(std::nullptr_t, const function<R (Args ...), LocalSize> &f) noexcept
+template <typename R, typename... Args, std::size_t LocalSize>
+bool operator!=(std::nullptr_t,
+                const function<R(Args...), LocalSize> &f) noexcept
 {
   return f;
 }
 
 /// @}
 
-namespace swap_detail {
+/// @relates function
 template <typename Signature, std::size_t LocalSize>
 void swap(function<Signature, LocalSize> &x,
           function<Signature, LocalSize> &y) noexcept
 {
   x.swap(y);
 }
-} // namespace swap_detail
 
 } // namespace gpcl
 

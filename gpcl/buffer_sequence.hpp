@@ -11,13 +11,47 @@
 #ifndef GPCL_BUFFER_SEQUENCE_HPP
 #define GPCL_BUFFER_SEQUENCE_HPP
 
-#include <gpcl/buffer.hpp>
+#include <gpcl/const_buffer.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/type_traits.hpp>
+#include <gpcl/mutable_buffer.hpp>
+#include <gpcl/tag_invoke.hpp>
+
+#include <iterator>
 
 namespace gpcl {
 
-namespace detail::buffer_sequence {
+namespace detail {
+
+struct buffer_sequence_begin_fn
+{
+  template <
+      typename T,
+      typename R = tag_invoke_result_t<buffer_sequence_begin_fn, const T &>,
+      std::enable_if_t<
+          std::is_convertible_v<typename std::iterator_traits<R>::value_type,
+                                const_buffer>,
+          int> = 0>
+  decltype(auto) operator()(const T &x) const
+  {
+    return gpcl::tag_invoke(*this, x);
+  }
+};
+
+struct buffer_sequence_end_fn
+{
+  template <typename T,
+            typename R = tag_invoke_result_t<buffer_sequence_end_fn, const T &>,
+            std::enable_if_t<
+                std::is_convertible_v<
+                    typename std::iterator_traits<R>::value_type, const_buffer>,
+                int> = 0>
+  decltype(auto) operator()(const T &x) const
+  {
+    return gpcl::tag_invoke(*this, x);
+  }
+};
+
 template <typename Buffer,
           std::enable_if_t<
               std::is_convertible<const Buffer *, const const_buffer *>::value,
@@ -54,29 +88,37 @@ auto buffer_sequence_end(const Container &b) noexcept
   return std::end(b);
 }
 
-struct buffer_sequence_begin_t
+template <
+    typename T,
+    typename R = decltype(buffer_sequence_begin(std::declval<const T &>())),
+    std::enable_if_t<
+        std::is_convertible_v<typename std::iterator_traits<R>::value_type,
+                              const_buffer>,
+        int> = 0>
+decltype(auto) tag_invoke(buffer_sequence_begin_fn, const T &x)
 {
-  template <typename BufferSequence>
-  auto operator()(const BufferSequence &bs) const noexcept
-  {
-    return buffer_sequence_begin(bs);
-  }
-};
+  return buffer_sequence_begin(x);
+}
 
-struct buffer_sequence_end_t
+template <typename T,
+          typename R = decltype(buffer_sequence_end(std::declval<const T &>())),
+          std::enable_if_t<
+              std::is_convertible_v<
+                  typename std::iterator_traits<R>::value_type, const_buffer>,
+              int> = 0>
+decltype(auto) tag_invoke(buffer_sequence_end_fn, const T &x)
 {
-  template <typename BufferSequence>
-  auto operator()(const BufferSequence &bs) const noexcept
-  {
-    return buffer_sequence_end(bs);
-  }
-};
+  return buffer_sequence_end(x);
+}
 
-} // namespace detail::buffer_sequence
+} // namespace detail
+
+using buffer_sequence_begin_fn = detail::buffer_sequence_begin_fn;
+using buffer_sequence_end_fn = detail::buffer_sequence_end_fn;
 
 /// Returns iterator to the first buffer of the buffer sequence.
 /**
- * @ingroup customization_point
+ * @ingroup customisation_point
  *
  * @param buffers a buffer sequence.
  */
@@ -84,13 +126,12 @@ struct buffer_sequence_end_t
 template <typename BufferSequence>
 auto buffer_sequence_begin(const BufferSequence &buffers);
 #else
-inline constexpr detail::buffer_sequence::buffer_sequence_begin_t
-    buffer_sequence_begin{};
+constexpr buffer_sequence_begin_fn buffer_sequence_begin{};
 #endif
 
 /// Returns the past-the-end iterator of the buffer sequence.
 /**
- * @ingroup customization_point
+ * @ingroup customisation_point
  *
  * @param buffers a buffer sequence.
  */
@@ -98,8 +139,7 @@ inline constexpr detail::buffer_sequence::buffer_sequence_begin_t
 template <typename BufferSequence>
 auto buffer_sequence_end(const BufferSequence &buffers);
 #else
-inline constexpr detail::buffer_sequence::buffer_sequence_end_t
-    buffer_sequence_end{};
+inline constexpr buffer_sequence_end_fn buffer_sequence_end{};
 #endif
 
 #ifndef GPCL_DOXYGEN

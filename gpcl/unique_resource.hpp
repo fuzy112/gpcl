@@ -158,14 +158,13 @@ unique_resource<std::decay_t<R>, std::decay_t<D>> make_unique_resource_checked(
         std::forward<R>(r), std::forward<D>(d));
 }
 
-namespace swap_detail {
+/// @relates unique_resources
 template <typename R, typename D>
 void swap(unique_resource<R, D> &x,
           unique_resource<R, D> &y) noexcept(noexcept(x.swap(y)))
 {
   x.swap(y);
 }
-} // namespace swap_detail
 
 } // namespace gpcl
 

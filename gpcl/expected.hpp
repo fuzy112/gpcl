@@ -837,13 +837,12 @@ public:
   /// @}
 };
 
-namespace swap_detail {
+/// @relates expected
 template <typename T, typename E>
 void swap(expected<T, E> &x, expected<T, E> &y) noexcept(noexcept(x.swap(y)))
 {
   x.swap(y);
 }
-} // namespace swap_detail
 
 /// @name Relational Operators
 /// @relates gpcl::expected

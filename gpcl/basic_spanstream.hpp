@@ -88,17 +88,17 @@ public:
   void span(gpcl::span<CharType> buf) noexcept { rdbuf()->span(buf); }
 };
 
-using ispanstream = basic_ispanstream<char>;
-using wispanstream = basic_ispanstream<wchar_t>;
-
-namespace swap_detail {
 template <typename CharType, typename Traits>
 void swap(basic_ispanstream<CharType, Traits> &x,
           basic_ispanstream<CharType, Traits> &y)
 {
   x.swap(y);
 }
-} // namespace swap_detail
+
+using ispanstream = basic_ispanstream<char>;
+using wispanstream = basic_ispanstream<wchar_t>;
+
+
 
 template <typename CharType, typename Traits = std::char_traits<CharType>>
 class basic_ospanstream : private detail::spanstream_base<CharType, Traits>,
@@ -150,17 +150,16 @@ public:
   void span(gpcl::span<CharType> buf) noexcept { rdbuf()->span(buf); }
 };
 
-using ospanstream = basic_ospanstream<char>;
-using wospanstream = basic_ospanstream<wchar_t>;
 
-namespace swap_detail {
 template <typename CharType, typename Traits>
 void swap(basic_ospanstream<CharType, Traits> &x,
           basic_ospanstream<CharType, Traits> &y)
 {
   x.swap(y);
 }
-} // namespace swap_detail
+
+using ospanstream = basic_ospanstream<char>;
+using wospanstream = basic_ospanstream<wchar_t>;
 
 template <typename CharType, typename Traits = std::char_traits<CharType>>
 class basic_spanstream : private detail::spanstream_base<CharType, Traits>,
@@ -213,17 +212,15 @@ public:
   void span(gpcl::span<CharType> buf) noexcept { rdbuf()->span(buf); }
 };
 
-using spanstream = basic_spanstream<char>;
-using wspanstream = basic_spanstream<wchar_t>;
-
-namespace swap_detail {
 template <typename CharType, typename Traits>
 void swap(basic_spanstream<CharType, Traits> &x,
           basic_spanstream<CharType, Traits> &y)
 {
   x.swap(y);
 }
-} // namespace swap_detail
+
+using spanstream = basic_spanstream<char>;
+using wspanstream = basic_spanstream<wchar_t>;
 
 } // namespace gpcl
 
