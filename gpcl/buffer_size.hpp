@@ -61,11 +61,9 @@ auto tag_invoke(buffer_size_fn, const T &x)
 
 using buffer_size_fn = detail::buffer_size_fn;
 
-namespace {
 /// Get the total size of a buffer sequence.
 /// @ingroup customisation_point
-constexpr auto &buffer_size = static_const<buffer_size_fn>;
-} // namespace
+inline constexpr buffer_size_fn buffer_size{};
 
 } // namespace gpcl
 

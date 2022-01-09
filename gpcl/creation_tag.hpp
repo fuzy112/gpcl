@@ -11,7 +11,6 @@
 #ifndef GPCL_CREATION_TAG_HPP
 #define GPCL_CREATION_TAG_HPP
 
-#include <gpcl/static_const.hpp>
 
 namespace gpcl {
 
@@ -27,11 +26,9 @@ struct open_or_create_t
 {
 };
 
-namespace {
-constexpr auto &create_only = static_const<create_only_t>;
-constexpr auto &open_only = static_const<open_only_t>;
-constexpr auto &open_or_create = static_const<open_or_create_t>;
-}
+inline constexpr create_only_t create_only{};
+inline constexpr open_only_t open_only{};
+inline constexpr open_or_create_t open_or_create{};
 
 } // namespace gpcl
 
