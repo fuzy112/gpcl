@@ -57,3 +57,7 @@ include(doctest.cmake)
 
 doctest_discover_tests(tests TEST_PREFIX "*header only*")
 doctest_discover_tests(tests-separate TEST_PREFIX "*separate*")
+
+add_executable(meta-test meta_test.cpp)
+target_link_libraries(meta-test PRIVATE gpcl::gpcl)
+add_test(NAME meta-test COMMAND meta-test)
