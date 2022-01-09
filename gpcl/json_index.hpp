@@ -32,7 +32,7 @@ struct json_index_fn
                 std::is_same_v<R,
                                decltype(gpcl::tag_invoke(
                                    std::declval<json_index_fn<R>>(), t, a1))>,
-                R> { return gpcl::tag_invoke(json_at_fn<R>{}, t, a1); };
+                R> { return gpcl::tag_invoke(json_index_fn<R>{}, t, a1); };
   }
 };
 
