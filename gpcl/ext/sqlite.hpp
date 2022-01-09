@@ -112,14 +112,12 @@ inline auto tag_invoke(bind_fn, const bind_proxy &proxy, int col,
 
 using bind_fn = detail::bind_fn;
 
-namespace {
 /// Binds a value to a column.
 ///
 /// @ingroup customisation_point
 /// @remark This is a customisation point.
 ///
-constexpr auto &bind = static_const<bind_fn>;
-}
+inline constexpr bind_fn bind{};
 
 namespace detail {
 
@@ -146,9 +144,7 @@ auto tag_invoke(get_fn, const step_result &result, int col, std::string &number)
 
 using get_fn = detail::get_fn;
 
-namespace {
-constexpr auto &get = static_const<get_fn>;
-}
+inline constexpr get_fn get{};
 
 class bind_proxy final
 {

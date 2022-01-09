@@ -116,21 +116,17 @@ decltype(auto) tag_invoke(buffer_sequence_end_fn, const T &x)
 using buffer_sequence_begin_fn = detail::buffer_sequence_begin_fn;
 using buffer_sequence_end_fn = detail::buffer_sequence_end_fn;
 
-namespace {
 /// Returns iterator to the first buffer of the buffer sequence.
 /**
  * @ingroup customisation_point
  */
-constexpr auto &buffer_sequence_begin = static_const<buffer_sequence_begin_fn>;
-
+inline constexpr buffer_sequence_begin_fn buffer_sequence_begin{};
 
 /// Returns the past-the-end iterator of the buffer sequence.
 /**
  * @ingroup customisation_point
  */
-constexpr auto &buffer_sequence_end = static_const<buffer_sequence_end_fn>;
-
-} // namespace
+inline constexpr buffer_sequence_end_fn buffer_sequence_end{};
 
 #ifndef GPCL_DOXYGEN
 template <typename T, typename = void>

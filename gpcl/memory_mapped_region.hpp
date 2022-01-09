@@ -12,7 +12,6 @@
 #define GPCL_MEMORY_MAPPED_REGION_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/static_const.hpp>
 #include <gpcl/unique_ptr.hpp>
 
 #if defined GPCL_POSIX
@@ -23,7 +22,7 @@
 namespace gpcl {
 
 #if defined GPCL_POSIX
-constexpr auto &memory_map = static_const<detail::posix_memory_map_impl>;
+inline constexpr detail::posix_memory_map_impl memory_map{};
 using memory_map_options = detail::posix_memory_map_options;
 #endif
 

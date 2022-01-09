@@ -15,7 +15,6 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/is_basic_lockable.hpp>
 #include <gpcl/is_lockable.hpp>
-#include <gpcl/static_const.hpp>
 #include <gpcl/swap.hpp>
 
 namespace gpcl {
@@ -32,11 +31,9 @@ struct defer_lock_t
 {
 };
 
-namespace {
-constexpr auto &adopt_lock = static_const<adopt_lock_t>;
-constexpr auto &try_to_lock = static_const<try_to_lock_t>;
-constexpr auto &defer_lock = static_const<defer_lock_t>;
-} // namespace
+inline constexpr adopt_lock_t adopt_lock{};
+inline constexpr try_to_lock_t try_to_lock{};
+inline constexpr defer_lock_t defer_lock{};
 
 /// RAII type that automatically unlocks the mutex.
 template <typename MutexType>
