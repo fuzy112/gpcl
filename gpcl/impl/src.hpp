@@ -20,6 +20,7 @@
 #include <gpcl/detail/impl/tlsf.ipp>
 #include <gpcl/detail/impl/unreachable.ipp>
 #include <gpcl/impl/getopt.ipp>
+#include <gpcl/impl/json_error.ipp>
 #include <gpcl/pmr/impl/default_resource.ipp>
 #include <gpcl/pmr/impl/monotonic_buffer_resource.ipp>
 #include <gpcl/pmr/impl/new_delete_resource.ipp>

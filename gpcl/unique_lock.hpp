@@ -90,6 +90,7 @@ public:
   auto operator=(unique_lock &&other) noexcept -> unique_lock &
   {
     swap(other);
+    return *this;
   }
 
   auto swap(unique_lock &other) noexcept -> void

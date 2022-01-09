@@ -125,9 +125,11 @@ private:
   public:
     explicit unique_lock_adaptor(unique_lock<mutex> &lock)
         : lock_(lock),
-          lock_mutex_impl_(lock.mutex().impl_, adopt_lock)
+          lock_mutex_impl_(lock.mutex().impl_, defer_lock)
     {
-      GPCL_ASSERT(lock_.owns_lock());
+      if (!lock_.owns_lock())
+        lock_.lock();
+      lock_mutex_impl_ = unique_lock(lock.mutex().impl_, adopt_lock);
     }
 
     ~unique_lock_adaptor()
@@ -139,7 +141,7 @@ private:
     unique_lock<mutex::impl_type> &get_impl_lock() { return lock_mutex_impl_; }
 
   private:
-    [[maybe_unused]] unique_lock<mutex> &lock_;
+    unique_lock<mutex> &lock_;
     unique_lock<mutex::impl_type> lock_mutex_impl_;
   };
 

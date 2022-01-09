@@ -1,5 +1,5 @@
-#ifndef GPCL_DETAIL_JSON_TAG_HPP
-#define GPCL_DETAIL_JSON_TAG_HPP
+#ifndef GPCL_JSON_TAG_HPP
+#define GPCL_JSON_TAG_HPP
 
 #include <gpcl/detail/config.hpp>
 
@@ -27,4 +27,4 @@ struct json_object_tag
 };
 } // namespace gpcl
 
-#endif // GPCL_DETAIL_JSON_TAG_HPP
+#endif // GPCL_JSON_TAG_HPP
