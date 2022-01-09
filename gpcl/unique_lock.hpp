@@ -15,6 +15,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/is_basic_lockable.hpp>
 #include <gpcl/is_lockable.hpp>
+#include <gpcl/static_const.hpp>
 #include <gpcl/swap.hpp>
 
 namespace gpcl {
@@ -31,9 +32,11 @@ struct defer_lock_t
 {
 };
 
-GPCL_CXX17_INLINE_CONSTEXPR adopt_lock_t adopt_lock{};
-GPCL_CXX17_INLINE_CONSTEXPR try_to_lock_t try_to_lock{};
-GPCL_CXX17_INLINE_CONSTEXPR defer_lock_t defer_lock{};
+namespace {
+constexpr auto &adopt_lock = static_const<adopt_lock_t>;
+constexpr auto &try_to_lock = static_const<try_to_lock_t>;
+constexpr auto &defer_lock = static_const<defer_lock_t>;
+} // namespace
 
 /// RAII type that automatically unlocks the mutex.
 template <typename MutexType>
@@ -45,9 +48,7 @@ class unique_lock
 public:
   using mutex_type = MutexType;
 
-  explicit unique_lock(mutex_type &mtx)
-      : mtx_(&mtx),
-        owns_lock_(false)
+  explicit unique_lock(mutex_type &mtx) : mtx_(&mtx), owns_lock_(false)
   {
     lock();
   }
