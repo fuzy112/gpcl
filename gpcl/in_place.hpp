@@ -12,13 +12,17 @@
 #define GPCL_IN_PLACE_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/static_const.hpp>
 
 namespace gpcl {
 
 struct in_place_t
 {
 };
-constexpr auto in_place = in_place_t();
+
+namespace {
+constexpr auto &in_place = static_const<in_place_t>;
+}
 
 } // namespace gpcl
 

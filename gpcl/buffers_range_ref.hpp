@@ -14,31 +14,28 @@
 #include <gpcl/buffer_sequence.hpp>
 
 namespace gpcl {
-namespace detail {
+
+/// A range-like view to a buffer sequence.
 template <typename BufferSequence>
-struct buffers_range_adaptor
+struct buffers_range_ref
 {
+  /// Reference to the buffer sequence.
   const BufferSequence &buffers;
 
+  template <typename Buffers = BufferSequence,
+       typename Enable = std::enable_if_t<
+          is_const_buffer_sequence<Buffers>::value>>
+  explicit buffers_range_ref(BufferSequence const &buffers)
+      : buffers(buffers)
+  {
+  }
+
+  /// Returns an iterator to the first buffer.
   auto begin() const { return gpcl::buffer_sequence_begin(buffers); }
 
+  /// Returns an iterator past-the-end of the last buffer.
   auto end() const { return gpcl::buffer_sequence_end(buffers); }
 };
-
-struct buffers_range_ref_impl
-{
-  template <typename BufferSequence,
-            std::enable_if_t<
-                gpcl::is_const_buffer_sequence<BufferSequence>::value, int> = 0>
-  auto operator()(BufferSequence const &bs) const
-  {
-    return buffers_range_adaptor<BufferSequence>{bs};
-  }
-};
-} // namespace detail
-
-inline constexpr detail::buffers_range_ref_impl
-    buffers_range_ref{};
 
 } // namespace gpcl
 

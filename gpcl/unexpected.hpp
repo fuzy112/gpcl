@@ -27,7 +27,7 @@ struct unexpect_t
   explicit unexpect_t() = default;
 };
 
-GPCL_CXX17_INLINE_CONSTEXPR unexpect_t unexpect{};
+constexpr unexpect_t unexpect{};
 
 /// Used as a wrapper to store the unexpected value.
 /// @tparam E must not be void.

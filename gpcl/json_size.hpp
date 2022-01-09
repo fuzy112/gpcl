@@ -54,7 +54,9 @@ std::size_t tag_invoke(json_size_fn, const T &x)
 
 using json_size_fn = detail::json_size_fn;
 
-constexpr json_size_fn json_size{};
+namespace {
+constexpr auto &json_size = static_const<json_size_fn>;
+}
 
 } // namespace gpcl
 

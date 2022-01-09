@@ -19,6 +19,7 @@ set (TESTS_SRCS
 	condition_variable_test.cpp
 	simple_segregated_storage_test.cpp
 	syncbuf_test.cpp
+	buffers_test.cpp
 )
 
 set (TEST_FIXTURES

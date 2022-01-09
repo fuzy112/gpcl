@@ -30,7 +30,7 @@ namespace detail {
   {                                                                            \
   };                                                                           \
   template <typename T>                                                        \
-  GPCL_CXX17_INLINE_CONSTEXPR bool name_part##_v = name_part<T>{};
+  constexpr bool name_part##_v = name_part<T>{};
 
 GPCL_TYPE_TRAITS_TREAT_VOID_AS_FALSE(is_default_constructible)
 GPCL_TYPE_TRAITS_TREAT_VOID_AS_FALSE(is_trivially_default_constructible)
@@ -88,28 +88,28 @@ struct is_char_like_type<char32_t> : std::true_type
 };
 
 template <typename T>
-GPCL_CXX17_INLINE_CONSTEXPR bool is_char_like_type_v = is_char_like_type<T>{};
+constexpr bool is_char_like_type_v = is_char_like_type<T>{};
 
 template <typename T, typename... Args>
-GPCL_CXX17_INLINE_CONSTEXPR bool is_constructible_v =
+constexpr bool is_constructible_v =
     std::is_constructible<T, Args...>{};
 
 template <typename T, typename... Args>
-GPCL_CXX17_INLINE_CONSTEXPR bool is_nothrow_constructible_v =
+constexpr bool is_nothrow_constructible_v =
     std::is_nothrow_constructible<T, Args...>{};
 
 template <typename T>
-GPCL_CXX17_INLINE_CONSTEXPR bool is_void_v = std::is_void<T>{};
+constexpr bool is_void_v = std::is_void<T>{};
 
 template <typename T, typename U>
-GPCL_CXX17_INLINE_CONSTEXPR bool is_same_v = std::is_same<T, U>{};
+constexpr bool is_same_v = std::is_same<T, U>{};
 
 template <typename From, typename To>
-GPCL_CXX17_INLINE_CONSTEXPR bool is_convertible_v =
+constexpr bool is_convertible_v =
     std::is_convertible<From, To>{};
 
 template <typename T, typename U>
-GPCL_CXX17_INLINE_CONSTEXPR bool is_assignable_v = std::is_assignable<T, U>{};
+constexpr bool is_assignable_v = std::is_assignable<T, U>{};
 
 template <bool... Bs>
 struct conjunction_helper;
@@ -133,7 +133,7 @@ template <typename... Ts>
 using conjunction = conjunction_helper<Ts::value...>;
 
 template <typename... Ts>
-GPCL_CXX17_INLINE_CONSTEXPR bool conjunction_v = conjunction<Ts...>::value;
+constexpr bool conjunction_v = conjunction<Ts...>::value;
 
 template <bool... Bs>
 struct disjunction_helper;
@@ -157,13 +157,13 @@ template <typename... Ts>
 using disjunction = disjunction_helper<Ts::value...>;
 
 template <typename... Ts>
-GPCL_CXX17_INLINE_CONSTEXPR bool disjunction_v = disjunction<Ts...>::value;
+constexpr bool disjunction_v = disjunction<Ts...>::value;
 
 template <typename T>
 using negate = std::integral_constant<bool, !T::value>;
 
 template <typename T>
-GPCL_CXX17_INLINE_CONSTEXPR bool negate_v = negate<T>::value;
+constexpr bool negate_v = negate<T>::value;
 
 template <bool C, typename T = void>
 using enable_if_t = typename std::enable_if<C, T>::type;

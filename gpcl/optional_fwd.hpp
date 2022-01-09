@@ -13,6 +13,7 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/in_place.hpp>
+#include <gpcl/static_const.hpp>
 
 #include <type_traits>
 
@@ -32,7 +33,14 @@ struct nullopt_t
 {
   constexpr nullopt_t(detail::optional_construct_helper) {}
 };
-constexpr nullopt_t nullopt{detail::optional_construct_helper{}};
+
+template <>
+constexpr nullopt_t static_const<nullopt_t>{
+    detail::optional_construct_helper{}};
+
+namespace {
+constexpr auto &nullopt = static_const<nullopt_t>;
+}
 
 template <typename T>
 struct is_optional : std::false_type

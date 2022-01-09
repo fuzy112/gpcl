@@ -12,6 +12,7 @@
 #define GPCL_BUFFER_HPP
 
 #include <gpcl/buffer_sequence.hpp>
+#include <gpcl/static_const.hpp>
 #include <gpcl/tag_invoke.hpp>
 
 namespace gpcl {
@@ -76,6 +77,7 @@ auto tag_invoke(buffer_fn, Args &&...args)
 
 using buffer_fn = detail::buffer_fn;
 
+namespace {
 /// Factory for mutable_buffer and constant_buffer.
 /** Create a new mutable_buffer or constant_buffer.
  *
@@ -90,12 +92,8 @@ using buffer_fn = detail::buffer_fn;
  *  auto b = buffer(storage);
  *  @endcode
  */
-#ifdef GPCL_DOXYGEN
-template <typename... Args>
-auto buffer(Args &&...args);
-#else
-inline constexpr buffer_fn buffer{};
-#endif
+constexpr auto &buffer = static_const<buffer_fn>;
+} // namespace
 
 } // namespace gpcl
 
