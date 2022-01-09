@@ -29,23 +29,15 @@ public:
   constexpr null_mutex() = default;
   ~null_mutex() = default;
 
-  auto lock() -> void { GPCL_ASSERT(!std::exchange(locked_, true)); }
+  auto lock() -> void { locked_ = true; }
 
+  auto unlock() -> void { locked_ = false; }
 
-  auto unlock() -> void { GPCL_ASSERT(std::exchange(locked_, false)); }
-
-  auto try_lock() -> bool
-  {
-#ifdef GPCL_DEBUG
-    return !std::exchange(locked_, true);
-#else
-    return true;
-#endif
-  }
+  auto try_lock() -> bool { return !std::exchange(locked_, true); }
   auto native_handle() noexcept -> std::nullptr_t { return nullptr; }
 
 private:
-  [[maybe_unused]] bool locked_{};
+  bool locked_{};
 };
 
 /// Normal mutex.
