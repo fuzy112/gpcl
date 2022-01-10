@@ -58,8 +58,9 @@ endif ()
 
 include (FetchContent)
 FetchContent_Declare(
-	cppref
+	cppreference
 	URL https://upload.cppreference.com/mwiki/images/1/16/html_book_20190607.tar.xz
+	URL_HASH SHA256=8f97b2baa749c748a2e022d785f1a2e95aa851a3075987dfcf38baf65e0e486d
 )
 
 find_package(Doxygen)
@@ -68,11 +69,11 @@ option (GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE "link to external cppreference docu
 
 if (Doxygen_FOUND AND GPCL_BUILD_DOC)
 
-	FetchContent_MakeAvailable(cppref)
+	FetchContent_MakeAvailable(cppreference)
 	if (GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE)
-		list (APPEND DOXYGEN_TAGFILES "${cppref_SOURCE_DIR}/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/")
+		list (APPEND DOXYGEN_TAGFILES "${cppreference_SOURCE_DIR}/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/")
 	else ()
-		list (APPEND DOXYGEN_TAGFILES "${cppref_SOURCE_DIR}/cppreference-doxygen-local.tag.xml=${cppref_SOURCE_DIR}/reference/en/")
+		list (APPEND DOXYGEN_TAGFILES "${cppreference_SOURCE_DIR}/cppreference-doxygen-local.tag.xml=${cppreference_SOURCE_DIR}/reference/en/")
 	endif ()
 	set (DOXYGEN_PREDEFINED GPCL_DOXYGEN)
 
