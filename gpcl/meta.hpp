@@ -482,6 +482,9 @@ using at = _t<detail::at_<List, N>>;
 template <typename List, std::size_t N>
 using at_c = at<List, size_t<N>>;
 
+template <typename List>
+using size = size_t<List::size()>;
+
 template <typename T>
 struct id
 {
