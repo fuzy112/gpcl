@@ -1,9 +1,23 @@
+//
+// meta.hpp
+// ~~~~~~~~
+//
+// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
 #ifndef GPCL_META_HPP
 #define GPCL_META_HPP
 
 #include <gpcl/meta_fwd.hpp>
 
+/// Metaprogramming utilities.
 namespace gpcl::meta {
+
+/// @defgroup meta Metaprogramming utilities
+/// @{
 
 template <typename T>
 using _t = typename T::type;
@@ -660,6 +674,8 @@ using as_list = _t<detail::as_list_<T>>;
 
 template <typename List>
 using as_tuple = apply<quote<std::tuple>, List>;
+
+/// @}
 
 } // namespace gpcl::meta
 
