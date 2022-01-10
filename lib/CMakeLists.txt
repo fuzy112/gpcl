@@ -14,4 +14,6 @@ endif ()
 set_target_properties(separate
 	PROPERTIES
 	OUTPUT_NAME gpcl
+	SOVERSION 500
+	VERSION 0.5.0
 )
