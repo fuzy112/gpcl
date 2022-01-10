@@ -14,6 +14,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/in_place_type.hpp>
+#include <gpcl/meta.hpp>
 #include <gpcl/narrow_cast.hpp>
 #include <gpcl/swap.hpp>
 
@@ -47,36 +48,7 @@ template <typename... Types>
 class variant;
 
 template <typename Variant>
-struct variant_size;
-
-template <typename... Types>
-struct variant_size<variant<Types...>>
-    : std::integral_constant<std::size_t, sizeof...(Types)>
-{
-};
-
-template <typename T>
-struct variant_size<T const> : variant_size<T>
-{
-};
-
-template <typename T>
-struct variant_size<T volatile> : variant_size<T>
-{
-};
-
-template <typename T>
-struct variant_size<T const volatile> : variant_size<T>
-{
-};
-
-template <typename T>
-struct variant_size<T &> : variant_size<T>
-{
-};
-
-template <typename T>
-struct variant_size<T &&> : variant_size<T>
+struct variant_size : meta::size<meta::as_list<std::decay_t<Variant>>>
 {
 };
 
@@ -84,74 +56,15 @@ template <typename Variant>
 constexpr std::size_t variant_size_v = variant_size<Variant>::value;
 
 template <std::size_t I, typename Variant>
-struct variant_alternative;
-
-template <typename T, typename... Types>
-struct variant_alternative<0, variant<T, Types...>>
+struct variant_alternative
 {
-  using type = T;
-};
-
-template <std::size_t I, typename T, typename... Types>
-struct variant_alternative<I, variant<T, Types...>>
-    : variant_alternative<I - 1, variant<Types...>>
-{
-};
-
-template <std::size_t I, typename T>
-struct variant_alternative<I, T const> : variant_alternative<I, T>
-{
-};
-
-template <std::size_t I, typename T>
-struct variant_alternative<I, T volatile> : variant_alternative<I, T>
-{
-};
-
-template <std::size_t I, typename T>
-struct variant_alternative<I, T const volatile> : variant_alternative<I, T>
-{
-};
-
-template <std::size_t I, typename T>
-struct variant_alternative<I, T &> : variant_alternative<I, T>
-{
-};
-
-template <std::size_t I, typename T>
-struct variant_alternative<I, T &&> : variant_alternative<I, T>
-{
+  using type = meta::at_c<meta::as_list<std::decay_t<Variant>>, I>;
 };
 
 template <std::size_t I, typename Variant>
 using variant_alternative_t = typename variant_alternative<I, Variant>::type;
 
 namespace detail {
-
-template <std::size_t I, typename T, typename... Types>
-struct find_type_index_impl;
-
-template <std::size_t I, typename T, typename... Types>
-struct find_type_index_impl<I, T, T, Types...>
-    : std::integral_constant<std::size_t, I>
-{
-};
-
-template <std::size_t I, typename T>
-struct find_type_index_impl<I, T>
-{
-};
-
-template <std::size_t I, typename T, typename U, typename... Types>
-struct find_type_index_impl<I, T, U, Types...>
-    : find_type_index_impl<I + 1, T, Types...>
-{
-};
-
-template <typename T, typename... Types>
-struct find_type_index : find_type_index_impl<0, T, Types...>
-{
-};
 
 // clang-format off
 template <std::size_t MaxIndex>
@@ -830,7 +743,7 @@ public:
       *static_cast<U *>(unsafe_get<U>(this)) = t;
     else
       new (unsafe_get<U>(this)) U(std::forward<T>(t));
-    set_index(detail::find_type_index<U, Types...>());
+    set_index(meta::find_index<variant, U>::type::value);
   }
 #endif
 
@@ -839,7 +752,7 @@ public:
       : base_type(detail::variant_noinit_tag{})
   {
     new (unsafe_get<T>(this)) T(std::forward<Args>(args)...);
-    set_index(detail::find_type_index<T, Types...>());
+    set_index(meta::find_index<variant, T>::type::value);
   }
 
   /// @}
@@ -863,7 +776,7 @@ public:
   operator=(T &&t) noexcept(std::is_nothrow_constructible_v<U, T &&>
                                 &&std ::is_nothrow_assignable_v<U, T &&>)
   {
-    if (detail::find_type_index<U, Types...>() == index())
+    if (meta::find_index<variant, U>::type::value == index())
     {
       *static_cast<U *>(unsafe_get<U>(this)) = std::forward<T>(t);
       return *this;
@@ -876,7 +789,7 @@ public:
       *static_cast<U *>(unsafe_get<U>(this)) = t;
     else
       new (unsafe_get<U>(this)) U(std::forward<T>(t));
-    set_index(detail::find_type_index<U, Types...>());
+    set_index(meta::find_index<variant, U>::type::value);
     return *this;
   }
 
@@ -904,14 +817,14 @@ public:
   template <typename T, typename... Args>
   constexpr T &emplace(Args &&...args)
   {
-    return emplace<detail::find_type_index<T, Types...>::value>(
+    return emplace<meta::find_index<variant, T>::type::value>(
         std::forward<Args>(args)...);
   }
 
   template <typename T, typename U, typename... Args>
   constexpr T &emplace(std::initializer_list<U> il, Args &&...args)
   {
-    return emplace<detail::find_type_index<T, Types...>::value>(
+    return emplace<meta::find_index<variant, U>::type::value>(
         il, std::forward<Args>(args)...);
   }
 
@@ -951,7 +864,7 @@ public:
 template <typename T, typename... Types>
 constexpr bool holds_alternative(const variant<Types...> &v) noexcept
 {
-  return detail::find_type_index<T, Types...>::value == v.index();
+  return meta::find_index<meta::list<Types...>, T>::type::value == v.index();
 }
 
 template <std::size_t I, class... Types>
@@ -1079,14 +992,35 @@ struct visit_impl
   constexpr decltype(auto) operator()(Visitor &&visitor, Variant1 &&variant1,
                                       Variants &&...variants) const
   {
+    using list_of_lists =
+        meta::transform<meta::list<Variant1 &&, Variants &&...>,
+                        meta::quote<meta::as_list>>;
+
+    using type_combinations = meta::cartesian_product<list_of_lists>;
+
+    using results = meta::transform<
+        type_combinations,
+        meta::bind_front<
+            meta::quote<meta::apply>,
+            meta::bind_front<meta::quote<std::invoke_result_t>, Visitor &&>>>;
+
+    static_assert(
+        meta::apply<
+            meta::quote<meta::and_>,
+            meta::transform<results, meta::bind_front<meta::quote<std::is_same>,
+                                                      meta::front<results>>>>::
+            type::value,
+        "The visitor must have the same return type for all possible "
+        "parameters");
+
     return (*this)(
         [&](auto &&... values) -> decltype(auto) {
           GPCL_ASSERT_CONST(!variant1.valueless_by_exception());
           return apply_visitor(
               [&](auto &&value1) -> decltype(auto) {
                 return std::forward<Visitor>(visitor)(
-                                   std::forward<decltype(value1)>(value1),
-                                   std::forward<decltype(values)>(values)...);
+                    std::forward<decltype(value1)>(value1),
+                    std::forward<decltype(values)>(values)...);
               },
               std::forward<Variant1>(variant1));
         },
@@ -1339,6 +1273,7 @@ constexpr void variant<Types...>::swap(variant &other) noexcept(
         [](auto &x, auto &y) {
           if constexpr (std::is_same_v<decltype(x), decltype(y)>)
           {
+            using gpcl::swap;
             swap(x, y);
             return;
           }
