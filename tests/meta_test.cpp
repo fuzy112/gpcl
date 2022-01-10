@@ -4,10 +4,9 @@
 
 using namespace gpcl;
 
-struct _c {};
-
 int main()
 {
+
   using my_list = meta::list<int, double, char>;
   static_assert(my_list::size() == 3);
 
@@ -44,7 +43,7 @@ int main()
   using tuple1 = meta::as_tuple<list6>;
   static_assert(std::is_same_v<tuple1, std::tuple<int, float>>);
 
-  static_assert(meta::find_type<list6, float>::value == 1);
+  static_assert(meta::find_index<list6, float>::value == 1);
 
   using is_same = meta::lambda<class _a, class _b, std::is_same<_a, _b>>;
   static_assert(meta::invoke<is_same, int, int>::value);
@@ -56,8 +55,10 @@ int main()
 
   using list8 =
       meta::transform<list6,
-                      meta::lambda<_c, std::add_lvalue_reference_t<_c>>>;
+                      meta::lambda<struct _c, std::add_lvalue_reference_t<_c>>>;
 
-  meta::list<int &, float &> t = list8{};
   static_assert(std::is_same_v<list8, meta::list<int &, float &>>);
+
+  static_assert(
+      std::is_same_v<meta::invoke<meta::lambda<class _a, _a>, int>, int>);
 }
