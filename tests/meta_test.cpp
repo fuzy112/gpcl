@@ -45,7 +45,9 @@ int main()
 
   static_assert(meta::find_index<list6, float>::value == 1);
 
-  using is_same = meta::lambda<class _a, class _b, std::is_same<_a, _b>>;
+  using is_same = meta::lambda<
+      meta::placeholders::_a, meta::placeholders::_b,
+      std::is_same<meta::placeholders::_a, meta::placeholders::_b>>;
   static_assert(meta::invoke<is_same, int, int>::value);
   static_assert(!meta::invoke<is_same, int, float>::value);
 
@@ -55,10 +57,17 @@ int main()
 
   using list8 =
       meta::transform<list6,
-                      meta::lambda<struct _c, std::add_lvalue_reference_t<_c>>>;
+                      meta::lambda<meta::placeholders::_c,
+                                   meta::defer<std::add_lvalue_reference_t,
+                                               meta::placeholders::_c>>>;
 
-  static_assert(std::is_same_v<list8, meta::list<int &, float &>>);
+  list8{} = meta::list<int &, float &>{};
 
-  static_assert(
-      std::is_same_v<meta::invoke<meta::lambda<class _a, _a>, int>, int>);
+  meta::let<meta::var<meta::placeholders::_a, int>,
+            meta::var<meta::placeholders::_b, meta::quote<std::add_pointer_t>>,
+            meta::lazy::invoke<meta::placeholders::_b, meta::placeholders::_a>>
+      x = static_cast<int *>(0);
 }
+
+// meta::substitute<
+//     meta::list<std::add_lvalue_reference< meta::placeholders::_b >,

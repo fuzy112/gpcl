@@ -59,7 +59,7 @@ using invoke = typename Callable::template invoke<Args...>;
 
 namespace lazy {
 template <typename F, typename... Xs>
-using invoke = defer<F::template invoke, Xs...>;
+using invoke = defer<meta::invoke, F, Xs...>;
 }
 
 template <template <typename...> typename F>
@@ -184,7 +184,7 @@ struct _if_<C, T> : std::enable_if<C::type::value, T>
 };
 
 template <typename C, typename T, typename F>
-struct _if_<C, T, F> : std::conditional_t<C::type::value, T, F>
+struct _if_<C, T, F> : std::conditional<C::type::value, T, F>
 {
 };
 } // namespace detail
@@ -222,7 +222,7 @@ struct apply_;
 template <template <typename...> class T, typename... Xs, typename F>
 struct apply_<T<Xs...>, F>
 {
-  using type = invoke<F, Xs...>;
+  using type = meta::invoke<F, Xs...>;
 };
 } // namespace detail
 
@@ -248,7 +248,7 @@ struct fold_<C<>, State, F>
 
 template <template <typename...> class C, typename X, typename... Xs,
           typename State, typename F>
-struct fold_<C<X, Xs...>, State, F> : fold_<C<Xs...>, invoke<F, State, X>, F>
+struct fold_<C<X, Xs...>, State, F> : fold_<C<Xs...>, meta::invoke<F, State, X>, F>
 {
 };
 } // namespace detail
@@ -274,7 +274,7 @@ struct foldr_<C<>, State, F>
 template <template <typename...> class C, typename X, typename... Xs,
           typename State, typename F>
 struct foldr_<C<X, Xs...>, State, F>
-    : invoke<F, _t<foldr_<C<Xs...>, State, F>>, X>
+    : meta:: invoke<F, _t<foldr_<C<Xs...>, State, F>>, X>
 {
 };
 
@@ -431,7 +431,7 @@ template <typename F>
 struct transform_fn
 {
   template <typename State, typename X>
-  using invoke = push_back<State, invoke<F, X>>;
+  using invoke = push_back<State, meta::invoke<F, X>>;
 };
 
 } // namespace detail
@@ -511,6 +511,21 @@ struct id
 template <typename Param, typename Arg>
 struct substitute
 {
+private:
+  template <typename T, typename = void>
+  struct eval_
+  {
+    using type = T;
+  };
+
+  template <template <typename...> class C, typename... Xs>
+  struct eval_<defer<C, Xs...>, void_<C<Xs...>>> : eval_<C<Xs...>>
+  {
+  };
+
+  template <typename T>
+  using eval = _t<eval_<T>>;
+
   template <typename T>
   struct protect_
   {
@@ -532,7 +547,7 @@ struct substitute
   template <typename Tree>
   struct invoke_
   {
-    using type = std::conditional_t<std::is_same_v<Tree, Param>, Arg, Tree>;
+    using type = eval<lazy::if_<std::is_same<Tree, Param>, Arg, Tree>>;
   };
 
   template <typename X>
@@ -574,17 +589,71 @@ struct substitute
   template <template <typename...> class T, typename... Xs>
   struct invoke_<T<Xs...>>
   {
-    using type =
-        unprotect<transform<protect<T<Xs...>>, substitute<Param, Arg>>>;
+    using type = unprotect<transform<protect<T<Xs...>>, quote_trait<invoke_>>>;
   };
 
+  template <template <typename...> class T, typename... Xs>
+  struct invoke_<defer<T, Xs...>>
+  {
+    using type = eval<defer<T, _t<invoke_<Xs>>...>>;
+  };
+
+public:
   template <typename... Tree>
   using invoke = _t<invoke_<Tree...>>;
 };
 
+template <typename S, typename E, typename...>
+using var = pair<S, E>;
+
+namespace detail {
+
+template <typename... Ts>
+struct let_
+{
+  template <typename Expr, typename Pair>
+  using do_subst = meta::invoke<substitute<first<Pair>, second<Pair>>, Expr>;
+
+  using type = fold<meta::pop_back<list<Ts...>>, meta::back<list<Ts...>>,
+                    meta::quote<do_subst>>;
+};
+
+} // namespace detail
+
+template <typename... Ts>
+using let = _t<detail::let_<Ts...>>;
+
+namespace placeholders {
+struct _a
+{
+};
+struct _b
+{
+};
+struct _c
+{
+};
+struct _d
+{
+};
+struct _e
+{
+};
+struct _f
+{
+};
+struct _g
+{
+};
+struct _h
+{
+};
+} // namespace placeholders
+
 template <typename... Ts>
 struct lambda
 {
+private:
   using _params = pop_back<list<Ts...>>;
   using _body = back<list<Ts...>>;
 
@@ -600,6 +669,7 @@ struct lambda
   template <typename Args>
   using invoke_helper = _t<invoke_helper_<Args>>;
 
+public:
   template <typename... Xs>
   using invoke = meta::invoke<invoke_helper<list<Xs...>>, _body>;
 };

@@ -998,18 +998,29 @@ struct visit_impl
 
     using type_combinations = meta::cartesian_product<list_of_lists>;
 
-    using results = meta::transform<
+    using types = meta::transform<
         type_combinations,
         meta::bind_front<
             meta::quote<meta::apply>,
             meta::bind_front<meta::quote<std::invoke_result_t>, Visitor &&>>>;
 
     static_assert(
+        meta::let<
+            meta::var<class head, meta::front<types>>,
+            meta::var<class tail, meta::pop_front<types>>,
+            meta::defer<
+                meta::fold, tail, meta::bool_<true>,
+                meta::lambda<
+                    class state, class type,
+                    meta::lazy::and_<state, meta::defer<std::is_same, type,
+                                                        head>>>>>::type::value);
+
+    static_assert(
         meta::apply<
             meta::quote<meta::and_>,
-            meta::transform<results, meta::bind_front<meta::quote<std::is_same>,
-                                                      meta::front<results>>>>::
-            type::value,
+            meta::transform<types,
+                            meta::bind_front<meta::quote<std::is_same>,
+                                             meta::front<types>>>>::type::value,
         "The visitor must have the same return type for all possible "
         "parameters");
 
