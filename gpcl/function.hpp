@@ -125,10 +125,6 @@ public:
       return invoke_(value, std::move(args)...);
     GPCL_THROW(bad_function_call());
   }
-
-  template <typename Signature, std::size_t LocalSize1>
-  friend inline void swap(function<Signature, LocalSize1> &x,
-                   function<Signature, LocalSize1> &y) noexcept;
 };
 
 /// @name Relational Operators
