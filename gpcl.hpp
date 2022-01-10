@@ -34,6 +34,7 @@
 #include <gpcl/clock.hpp>
 #include <gpcl/clone_ptr.hpp>
 #include <gpcl/condition_variable.hpp>
+#include <gpcl/const_buffer.hpp>
 #include <gpcl/creation_tag.hpp>
 #include <gpcl/decay_copy.hpp>
 #include <gpcl/enable_shared_from.hpp>
@@ -57,6 +58,13 @@
 #include <gpcl/is_lockable.hpp>
 #include <gpcl/ispanstream.hpp>
 #include <gpcl/json.hpp>
+#include <gpcl/json_at.hpp>
+#include <gpcl/json_cast.hpp>
+#include <gpcl/json_error.hpp>
+#include <gpcl/json_index.hpp>
+#include <gpcl/json_iomanip.hpp>
+#include <gpcl/json_size.hpp>
+#include <gpcl/json_tag.hpp>
 #include <gpcl/lexical_cast.hpp>
 #include <gpcl/lock_file.hpp>
 #include <gpcl/make_any.hpp>
@@ -64,6 +72,9 @@
 #include <gpcl/make_shared.hpp>
 #include <gpcl/memory_mapped_region.hpp>
 #include <gpcl/message_queue.hpp>
+#include <gpcl/meta.hpp>
+#include <gpcl/meta_fwd.hpp>
+#include <gpcl/mutable_buffer.hpp>
 #include <gpcl/mutex.hpp>
 #include <gpcl/narrow_cast.hpp>
 #include <gpcl/noncopyable.hpp>
@@ -87,6 +98,7 @@
 #include <gpcl/spanstream.hpp>
 #include <gpcl/swap.hpp>
 #include <gpcl/syncbuf.hpp>
+#include <gpcl/tag_invoke.hpp>
 #include <gpcl/thread.hpp>
 #include <gpcl/thread_annotations.hpp>
 #include <gpcl/thread_attributes.hpp>
