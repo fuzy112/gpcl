@@ -461,13 +461,13 @@ struct at_
 };
 
 template <typename X, typename... Xs, typename N>
-struct at_<list<X, Xs...>, N, bool(N::type::value == 0)>
+struct at_<list<X, Xs...>, N, bool(std::size_t(N::type::value) == 0)>
 {
   using type = X;
 };
 
 template <typename X, typename... Xs, typename N>
-struct at_<list<X, Xs...>, N, bool(N::type::value != 0)>
+struct at_<list<X, Xs...>, N, bool(std::size_t(N::type::value) != 0)>
 {
   using type =
       _t<at_<list<Xs...>, integral_constant<typename N::type::value_type,
@@ -587,13 +587,7 @@ struct lambda
   using invoke_helper = _t<invoke_helper_<Args>>;
 
   template <typename... Xs>
-  struct invoke_
-  {
-    using type = invoke<invoke_helper<list<Xs...>>, _body>;
-  };
-
-  template <typename... Xs>
-  using invoke = _t<invoke_<Xs...>>;
+  using invoke = meta::invoke<invoke_helper<list<Xs...>>, _body>;
 };
 
 namespace detail {
@@ -626,6 +620,39 @@ struct as_list_<C<Xs...>>
 {
   using type = list<Xs...>;
 };
+
+template <typename T>
+struct as_list_<const T>
+{
+  using type = transform<_t<as_list_<T>>, quote<std::add_const_t>>;
+};
+
+template <typename T>
+struct as_list_<volatile T>
+{
+  using type = transform<_t<as_list_<T>>, quote<std::add_volatile_t>>;
+};
+
+template <typename T>
+struct as_list_<const volatile T>
+{
+  using type =
+      transform<_t<as_list_<T>>,
+                compose<quote<std::add_const_t>, quote<std::add_volatile_t>>>;
+};
+
+template <typename T>
+struct as_list_<T &>
+{
+  using type = transform<_t<as_list_<T>>, quote<std::add_lvalue_reference_t>>;
+};
+
+template <typename T>
+struct as_list_<T &&>
+{
+  using type = transform<_t<as_list_<T>>, quote<std::add_rvalue_reference_t>>;
+};
+
 } // namespace detail
 
 template <typename T>
