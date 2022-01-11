@@ -110,19 +110,7 @@ void *posix_thread_function(void *arg) noexcept
   sigaddset(&set, SIGTERM);
   pthread_sigmask(SIG_BLOCK, &set, nullptr);
 
-#    ifdef GPCL_USE_BOOST_SYSTEM_ERROR
-  BOOST_TRY { fn->run(); }
-  BOOST_CATCH(...)
-  {
-    std::clog << boost::current_exception_diagnostic_information() << std::endl;
-    std::terminate();
-  }
-  BOOST_CATCH_END
-#    else
-  GPCL_TRY { fn->run(); }
-  GPCL_CATCH(...) { std::terminate(); }
-  GPCL_CATCH_END
-#    endif
+  fn->run();
 
   return nullptr;
 }

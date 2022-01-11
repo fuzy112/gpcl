@@ -85,12 +85,12 @@ public:
 
   bool is_from(element_type *p) { return p_.first().is_from(p); }
 
-  element_type *construct() { return new (this->malloc()) element_type(); }
+  element_type *construct() { return ::new (this->malloc()) element_type(); }
 
   template <typename... Args>
   element_type *construct(Args &&... args)
   {
-    return new (this->malloc()) element_type(std::forward<Args>(args)...);
+    return ::new (this->malloc()) element_type(std::forward<Args>(args)...);
   }
 
   void destroy(element_type *p)

@@ -231,7 +231,7 @@ public:
   statement &operator=(statement &&other) noexcept
   {
     this->~statement();
-    new (this) statement(gpcl::detail::move(other));
+    ::new (this) statement(gpcl::detail::move(other));
     return *this;
   }
 

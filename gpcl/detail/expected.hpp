@@ -380,24 +380,24 @@ public:
       GPCL_CXX17_IF_CONSTEXPR(detail::is_nothrow_constructible_v<T, Args...>)
       {
         this->err_.unexpected<E>::~unexpected();
-        new (&this->val_) T(detail::forward<Args>(args)...);
+        ::new (&this->val_) T(detail::forward<Args>(args)...);
         this->ok_ = true;
       }
       else GPCL_CXX17_IF_CONSTEXPR(detail::is_nothrow_move_constructible_v<T>)
       {
         T tmp = T(detail::forward<Args>(args)...);
         this->err_.unexpected<E>::~unexpected();
-        new (&this->val_) T(detail::move(tmp));
+        ::new (&this->val_) T(detail::move(tmp));
         this->ok_ = true;
       }
       else
       {
         unexpected<E> tmp(detail::move(this->error()));
         this->err_.unexpected<E>::~unexpected();
-        GPCL_TRY { new (&this->val_) T(detail::forward<Args>(args)...); }
+        GPCL_TRY { ::new (&this->val_) T(detail::forward<Args>(args)...); }
         GPCL_CATCH(...)
         {
-          new (&this->err_) unexpected<E>(detail::move(tmp));
+          ::new (&this->err_) unexpected<E>(detail::move(tmp));
           GPCL_RETHROW;
         }
         GPCL_CATCH_END
@@ -424,24 +424,24 @@ public:
                                              Args...>)
       {
         this->err_.unexpected<E>::~unexpected();
-        new (&this->val_) T(il, detail::forward<Args>(args)...);
+        ::new (&this->val_) T(il, detail::forward<Args>(args)...);
         this->ok_ = true;
       }
       else GPCL_CXX17_IF_CONSTEXPR(detail::is_nothrow_move_constructible_v<T>)
       {
         T tmp = T(il, detail::forward<Args>(args)...);
         this->err_.unexpected<E>::~unexpected();
-        new (&this->val_) T(detail::move(tmp));
+        ::new (&this->val_) T(detail::move(tmp));
         this->ok_ = true;
       }
       else
       {
         unexpected<E> tmp(detail::move(this->error()));
         this->err_.unexpected<E>::~unexpected();
-        GPCL_TRY { new (&this->val_) T(il, detail::forward<Args>(args)...); }
+        GPCL_TRY { ::new (&this->val_) T(il, detail::forward<Args>(args)...); }
         GPCL_CATCH(...)
         {
-          new (&this->err_) unexpected<E>(detail::move(tmp));
+          ::new (&this->err_) unexpected<E>(detail::move(tmp));
           GPCL_RETHROW;
         }
         GPCL_CATCH_END
@@ -509,11 +509,11 @@ public:
     this->ok_ = other.ok_;
     if (this->ok_)
     {
-      new (&this->val_) T(other.val_);
+      ::new (&this->val_) T(other.val_);
     }
     else
     {
-      new (&this->err_) unexpected<E>(other.err_);
+      ::new (&this->err_) unexpected<E>(other.err_);
     }
   }
 };
@@ -615,11 +615,11 @@ public:
     this->ok_ = other.ok_;
     if (this->ok_)
     {
-      new (&this->val_) T(detail::move(other.val_));
+      ::new (&this->val_) T(detail::move(other.val_));
     }
     else
     {
-      new (&this->err_) unexpected<E>(detail::move(other.err_));
+      ::new (&this->err_) unexpected<E>(detail::move(other.err_));
     }
   }
 };
@@ -669,7 +669,7 @@ public:
     this->ok_ = other.ok_;
     if (!this->ok_)
     {
-      new (&this->err_) unexpected<E>(detail::move(other.err_));
+      ::new (&this->err_) unexpected<E>(detail::move(other.err_));
     }
   }
 };
@@ -742,7 +742,7 @@ public:
     }
     else if (this->ok_ && !other.ok_)
     {
-      new (&this->err_) unexpected<E>(other.err_);
+      ::new (&this->err_) unexpected<E>(other.err_);
       this->ok_ = false;
     }
     else if (!this->ok_ && other.ok_)
@@ -814,25 +814,25 @@ public:
       GPCL_CXX17_IF_CONSTEXPR(detail::is_nothrow_copy_constructible_v<E>)
       {
         this->val_.T::~T();
-        new (&this->err_) unexpected<E>(other.err_);
+        ::new (&this->err_) unexpected<E>(other.err_);
         this->ok_ = false;
       }
       else GPCL_CXX17_IF_CONSTEXPR(detail::is_nothrow_move_constructible_v<E>)
       {
         unexpected<E> tmp = other.err_;
         this->val_.T::~T();
-        new (&this->err_) unexpected<E>(detail::move(tmp));
+        ::new (&this->err_) unexpected<E>(detail::move(tmp));
         this->ok_ = false;
       }
       else
       {
         T tmp = this->val_;
         this->val_.T::~T();
-        GPCL_TRY { new (&this->err_) unexpected<E>(other.err_); }
+        GPCL_TRY { ::new (&this->err_) unexpected<E>(other.err_); }
         GPCL_CATCH(...)
         {
           static_assert(detail::is_nothrow_move_constructible_v<T>, "");
-          new (&this->val_) T(tmp);
+          ::new (&this->val_) T(tmp);
           GPCL_RETHROW;
         }
         GPCL_CATCH_END
@@ -844,25 +844,25 @@ public:
       GPCL_CXX17_IF_CONSTEXPR(detail::is_nothrow_copy_constructible_v<T>)
       {
         this->err_.unexpected<E>::~unexpected();
-        new (&this->val_) T(other.val_);
+        ::new (&this->val_) T(other.val_);
         this->ok_ = true;
       }
       else GPCL_CXX17_IF_CONSTEXPR(detail::is_nothrow_move_constructible_v<T>)
       {
         T tmp = other.val_; // can throw!
         this->err_.unexpected<E>::~unexpected();
-        new (&this->val_) T(detail::move(tmp));
+        ::new (&this->val_) T(detail::move(tmp));
         this->ok_ = true;
       }
       else
       {
         unexpected<E> tmp = this->err_; // can throw!
         this->err_.unexpected<E>::~unexpected();
-        GPCL_TRY { new (&this->val_) T(other.val_); }
+        GPCL_TRY { ::new (&this->val_) T(other.val_); }
         GPCL_CATCH(...)
         {
           static_assert(detail::is_nothrow_move_constructible_v<E>, "");
-          new (&this->err_) unexpected<E>(detail::move(tmp));
+          ::new (&this->err_) unexpected<E>(detail::move(tmp));
           GPCL_RETHROW;
         }
         GPCL_CATCH_END
@@ -925,7 +925,7 @@ public:
     }
     else if (this->ok_ && !other.ok_)
     {
-      new (&this->err_) unexpected<E>(detail::move(other.err_));
+      ::new (&this->err_) unexpected<E>(detail::move(other.err_));
       this->ok_ = false;
     }
     else if (!this->ok_ && other.ok_)
@@ -1001,18 +1001,18 @@ public:
       GPCL_CXX17_IF_CONSTEXPR(detail::is_nothrow_move_constructible_v<E>)
       {
         this->val_.T::~T();
-        new (&this->err_) unexpected<E>(detail::move(other.err_));
+        ::new (&this->err_) unexpected<E>(detail::move(other.err_));
         this->ok_ = false;
       }
       else
       {
         T tmp = detail::move(this->val_);
         this->val_.T::~T();
-        GPCL_TRY { new (&this->err_) unexpected<E>(detail::move(other.err_)); }
+        GPCL_TRY { ::new (&this->err_) unexpected<E>(detail::move(other.err_)); }
         GPCL_CATCH(...)
         {
           static_assert(detail::is_nothrow_move_constructible_v<T>);
-          new (&this->val_) T(tmp);
+          ::new (&this->val_) T(tmp);
           GPCL_RETHROW;
         }
         GPCL_CATCH_END
@@ -1024,18 +1024,18 @@ public:
       GPCL_CXX17_IF_CONSTEXPR(detail::is_nothrow_move_constructible_v<T>)
       {
         this->err_.unexpected<E>::~unexpected();
-        new (&this->val_) T(detail::move(other.val_));
+        ::new (&this->val_) T(detail::move(other.val_));
         this->ok_ = true;
       }
       else
       {
         unexpected<E> tmp = detail::move(this->err_);
         this->err_.unexpected<E>::~unexpected();
-        GPCL_TRY { new (&this->val_) T(detail::move(other.val_)); }
+        GPCL_TRY { ::new (&this->val_) T(detail::move(other.val_)); }
         GPCL_CATCH(...)
         {
           static_assert(detail::is_nothrow_move_constructible_v<E>);
-          new (&this->err_) unexpected<E>(detail::move(tmp));
+          ::new (&this->err_) unexpected<E>(detail::move(tmp));
           GPCL_RETHROW;
         }
         GPCL_CATCH_END
@@ -1094,4 +1094,4 @@ constexpr bool expected_convert_constructible_v =
 } // namespace detail
 } // namespace gpcl
 
-#endif
+#endif // GPCL_DETAIL_EXPECTED_HPP

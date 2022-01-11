@@ -229,7 +229,7 @@ protected:
     if (other.index_ == I)
     {
       using type = variant_alternative_t<I, variant<Types...>>;
-      new (unsafe_get<type>(this)) type{std::move(*(unsafe_get<type>(&other)))};
+      ::new (unsafe_get<type>(this)) type{std::move(*(unsafe_get<type>(&other)))};
       this->index_ = I;
       return;
     }
@@ -323,7 +323,7 @@ protected:
     if (other.index_ == I)
     {
       using type = variant_alternative_t<I, variant<Types...>>;
-      new (unsafe_get<type>(this)) type(*(unsafe_get<type>(&other)));
+      ::new (unsafe_get<type>(this)) type(*(unsafe_get<type>(&other)));
       this->index_ = I;
       return;
     }
@@ -652,7 +652,7 @@ public:
   constexpr variant_default_construct_base() : base_type()
   {
     if constexpr (!std::is_trivially_default_constructible_v<first_type>)
-      new (unsafe_get<first_type>(this)) first_type();
+      ::new (unsafe_get<first_type>(this)) first_type();
     this->index_ = 0;
   }
 
@@ -742,7 +742,7 @@ public:
     if constexpr (std::is_trivial_v<U>)
       *static_cast<U *>(unsafe_get<U>(this)) = t;
     else
-      new (unsafe_get<U>(this)) U(std::forward<T>(t));
+      ::new (unsafe_get<U>(this)) U(std::forward<T>(t));
     set_index(meta::find_index<variant, U>::type::value);
   }
 #endif
@@ -751,7 +751,7 @@ public:
   constexpr variant(in_place_type_t<T>, Args &&...args)
       : base_type(detail::variant_noinit_tag{})
   {
-    new (unsafe_get<T>(this)) T(std::forward<Args>(args)...);
+    ::new (unsafe_get<T>(this)) T(std::forward<Args>(args)...);
     set_index(meta::find_index<variant, T>::type::value);
   }
 
@@ -788,7 +788,7 @@ public:
     if constexpr (std::is_trivial_v<U>)
       *static_cast<U *>(unsafe_get<U>(this)) = t;
     else
-      new (unsafe_get<U>(this)) U(std::forward<T>(t));
+      ::new (unsafe_get<U>(this)) U(std::forward<T>(t));
     set_index(meta::find_index<variant, U>::type::value);
     return *this;
   }
@@ -834,7 +834,7 @@ public:
     using type = variant_alternative_t<I, variant>;
     base_type::reset();
     void *address = detail::unsafe_get<type>(this);
-    auto pointer = new (address) type(std::forward<Args>(args)...);
+    auto pointer = ::new (address) type(std::forward<Args>(args)...);
     set_index(I);
     return *pointer;
   }
@@ -846,7 +846,7 @@ public:
     using type = variant_alternative_t<I, variant>;
     base_type::reset();
     void *address = detail::unsafe_get<type>(this);
-    auto pointer = new (address) type(il, std::forward<Args>(args)...);
+    auto pointer = ::new (address) type(il, std::forward<Args>(args)...);
     set_index(I);
     return *pointer;
   }

@@ -110,7 +110,7 @@ private:
   template <typename F, decltype(std::declval<F>()(), int{}) = 0>
   void start_thread(thread_attributes const &attr, F &&f)
   {
-    auto fn = unique_ptr<func<F>>(new func<F>(detail::forward<F>(f)));
+    auto fn = gpcl::make_unique<func<F>>(detail::forward<F>(f));
     start_thread(attr, std::move(fn));
   }
 
@@ -127,4 +127,4 @@ private:
 #  include <gpcl/detail/impl/posix_thread.ipp>
 #endif
 
-#endif
+#endif // GPCL_DETAIL_POSIX_THREAD_HPP

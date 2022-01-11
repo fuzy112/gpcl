@@ -68,7 +68,7 @@ void *tlsf_resource::request_new_buffer(std::size_t bytes)
   {
     GPCL_THROW(std::bad_alloc());
   }
-  new (base) pool_base{bytes};
+  ::new (base) pool_base{bytes};
   base->next = pool_list_;
   pool_list_ = base;
   return base + 1;

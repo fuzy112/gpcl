@@ -223,7 +223,7 @@ public:
     this->has_val_ = other.has_val_;
     if (this->has_val_)
     {
-      new (&this->val_) T(other.val_);
+      ::new (&this->val_) T(other.val_);
     }
   }
 
@@ -238,7 +238,7 @@ public:
     this->has_val_ = other.has_val_;
     if (this->has_val_)
     {
-      new (&this->val_) T(other.val_);
+      ::new (&this->val_) T(other.val_);
     }
   }
 
@@ -254,7 +254,7 @@ public:
     this->has_val_ = detail::exchange(other.has_val_, false);
     if (this->has_val_)
     {
-      new (&this->val_) T(other.val_);
+      ::new (&this->val_) T(other.val_);
     }
   }
 
@@ -269,7 +269,7 @@ public:
     this->has_val_ = detail::exchange(other.has_val_, false);
     if (this->has_val_)
     {
-      new (&this->val_) T(other.val_);
+      ::new (&this->val_) T(other.val_);
     }
   }
 
@@ -309,7 +309,7 @@ public:
     }
     else
     {
-      new (&this->val_) T(detail::forward<U>(u));
+      ::new (&this->val_) T(detail::forward<U>(u));
       this->has_val_ = true;
     }
     return *this;
@@ -334,7 +334,7 @@ public:
     else if (!this->has_val_ && other.has_val_)
     {
       this->has_val_ = true;
-      new (&this->val_) T(other.val_);
+      ::new (&this->val_) T(other.val_);
     }
     else
     {
@@ -363,7 +363,7 @@ public:
     else if (!this->has_val_ && other.has_val_)
     {
       this->has_val_ = true;
-      new (&this->val_) T(std::move(other.val_));
+      ::new (&this->val_) T(std::move(other.val_));
       other.has_val_ = false;
     }
     else
@@ -386,7 +386,7 @@ public:
       this->val_.T::~T();
       this->has_val_ = false;
     }
-    new (&this->val_) T(detail::forward<Args>(args)...);
+    ::new (&this->val_) T(detail::forward<Args>(args)...);
     this->has_val_ = true;
     return this->val_;
   }
@@ -399,7 +399,7 @@ public:
       this->val_.T::~T();
       this->has_val_ = false;
     }
-    new (&this->val_) T(ilist, detail::forward<Args>(args)...);
+    ::new (&this->val_) T(ilist, detail::forward<Args>(args)...);
     this->has_val_ = true;
     return this->val_;
   }

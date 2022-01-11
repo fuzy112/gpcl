@@ -280,7 +280,7 @@ public:
     if (*this)
     {
       this->val_.T::~T();
-      new (&this->err_) unexpected<E>(e.value());
+      ::new (&this->err_) unexpected<E>(e.value());
       this->ok_ = false;
     }
     else
@@ -300,7 +300,7 @@ public:
   {
     if (*this)
     {
-      new (&this->err_) unexpected<E>(e.value());
+      ::new (&this->err_) unexpected<E>(e.value());
       this->ok_ = false;
     }
     else

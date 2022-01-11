@@ -129,7 +129,7 @@ public:
     this->has_val_ = other.has_val_;
     if (this->has_val_)
     {
-      new (&this->val_) T(this->val_);
+      ::new (&this->val_) T(this->val_);
     }
   }
 
@@ -175,7 +175,7 @@ public:
     this->has_val_ = detail::exchange(other.has_val_, false);
     if (this->has_val_)
     {
-      new (&this->val_) T(std::move(other.val_));
+      ::new (&this->val_) T(std::move(other.val_));
       other.val_.T::~T();
     }
   }
@@ -264,7 +264,7 @@ public:
     else if (!this->has_val_ && other.has_val_)
     {
       this->has_val_ = true;
-      new (&this->val_) T(other.val_);
+      ::new (&this->val_) T(other.val_);
     }
     else
     {
@@ -352,7 +352,7 @@ public:
     else if (!this->has_val_ && other.has_val_)
     {
       this->has_val_ = true;
-      new (&this->val_) T(std::move(other.val_));
+      ::new (&this->val_) T(std::move(other.val_));
       other.val_.T::~T();
       other.has_val_ = false;
     }

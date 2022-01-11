@@ -59,7 +59,7 @@ constexpr expected<T, E>::expected(const expected<U, G> &rhs)
   this->ok_ = bool(rhs);
   if (!this->ok_)
   {
-    new (&this->val_) unexpected<E>(rhs.error());
+    ::new (&this->val_) unexpected<E>(rhs.error());
   }
 }
 
@@ -88,15 +88,15 @@ expected<T, E> &expected<T, E>::operator=(U &&v)
     if constexpr (detail::is_nothrow_constructible_v<T, U>)
     {
       this->err_.unexpected<E>::~unexpected();
-      new (&this->val_) T(detail::forward<U>(v));
+      ::new (&this->val_) T(detail::forward<U>(v));
       this->ok_ = true;
     }
     else
     {
       unexpected<E> tmp(detail::move(this->error()));
       this->err_.unexpected<E>::~unexpected();
-      GPCL_TRY { new (&this->val_) T(detail::forward<U>(v)); }
-      GPCL_CATCH(...) { new (&this->err_) unexpected<E>(detail::move(tmp)); }
+      GPCL_TRY { ::new (&this->val_) T(detail::forward<U>(v)); }
+      GPCL_CATCH(...) { ::new (&this->err_) unexpected<E>(detail::move(tmp)); }
       GPCL_CATCH_END
       this->ok_ = true;
     }
@@ -115,7 +115,7 @@ expected<T, E> &expected<T, E>::operator=(unexpected<G> &&e)
 {
   if (*this)
   {
-    new (&this->err_) unexpected<E>(detail::move(e.value()));
+    ::new (&this->err_) unexpected<E>(detail::move(e.value()));
     this->ok_ = false;
   }
   else
@@ -137,7 +137,7 @@ expected<T, E> &expected<T, E>::operator=(unexpected<G> &&e)
   if (*this)
   {
     this->val_.T::~T();
-    new (&this->err_) unexpected<E>(detail::move(e.value()));
+    ::new (&this->err_) unexpected<E>(detail::move(e.value()));
     this->ok_ = false;
   }
   else
@@ -158,7 +158,7 @@ constexpr expected<T, E>::expected(expected<U, G> &&rhs)
   this->ok_ = bool(rhs);
   if (!this->ok_)
   {
-    new (&this->err_) unexpected<E>(detail::move(rhs).error());
+    ::new (&this->err_) unexpected<E>(detail::move(rhs).error());
   }
 }
 
@@ -176,11 +176,11 @@ constexpr expected<T, E>::expected(expected<U, G> &&rhs)
   this->ok_ = bool(rhs);
   if (this->ok_)
   {
-    new (&this->val_) T(detail::move(*rhs));
+    ::new (&this->val_) T(detail::move(*rhs));
   }
   else
   {
-    new (&this->err_) unexpected<E>(detail::move(rhs).error());
+    ::new (&this->err_) unexpected<E>(detail::move(rhs).error());
   }
 }
 template <typename T, typename E>
@@ -195,11 +195,11 @@ constexpr expected<T, E>::expected(expected<U, G> &&rhs)
   this->ok_ = bool(rhs);
   if (this->ok_)
   {
-    new (&this->val_) T(detail::move(*rhs));
+    ::new (&this->val_) T(detail::move(*rhs));
   }
   else
   {
-    new (&this->err_) unexpected<E>(detail::move(rhs).error());
+    ::new (&this->err_) unexpected<E>(detail::move(rhs).error());
   }
 }
 
@@ -214,7 +214,7 @@ constexpr expected<T, E>::expected(const expected<U, G> &rhs)
   this->ok_ = bool(rhs);
   if (!this->ok_)
   {
-    new (&this->val_) unexpected<E>(rhs.error());
+    ::new (&this->val_) unexpected<E>(rhs.error());
   }
 }
 
@@ -232,11 +232,11 @@ constexpr expected<T, E>::expected(const expected<U, G> &rhs)
   this->ok_ = bool(rhs);
   if (this->ok_)
   {
-    new (&this->val_) T(*rhs);
+    ::new (&this->val_) T(*rhs);
   }
   else
   {
-    new (&this->err_) unexpected<E>(rhs.error());
+    ::new (&this->err_) unexpected<E>(rhs.error());
   }
 }
 
@@ -253,11 +253,11 @@ constexpr expected<T, E>::expected(const expected<U, G> &rhs)
   this->ok_ = bool(rhs);
   if (this->ok_)
   {
-    new (&this->val_) T(*rhs);
+    ::new (&this->val_) T(*rhs);
   }
   else
   {
-    new (&this->err_) unexpected<E>(rhs.error());
+    ::new (&this->err_) unexpected<E>(rhs.error());
   }
 }
 
