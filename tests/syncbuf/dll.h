@@ -11,7 +11,7 @@
 
 namespace gpcl_syncbuf_test {
 
-SYNCBUF_EXPORT gpcl::shared_ptr<gpcl::mutex>
+SYNCBUF_EXPORT gpcl::detail::mutex_for_address_ptr
 get_mutex_for_address(std::streambuf const *s);
 
 }

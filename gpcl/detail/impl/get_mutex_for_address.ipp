@@ -20,6 +20,8 @@
 
 namespace gpcl::detail {
 
+#if GPCL_DETAIL_MUTEX_FOR_ADDRESS_USE_SHARED_PTR
+
 class mt_map
 {
   recursive_mutex mutex_;
@@ -81,12 +83,26 @@ shared_ptr<mutex> get_mutex_for_address(void const *key)
   auto sp_mutex_deleter = gpcl::make_shared<mutex_deleter>(mutex_map, key);
   shared_ptr<mutex> sp(sp_mutex_deleter, &sp_mutex_deleter->mutex_);
 
-#if defined GPCL_POSIX
+#  if defined GPCL_POSIX
   unique_lock<mutex> lock_dummy(*sp); // ensure the mutex is initialized
-#endif
+#  endif
   wp = sp;
   return sp;
 }
+
+#else
+
+mutex *get_mutex_for_address(void const *key)
+{
+  static mutex mtx;
+  static std::unordered_map<void const *, mutex> map;
+
+  unique_lock lock(mtx);
+  return &map[key];
+}
+
+#endif
+
 } // namespace gpcl::detail
 
 #endif // GPCL_DETAIL_IMPL_GET_MUTEX_FOR_ADDRESS_IPP

@@ -17,8 +17,15 @@
 
 namespace gpcl ::detail {
 
+
+#if GPCL_DETAIL_MUTEX_FOR_ADDRESS_USE_SHARED_PTR
+typedef shared_ptr<mutex> mutex_for_address_ptr;
+#else
+typedef mutex *mutex_for_address_ptr;
+#endif
+
 GPCL_DECL
-shared_ptr<mutex> get_mutex_for_address(void const *key);
+mutex_for_address_ptr get_mutex_for_address(void const *key);
 
 } // namespace gpcl::detail
 

@@ -53,7 +53,7 @@ private:
   std::basic_string<CharType, Traits, Allocator> buffer_;
 
   // mutex which protects the wrapped buffer.
-  shared_ptr<mutex> mutex_ = detail::get_mutex_for_address(wrapped_);
+  detail::mutex_for_address_ptr mutex_ = detail::get_mutex_for_address(wrapped_);
 
 public:
   /// Construct a basic_syncbuf with no wrapped streambuf.
@@ -77,7 +77,7 @@ public:
         wrapped_(other.wrapped_),
         flag_(other.flag_),
         buffer_(std::move(other).buffer_),
-        mutex_(other.mutex_)
+        mutex_(std::move(other).mutex_)
   {
     other.wrapped_ = false;
     other.flag_ = none;
@@ -95,7 +95,7 @@ public:
     wrapped_ = other.wrapped_;
     flag_ = other.flag_;
     buffer_ = std::move(other).buffer_;
-    mutex_ = other.mutex_;
+    mutex_ = std::move(other).mutex_;
 
     other.wrapped_ = nullptr;
     other.flag_ = none;
