@@ -20,6 +20,7 @@ set (TESTS_SRCS
 	simple_segregated_storage_test.cpp
 	syncbuf_test.cpp
 	buffers_test.cpp
+	bind_front_test.cpp
 )
 
 set (TEST_FIXTURES

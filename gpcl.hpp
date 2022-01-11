@@ -25,6 +25,7 @@
 #include <gpcl/basic_spanbuf.hpp>
 #include <gpcl/basic_spanstream.hpp>
 #include <gpcl/basic_syncbuf.hpp>
+#include <gpcl/bind_front.hpp>
 #include <gpcl/buffer.hpp>
 #include <gpcl/buffer_iterator.hpp>
 #include <gpcl/buffer_sequence.hpp>
