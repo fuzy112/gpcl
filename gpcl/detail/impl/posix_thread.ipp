@@ -20,11 +20,6 @@
 
 #include <sys/select.h>
 
-#ifdef GPCL_USE_BOOST_SYSTEM_ERROR
-#  include <boost/core/no_exceptions_support.hpp>
-#  include <boost/exception/diagnostic_information.hpp>
-#endif
-
 #ifdef __linux__
 #  include <sys/syscall.h>
 #endif
@@ -163,7 +158,7 @@ auto posix_thread::yield() -> void
     throw_system_error(err, "pthread_yield");
 }
 
-#ifdef __linux__
+#if GPCL_CONFIG_POSIX_THREAD_ID_IS_TID
 
 posix_thread_id posix_thread::id() const
 {
@@ -181,7 +176,19 @@ posix_thread_id posix_thread::this_thread_id()
   return posix_thread_id{tid};
 }
 
-#endif // __linux__
+#else
+
+posix_thread_id posix_thread::id() const
+{
+  return posix_thread_id{thread_};
+}
+
+posix_thread_id posix_thread::this_thread_id()
+{
+  return posix_thread_id{pthread_self()};
+}
+
+#endif
 
 } // namespace detail
 } // namespace gpcl

@@ -102,12 +102,20 @@ public:
 
   void deallocate(T *p, std::size_t n) const
   {
+    if (p == 0 || n == 0)
+      return;
     unique_lock lock(g_debug_alloc_data.mtx);
 
     auto iter = g_debug_alloc_data.alloc_records_map.find(p);
     if (iter == g_debug_alloc_data.alloc_records_map.cend())
     {
       std::cerr << "double free!\n";
+      std::cerr << "address " << p << ","
+                << "size: " << sizeof(T) << ", "
+                << "count: " << n << ", "
+                << "total bytes: " << sizeof(T) * n << ","
+                << "type: " << typeid(T).name() << '\n';
+      std::abort();
       return;
     }
     free(p);

@@ -11,15 +11,16 @@
 #ifndef GPCL_DETAIL_POSIX_THREAD_HPP
 #define GPCL_DETAIL_POSIX_THREAD_HPP
 
-#include <functional>
-#include <memory>
-#include <type_traits>
-
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/utility.hpp>
 #include <gpcl/thread_attributes.hpp>
 #include <gpcl/unique_ptr.hpp>
 #include <gpcl/zstring.hpp>
+
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <type_traits>
 
 #ifdef GPCL_POSIX
 #  include <pthread.h>
@@ -27,47 +28,58 @@
 
 namespace gpcl {
 namespace detail {
+
+class posix_thread;
+
 GPCL_DECL void *posix_thread_function(void *arg) noexcept;
 
 GPCL_DECL bool posix_thread_interrupted();
 
 class posix_thread_id
 {
-  pid_t tid_ = 0;
+#  if defined GPCL_CONFIG_POSIX_THREAD_ID_IS_TID
+  pid_t value_ = 0;
+
+  explicit posix_thread_id(pid_t id) : value_(id) {}
+
+#  else
+  pthread_t value_ = 0;
+
+  explicit posix_thread_id(pthread_t id) : value_(id) {}
+
+#  endif
 
   friend posix_thread;
-
-  explicit posix_thread_id(pid_t id) : tid_(id) {}
 
 public:
   constexpr posix_thread_id() = default;
 
-  constexpr explicit operator bool() const { return tid_ != 0; }
+  constexpr explicit operator bool() const { return value_ != 0; }
 
   template <typename CharT, typename Traits>
-  std::basic_ostream<CharT, Traits> &
+  friend std::basic_ostream<CharT, Traits> &
   operator<<(std::basic_ostream<CharT, Traits> &os, posix_thread_id const &id)
   {
     typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
     if (!os)
       return os;
 
-    return os << '{' << std::hex << id.tid_ << '}';
+    return os << '{' << std::hex << id.value_ << '}';
   }
 
   friend bool operator<(const posix_thread_id &x, const posix_thread_id &y)
   {
-    return x.tid_ < y.tid_;
+    return x.value_ < y.value_;
   }
 
   friend bool operator==(const posix_thread_id &x, const posix_thread_id &y)
   {
-    return x.tid_ == y.tid_;
+    return x.value_ == y.value_;
   }
 
-  friend bool operator==(const posix_thread_id &x, const posix_thread_id &y)
+  friend bool operator!=(const posix_thread_id &x, const posix_thread_id &y)
   {
-    return x.tid_ != y.tid_;
+    return x.value_ != y.value_;
   }
 };
 
