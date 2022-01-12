@@ -12,9 +12,11 @@
 #define GPCL_SPAN_HPP
 
 #include <gpcl/assert.hpp>
+#include <gpcl/default_allocator.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/type_traits.hpp>
 #include <gpcl/detail/utility.hpp>
+
 #include <array>
 #include <vector>
 
@@ -297,7 +299,7 @@ public:
 
   // extensions
 
-  template <typename Allocator = std::allocator<value_type>>
+  template <typename Allocator = gpcl::default_allocator<value_type>>
   [[nodiscard]] std::vector<value_type, Allocator>
   to_vector(Allocator alloc = Allocator()) const
   {

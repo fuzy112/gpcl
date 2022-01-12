@@ -11,10 +11,11 @@
 #ifndef GPCL_SHARED_PTR_HPP
 #define GPCL_SHARED_PTR_HPP
 
+#include <gpcl/default_allocator.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/ref_count.hpp>
-#include <gpcl/swap.hpp>
 #include <gpcl/in_place.hpp>
+#include <gpcl/swap.hpp>
 
 #include <ostream>
 
@@ -97,8 +98,9 @@ public:
             std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
   explicit shared_ptr(Y *ptr)
       : p_(ptr),
-        s_(detail::ref_count_ptr<Y *, default_delete<Y>, std::allocator<Y *>>::
-               create(std::allocator<Y *>(), ptr, default_delete<Y>()))
+        s_(detail::ref_count_ptr<Y *, default_delete<Y>,
+                                 gpcl::default_allocator<Y *>>::
+               create(gpcl::default_allocator<Y *>(), ptr, default_delete<Y>()))
   {
     enables_shared_from_this(ptr);
   }
@@ -117,8 +119,8 @@ public:
             std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
   shared_ptr(Y *ptr, Deleter d)
       : p_(ptr),
-        s_(detail::ref_count_ptr<Y *, Deleter, std::allocator<Y *>>::create(
-            std::allocator<Y *>(), ptr, std::move(d)))
+        s_(detail::ref_count_ptr<Y *, Deleter, gpcl::default_allocator<Y *>>::
+               create(gpcl::default_allocator<Y *>(), ptr, std::move(d)))
   {
     enables_shared_from_this(ptr);
   }
@@ -136,8 +138,8 @@ public:
   template <typename Deleter>
   shared_ptr(std::nullptr_t, Deleter d)
       : s_(detail::ref_count_ptr<detail::nullptr_wrapper, Deleter,
-                                 std::allocator<std::nullptr_t>>::
-               create(std::allocator<std::nullptr_t>(),
+                                 gpcl::default_allocator<std::nullptr_t>>::
+               create(gpcl::default_allocator<std::nullptr_t>(),
                       detail::nullptr_wrapper(), std::move(d)))
   {
   }
@@ -258,13 +260,14 @@ public:
   {
   }
 
-  template <typename Allocator, typename ...Args>
+  template <typename Allocator, typename... Args>
   shared_ptr(in_place_t, const Allocator &alloc, Args &&...args)
   {
-    auto *rc_obj = detail::ref_count_obj<T, Allocator>::create(alloc, std::forward<Args>(args)...);
+    auto *rc_obj = detail::ref_count_obj<T, Allocator>::create(
+        alloc, std::forward<Args>(args)...);
     p_ = rc_obj->get_address();
     s_ = rc_obj;
-    
+
     this->enables_shared_from_this(p_);
   }
 

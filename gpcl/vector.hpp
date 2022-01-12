@@ -11,6 +11,7 @@
 #ifndef GPCL_VECTOR_HPP
 #define GPCL_VECTOR_HPP
 
+#include <gpcl/default_allocator.hpp>
 #include <gpcl/detail/compressed_pair.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/iterator.hpp>
@@ -67,7 +68,7 @@ constexpr vector_iterator<Tp>::operator vector_const_iterator<Tp>()
   return vector_const_iterator<Tp>{*this};
 }
 
-template <typename Tp, typename Allocator = std::allocator<Tp>>
+template <typename Tp, typename Allocator = gpcl::default_allocator<Tp>>
 class vector
 {
 public:
@@ -91,7 +92,7 @@ private:
   static void destroy(pointer data, size_type count,
                       allocator_type &allocator) noexcept
   {
-    [](auto &&...) {} (data, count, allocator);
+    [](auto &&...) {}(data, count, allocator);
     if constexpr (!std::is_trivially_destructible_v<value_type> &&
                   !std::is_fundamental_v<value_type>)
 
@@ -341,7 +342,7 @@ public:
 # pragma warning(push)
 # pragma warning(disable : 4127)
 #endif
-// clang-format on
+  // clang-format on
   vector(vector &&other, const type_identity_t<Allocator> &allocator)
       : p_(allocator, nullptr)
   {
@@ -367,7 +368,7 @@ public:
 #if defined _MSC_VER
 # pragma warning(pop)
 #endif
-// clang-format on
+  // clang-format on
 
   vector(std::initializer_list<value_type> il,
          const allocator_type &allocator = Allocator())
@@ -943,7 +944,7 @@ private:
 };
 
 template <typename InputIterator,
-          typename Allocator = std::allocator<
+          typename Allocator = gpcl::default_allocator<
               typename std::iterator_traits<InputIterator>::value_type>>
 vector(InputIterator, InputIterator, Allocator = Allocator())
     -> vector<typename std::iterator_traits<InputIterator>::value_type,

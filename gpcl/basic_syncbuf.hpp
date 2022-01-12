@@ -11,14 +11,15 @@
 #ifndef GPCL_BASIC_SYNCBUF_HPP
 #define GPCL_BASIC_SYNCBUF_HPP
 
+#include <gpcl/default_allocator.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/detail/get_mutex_for_address.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/mutex.hpp>
 #include <gpcl/shared_ptr.hpp>
 #include <gpcl/swap.hpp>
 #include <gpcl/unique_lock.hpp>
 #include <gpcl/weak_ptr.hpp>
-#include <gpcl/detail/get_mutex_for_address.hpp>
 
 #include <streambuf>
 #include <unordered_map>
@@ -27,7 +28,7 @@ namespace gpcl {
 
 /// basic_syncbuf is a synchronized wrapper for a @ref std::basic_streambuf.
 template <typename CharType, typename Traits = std::char_traits<CharType>,
-          typename Allocator = std::allocator<CharType>>
+          typename Allocator = gpcl::default_allocator<CharType>>
 class basic_syncbuf : public std::basic_streambuf<CharType, Traits>
 {
 public:
@@ -53,7 +54,8 @@ private:
   std::basic_string<CharType, Traits, Allocator> buffer_;
 
   // mutex which protects the wrapped buffer.
-  detail::mutex_for_address_ptr mutex_ = detail::get_mutex_for_address(wrapped_);
+  detail::mutex_for_address_ptr mutex_ =
+      detail::get_mutex_for_address(wrapped_);
 
 public:
   /// Construct a basic_syncbuf with no wrapped streambuf.
@@ -220,7 +222,6 @@ void swap(basic_syncbuf<CharType, Traits, Allocator> &x,
 
 using syncbuf = basic_syncbuf<char>;
 using wsyncbuf = basic_syncbuf<wchar_t>;
-
 
 } // namespace gpcl
 

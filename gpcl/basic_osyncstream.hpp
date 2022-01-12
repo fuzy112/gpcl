@@ -12,6 +12,7 @@
 #define GPCL_BASIC_OSYNCSTREAM_HPP
 
 #include <gpcl/basic_syncbuf.hpp>
+#include <gpcl/default_allocator.hpp>
 
 #include <ostream>
 
@@ -20,7 +21,7 @@ namespace gpcl {
 namespace detail {
 
 template <typename CharType, typename Traits = std::char_traits<CharType>,
-          typename Allocator = std::allocator<CharType>>
+          typename Allocator = gpcl::default_allocator<CharType>>
 class osyncstream_base
 {
 protected:
@@ -38,7 +39,7 @@ protected:
 } // namespace detail
 
 template <typename CharType, typename Traits = std::char_traits<CharType>,
-          typename Allocator = std::allocator<CharType>>
+          typename Allocator = gpcl::default_allocator<CharType>>
 class basic_osyncstream
     : private detail::osyncstream_base<CharType, Traits, Allocator>,
       public std::basic_ostream<CharType, Traits>

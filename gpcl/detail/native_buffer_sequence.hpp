@@ -11,9 +11,10 @@
 #ifndef GPCL_DETAIL_IOVEC_HPP
 #define GPCL_DETAIL_IOVEC_HPP
 
-#include "gpcl/buffer_sequence.hpp"
-#include "gpcl/detail/config.hpp"
-#include "gpcl/vector.hpp"
+#include <gpcl/buffer_sequence.hpp>
+#include <gpcl/default_allocator.hpp>
+#include <gpcl/detail/config.hpp>
+#include <gpcl/vector.hpp>
 
 #include <cstdlib>
 #include <sys/uio.h>
@@ -22,20 +23,21 @@ namespace gpcl {
 namespace detail {
 
 #ifdef GPCL_DOXYGEN
-template <typename BufferSequence, typename Allocator = std::allocator<char>>
+template <typename BufferSequence,
+          typename Allocator = gpcl::default_allocator<char>>
 struct native_buffer_sequence
 {
   /// Constructor.
   explicit native_buffer_sequence(const BufferSequence &bs,
                                   const Allocator &a = Allocator());
 
-
   /// A contiguous sequence of struct ::iovec.
-  unspecified-sequence iov;
+  unspecified - sequence iov;
 };
 #else
 
-template <typename BufferSequence, typename Allocator = std::allocator<char>>
+template <typename BufferSequence,
+          typename Allocator = gpcl::default_allocator<char>>
 struct native_buffer_sequence
 {
   explicit native_buffer_sequence(const BufferSequence &bs,
@@ -99,7 +101,8 @@ struct native_buffer_sequence<std::array<Buffer, S>, Allocator>
     }
   }
 
-  native_buffer_sequence(const std::array<Buffer, S> &bs, const Allocator &) noexcept
+  native_buffer_sequence(const std::array<Buffer, S> &bs,
+                         const Allocator &) noexcept
       : native_buffer_sequence(bs)
   {
   }

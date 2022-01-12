@@ -11,6 +11,7 @@
 #ifndef GPCL_JSON_HPP
 #define GPCL_JSON_HPP
 
+#include <gpcl/default_allocator.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/lexical_cast.hpp>
 #include <gpcl/shared_ptr.hpp>
@@ -42,7 +43,7 @@ template <
     template <typename Value, typename Allocator> class VectorType,
 
     typename CharType = char, typename CharTraits = std::char_traits<CharType>,
-    typename Allocator = std::allocator<char>>
+    typename Allocator = gpcl::default_allocator<char>>
 struct basic_json
 {
   using char_type = CharType;
@@ -1527,7 +1528,7 @@ public:
 
   /// JSON value builder.
   /// This class can be used as an EventVisitor of @c parser.
-  template <typename Allocator1 = std::allocator<char>>
+  template <typename Allocator1 = gpcl::default_allocator<char>>
   struct value_builder
   {
 
@@ -1663,7 +1664,8 @@ public:
   /// @{
 
   /// Parses a JSON text using @c parser and @c value_builder.
-  template <typename InputIt, typename Allocator1 = std::allocator<char>>
+  template <typename InputIt,
+            typename Allocator1 = gpcl::default_allocator<char>>
   static value parse(InputIt first, InputIt last,
                      Allocator1 const &alloc = Allocator1())
   {
@@ -1676,7 +1678,7 @@ public:
   }
 
   /// Parses a JSON text using @c parser and @c value_builder.
-  template <typename Allocator1 = std::allocator<char>>
+  template <typename Allocator1 = gpcl::default_allocator<char>>
   static value parse(std::basic_string_view<CharType, CharTraits> string,
                      Allocator1 const &alloc = Allocator1())
   {
@@ -1684,7 +1686,7 @@ public:
   }
 
   /// Parses a JSON text using @c parser and @c value_builder.
-  template <typename Allocator1 = std::allocator<char>>
+  template <typename Allocator1 = gpcl::default_allocator<char>>
   static value parse(std::basic_istream<CharType, CharTraits> &stream,
                      Allocator1 const &alloc = Allocator1())
   {

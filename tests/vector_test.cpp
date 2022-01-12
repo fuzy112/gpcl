@@ -1,5 +1,6 @@
 #include "doctest.h"
 
+#include <gpcl/default_allocator.hpp>
 #include <gpcl/vector.hpp>
 
 #include <algorithm>
@@ -10,11 +11,11 @@
 TEST_CASE("[vector]"
           "constructors")
 {
-  gpcl::vector<std::string> v1(300, std::allocator<std::string>());
+  gpcl::vector<std::string> v1(300, gpcl::default_allocator<std::string>());
   const std::string cs = "102345678901234456790";
-  gpcl::vector<std::string> v2(300, cs, std::allocator<std::string>());
+  gpcl::vector<std::string> v2(300, cs, gpcl::default_allocator<std::string>());
   gpcl::vector<std::string> v3(std::move(v1));
-  gpcl::vector v4(std::move(v2), std::allocator<std::string>());
+  gpcl::vector v4(std::move(v2), gpcl::default_allocator<std::string>());
   gpcl::vector<std::string> v5;
 }
 

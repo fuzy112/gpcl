@@ -175,14 +175,14 @@ posix_thread_id posix_thread::id() const
   int err = pthread_getthreadid_np(&thread_, &tid);
   if (err)
     throw_system_error(err, "pthread_getthreadid_np");
-  return {tid};
+  return posix_thread_id{tid};
 }
 
 posix_thread_id posix_thread::this_thread_id()
 {
   pid_t tid;
   tid = syscall(SYS_gettid);
-  return {tid};
+  return posix_thread_id{tid};
 }
 
 #endif // __linux__

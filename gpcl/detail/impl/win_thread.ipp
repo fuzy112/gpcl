@@ -28,26 +28,13 @@ namespace detail {
 
 auto __stdcall win_thread_proc(void *arg) -> unsigned
 {
-  GPCL_ASSERT(arg != nullptr);
-  auto fn = unique_ptr<win_thread::func_base>(
-      reinterpret_cast<win_thread::func_base *>(arg));
-#ifdef GPCL_USE_BOOST_SYSTEM_ERROR
-  GPCL_TRY { fn->run(); }
-  GPCL_CATCH(...)
-  {
-    std::cerr << boost::current_exception_diagnostic_information() << std::endl;
-    std::terminate();
-  }
-  GPCL_CATCH_END
-#else
-  GPCL_TRY { fn->run(); }
-  GPCL_CATCH(std::exception & e)
-  {
-    std::cerr << e.what() << '\n';
-    std::terminate();
-  }
-  GPCL_CATCH_END
-#endif
+  [&]() noexcept {
+    GPCL_ASSERT(arg != nullptr);
+    auto fn = unique_ptr<win_thread::func_base>(
+        reinterpret_cast<win_thread::func_base *>(arg));
+
+    fn->run();
+  }();
   ::ExitThread(0);
   return 0;
 }
