@@ -2,11 +2,18 @@
 // posix_thread.ipp
 // ~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2020 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2020-2022 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+
+#ifndef GPCL_DETAIL_IMPL_POSIX_THREAD_IPP
+#define GPCL_DETAIL_IMPL_POSIX_THREAD_IPP
+
+#ifdef __linux__
+#  define _GNU_SOURCES
+#endif
 
 #include <gpcl/assert.hpp>
 #include <gpcl/detail/chrono.hpp>
@@ -15,13 +22,19 @@
 #include <gpcl/expected.hpp>
 #include <signal.h>
 
-#ifdef GPCL_POSIX
-#  include <sys/select.h>
+#include <sys/select.h>
 
-#  ifdef GPCL_USE_BOOST_SYSTEM_ERROR
-#    include <boost/core/no_exceptions_support.hpp>
-#    include <boost/exception/diagnostic_information.hpp>
-#  endif
+#ifdef GPCL_USE_BOOST_SYSTEM_ERROR
+#  include <boost/core/no_exceptions_support.hpp>
+#  include <boost/exception/diagnostic_information.hpp>
+#endif
+
+#ifdef __linux__
+#  include <sys/syscall.h>
+#endif
+
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace gpcl {
 namespace detail {
@@ -83,7 +96,6 @@ struct posix_thread_attributes : noncopyable
   [[nodiscard]] pthread_attr_t const *get() const { return &attr_; }
 };
 
-#  ifdef GPCL_POSIX
 void posix_thread::start_thread(thread_attributes const &attr,
                                 unique_ptr<func_base> fn)
 {
@@ -155,9 +167,27 @@ auto posix_thread::yield() -> void
     throw_system_error(err, "pthread_yield");
 }
 
-#  endif
+#ifdef __linux__
+
+posix_thread_id posix_thread::id() const
+{
+  pthread_id_np_t tid;
+  int err = pthread_getthreadid_np(&thread_, &tid);
+  if (err)
+    throw_system_error(err, "pthread_getthreadid_np");
+  return {tid};
+}
+
+posix_thread_id posix_thread::this_thread_id()
+{
+  pid_t tid;
+  tid = syscall(SYS_gettid);
+  return {tid};
+}
+
+#endif // __linux__
 
 } // namespace detail
 } // namespace gpcl
 
-#endif
+#endif // GPCL_DETAIL_IMPL_POSIX_THREAD_IPP

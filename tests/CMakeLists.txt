@@ -21,6 +21,7 @@ set (TESTS_SRCS
 	syncbuf_test.cpp
 	buffers_test.cpp
 	bind_front_test.cpp
+	thread_test.cpp
 )
 
 set (TEST_FIXTURES

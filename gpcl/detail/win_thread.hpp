@@ -2,7 +2,7 @@
 // win_thread.hpp
 // ~~~~~~~~~~~~~~
 //
-// Copyright (c) 2020 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2020-2022 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -14,7 +14,10 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/unique_handle.hpp>
 #include <gpcl/thread_attributes.hpp>
+#include <gpcl/unique_ptr.hpp>
+
 #include <memory>
+#include <ostream>
 #include <type_traits>
 
 #ifdef GPCL_WINDOWS
@@ -23,6 +26,48 @@
 
 namespace gpcl {
 namespace detail {
+
+class win_thread;
+
+class win_thread_id
+{
+  DWORD value_ = 0;
+
+  explicit win_thread_id(DWORD v) : value_(v) {}
+
+public:
+  constexpr win_thread_id() = default;
+
+  constexpr explicit operator bool() const { return value_ != 0; }
+
+  friend win_thread;
+
+  template <typename CharT, typename Traits>
+  friend std::basic_ostream<CharT, Traits> &
+  operator<<(std::basic_ostream<CharT, Traits> &os, win_thread_id const &id)
+  {
+    typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
+    if (!os)
+      return os;
+
+    return os << '{' << std::hex << id.value_ << '}';
+  }
+
+  friend inline bool operator<(const win_thread_id &x, const win_thread_id &y)
+  {
+    return x.value_ < y.value_;
+  }
+
+  friend inline bool operator==(const win_thread_id &x, const win_thread_id &y)
+  {
+    return x.value_ == y.value_;
+  }
+
+  friend inline bool operator!=(const win_thread_id &x, const win_thread_id &y)
+  {
+    return x.value_ != y.value_;
+  }
+};
 
 typedef std::remove_pointer<_beginthreadex_proc_type>::type
     win_thread_proc_type;
@@ -68,6 +113,12 @@ public:
 
   auto native_handle() const -> native_handle_type { return thread_.get(); }
 
+  GPCL_DECL win_thread_id id() const;
+
+  static GPCL_DECL void yield();
+
+  static GPCL_DECL win_thread_id this_thread_id();
+
 private:
   class func_base
   {
@@ -112,4 +163,4 @@ private:
 #  include <gpcl/detail/impl/win_thread.ipp>
 #endif
 
-#endif
+#endif // GPCL_DETAIL_WIN_THREAD_HPP

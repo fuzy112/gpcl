@@ -2,7 +2,7 @@
 // posix_thread.hpp
 // ~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2020 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2020-2022 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -23,12 +23,53 @@
 
 #ifdef GPCL_POSIX
 #  include <pthread.h>
+#  include <sys/types.h>
 
 namespace gpcl {
 namespace detail {
 GPCL_DECL void *posix_thread_function(void *arg) noexcept;
 
 GPCL_DECL bool posix_thread_interrupted();
+
+class posix_thread_id
+{
+  pid_t tid_ = 0;
+
+  friend posix_thread;
+
+  explicit posix_thread_id(pid_t id) : tid_(id) {}
+
+public:
+  constexpr posix_thread_id() = default;
+
+  constexpr explicit operator bool() const { return tid_ != 0; }
+
+  template <typename CharT, typename Traits>
+  std::basic_ostream<CharT, Traits> &
+  operator<<(std::basic_ostream<CharT, Traits> &os, posix_thread_id const &id)
+  {
+    typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
+    if (!os)
+      return os;
+
+    return os << '{' << std::hex << id.tid_ << '}';
+  }
+
+  friend bool operator<(const posix_thread_id &x, const posix_thread_id &y)
+  {
+    return x.tid_ < y.tid_;
+  }
+
+  friend bool operator==(const posix_thread_id &x, const posix_thread_id &y)
+  {
+    return x.tid_ == y.tid_;
+  }
+
+  friend bool operator==(const posix_thread_id &x, const posix_thread_id &y)
+  {
+    return x.tid_ != y.tid_;
+  }
+};
 
 class posix_thread
 {
@@ -82,6 +123,10 @@ public:
   GPCL_DECL void detach();
 
   [[nodiscard]] native_handle_type native_handle() const { return thread_; }
+
+  GPCL_DECL posix_thread_id id() const;
+
+  static GPCL_DECL posix_thread_id this_thread_id();
 
 private:
   class func_base

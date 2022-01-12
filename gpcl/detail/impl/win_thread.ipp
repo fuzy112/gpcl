@@ -2,11 +2,14 @@
 // win_thread.ipp
 // ~~~~~~~~~~~~~~
 //
-// Copyright (c) 2020 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2020-2022 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+
+#ifndef GPCL_DETAIL_IMPL_WIN_THREAD_IPP
+#define GPCL_DETAIL_IMPL_WIN_THREAD_IPP
 
 #include <gpcl/assert.hpp>
 #include <gpcl/detail/config.hpp>
@@ -18,8 +21,7 @@
 #  include <boost/exception/diagnostic_information.hpp>
 #endif
 
-#ifdef GPCL_WINDOWS
-#  include <process.h>
+#include <process.h>
 
 namespace gpcl {
 namespace detail {
@@ -29,7 +31,7 @@ auto __stdcall win_thread_proc(void *arg) -> unsigned
   GPCL_ASSERT(arg != nullptr);
   auto fn = unique_ptr<win_thread::func_base>(
       reinterpret_cast<win_thread::func_base *>(arg));
-#  ifdef GPCL_USE_BOOST_SYSTEM_ERROR
+#ifdef GPCL_USE_BOOST_SYSTEM_ERROR
   GPCL_TRY { fn->run(); }
   GPCL_CATCH(...)
   {
@@ -37,7 +39,7 @@ auto __stdcall win_thread_proc(void *arg) -> unsigned
     std::terminate();
   }
   GPCL_CATCH_END
-#  else
+#else
   GPCL_TRY { fn->run(); }
   GPCL_CATCH(std::exception & e)
   {
@@ -45,7 +47,7 @@ auto __stdcall win_thread_proc(void *arg) -> unsigned
     std::terminate();
   }
   GPCL_CATCH_END
-#  endif
+#endif
   ::ExitThread(0);
   return 0;
 }
@@ -97,7 +99,32 @@ auto win_thread::start_thread_impl(func_base *fn) -> void
   }
 }
 
+auto win_thread::id() const -> win_thread_id
+{
+  auto value = ::GetThreadId(native_handle());
+  if (!value)
+  {
+    throw_system_error("win_thread::id");
+  }
+  return win_thread_id{value};
+}
+
+void win_thread::yield()
+{
+  ::SwitchToThread();
+}
+
+auto win_thread::this_thread_id() -> win_thread_id
+{
+  auto value = ::GetCurrentThreadId();
+  if (!value)
+  {
+    throw_system_error("win_thread::id");
+  }
+  return win_thread_id{value};
+}
+
 } // namespace detail
 } // namespace gpcl
 
-#endif
+#endif // GPCL_DETAIL_IMPL_WIN_THREAD_IPP
