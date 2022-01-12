@@ -18,45 +18,6 @@
 namespace gpcl {
 
 namespace detail {
-template <typename T>
-class sp_inplace_deleter
-{
-  std::aligned_union_t<sizeof(T), T> storage_;
-  bool holds_value_ = false;
-
-public:
-  constexpr sp_inplace_deleter() = default;
-
-  /// Copy constructor.
-  /// @note It is undefined behaviour to copy a sp_inplace_deleter thats holds
-  /// value.
-  sp_inplace_deleter(const sp_inplace_deleter &other) noexcept
-  {
-    (void)other;
-    GPCL_ASSERT(!other.holds_value_);
-  }
-
-  ~sp_inplace_deleter() { destroy(); }
-
-  /// Destroys the held value.
-  void destroy() noexcept
-  {
-    if (holds_value_)
-    {
-      static_cast<T *>(address())->~T();
-      holds_value_ = false;
-    }
-  }
-
-  /// Destroys the held value.
-  void operator()(void *) noexcept { destroy(); }
-
-  /// Returns the address for storing the held value.
-  void *address() noexcept { return &storage_; }
-
-  /// Indicates that `this` holds a value.
-  void holds_value() noexcept { holds_value_ = true; }
-};
 
 template <typename T>
 template <typename Alloc, typename... Args>
@@ -64,13 +25,7 @@ auto allocate_shared_impl<T>::operator()(const Alloc &alloc,
                                          Args &&...args) const
     -> std::enable_if_t<!std::is_array_v<T>, shared_ptr<T>>
 {
-  const shared_ptr<void> x(nullptr, sp_inplace_deleter<T>(), alloc);
-  auto *d = gpcl::get_deleter<sp_inplace_deleter<T>>(x);
-  GPCL_ASSERT(!!d);
-  shared_ptr<T> rv(x, ::new (d->address()) T(std::forward<Args>(args)...),
-                   true);
-  d->holds_value();
-  return rv;
+  return shared_ptr<T>(in_place, alloc, std::forward<Args>(args)...);
 }
 
 } // namespace detail

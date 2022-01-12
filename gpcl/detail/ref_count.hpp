@@ -168,6 +168,53 @@ public:
   inline ~ref_count_ptr() noexcept { delete_managed_object(); }
 };
 
+template <typename T, typename Allocator>
+class ref_count_obj : public ref_count<ref_count_obj<T, Allocator>, Allocator>
+{
+  using base_type = ref_count<ref_count_obj<T, Allocator>, Allocator>;
+
+  mutable std::aligned_storage_t<sizeof(T), alignof(T)> storage_;
+
+  struct destroy
+  {
+    void operator()(T *p) const noexcept
+    {
+      p->~T();
+    }
+  };
+
+  unique_ptr<T, destroy> p_;
+
+public:
+  /// Delete the managed object.
+  inline void delete_managed_object() noexcept
+  {
+    GPCL_ASSERT_CONST(base_type::use_count() == 0);
+    p_.reset();
+  }
+
+  inline std::nullptr_t get_deleter() noexcept { return nullptr; }
+
+#if !defined GPCL_NO_RTTI
+  static inline std::type_info *get_deleter_type_info() noexcept
+  {
+    return nullptr;
+  }
+#endif
+
+public:
+  template <typename... Args>
+  explicit inline ref_count_obj(ref_count_base::operation_func_t op_func,
+                                Allocator a, Args &&...args)
+      : base_type(op_func, a),
+        p_(::new (reinterpret_cast<void *>(&storage_))
+               T(std::forward<Args>(args)...))
+  {
+  }
+
+  T *get_address() const noexcept { return p_.get(); }
+};
+
 } // namespace detail
 } // namespace gpcl
 

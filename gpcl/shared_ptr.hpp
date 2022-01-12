@@ -14,6 +14,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/ref_count.hpp>
 #include <gpcl/swap.hpp>
+#include <gpcl/in_place.hpp>
 
 #include <ostream>
 
@@ -255,6 +256,16 @@ public:
   shared_ptr(unique_ptr<Y, Deleter> &&r)
       : shared_ptr(r.release(), std::move(r.get_deleter()))
   {
+  }
+
+  template <typename Allocator, typename ...Args>
+  shared_ptr(in_place_t, const Allocator &alloc, Args &&...args)
+  {
+    auto *rc_obj = detail::ref_count_obj<T, Allocator>::create(alloc, std::forward<Args>(args)...);
+    p_ = rc_obj->get_address();
+    s_ = rc_obj;
+    
+    this->enables_shared_from_this(p_);
   }
 
   /// Destructs the owned object if no more `shared_ptr`s link to it.
