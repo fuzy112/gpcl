@@ -11,10 +11,6 @@
 #ifndef GPCL_DETAIL_IMPL_POSIX_THREAD_IPP
 #define GPCL_DETAIL_IMPL_POSIX_THREAD_IPP
 
-#ifdef __linux__
-#  define _GNU_SOURCES
-#endif
-
 #include <gpcl/assert.hpp>
 #include <gpcl/detail/chrono.hpp>
 #include <gpcl/detail/error.hpp>
