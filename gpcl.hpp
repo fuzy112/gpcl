@@ -101,7 +101,6 @@
 #include <gpcl/syncbuf.hpp>
 #include <gpcl/tag_invoke.hpp>
 #include <gpcl/thread.hpp>
-#include <gpcl/thread_annotations.hpp>
 #include <gpcl/thread_attributes.hpp>
 #include <gpcl/time.hpp>
 #include <gpcl/type_identity.hpp>
