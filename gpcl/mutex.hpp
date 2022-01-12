@@ -61,7 +61,11 @@ public:
 
   using native_handle_type = impl_type::native_handle_type;
 
+#if defined GPCL_WINDOWS
+  mutex() = default;
+#else
   constexpr mutex() = default;
+#endif
 
   mutex(const mutex &) = delete;
   mutex(mutex &&) = delete;

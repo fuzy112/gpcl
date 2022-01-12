@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <numeric>
+#include <limits>
 
 #ifdef GPCL_WINDOWS
 

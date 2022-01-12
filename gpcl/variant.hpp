@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <exception>
 #include <utility>
+#include <limits>
 
 namespace gpcl {
 

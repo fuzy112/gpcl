@@ -15,6 +15,7 @@
 #include <gpcl/detail/compressed_pair.hpp>
 #include <gpcl/detail/config.hpp>
 
+#include <functional>
 #include <new>
 
 namespace gpcl {

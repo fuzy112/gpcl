@@ -115,7 +115,7 @@ public:
     return ret;
   }
 
-  constexpr bool is_open() const noexcept
+  bool is_open() const noexcept
   {
     return INVALID_HANDLE_VALUE != hd_;
   }

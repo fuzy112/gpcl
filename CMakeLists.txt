@@ -18,9 +18,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
 
+option (GCPL_ENABLE_LTO "Enable link time optimisation" OFF)
+
 include(CheckIPOSupported)
 check_ipo_supported(RESULT ipo_supported)
-if (ipo_supported)
+if (ipo_supported AND GCPL_ENABLE_LTO)
 	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
