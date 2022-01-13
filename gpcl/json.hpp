@@ -1496,6 +1496,18 @@ public:
       }
     }
 
+    /// Checks if T meets the requirement of Visitor.
+    template <typename T>
+    using is_visitor = meta::apply<
+        meta::quote<meta::and_>,
+        meta::transform<
+            meta::list<error_event, null_event, true_event, false_event,
+                       integer_event, float_event, integer_event, float_event,
+                       string_event, start_array_event, end_array_event,
+                       start_object_event, object_key_event, end_object_event>,
+            meta::lambda<class arg_event,
+                         meta::defer<std::is_invocable, T &&, arg_event>>>>;
+
   public:
     /// Consume a sequence of characters and emit events to the visitor.
     /// @param first begin of the character sequence.
@@ -1508,6 +1520,8 @@ public:
     template <typename InputIt, typename Visitor>
     void put(InputIt first, InputIt last, Visitor &&visitor)
     {
+      static_assert(is_visitor<Visitor>::type::value);
+
       while (first != last)
       {
         CharType ch = *first++;
@@ -1653,7 +1667,9 @@ public:
 
     /// Consume an event.
     /// @tparam E an event type.
-    template <typename E>
+    template <typename E, typename = std::void_t<
+                              decltype(std::declval<value_builder &>()
+                                           .handle_event(std::declval<E>()))>>
     void operator()(E &&e)
     {
       handle_event(std::forward<E>(e));
