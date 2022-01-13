@@ -19,7 +19,6 @@
 
 #include <functional>
 #include <iostream>
-#include <memory>
 #include <type_traits>
 
 #ifdef GPCL_POSIX
@@ -185,3 +184,4 @@ private:
 #endif
 
 #endif // GPCL_DETAIL_POSIX_THREAD_HPP
+

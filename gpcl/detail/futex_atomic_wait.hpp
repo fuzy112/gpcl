@@ -15,6 +15,8 @@
 #include <gpcl/detail/futex.hpp>
 #include <gpcl/detail/posix_thread.hpp>
 
+#include <atomic>
+
 namespace gpcl {
 namespace detail {
 

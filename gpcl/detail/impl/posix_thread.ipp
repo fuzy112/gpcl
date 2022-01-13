@@ -15,7 +15,6 @@
 #include <gpcl/detail/chrono.hpp>
 #include <gpcl/detail/error.hpp>
 #include <gpcl/detail/posix_thread.hpp>
-#include <gpcl/expected.hpp>
 #include <signal.h>
 
 #include <sys/select.h>
