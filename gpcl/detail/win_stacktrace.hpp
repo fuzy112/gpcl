@@ -3,8 +3,9 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
+#include <gpcl/mutex.hpp>
+#include <gpcl/unique_lock.hpp>
 
-#include <atomic>
 #include <cstdint>
 #include <cstring>
 #include <iomanip>
@@ -65,9 +66,16 @@ public:
              const win_stacktrace_entry &f)
   {
     auto desc = f.description();
+    auto file = f.source_file();
+    auto line = f.source_line();
     if (desc.empty())
-      return os << "???";
-    return os << desc;
+      os << "???";
+    else
+      os << desc;
+    os << " in " << file;
+    if (line != 0)
+      os << " at line " << line;
+    return os;
   }
 };
 
@@ -230,21 +238,28 @@ void swap(basic_win_stacktrace<Allocator> &x,
 
 struct win_sym_init
 {
-  inline static std::atomic<long> init_count{0};
+  inline static long init_count{0};
   inline static HANDLE process;
+  inline static recursive_mutex mtx;
 
   win_sym_init()
   {
-    if (init_count.fetch_add(1) == 0)
+    unique_lock lock(mtx);
+
+    if (init_count++ == 0)
     {
       process = GetCurrentProcess();
+
       SymInitialize(process, NULL, TRUE);
+      SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
     }
   }
 
   ~win_sym_init()
   {
-    if (init_count.fetch_sub(1) == 1)
+    unique_lock lock(mtx);
+
+    if (--init_count == 0)
     {
       SymCleanup(process);
     }
@@ -356,8 +371,8 @@ inline std::string win_stacktrace_entry::description() const
   PSYMBOL_INFO symbol = (PSYMBOL_INFO)buffer;
   symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
   symbol->MaxNameLen = MAX_SYM_NAME;
-
   DWORD64 displacement = 0;
+  unique_lock lock(g_win_sym_init_.mtx);
   if (SymFromAddr(g_win_sym_init_.process, data_.AddrPC.Offset, &displacement,
                   symbol))
   {
@@ -365,6 +380,53 @@ inline std::string win_stacktrace_entry::description() const
   }
 
   return "";
+}
+
+inline std::uint_least32_t win_stacktrace_entry::source_line() const
+{
+  DWORD64 dwAddress = data_.AddrPC.Offset;
+  DWORD dwDisplacement;
+  IMAGEHLP_LINE64 line;
+
+  unique_lock lock(g_win_sym_init_.mtx);
+
+  line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+  if (SymGetLineFromAddr64(g_win_sym_init_.process, dwAddress, &dwDisplacement,
+                           &line))
+  {
+    return line.LineNumber;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+inline std::string win_stacktrace_entry::source_file() const
+{
+  DWORD64 dwAddress = data_.AddrPC.Offset;
+  DWORD dwDisplacement;
+  IMAGEHLP_LINE64 line;
+
+  unique_lock lock(g_win_sym_init_.mtx);
+
+  line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+  if (SymGetLineFromAddr64(g_win_sym_init_.process, dwAddress, &dwDisplacement,
+                           &line))
+  {
+    return line.FileName;
+  }
+
+  IMAGEHLP_MODULE64 module_;
+  module_.SizeOfStruct = sizeof(module_);
+  if (SymGetModuleInfo64(g_win_sym_init_.process, dwAddress, &module_))
+  {
+    return module_.LoadedImageName;
+  }
+
+  return "unknown";
 }
 
 } // namespace gpcl::detail
