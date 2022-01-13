@@ -63,7 +63,7 @@
 #  define GPCL_USE_BOOST_ASSERT
 #endif
 
-#if __cplusplus < 201100
+#if __cplusplus < 201100 && !defined _MSC_VER
 #  error "C++11 or better is required"
 #endif
 
