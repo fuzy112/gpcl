@@ -21,3 +21,5 @@ add_subdirectory(json)
 if (MSVC)
     add_subdirectory(auto_linking)
 endif ()
+
+add_subdirectory(stacktrace)
