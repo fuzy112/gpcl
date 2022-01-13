@@ -469,19 +469,19 @@ template <typename ListOfLists>
 using join = apply<quote<concat>, ListOfLists>;
 
 namespace detail {
-template <typename List, typename N, bool = true>
+template <typename List, typename N, bool V = (std::size_t(N::type::value) == 0)>
 struct at_
 {
 };
 
 template <typename X, typename... Xs, typename N>
-struct at_<list<X, Xs...>, N, bool(std::size_t(N::type::value) == 0)>
+struct at_<list<X, Xs...>, N, true>
 {
   using type = X;
 };
 
 template <typename X, typename... Xs, typename N>
-struct at_<list<X, Xs...>, N, bool(std::size_t(N::type::value) != 0)>
+struct at_<list<X, Xs...>, N, false>
 {
   using type =
       _t<at_<list<Xs...>, integral_constant<typename N::type::value_type,

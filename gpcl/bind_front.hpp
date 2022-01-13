@@ -44,16 +44,6 @@ auto bind_front(Fn &&fn, Ts &&...xs)
 
 #endif
 
-template <typename Fn, typename... Ts>
-const auto bind_front_ref(Fn &&fn, Ts &&...xs)
-{
-  return [&, disable_copy = noncopyable{}](auto &&...ys) -> decltype(auto) {
-    (void)disable_copy;
-    return static_cast<Fn &&>(fn)(static_cast<Ts &&>(xs)...,
-                                  static_cast<decltype(ys) &&>(ys)...);
-  };
-}
-
 } // namespace gpcl
 
 #endif // GPCL_BIND_FRONT_HPP

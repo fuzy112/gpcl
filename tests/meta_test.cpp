@@ -1,5 +1,4 @@
 #include <gpcl/meta.hpp>
-#include <cxxabi.h>
 #include <iostream>
 
 using namespace gpcl;

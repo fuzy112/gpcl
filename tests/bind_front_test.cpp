@@ -11,14 +11,3 @@ TEST_CASE("bind_front")
   CHECK(f(1) == 43);
   CHECK(f(42) == 84);
 }
-
-TEST_CASE("bind_front_ref")
-{
-  CHECK(gpcl::bind_front_ref([](int a, int b) {
-    return a + b;
-  }, 42)(1) == 43);
-
-  CHECK(gpcl::bind_front_ref([](int a, int b) {
-    return a + b;
-  }, 42)(100) == 142);
-}
