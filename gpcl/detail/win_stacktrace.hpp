@@ -52,13 +52,24 @@ public:
   std::uint_least32_t source_line() const;
 
   friend inline bool operator<(const win_stacktrace_entry &x,
-                               const win_stacktrace_entry &y);
+                               const win_stacktrace_entry &y)
+  {
+    return x.data_.AddrFrame.Offset < y.data_.AddrFrame.Offset;
+  }
 
   friend inline bool operator!=(const win_stacktrace_entry &x,
-                                const win_stacktrace_entry &y);
+                                const win_stacktrace_entry &y)
+  {
+    if (!x && !y)
+      return true;
+    return x.data_.AddrFrame.Offset != y.data_.AddrFrame.Offset;
+  }
 
   friend inline bool operator==(const win_stacktrace_entry &x,
-                                const win_stacktrace_entry &y);
+                                const win_stacktrace_entry &y)
+  {
+    return !(x != y);
+  }
 
   template <typename CharT, typename Traits>
   friend std::basic_ostream<CharT, Traits> &

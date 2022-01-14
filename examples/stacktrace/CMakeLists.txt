@@ -1,6 +1,6 @@
 add_example_executable(stacktrace main.cpp)
 
-if (WIN32)
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
     target_link_libraries(stacktrace PRIVATE DbgHelp)
 endif ()
 
