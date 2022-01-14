@@ -25,7 +25,8 @@ set (TESTS_SRCS
 )
 
 set (TEST_FIXTURES
-	syncbuf)
+	syncbuf
+	)
 
 
 set (TEST_FIXTURES_HEADER_ONLY)
@@ -38,12 +39,12 @@ foreach (name ${TEST_FIXTURES})
 
 	add_library("${name}-header_only" STATIC ${fixture_sources})
 	target_compile_definitions("${name}-header_only" PUBLIC "-D$<UPPER_CASE:${name}>_STATIC_DEFINE")
-	target_link_libraries("${name}-header_only" PRIVATE gpcl::gpcl)
+	target_link_libraries("${name}-header_only" PUBLIC gpcl::gpcl)
 	list (APPEND TEST_FIXTURES_HEADER_ONLY "${name}-header_only")
 
 	add_library("${name}-separate" ${fixture_sources})
 	GENERATE_EXPORT_HEADER("${name}-separate" BASE_NAME "${name}")
-	target_link_libraries("${name}-separate" PRIVATE gpcl::separate)
+	target_link_libraries("${name}-separate" PUBLIC gpcl::separate)
 	list (APPEND TEST_FIXTURES_SEPARATE "${name}-separate")
 endforeach()
 

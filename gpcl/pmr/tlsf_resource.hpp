@@ -50,7 +50,7 @@ private:
   GPCL_DECL void do_deallocate(void *p, std::size_t bytes,
                                std::size_t alignment) override;
 
-  GPCL_DECL bool
+  bool
   do_is_equal(const memory_resource &other) const noexcept override
   {
     return this == std::addressof(other);

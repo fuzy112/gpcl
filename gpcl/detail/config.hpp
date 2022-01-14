@@ -24,7 +24,7 @@
 #if defined(GPCL_HEADER_ONLY)
 #  define GPCL_DECL inline
 #elif defined(GPCL_DYN_LINK)
-#  if defined(_MSC_VER)
+#  if defined(_MSC_VER) || defined(__MINGW64__) || defined(__MING32__)
 #    if defined(GPCL_SOURCE)
 #      define GPCL_DECL __declspec(dllexport)
 #    else

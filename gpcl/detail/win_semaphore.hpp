@@ -33,7 +33,7 @@ public:
   using value_type = unsigned int;
 
   GPCL_DECL explicit win_semaphore(value_type init_value);
-  GPCL_DECL ~win_semaphore() = default;
+  ~win_semaphore() = default;
 
   GPCL_DECL auto try_wait() -> bool;
   GPCL_DECL auto wait() -> void;
