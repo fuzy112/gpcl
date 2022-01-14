@@ -1,5 +1,5 @@
-#ifndef GPCL_DETAIL_LINUX_STACKTRACE_HPP
-#define GPCL_DETAIL_LINUX_STACKTRACE_HPP
+#ifndef GPCL_DETAIL_POSIX_STACKTRACE_HPP
+#define GPCL_DETAIL_POSIX_STACKTRACE_HPP
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
@@ -29,19 +29,19 @@ inline std::string gcc_demangle(const char* sym)
   return name;
 }
 
-struct linux_stacktrace_entry
+struct posix_stacktrace_entry
 {
   using native_handle_type = void *;
 
   void *address = nullptr;
 
-  constexpr linux_stacktrace_entry() noexcept = default;
+  constexpr posix_stacktrace_entry() noexcept = default;
 
-  constexpr linux_stacktrace_entry(const linux_stacktrace_entry &) noexcept =
+  constexpr posix_stacktrace_entry(const posix_stacktrace_entry &) noexcept =
       default;
 
-  constexpr linux_stacktrace_entry &
-  operator=(const linux_stacktrace_entry &) noexcept = default;
+  constexpr posix_stacktrace_entry &
+  operator=(const posix_stacktrace_entry &) noexcept = default;
 
   std::string description() const
   {
@@ -64,20 +64,20 @@ struct linux_stacktrace_entry
 
   constexpr explicit operator bool() const noexcept { return !!address; }
 
-  friend inline bool operator<(const linux_stacktrace_entry &x,
-                               const linux_stacktrace_entry &y)
+  friend inline bool operator<(const posix_stacktrace_entry &x,
+                               const posix_stacktrace_entry &y)
   {
     return x.address < y.address;
   }
 
-  friend inline bool operator!=(const linux_stacktrace_entry &x,
-                                const linux_stacktrace_entry &y)
+  friend inline bool operator!=(const posix_stacktrace_entry &x,
+                                const posix_stacktrace_entry &y)
   {
     return x.address != y.address;
   }
 
-  friend inline bool operator==(const linux_stacktrace_entry &x,
-                                const linux_stacktrace_entry &y)
+  friend inline bool operator==(const posix_stacktrace_entry &x,
+                                const posix_stacktrace_entry &y)
   {
     return x.address == y.address;
   }
@@ -85,23 +85,23 @@ struct linux_stacktrace_entry
   template <typename CharT, typename Traits>
   friend std::basic_ostream<CharT, Traits> &
   operator<<(std::basic_ostream<CharT, Traits> &os,
-             const linux_stacktrace_entry &entry)
+             const posix_stacktrace_entry &entry)
   {
     return os << entry.description();
   }
 };
 
 template <typename Allocator>
-class basic_linux_stacktrace
+class basic_posix_stacktrace
 {
   static_assert(
       std::is_same<typename std::allocator_traits<Allocator>::value_type,
-                   linux_stacktrace_entry>::value);
+                   posix_stacktrace_entry>::value);
 
-  std::vector<linux_stacktrace_entry, Allocator> data_;
+  std::vector<posix_stacktrace_entry, Allocator> data_;
 
 public:
-  using value_type = linux_stacktrace_entry;
+  using value_type = posix_stacktrace_entry;
   using const_reference = const value_type &;
   using reference = value_type &;
 
@@ -110,52 +110,52 @@ public:
   using difference_type = std::ptrdiff_t;
 
   using const_iterator =
-      typename std::vector<linux_stacktrace_entry, Allocator>::const_iterator;
+      typename std::vector<posix_stacktrace_entry, Allocator>::const_iterator;
   using iterator = const_iterator;
   using reverse_iterator = std::reverse_iterator<iterator>;
   using reverse_const_iterator = std::reverse_iterator<const_iterator>;
 
-  basic_linux_stacktrace() noexcept(
+  basic_posix_stacktrace() noexcept(
       std::is_nothrow_default_constructible_v<Allocator>) = default;
 
-  explicit basic_linux_stacktrace(const allocator_type &alloc) noexcept
+  explicit basic_posix_stacktrace(const allocator_type &alloc) noexcept
       : data_(alloc)
   {
   }
 
-  basic_linux_stacktrace(const basic_linux_stacktrace &other) = default;
+  basic_posix_stacktrace(const basic_posix_stacktrace &other) = default;
 
-  basic_linux_stacktrace(basic_linux_stacktrace &&other) noexcept = default;
+  basic_posix_stacktrace(basic_posix_stacktrace &&other) noexcept = default;
 
-  basic_linux_stacktrace(const basic_linux_stacktrace &other,
+  basic_posix_stacktrace(const basic_posix_stacktrace &other,
                          const allocator_type &alloc)
       : data_(other.data_, alloc)
   {
   }
 
-  basic_linux_stacktrace(basic_linux_stacktrace &&other,
+  basic_posix_stacktrace(basic_posix_stacktrace &&other,
                          const allocator_type &alloc)
       : data_(std::move(other).data_, alloc)
   {
   }
 
-  ~basic_linux_stacktrace() = default;
+  ~basic_posix_stacktrace() = default;
 
-  basic_linux_stacktrace &operator=(const basic_linux_stacktrace &other);
+  basic_posix_stacktrace &operator=(const basic_posix_stacktrace &other);
 
-  basic_linux_stacktrace &operator=(basic_linux_stacktrace &&other) noexcept(
+  basic_posix_stacktrace &operator=(basic_posix_stacktrace &&other) noexcept(
       std::allocator_traits<
           Allocator>::propagate_on_container_move_assignment::value ||
       std::allocator_traits<Allocator>::is_always_equal::value);
 
-  static basic_linux_stacktrace
+  static basic_posix_stacktrace
   current(const allocator_type &alloc = allocator_type()) noexcept;
 
-  static basic_linux_stacktrace
+  static basic_posix_stacktrace
   current(size_type skip,
           const allocator_type &alloc = allocator_type()) noexcept;
 
-  static basic_linux_stacktrace
+  static basic_posix_stacktrace
   current(size_type skip, size_type max_depth,
           const allocator_type &alloc = allocator_type()) noexcept;
 
@@ -192,24 +192,24 @@ public:
 
   const_reference at(size_type pos) const { return data_.at(pos); }
 
-  void swap(basic_linux_stacktrace &other) noexcept(
+  void swap(basic_posix_stacktrace &other) noexcept(
       std::allocator_traits<Allocator>::propagate_on_container_swap::value ||
       std::allocator_traits<Allocator>::is_always_equal::value)
   {
     data_.swap(other.data_);
   }
 
-  bool operator==(const basic_linux_stacktrace &other)
+  bool operator==(const basic_posix_stacktrace &other)
   {
     return data_ == other.data_;
   }
 
-  bool operator!=(const basic_linux_stacktrace &other)
+  bool operator!=(const basic_posix_stacktrace &other)
   {
     return data_ != other.data_;
   }
 
-  bool operator<(const basic_linux_stacktrace &other)
+  bool operator<(const basic_posix_stacktrace &other)
   {
     return data_ < other.data_;
   }
@@ -218,7 +218,7 @@ public:
 template <typename CharT, typename Traits, typename Allocator>
 std::basic_ostream<CharT, Traits> &
 operator<<(std::basic_ostream<CharT, Traits> &os,
-           const basic_linux_stacktrace<Allocator> &st)
+           const basic_posix_stacktrace<Allocator> &st)
 {
   typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
   if (!sentry)
@@ -242,26 +242,26 @@ operator<<(std::basic_ostream<CharT, Traits> &os,
 }
 
 template <typename Allocator>
-void swap(basic_linux_stacktrace<Allocator> &x,
-          basic_linux_stacktrace<Allocator> &y) noexcept(noexcept(x.swap(y)))
+void swap(basic_posix_stacktrace<Allocator> &x,
+          basic_posix_stacktrace<Allocator> &y) noexcept(noexcept(x.swap(y)))
 {
   x.swap(y);
 }
 
-constexpr std::size_t linux_stacktrace_impl_start_buffer_size = 100;
+constexpr std::size_t posix_stacktrace_impl_start_buffer_size = 100;
 
 
 template <typename Allocator>
-void linux_stacktrace_impl(
+void posix_stacktrace_impl(
     size_t skip, size_t max_depth,
-    std::vector<linux_stacktrace_entry, Allocator> &container)
+    std::vector<posix_stacktrace_entry, Allocator> &container)
 {
   GPCL_TRY
   {
     std::vector<void *, typename std::allocator_traits<
                             Allocator>::template rebind_alloc<void *>>
         buffer(container.get_allocator());
-    buffer.resize(linux_stacktrace_impl_start_buffer_size);
+    buffer.resize(posix_stacktrace_impl_start_buffer_size);
 
     int nframes;
 
@@ -285,34 +285,34 @@ void linux_stacktrace_impl(
 }
 
 template <typename Allocator>
-basic_linux_stacktrace<Allocator>
-basic_linux_stacktrace<Allocator>::current(const Allocator &alloc) noexcept
+basic_posix_stacktrace<Allocator>
+basic_posix_stacktrace<Allocator>::current(const Allocator &alloc) noexcept
 {
-  basic_linux_stacktrace st(alloc);
-  linux_stacktrace_impl(0, size_t(-1), st.data_);
+  basic_posix_stacktrace st(alloc);
+  posix_stacktrace_impl(0, size_t(-1), st.data_);
   return st;
 }
 
 template <typename Allocator>
-basic_linux_stacktrace<Allocator>
-basic_linux_stacktrace<Allocator>::current(size_type skip,
+basic_posix_stacktrace<Allocator>
+basic_posix_stacktrace<Allocator>::current(size_type skip,
                                            const Allocator &alloc) noexcept
 {
-  basic_linux_stacktrace st(alloc);
-  linux_stacktrace_impl(skip, size_t(-1), st.data_);
+  basic_posix_stacktrace st(alloc);
+  posix_stacktrace_impl(skip, size_t(-1), st.data_);
   return st;
 }
 
 template <typename Allocator>
-basic_linux_stacktrace<Allocator>
-basic_linux_stacktrace<Allocator>::current(size_type skip, size_type max_depth,
+basic_posix_stacktrace<Allocator>
+basic_posix_stacktrace<Allocator>::current(size_type skip, size_type max_depth,
                                            const Allocator &alloc) noexcept
 {
-  basic_linux_stacktrace st(alloc);
-  linux_stacktrace_impl(skip, max_depth, st.data_);
+  basic_posix_stacktrace st(alloc);
+  posix_stacktrace_impl(skip, max_depth, st.data_);
   return st;
 }
 
 } // namespace gpcl::detail
 
-#endif // GPCL_DETAIL_LINUX_STACKTRACE_HPP
+#endif // GPCL_DETAIL_POSIX_STACKTRACE_HPP
