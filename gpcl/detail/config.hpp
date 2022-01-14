@@ -43,17 +43,26 @@
 #  define GPCL_WINDOWS
 #endif
 
-#ifdef __COBALT__
-#  define GPCL_XENOMAI
+#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
+#  define GPCL_UNIX
+#endif
+
+#if defined(GPCL_UNIX)
+#  include <unistd.h>
 #endif
 
 #ifdef __linux__
+#  define GPCL_LINUX
+#endif
+
+#ifdef _POSIX_VERSION
 #  define GPCL_POSIX
 #endif
 
 #ifdef GPCL_WINDOWS
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
+#    include <windows.h>
 #  endif
 #endif
 
@@ -68,9 +77,9 @@
 #endif
 
 #ifdef __has_include
-# if __has_include(<version>)
-#   include <version>
-# endif
+#  if __has_include(<version>)
+#    include <version>
+#  endif
 #endif
 
 #ifndef GPCL_CXX17_IF_CONSTEXPR
@@ -109,7 +118,7 @@
 
 // #undef GPCL_DISABLE_AUTO_LINKING
 
-#if defined _MSC_VER && defined GPCL_SEPARATE_COMPILATION &&  \
+#if defined _MSC_VER && defined GPCL_SEPARATE_COMPILATION &&                   \
     !defined GPCL_SOURCE && !defined GPCL_DISABLE_AUTO_LINKING
 #  pragma comment(lib, "gpcl")
 #endif
