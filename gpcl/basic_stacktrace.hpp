@@ -12,7 +12,6 @@
 #define GPCL_BASIC_STACKTRACE_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/default_allocator.hpp>
 
 #if defined(GPCL_WINDOWS)
 #  include <gpcl/detail/win_stacktrace.hpp>
@@ -33,10 +32,6 @@ using stacktrace_entry = detail::win_stacktrace_entry;
 template <typename Allocator>
 using basic_stacktrace = detail::basic_posix_stacktrace<Allocator>;
 using stacktrace_entry = detail::posix_stacktrace_entry;
-#endif
-
-#ifdef GPCL_STACKTRACE
-using stacktrace = basic_stacktrace<default_allocator<stacktrace_entry>>;
 #endif
 
 } // namespace gpcl

@@ -12,5 +12,14 @@
 #define GPCL_STACKTRACE_HPP
 
 #include <gpcl/basic_stacktrace.hpp>
+#include <gpcl/default_allocator.hpp>
+
+namespace gpcl {
+
+#ifdef GPCL_STACKTRACE
+using stacktrace = basic_stacktrace<default_allocator<stacktrace_entry>>;
+#endif
+
+} // namespace gpcl
 
 #endif // GPCL_STACKTRACE_HPP

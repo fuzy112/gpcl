@@ -13,7 +13,6 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/mutex.hpp>
-#include <gpcl/stacktrace.hpp>
 #include <gpcl/thread.hpp>
 #include <gpcl/unique_lock.hpp>
 
@@ -42,34 +41,24 @@ struct debug_allocator_data
   recursive_mutex mtx;
   std::map<const void *, alloc_record> alloc_records_map;
 
-  ~debug_allocator_data()
-  {
-    if (!alloc_records_map.empty())
-    {
-      std::clog << "memory leak detected!\n";
+private:
+  GPCL_DECL debug_allocator_data();
+  GPCL_DECL ~debug_allocator_data();
 
-      for (auto &&[address, record] : alloc_records_map)
-      {
-        std::clog << "address " << address << ": "
-                  << "size: " << record.size << ", "
-                  << "count: " << record.count << ", "
-                  << "total bytes: " << record.size * record.count << ", "
-                  << "type: " << record.type->name() << '\n';
-        std::clog
-            << basic_stacktrace<std::allocator<stacktrace_entry>>::current()
-            << std::endl;
-      }
-
-      std::abort();
-    }
-    else
-    {
-      std::clog << "no memory leak!\n";
-    }
-  }
+public:
+  static GPCL_DECL debug_allocator_data &instance();
 };
 
-inline debug_allocator_data g_debug_alloc_data;
+inline debug_allocator_data &g_debug_alloc_data =
+    debug_allocator_data::instance();
+
+GPCL_DECL void debug_allocator_double_free(void *p, std::size_t size,
+                                           std::size_t count
+#if !defined GPCL_NO_RTTI
+                                           ,
+                                           std::type_info const &type
+#endif
+);
 
 template <typename T>
 class debug_allocator
@@ -123,16 +112,7 @@ public:
     auto iter = g_debug_alloc_data.alloc_records_map.find(p);
     if (iter == g_debug_alloc_data.alloc_records_map.cend())
     {
-      std::clog << "double free!\n";
-      std::clog << "address " << p << ","
-                << "size: " << sizeof(T) << ", "
-                << "count: " << n << ", "
-                << "total bytes: " << sizeof(T) * n << ","
-                << "type: " << typeid(T).name() << '\n';
-      std::clog << basic_stacktrace<std::allocator<stacktrace_entry>>::current()
-                << std::endl;
-      std::abort();
-      return;
+      debug_allocator_double_free(p, sizeof(T), n, typeid(T));
     }
     free(p);
     g_debug_alloc_data.alloc_records_map.erase(iter);
@@ -141,5 +121,9 @@ public:
 
 } // namespace detail
 } // namespace gpcl
+
+#ifdef GPCL_HEADER_ONLY
+#  include <gpcl/detail/impl/debug_allocator.ipp>
+#endif
 
 #endif // GPCL_DETAIL_DEBUG_ALLOCATOR_HPP
