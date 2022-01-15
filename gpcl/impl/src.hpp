@@ -50,5 +50,6 @@
 #  include <gpcl/detail/impl/win_lock_file.ipp>
 #  include <gpcl/detail/impl/win_mutex.ipp>
 #  include <gpcl/detail/impl/win_semaphore.ipp>
+#  include <gpcl/detail/impl/win_stacktrace.ipp>
 #  include <gpcl/detail/impl/win_thread.ipp>
 #endif

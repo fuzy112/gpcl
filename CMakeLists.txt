@@ -58,13 +58,19 @@ target_include_directories(gpcl
 if (UNIX)
 	target_link_libraries(gpcl
 		INTERFACE
-		pthread
+		#pthread
 		rt
 		)
 
 	# target_compile_options(gpcl INTERFACE "-fno-exceptions")
 endif ()
 
+if (WIN32)
+	target_link_libraries(gpcl
+		INTERFACE
+		DbgHelp
+		)
+endif()
 
 include (FetchContent)
 FetchContent_Declare(

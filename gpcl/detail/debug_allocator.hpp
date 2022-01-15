@@ -3,6 +3,7 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/mutex.hpp>
+#include <gpcl/stacktrace.hpp>
 #include <gpcl/thread.hpp>
 #include <gpcl/unique_lock.hpp>
 
@@ -35,22 +36,23 @@ struct debug_allocator_data
   {
     if (!alloc_records_map.empty())
     {
-      std::cerr << "memory leak detected!\n";
+      std::clog << "memory leak detected!\n";
 
       for (auto &&[address, record] : alloc_records_map)
       {
-        std::cerr << "address " << address << ": "
+        std::clog << "address " << address << ": "
                   << "size: " << record.size << ", "
                   << "count: " << record.count << ", "
                   << "total bytes: " << record.size * record.count << ", "
                   << "type: " << record.type->name() << '\n';
+        std::clog << stacktrace::current() << std::endl;
       }
 
       std::abort();
     }
     else
     {
-      std::cerr << "no memory leak!\n";
+      std::clog << "no memory leak!\n";
     }
   }
 };
@@ -109,12 +111,13 @@ public:
     auto iter = g_debug_alloc_data.alloc_records_map.find(p);
     if (iter == g_debug_alloc_data.alloc_records_map.cend())
     {
-      std::cerr << "double free!\n";
-      std::cerr << "address " << p << ","
+      std::clog << "double free!\n";
+      std::clog << "address " << p << ","
                 << "size: " << sizeof(T) << ", "
                 << "count: " << n << ", "
                 << "total bytes: " << sizeof(T) * n << ","
                 << "type: " << typeid(T).name() << '\n';
+      std::clog << stacktrace::current() << std::endl;
       std::abort();
       return;
     }

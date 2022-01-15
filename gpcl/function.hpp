@@ -70,7 +70,8 @@ public:
 
   function(std::nullptr_t) noexcept {}
 
-  template <typename F>
+  template <typename F,
+            typename = std::enable_if_t<!std::is_same_v<std::decay_t<F>, function>>>
   function(F &&f) : data_(std::forward<F>(f))
   {
     invoke_ = [](const void *pf, Args... args) -> Result {

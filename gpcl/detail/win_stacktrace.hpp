@@ -2,8 +2,8 @@
 #define GPCL_DETAIL_WIN_STACKTRACE_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/error.hpp>
-#include <gpcl/mutex.hpp>
 #include <gpcl/unique_lock.hpp>
 
 #include <cstdint>
@@ -45,11 +45,11 @@ public:
     return data_.AddrPC.Offset == 0;
   }
 
-  std::string description() const;
+  GPCL_DECL std::string description() const;
 
-  std::string source_file() const;
+  GPCL_DECL std::string source_file() const;
 
-  std::uint_least32_t source_line() const;
+  GPCL_DECL std::uint_least32_t source_line() const;
 
   friend inline bool operator<(const win_stacktrace_entry &x,
                                const win_stacktrace_entry &y)
@@ -247,37 +247,16 @@ void swap(basic_win_stacktrace<Allocator> &x,
   x.swap(y);
 }
 
-struct win_sym_init
+struct win_dbg_helper
 {
-  inline static long init_count{0};
-  inline static HANDLE process;
-  inline static recursive_mutex mtx;
+  GPCL_DECL win_dbg_helper();
 
-  win_sym_init()
-  {
-    unique_lock lock(mtx);
+  GPCL_DECL ~win_dbg_helper();
 
-    if (init_count++ == 0)
-    {
-      process = GetCurrentProcess();
+  GPCL_DECL unique_lock<win_recursive_mutex> lock();
 
-      SymInitialize(process, NULL, TRUE);
-      SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
-    }
-  }
-
-  ~win_sym_init()
-  {
-    unique_lock lock(mtx);
-
-    if (--init_count == 0)
-    {
-      SymCleanup(process);
-    }
-  }
+  HANDLE process() const { return GetCurrentProcess(); }
 };
-
-inline win_sym_init g_win_sym_init_;
 
 template <typename Allocator>
 __forceinline void win_stacktrace_impl(
@@ -326,6 +305,9 @@ __forceinline void win_stacktrace_impl(
 
   GPCL_TRY
   {
+    win_dbg_helper win_dbg_helper_;
+    auto lock = win_dbg_helper_.lock();
+
     for (std::size_t i = 0; i < max_depth; ++i)
     {
       BOOL result =
@@ -376,70 +358,10 @@ basic_win_stacktrace<Allocator>::current(const Allocator &alloc) noexcept
   return result;
 }
 
-inline std::string win_stacktrace_entry::description() const
-{
-  char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME + sizeof(char)];
-  PSYMBOL_INFO symbol = (PSYMBOL_INFO)buffer;
-  symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-  symbol->MaxNameLen = MAX_SYM_NAME;
-  DWORD64 displacement = 0;
-  unique_lock lock(g_win_sym_init_.mtx);
-  if (SymFromAddr(g_win_sym_init_.process, data_.AddrPC.Offset, &displacement,
-                  symbol))
-  {
-    return std::string(symbol->Name, symbol->NameLen);
-  }
-
-  return "";
-}
-
-inline std::uint_least32_t win_stacktrace_entry::source_line() const
-{
-  DWORD64 dwAddress = data_.AddrPC.Offset;
-  DWORD dwDisplacement;
-  IMAGEHLP_LINE64 line;
-
-  unique_lock lock(g_win_sym_init_.mtx);
-
-  line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-
-  if (SymGetLineFromAddr64(g_win_sym_init_.process, dwAddress, &dwDisplacement,
-                           &line))
-  {
-    return line.LineNumber;
-  }
-  else
-  {
-    return 0;
-  }
-}
-
-inline std::string win_stacktrace_entry::source_file() const
-{
-  DWORD64 dwAddress = data_.AddrPC.Offset;
-  DWORD dwDisplacement;
-  IMAGEHLP_LINE64 line;
-
-  unique_lock lock(g_win_sym_init_.mtx);
-
-  line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-
-  if (SymGetLineFromAddr64(g_win_sym_init_.process, dwAddress, &dwDisplacement,
-                           &line))
-  {
-    return line.FileName;
-  }
-
-  IMAGEHLP_MODULE64 module_;
-  module_.SizeOfStruct = sizeof(module_);
-  if (SymGetModuleInfo64(g_win_sym_init_.process, dwAddress, &module_))
-  {
-    return module_.LoadedImageName;
-  }
-
-  return "unknown";
-}
-
 } // namespace gpcl::detail
+
+#ifdef GPCL_HEADER_ONLY
+#  include <gpcl/detail/impl/win_stacktrace.ipp>
+#endif
 
 #endif // GPCL_DETAIL_WIN_STACKTRACE_HPP

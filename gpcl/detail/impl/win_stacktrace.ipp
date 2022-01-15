@@ -1,0 +1,106 @@
+#ifndef GPCL_DETAIL_IMPL_WIN_STACKTRACE_IPP
+#define GPCL_DETAIL_IMPL_WIN_STACKTRACE_IPP
+
+#include <gpcl/detail/win_stacktrace.hpp>
+
+namespace gpcl::detail {
+
+inline long g_win_dbg_init_count{0};
+
+win_dbg_helper::win_dbg_helper()
+{
+  auto lk = lock();
+
+  if (g_win_dbg_init_count++ == 0)
+  {
+    SymInitialize(process(), NULL, TRUE);
+    SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
+  }
+}
+
+win_dbg_helper::~win_dbg_helper()
+{
+  auto lk = lock();
+
+  if (--g_win_dbg_init_count == 0)
+  {
+    SymCleanup(process());
+  }
+}
+
+unique_lock<win_recursive_mutex> win_dbg_helper::lock()
+{
+  static win_recursive_mutex win_dbg_mtx{};
+
+  return unique_lock(win_dbg_mtx);
+}
+
+std::string win_stacktrace_entry::description() const
+{
+  char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME + sizeof(char)];
+  PSYMBOL_INFO symbol = (PSYMBOL_INFO)buffer;
+  symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+  symbol->MaxNameLen = MAX_SYM_NAME;
+  DWORD64 displacement = 0;
+
+  static win_dbg_helper helper;
+  auto lock = helper.lock();
+  if (SymFromAddr(helper.process(), data_.AddrPC.Offset,
+                  &displacement, symbol))
+  {
+    return std::string(symbol->Name, symbol->NameLen);
+  }
+
+  return "";
+}
+
+std::uint_least32_t win_stacktrace_entry::source_line() const
+{
+  DWORD64 dwAddress = data_.AddrPC.Offset;
+  DWORD dwDisplacement;
+  IMAGEHLP_LINE64 line;
+
+  static win_dbg_helper helper;
+  auto lock = helper.lock();
+  line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+  if (SymGetLineFromAddr64(helper.process(), dwAddress,
+                           &dwDisplacement, &line))
+  {
+    return line.LineNumber;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+std::string win_stacktrace_entry::source_file() const
+{
+  DWORD64 dwAddress = data_.AddrPC.Offset;
+  DWORD dwDisplacement;
+  IMAGEHLP_LINE64 line;
+
+  static win_dbg_helper helper;
+  auto lock = helper.lock();
+  line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+  if (SymGetLineFromAddr64(helper.process(), dwAddress,
+                           &dwDisplacement, &line))
+  {
+    return line.FileName;
+  }
+
+  IMAGEHLP_MODULE64 module_;
+  module_.SizeOfStruct = sizeof(module_);
+  if (SymGetModuleInfo64(helper.process(), dwAddress, &module_))
+  {
+    return module_.LoadedImageName;
+  }
+
+  return "unknown";
+}
+
+} // namespace gpcl::detail
+
+#endif // GPCL_DETAIL_IMPL_WIN_STACKTRACE_IPP
