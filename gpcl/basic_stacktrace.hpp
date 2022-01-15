@@ -26,6 +26,43 @@
 namespace gpcl {
 
 #if defined(GPCL_DOXYGEN)
+
+class stacktrace_entry
+{
+public:
+  union native_handle_type;
+
+  constexpr stacktrace_entry() noexcept = default;
+
+  constexpr stacktrace_entry(const stacktrace_entry &) = default;
+
+  constexpr stacktrace_entry &
+  operator=(const stacktrace_entry &) = default;
+
+  constexpr native_handle_type native_handle() const noexcept;
+
+  constexpr explicit operator bool() const noexcept;
+
+  GPCL_DECL std::string description() const;
+
+  GPCL_DECL std::string source_file() const;
+
+  GPCL_DECL std::uint_least32_t source_line() const;
+
+  friend inline bool operator<(const stacktrace_entry &x,
+                               const stacktrace_entry &y);
+
+  friend inline bool operator!=(const stacktrace_entry &x,
+                                const stacktrace_entry &y);
+
+  friend inline bool operator==(const stacktrace_entry &x,
+                                const stacktrace_entry &y);
+  template <typename CharT, typename Traits>
+  friend std::basic_ostream<CharT, Traits> &
+  operator<<(std::basic_ostream<CharT, Traits> &os,
+             const stacktrace_entry &f);
+};
+
 template <typename Allocator>
 class basic_stacktrace
 {
@@ -73,9 +110,9 @@ public:
   const_iterator cencd() const noexcept;
 
   reverse_const_iterator rbegin() const noexcept;
-  reverse_const_iterator rcbegin() const noexcept;
+  reverse_const_iterator crbegin() const noexcept;
   reverse_const_iterator rend() const noexcept;
-  reverse_const_iterator rcencd() const noexcept;
+  reverse_const_iterator crend() const noexcept;
 
   size_type size() const noexcept;
   size_type max_size() const noexcept;
