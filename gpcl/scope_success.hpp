@@ -48,7 +48,7 @@ public:
 
   scope_success(scope_success const &) = delete;
 
-  ~scope_success()
+  ~scope_success() noexcept(noexcept(std::declval<F &>()()))
   {
     if (active_ && uncaught_exceptions_ >= std::uncaught_exceptions())
     {

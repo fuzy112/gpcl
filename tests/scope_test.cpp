@@ -238,6 +238,32 @@ TEST_CASE("scope_success")
     CHECK(exit_function_called == 0);
   }
 #endif
+
+#ifdef __cpp_exceptions
+  SUBCASE("exit function throws")
+  {
+    struct ThrowsInt
+    {
+      void operator()() const
+      {
+        throw int(42);
+      }
+    };
+
+
+    auto test_f = [] {
+      gpcl::scope_success<ThrowsInt> ss(ThrowsInt{});
+    };
+
+    auto test_f2 = [] {
+      gpcl::scope_success<ThrowsInt> ss(ThrowsInt{});
+      throw bool(1);
+    };
+
+    CHECK_THROWS_AS(test_f(), int);
+    CHECK_THROWS_AS(test_f2(), bool);
+  }
+#endif
 }
 
 TEST_CASE("scope_fail")
