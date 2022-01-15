@@ -55,12 +55,12 @@ public:
 
   ~basic_stacktrace();
 
-  basic_stacktrace
+  static basic_stacktrace
   current(allocator_type const &alloc = allocator_type()) const noexcept;
-  basic_stacktrace
+  static basic_stacktrace
   current(size_type skip,
           allocator_type const &alloc = allocator_type()) const noexcept;
-  basic_stacktrace
+  static basic_stacktrace
   current(size_type skip, size_type max_depth,
           allocator_type const &alloc = allocator_type()) const noexcept;
 
