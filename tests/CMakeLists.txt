@@ -22,6 +22,7 @@ set (TESTS_SRCS
 	buffers_test.cpp
 	bind_front_test.cpp
 	thread_test.cpp
+	scope_test.cpp
 )
 
 set (TEST_FIXTURES
