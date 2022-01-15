@@ -15,6 +15,8 @@
 #include <gpcl/detail/chrono.hpp>
 #include <gpcl/detail/error.hpp>
 #include <gpcl/detail/posix_thread.hpp>
+#include <gpcl/scope_success.hpp>
+
 #include <signal.h>
 
 #include <sys/select.h>
@@ -90,14 +92,13 @@ void posix_thread::start_thread(thread_attributes const &attr,
                                 unique_ptr<func_base> fn)
 {
   posix_thread_attributes attr1(attr);
-
+  scope_success release_fn{[&] { fn.release(); }};
   int err =
       pthread_create(&thread_, attr1.get(), posix_thread_function, fn.get());
   if (err)
   {
     throw_system_error(err, "pthread_create");
   }
-  (void)fn.release();
 }
 
 void *posix_thread_function(void *arg) noexcept

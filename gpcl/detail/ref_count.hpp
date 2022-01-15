@@ -16,6 +16,7 @@
 #include <gpcl/detail/ref_count_base.hpp>
 #include <gpcl/detail/type_traits.hpp>
 #include <gpcl/detail/utility.hpp>
+#include <gpcl/scope_fail.hpp>
 #include <gpcl/unique_ptr.hpp>
 
 #include <memory>
@@ -94,12 +95,12 @@ public:
   {
     rebind_allocator alloc{allocator};
 
-    unique_ptr<void, allocator_delete> addr(
-        rebind_allocator_traits::allocate(alloc, 1), allocator_delete{alloc});
+    auto *addr = rebind_allocator_traits::allocate(alloc, 1);
+    scope_fail dealloc_on_failure{
+        [&] { rebind_allocator_traits::deallocate(alloc, addr, 1); }};
 
-    auto r = ::new (addr.get())
+    auto r = ::new (addr)
         Derived(&do_operate, allocator, std::forward<Args>(args)...);
-    (void)addr.release();
     return r;
   }
 
