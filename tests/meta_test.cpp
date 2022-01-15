@@ -62,10 +62,13 @@ int main()
 
   list8{} = meta::list<int &, float &>{};
 
-  meta::let<meta::var<meta::placeholders::_a, int>,
-            meta::var<meta::placeholders::_b, meta::quote<std::add_pointer_t>>,
-            meta::lazy::invoke<meta::placeholders::_b, meta::placeholders::_a>>
-      x = static_cast<int *>(0);
+  static_assert(
+      std::is_same_v<meta::let<meta::var<meta::placeholders::_a, int>,
+                               meta::var<meta::placeholders::_b,
+                                         meta::quote<std::add_pointer_t>>,
+                               meta::lazy::invoke<meta::placeholders::_b,
+                                                  meta::placeholders::_a>>,
+                     int *>);
 }
 
 // meta::substitute<

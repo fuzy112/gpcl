@@ -24,6 +24,7 @@
 #include <gpcl/basic_osyncstream.hpp>
 #include <gpcl/basic_spanbuf.hpp>
 #include <gpcl/basic_spanstream.hpp>
+#include <gpcl/basic_stacktrace.hpp>
 #include <gpcl/basic_syncbuf.hpp>
 #include <gpcl/bind_front.hpp>
 #include <gpcl/buffer.hpp>
@@ -38,6 +39,7 @@
 #include <gpcl/const_buffer.hpp>
 #include <gpcl/creation_tag.hpp>
 #include <gpcl/decay_copy.hpp>
+#include <gpcl/default_allocator.hpp>
 #include <gpcl/enable_shared_from.hpp>
 #include <gpcl/enable_shared_from_this.hpp>
 #include <gpcl/error.hpp>
@@ -97,6 +99,7 @@
 #include <gpcl/span.hpp>
 #include <gpcl/spanbuf.hpp>
 #include <gpcl/spanstream.hpp>
+#include <gpcl/stacktrace.hpp>
 #include <gpcl/swap.hpp>
 #include <gpcl/syncbuf.hpp>
 #include <gpcl/tag_invoke.hpp>

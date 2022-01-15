@@ -35,8 +35,8 @@ auto __stdcall win_thread_proc(void *arg) -> unsigned
 
     fn->run();
   }();
-  ::ExitThread(0);
-  return 0;
+  _endthread();
+  GPCL_UNREACHABLE("Thread should exit at the previous line.");
 }
 
 win_thread::~win_thread()

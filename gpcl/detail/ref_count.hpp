@@ -173,13 +173,14 @@ class ref_count_obj : public ref_count<ref_count_obj<T, Allocator>, Allocator>
 {
   using base_type = ref_count<ref_count_obj<T, Allocator>, Allocator>;
 
-  mutable std::aligned_storage_t<sizeof(T), alignof(T)> storage_;
+  mutable std::aligned_storage_t<sizeof(T), alignof(T)> storage_{};
 
   struct destroy
   {
     void operator()(T *p) const noexcept
     {
-      p->~T();
+      if (p)
+        p->~T();
     }
   };
 

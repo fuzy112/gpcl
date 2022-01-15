@@ -1,3 +1,13 @@
+//
+// debug_allocator.hpp
+// ~~~~~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
 #ifndef GPCL_DETAIL_DEBUG_ALLOCATOR_HPP
 #define GPCL_DETAIL_DEBUG_ALLOCATOR_HPP
 
@@ -45,7 +55,9 @@ struct debug_allocator_data
                   << "count: " << record.count << ", "
                   << "total bytes: " << record.size * record.count << ", "
                   << "type: " << record.type->name() << '\n';
-        std::clog << stacktrace::current() << std::endl;
+        std::clog
+            << basic_stacktrace<std::allocator<stacktrace_entry>>::current()
+            << std::endl;
       }
 
       std::abort();
@@ -117,7 +129,8 @@ public:
                 << "count: " << n << ", "
                 << "total bytes: " << sizeof(T) * n << ","
                 << "type: " << typeid(T).name() << '\n';
-      std::clog << stacktrace::current() << std::endl;
+      std::clog << basic_stacktrace<std::allocator<stacktrace_entry>>::current()
+                << std::endl;
       std::abort();
       return;
     }

@@ -40,16 +40,18 @@ option(GPCL_BUILD_DOC "enable document generation" ON)
 
 include(CTest)
 
-if (MINGW)
-    add_compile_options(-Wa,-mbig-obj)
-endif ()
-
 find_package(Boost
     COMPONENTS system
     )
 
 add_library(gpcl INTERFACE)
 add_library(gpcl::gpcl ALIAS gpcl)
+
+find_package(Threads QUIET)
+if (Threads_FOUND)
+	target_link_libraries (gpcl INTERFACE Threads::Threads)
+endif()
+
 target_include_directories(gpcl
 	INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -58,11 +60,8 @@ target_include_directories(gpcl
 if (UNIX)
 	target_link_libraries(gpcl
 		INTERFACE
-		#pthread
 		rt
 		)
-
-	# target_compile_options(gpcl INTERFACE "-fno-exceptions")
 endif ()
 
 if (WIN32)
@@ -71,6 +70,10 @@ if (WIN32)
 		DbgHelp
 		)
 endif()
+
+if (MINGW)
+    target_compile_options(gpcl INTERFACE "-Wa,-mbig-obj")
+endif ()
 
 include (FetchContent)
 FetchContent_Declare(
