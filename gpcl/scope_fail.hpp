@@ -60,6 +60,10 @@ public:
 
   void release() noexcept { active_ = false; }
 };
+
+template <typename F>
+scope_fail(F) -> scope_fail<F>;
+
 } // namespace gpcl
 
 #endif // GPCL_SCOPE_FAIL_HPP

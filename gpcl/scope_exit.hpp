@@ -59,6 +59,9 @@ public:
   void release() noexcept { active_ = false; }
 };
 
+template <typename F>
+scope_exit(F) -> scope_exit<F>;
+
 } // namespace gpcl
 
 #endif // GPCL_SCOPE_EXIT_HPP

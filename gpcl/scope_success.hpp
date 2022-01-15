@@ -61,6 +61,11 @@ public:
 
   void release() noexcept { active_ = false; }
 };
+
+
+template <typename F>
+scope_success(F) -> scope_success<F>;
+
 } // namespace gpcl
 
 #endif // GPCL_SCOPE_SUCCESS_HPP
