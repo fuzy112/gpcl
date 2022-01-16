@@ -25,7 +25,7 @@ struct is_lockable : std::false_type
 template <typename T>
 struct is_lockable<
     T, typename std::enable_if<std::is_same<
-           decltype(std::declval<T>().try_lock()), bool>::value>::type>
+           decltype(std::declval<T &>().try_lock()), bool>::value>::type>
     : is_basic_lockable<T>
 {
 };

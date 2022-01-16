@@ -18,7 +18,7 @@
 #include <gpcl/mutex.hpp>
 #include <gpcl/shared_ptr.hpp>
 #include <gpcl/swap.hpp>
-#include <gpcl/unique_lock.hpp>
+#include <gpcl/scoped_lock.hpp>
 #include <gpcl/weak_ptr.hpp>
 
 #include <streambuf>
@@ -133,7 +133,7 @@ public:
     if (!wrapped_)
       return false;
 
-    gpcl::unique_lock<mutex> lock(*mutex_);
+    gpcl::scoped_lock<mutex> lock(*mutex_);
     auto n = wrapped_->sputn(buffer_.data(), buffer_.size());
     buffer_.erase(buffer_.begin(), buffer_.begin() + n);
 

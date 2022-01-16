@@ -23,8 +23,8 @@ struct is_basic_lockable : std::false_type
 };
 
 template <typename T>
-struct is_basic_lockable<T, decltype(std::declval<T>().lock(),
-                                     std::declval<T>().unlock(), void())>
+struct is_basic_lockable<T, decltype(std::declval<T &>().lock(),
+                                     std::declval<T &>().unlock(), void())>
     : std::true_type
 {
 };

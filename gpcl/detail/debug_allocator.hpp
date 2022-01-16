@@ -14,7 +14,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/mutex.hpp>
 #include <gpcl/thread.hpp>
-#include <gpcl/unique_lock.hpp>
+#include <gpcl/scoped_lock.hpp>
 
 #include <cstdlib>
 #include <iostream>
@@ -89,7 +89,7 @@ public:
 
   T *allocate(std::size_t n) const
   {
-    unique_lock lock(g_debug_alloc_data.mtx);
+    scoped_lock lock(g_debug_alloc_data.mtx);
     void *p = std::malloc(sizeof(T) * n);
     g_debug_alloc_data.alloc_records_map[p] = alloc_record
     {
@@ -107,7 +107,7 @@ public:
   {
     if (p == 0 || n == 0)
       return;
-    unique_lock lock(g_debug_alloc_data.mtx);
+    scoped_lock lock(g_debug_alloc_data.mtx);
 
     auto iter = g_debug_alloc_data.alloc_records_map.find(p);
     if (iter == g_debug_alloc_data.alloc_records_map.cend())

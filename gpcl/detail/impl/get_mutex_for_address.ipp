@@ -13,7 +13,7 @@
 
 #include <gpcl/detail/get_mutex_for_address.hpp>
 #include <gpcl/pool_allocator.hpp>
-#include <gpcl/unique_lock.hpp>
+#include <gpcl/scoped_lock.hpp>
 #include <gpcl/weak_ptr.hpp>
 
 #include <unordered_map>
@@ -30,11 +30,8 @@ class mt_map
 public:
   shared_ptr<std::unordered_map<const void *, weak_ptr<mutex>>> lock()
   {
-    unique_lock<recursive_mutex> lk(mutex_);
-    shared_ptr<std::unordered_map<const void *, weak_ptr<mutex>>> result(
-        &map_, [this](void *) mutable { this->mutex_.unlock(); });
-    lk.release();
-    return result;
+    auto plock = make_shared<scoped_lock<recursive_mutex>>(mutex_);
+    return shared_ptr<std::unordered_map<const void *, weak_ptr<mutex>>>(plock, &map_);
   }
 };
 
@@ -83,9 +80,6 @@ shared_ptr<mutex> get_mutex_for_address(void const *key)
   auto sp_mutex_deleter = gpcl::make_shared<mutex_deleter>(mutex_map, key);
   shared_ptr<mutex> sp(sp_mutex_deleter, &sp_mutex_deleter->mutex_);
 
-#  if defined GPCL_POSIX
-  unique_lock<mutex> lock_dummy(*sp); // ensure the mutex is initialized
-#  endif
   wp = sp;
   return sp;
 }
@@ -97,7 +91,7 @@ mutex *get_mutex_for_address(void const *key)
   static mutex mtx;
   static std::unordered_map<void const *, mutex> map;
 
-  unique_lock lock(mtx);
+  scoped_lock lock(mtx);
   return &map[key];
 }
 
