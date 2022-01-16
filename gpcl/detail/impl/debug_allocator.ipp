@@ -51,7 +51,7 @@ debug_allocator_data::~debug_allocator_data()
   }
   else
   {
-    std::clog << "no memory leak!\n";
+    // std::clog << "no memory leak!\n";
   }
 }
 

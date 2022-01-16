@@ -9,7 +9,7 @@
 
 using namespace gpcl;
 
-#if defined(GPCL_POSIX)
+#if defined(GPCL_ONCE_FLAG)
 
 TEST_CASE("once_flag concurrency")
 {
