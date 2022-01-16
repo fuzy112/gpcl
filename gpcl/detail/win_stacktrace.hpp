@@ -264,14 +264,20 @@ void swap(basic_win_stacktrace<Allocator> &x,
 
 struct win_dbg_helper
 {
+private:
   GPCL_DECL win_dbg_helper();
 
   GPCL_DECL ~win_dbg_helper();
 
+public:
   GPCL_DECL unique_lock<win_recursive_mutex> lock();
 
   HANDLE process() const { return GetCurrentProcess(); }
+
+  static GPCL_DECL win_dbg_helper &instance();
 };
+
+static auto &g_win_dbg_helper = win_dbg_helper::instance();
 
 template <typename Allocator>
 __forceinline void win_stacktrace_impl(
@@ -320,8 +326,7 @@ __forceinline void win_stacktrace_impl(
 
   GPCL_TRY
   {
-    win_dbg_helper win_dbg_helper_;
-    auto lock = win_dbg_helper_.lock();
+    auto lock = g_win_dbg_helper.lock();
 
     for (std::size_t i = 0; i < max_depth; ++i)
     {
@@ -335,7 +340,7 @@ __forceinline void win_stacktrace_impl(
       if (i > skip)
       {
         win_stacktrace_entry entry;
-        std::memcpy(entry.native_handle(), &stackframe, sizeof(stackframe));
+        *entry.native_handle() = stackframe;
         container.push_back(entry);
       }
     }

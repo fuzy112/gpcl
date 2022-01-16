@@ -20,18 +20,20 @@
 namespace gpcl {
 namespace detail {
 
-win_recursive_mutex::win_recursive_mutex() noexcept
+void win_recursive_mutex::init() noexcept
 {
-  InitializeCriticalSection(&cs_);
+  call_once(once_, InitializeCriticalSection, &cs_);
 }
 
 win_recursive_mutex::~win_recursive_mutex() noexcept
 {
-  DeleteCriticalSection(&cs_);
+  if (once_.initialized())
+    DeleteCriticalSection(&cs_);
 }
 
 auto win_recursive_mutex::lock() noexcept -> void
 {
+  init();
   EnterCriticalSection(&cs_);
 }
 
@@ -57,6 +59,7 @@ auto win_mutex::unlock() -> void
 
 auto win_recursive_mutex::try_lock() noexcept -> bool
 {
+  init();
   return TryEnterCriticalSection(&cs_);
 }
 

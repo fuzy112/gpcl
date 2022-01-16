@@ -15,33 +15,29 @@
 
 namespace gpcl::detail {
 
-inline long g_win_dbg_init_count{0};
-
 win_dbg_helper::win_dbg_helper()
 {
   auto lk = lock();
 
-  if (g_win_dbg_init_count++ == 0)
-  {
-    SymInitialize(process(), NULL, TRUE);
-    SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
-  }
+  SymInitialize(process(), NULL, TRUE);
+  SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
 }
 
 win_dbg_helper::~win_dbg_helper()
 {
   auto lk = lock();
+  SymCleanup(process());
+}
 
-  if (--g_win_dbg_init_count == 0)
-  {
-    SymCleanup(process());
-  }
+win_dbg_helper &win_dbg_helper::instance()
+{
+  static win_dbg_helper inst;
+  return inst;
 }
 
 unique_lock<win_recursive_mutex> win_dbg_helper::lock()
 {
   static win_recursive_mutex win_dbg_mtx{};
-
   return unique_lock(win_dbg_mtx);
 }
 
@@ -53,9 +49,8 @@ std::string win_stacktrace_entry::description() const
   symbol->MaxNameLen = MAX_SYM_NAME;
   DWORD64 displacement = 0;
 
-  static win_dbg_helper helper;
-  auto lock = helper.lock();
-  if (SymFromAddr(helper.process(), data_.AddrPC.Offset,
+  auto lock = g_win_dbg_helper.lock();
+  if (SymFromAddr(g_win_dbg_helper.process(), data_.AddrPC.Offset,
                   &displacement, symbol))
   {
     return std::string(symbol->Name, symbol->NameLen);
@@ -70,11 +65,10 @@ std::uint_least32_t win_stacktrace_entry::source_line() const
   DWORD dwDisplacement;
   IMAGEHLP_LINE64 line;
 
-  static win_dbg_helper helper;
-  auto lock = helper.lock();
+  auto lock = g_win_dbg_helper.lock();
   line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
 
-  if (SymGetLineFromAddr64(helper.process(), dwAddress,
+  if (SymGetLineFromAddr64(g_win_dbg_helper.process(), dwAddress,
                            &dwDisplacement, &line))
   {
     return line.LineNumber;
@@ -91,11 +85,10 @@ std::string win_stacktrace_entry::source_file() const
   DWORD dwDisplacement;
   IMAGEHLP_LINE64 line;
 
-  static win_dbg_helper helper;
-  auto lock = helper.lock();
+  auto lock = g_win_dbg_helper.lock();
   line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
 
-  if (SymGetLineFromAddr64(helper.process(), dwAddress,
+  if (SymGetLineFromAddr64(g_win_dbg_helper.process(), dwAddress,
                            &dwDisplacement, &line))
   {
     return line.FileName;
@@ -103,7 +96,7 @@ std::string win_stacktrace_entry::source_file() const
 
   IMAGEHLP_MODULE64 module_;
   module_.SizeOfStruct = sizeof(module_);
-  if (SymGetModuleInfo64(helper.process(), dwAddress, &module_))
+  if (SymGetModuleInfo64(g_win_dbg_helper.process(), dwAddress, &module_))
   {
     return module_.LoadedImageName;
   }

@@ -18,12 +18,14 @@ namespace detail {
 
 class win_once_flag
 {
-  INIT_ONCE opaque_ = INIT_ONCE_STATIC_INIT;
+  mutable INIT_ONCE opaque_ = INIT_ONCE_STATIC_INIT;
 
 public:
   constexpr win_once_flag() = default;
   win_once_flag(const win_once_flag &) = delete;
   win_once_flag &operator=(const win_once_flag) = delete;
+
+  inline bool initialized() const;
 
   template <typename Callable, typename... Args>
   friend void ::gpcl::call_once(detail::win_once_flag &flag,

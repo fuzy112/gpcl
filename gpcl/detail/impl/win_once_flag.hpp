@@ -6,6 +6,19 @@
 
 namespace gpcl {
 
+namespace detail {
+
+bool win_once_flag::initialized() const
+{
+  BOOL status{};
+  BOOL pending{};
+  status =
+      InitOnceBeginInitialize(&opaque_, INIT_ONCE_CHECK_ONLY, &pending, NULL);
+  return status && !pending;
+}
+
+} // namespace detail
+
 template <typename Callable, typename... Args>
 void call_once(detail::win_once_flag &flag, Callable &&callable, Args &&...args)
 {

@@ -13,6 +13,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/unique_handle.hpp>
 #include <gpcl/detail/win_clock.hpp>
+#include <gpcl/detail/win_once_flag.hpp>
 #include <gpcl/noncopyable.hpp>
 #include <functional>
 
@@ -24,12 +25,17 @@ namespace detail {
 
 class win_recursive_mutex : noncopyable
 {
-  CRITICAL_SECTION cs_;
+  win_once_flag once_;
+  CRITICAL_SECTION cs_{};
 
 public:
   using native_handle_type = LPCRITICAL_SECTION;
 
-  GPCL_DECL win_recursive_mutex() noexcept;
+private:
+  GPCL_DECL void init() noexcept;
+
+public:
+  constexpr win_recursive_mutex() = default;
 
   GPCL_DECL ~win_recursive_mutex() noexcept;
 
