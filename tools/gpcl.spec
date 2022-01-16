@@ -40,7 +40,7 @@ A C++ 17 library.
 
 %package	dev
 Summary:	Development files for GPCL.
-Requires:	%{name}
+Requires:	%{libgpcl}
 
 %description	dev
 Development files for GPCL.
