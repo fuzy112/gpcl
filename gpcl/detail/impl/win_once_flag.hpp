@@ -3,6 +3,7 @@
 
 #include <gpcl/detail/win_once_flag.hpp>
 #include <gpcl/error.hpp>
+#include <gpcl/scope_exit.hpp>
 
 namespace gpcl {
 
@@ -31,19 +32,15 @@ void call_once(detail::win_once_flag &flag, Callable &&callable, Args &&...args)
   if (!pending)
     return; // already initialized
 
-  GPCL_TRY { callable(std::forward<Args>(args)...); }
-  GPCL_CATCH(...)
-  {
-    status = InitOnceComplete(&flag.opaque_, INIT_ONCE_INIT_FAILED, NULL);
+  DWORD result = INIT_ONCE_INIT_FAILED;
+
+  const scope_exit complete{[&flag, &result] {
+    BOOL status = InitOnceComplete(&flag.opaque_, result, NULL);
     if (!status)
       std::terminate();
-    throw;
-  }
-  GPCL_CATCH_END
-
-  status = InitOnceComplete(&flag.opaque_, 0, NULL);
-  if (!status)
-    std::terminate();
+  }};
+  callable(std::forward<Args>(args)...);
+  result = 0;
 }
 
 } // namespace gpcl
