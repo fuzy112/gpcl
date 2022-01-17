@@ -5,7 +5,7 @@ target_link_libraries(separate PUBLIC gpcl::gpcl)
 
 target_compile_definitions(separate 
 	PUBLIC GPCL_SEPARATE_COMPILATION=1
-	PRIVATE GPCL_SOURCE=1
+	#PRIVATE GPCL_SOURCE=1
 )
 
 get_target_property(separate_library_type separate TYPE)
@@ -19,4 +19,5 @@ set_target_properties(separate
 	OUTPUT_NAME gpcl
 	SOVERSION 500
 	VERSION 0.5.0
+	DEFINE_SYMBOL GPCL_SOURCE
 )

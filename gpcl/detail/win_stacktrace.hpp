@@ -280,7 +280,7 @@ public:
 static auto &g_win_dbg_helper = win_dbg_helper::instance();
 
 template <typename Allocator>
-__forceinline void win_stacktrace_impl(
+DECLSPEC_NOINLINE void win_stacktrace_impl(
     std::size_t skip, std::size_t max_depth,
     std::vector<win_stacktrace_entry, Allocator> &container) noexcept
 {

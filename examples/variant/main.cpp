@@ -1,4 +1,7 @@
+#ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
+#endif
+
 #include <gpcl/variant.hpp>
 #include <vector>
 #include <cmath>
