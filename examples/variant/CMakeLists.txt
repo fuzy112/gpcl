@@ -1,1 +1,2 @@
 add_example_executable(variant main.cpp)
+target_compile_definitions(variant PRIVATE _USE_MATH_DEFINES)

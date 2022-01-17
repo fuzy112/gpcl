@@ -137,7 +137,8 @@
                 "BUILD_SHARED_LIBS": "ON",
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_CXX_FLAGS": "/W4 /EHsc",
-                "GPCL_BUILD_DOC": "OFF"
+              "GPCL_BUILD_DOC": "OFF",
+              "GPCL_ENABLE_PCH":  "ON"
             }
         },
         {

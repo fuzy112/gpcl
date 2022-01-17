@@ -75,6 +75,14 @@ if (MINGW)
     target_compile_options(gpcl INTERFACE "-Wa,-mbig-obj")
 endif ()
 
+if (GPCL_ENABLE_PCH)
+	target_precompile_headers(
+		gpcl
+		INTERFACE
+		$<BUILD_INTERFACE:gpcl.hpp>
+	)
+endif ()
+
 include (FetchContent)
 FetchContent_Declare(
 	cppreference

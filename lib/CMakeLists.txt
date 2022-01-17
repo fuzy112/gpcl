@@ -3,7 +3,10 @@ add_library(gpcl::separate ALIAS separate)
 
 target_link_libraries(separate PUBLIC gpcl::gpcl)
 
-target_compile_definitions(separate PUBLIC GPCL_SEPARATE_COMPILATION=1)
+target_compile_definitions(separate 
+	PUBLIC GPCL_SEPARATE_COMPILATION=1
+	PRIVATE GPCL_SOURCE=1
+)
 
 get_target_property(separate_library_type separate TYPE)
 
