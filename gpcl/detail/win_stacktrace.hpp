@@ -40,44 +40,42 @@ class win_stacktrace_entry;
 
 class win_stacktrace_entry
 {
-  mutable STACKFRAME64 data_ = {};
+  PVOID addr_ = 0;
 
 public:
-  using native_handle_type = LPSTACKFRAME;
+  using native_handle_type = PVOID;
 
   constexpr win_stacktrace_entry() noexcept = default;
+
+  constexpr win_stacktrace_entry(native_handle_type address) : addr_(address) {}
 
   constexpr win_stacktrace_entry(const win_stacktrace_entry &) = default;
 
   constexpr win_stacktrace_entry &
   operator=(const win_stacktrace_entry &) = default;
 
-  constexpr native_handle_type native_handle() const noexcept { return &data_; }
+  constexpr native_handle_type native_handle() const noexcept { return addr_; }
 
-  constexpr explicit operator bool() const noexcept
-  {
-    STACKFRAME empty{};
-    return data_.AddrPC.Offset == 0;
-  }
+  constexpr explicit operator bool() const noexcept { return !!addr_; }
 
   GPCL_DECL std::string description() const;
 
   GPCL_DECL std::string source_file() const;
+
+  GPCL_DECL std::string binary_file() const;
 
   GPCL_DECL std::uint_least32_t source_line() const;
 
   friend inline bool operator<(const win_stacktrace_entry &x,
                                const win_stacktrace_entry &y)
   {
-    return x.data_.AddrFrame.Offset < y.data_.AddrFrame.Offset;
+    return x.addr_ < y.addr_;
   }
 
   friend inline bool operator!=(const win_stacktrace_entry &x,
                                 const win_stacktrace_entry &y)
   {
-    if (!x && !y)
-      return true;
-    return x.data_.AddrFrame.Offset != y.data_.AddrFrame.Offset;
+    return x.addr_ != y.addr_;
   }
 
   friend inline bool operator==(const win_stacktrace_entry &x,
@@ -91,16 +89,29 @@ public:
   operator<<(std::basic_ostream<CharT, Traits> &os,
              const win_stacktrace_entry &f)
   {
+    typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
+    if (!sentry)
+      return os;
+
+    if (!f)
+      return os << "[empty]";
+
     auto desc = f.description();
     auto file = f.source_file();
     auto line = f.source_line();
+
     if (desc.empty())
-      os << "???";
+      os << f.native_handle();
     else
       os << desc;
-    os << " in " << file;
-    if (line != 0)
-      os << " at line " << line;
+
+    if (line)
+      return os << " at " << file << ":" << std::dec << line;
+
+    auto binary = f.binary_file();
+    if (!binary.empty())
+      os << " in " << binary;
+
     return os;
   }
 };
@@ -249,7 +260,7 @@ operator<<(std::basic_ostream<CharT, Traits> &os,
   int i(0);
   for (auto &e : st)
   {
-    os << '[' << std::setw(width) << ++i << "] " << e << '\n';
+    os << std::setw(width) << std::dec << ++i << "# " << e << '\n';
   }
 
   return os;
@@ -284,6 +295,7 @@ DECLSPEC_NOINLINE void win_stacktrace_impl(
     std::size_t skip, std::size_t max_depth,
     std::vector<win_stacktrace_entry, Allocator> &container) noexcept
 {
+#if GPCL_DETAIL_WIN_STACKTRACE_USE_WALKSTACK64
   HANDLE process = GetCurrentProcess();
   HANDLE thread = GetCurrentThread();
 
@@ -296,7 +308,7 @@ DECLSPEC_NOINLINE void win_stacktrace_impl(
   STACKFRAME64 stackframe;
   ZeroMemory(&stackframe, sizeof(stackframe));
 
-#ifdef _M_IX86
+#  ifdef _M_IX86
   image = IMAGE_FILE_MACHINE_I386;
   stackframe.AddrPC.Offset = context.Eip;
   stackframe.AddrPC.Mode = AddrModeFlat;
@@ -304,7 +316,7 @@ DECLSPEC_NOINLINE void win_stacktrace_impl(
   stackframe.AddrFrame.Mode = AddrModeFlat;
   stackframe.AddrStack.Offset = context.Esp;
   stackframe.AddrStack.Mode = AddrModeFlat;
-#elif _M_X64
+#  elif _M_X64
   image = IMAGE_FILE_MACHINE_AMD64;
   stackframe.AddrPC.Offset = context.Rip;
   stackframe.AddrPC.Mode = AddrModeFlat;
@@ -312,7 +324,7 @@ DECLSPEC_NOINLINE void win_stacktrace_impl(
   stackframe.AddrFrame.Mode = AddrModeFlat;
   stackframe.AddrStack.Offset = context.Rsp;
   stackframe.AddrStack.Mode = AddrModeFlat;
-#elif _M_IA64
+#  elif _M_IA64
   image = IMAGE_FILE_MACHINE_IA64;
   stackframe.AddrPC.Offset = context.StIIP;
   stackframe.AddrPC.Mode = AddrModeFlat;
@@ -322,13 +334,13 @@ DECLSPEC_NOINLINE void win_stacktrace_impl(
   stackframe.AddrBStore.Mode = AddrModeFlat;
   stackframe.AddrStack.Offset = context.IntSp;
   stackframe.AddrStack.Mode = AddrModeFlat;
-#endif
+#  endif
 
   GPCL_TRY
   {
     auto lock = g_win_dbg_helper.lock();
 
-    for (std::size_t i = 0; i < max_depth; ++i)
+    for (std::size_t i = 0; i < max_depth + skip; ++i)
     {
       BOOL result =
           StackWalk64(image, process, thread, &stackframe, &context, nullptr,
@@ -339,14 +351,35 @@ DECLSPEC_NOINLINE void win_stacktrace_impl(
 
       if (i > skip)
       {
-        win_stacktrace_entry entry;
-        *entry.native_handle() = stackframe;
-        container.push_back(entry);
+        container.emplace_back((PVOID)stackframe.AddrPC.Offset);
       }
     }
   }
   GPCL_CATCH(...) { container.clear(); }
   GPCL_CATCH_END
+#else
+
+  std::vector<PVOID, typename std::allocator_traits<
+                         Allocator>::template rebind_alloc<PVOID>>
+      buffer(container.get_allocator());
+
+  if (max_depth == std::size_t(-1))
+    max_depth = 63;
+
+  buffer.resize(max_depth);
+
+  ULONG hash = 0;
+
+  USHORT n =
+      RtlCaptureStackBackTrace(skip, buffer.size(), buffer.data(), &hash);
+  buffer.resize(n);
+
+  container.reserve(buffer.size());
+  for (auto addr : buffer)
+  {
+    container.emplace_back(addr);
+  }
+#endif
 }
 
 template <typename Allocator>

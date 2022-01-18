@@ -49,26 +49,26 @@ std::string win_stacktrace_entry::description() const
   symbol->MaxNameLen = MAX_SYM_NAME;
   DWORD64 displacement = 0;
 
-  auto lock = g_win_dbg_helper.lock();
-  if (SymFromAddr(g_win_dbg_helper.process(), data_.AddrPC.Offset,
-                  &displacement, symbol))
+  BOOL status;
   {
-    return std::string(symbol->Name, symbol->NameLen);
+    auto lock = g_win_dbg_helper.lock();
+    status = SymFromAddr(g_win_dbg_helper.process(), (std::intptr_t)addr_,
+                         &displacement, symbol);
   }
-
+  if (status)
+    return std::string(symbol->Name, symbol->NameLen);
   return "";
 }
 
 std::uint_least32_t win_stacktrace_entry::source_line() const
 {
-  DWORD64 dwAddress = data_.AddrPC.Offset;
   DWORD dwDisplacement;
   IMAGEHLP_LINE64 line;
 
   auto lock = g_win_dbg_helper.lock();
   line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
 
-  if (SymGetLineFromAddr64(g_win_dbg_helper.process(), dwAddress,
+  if (SymGetLineFromAddr64(g_win_dbg_helper.process(), (std::intptr_t)addr_,
                            &dwDisplacement, &line))
   {
     return line.LineNumber;
@@ -81,27 +81,31 @@ std::uint_least32_t win_stacktrace_entry::source_line() const
 
 std::string win_stacktrace_entry::source_file() const
 {
-  DWORD64 dwAddress = data_.AddrPC.Offset;
   DWORD dwDisplacement;
   IMAGEHLP_LINE64 line;
 
   auto lock = g_win_dbg_helper.lock();
   line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
 
-  if (SymGetLineFromAddr64(g_win_dbg_helper.process(), dwAddress,
+  if (SymGetLineFromAddr64(g_win_dbg_helper.process(), (std::intptr_t)addr_,
                            &dwDisplacement, &line))
   {
     return line.FileName;
   }
 
-  IMAGEHLP_MODULE64 module_;
-  module_.SizeOfStruct = sizeof(module_);
-  if (SymGetModuleInfo64(g_win_dbg_helper.process(), dwAddress, &module_))
-  {
-    return module_.LoadedImageName;
-  }
+  return "";
+}
 
-  return "unknown";
+std::string win_stacktrace_entry::binary_file() const
+{
+  IMAGEHLP_MODULE64 module64;
+  module64.SizeOfStruct = sizeof(module64);
+  if (SymGetModuleInfo64(g_win_dbg_helper.process(), (std::intptr_t)addr_,
+                         &module64))
+  {
+    return module64.LoadedImageName;
+  }
+  return "";
 }
 
 } // namespace gpcl::detail
