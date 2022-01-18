@@ -8,9 +8,7 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <gpcl/assert.hpp>
 #include <gpcl/detail/error.hpp>
-#include <gpcl/error.hpp>
 #include <cstdio>  // for fprintf
 #include <cstring> // for strerror
 

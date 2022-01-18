@@ -14,6 +14,7 @@
 #include <gpcl/bad_any_cast.hpp>
 #include <gpcl/basic_any.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/error.hpp>
 
 #include <cstdlib>
 

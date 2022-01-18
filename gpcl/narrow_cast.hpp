@@ -13,6 +13,7 @@
 
 #include <gpcl/assert.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/error.hpp>
 #include <gpcl/zstring.hpp>
 
 #include <exception>

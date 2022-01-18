@@ -17,6 +17,7 @@
 #endif
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/detail/impl/assertion_failure.ipp>
 #include <gpcl/detail/impl/debug_allocator.ipp>
 #include <gpcl/detail/impl/error.ipp>
 #include <gpcl/detail/impl/get_mutex_for_address.ipp>

@@ -11,11 +11,7 @@
 #ifndef GPCL_DETAIL_UTILITY_HPP
 #define GPCL_DETAIL_UTILITY_HPP
 
-#include <gpcl/assert.hpp>
-#include <gpcl/detail/error.hpp>
-#include <gpcl/narrow_cast.hpp>
-#include <gpcl/swap.hpp>
-
+#include <gpcl/detail/config.hpp>
 
 namespace gpcl {
 namespace detail {

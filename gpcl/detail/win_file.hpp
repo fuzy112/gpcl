@@ -11,9 +11,12 @@
 #ifndef GPCL_DETAIL_WIN_FILE_HPP
 #define GPCL_DETAIL_WIN_FILE_HPP
 
+#include <gpcl/assert.hpp>
 #include <gpcl/creation_tag.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/detail/error.hpp>
 #include <gpcl/detail/utility.hpp>
+#include <gpcl/swap.hpp>
 #include <gpcl/zstring.hpp>
 
 namespace gpcl {
@@ -115,10 +118,7 @@ public:
     return ret;
   }
 
-  bool is_open() const noexcept
-  {
-    return INVALID_HANDLE_VALUE != hd_;
-  }
+  bool is_open() const noexcept { return INVALID_HANDLE_VALUE != hd_; }
 
   template <typename ConstBufferSequence>
   std::size_t write_some_at(offset_type off, const ConstBufferSequence &bs,

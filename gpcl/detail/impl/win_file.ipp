@@ -8,7 +8,9 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
+#include <gpcl/detail/error.hpp>
 #include <gpcl/detail/win_file.hpp>
+#include <gpcl/narrow_cast.hpp>
 
 namespace gpcl {
 namespace detail {

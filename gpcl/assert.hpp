@@ -12,32 +12,30 @@
 #define GPCL_ASSERT_HPP
 
 #include <gpcl/detail/config.hpp>
+
+#include <gpcl/detail/assertion_failure.hpp>
 #include <gpcl/detail/unreachable.hpp>
 
+#include <cassert>
+#include <cstdlib>
 #include <cstring>
 
-#ifdef DOCTEST_REQUIRE
-#  define GPCL_ASSERT DOCTEST_REQUIRE
-#elif defined GPCL_USE_BOOST_ASSERT
-#  include <boost/assert.hpp>
-#  define GPCL_ASSERT BOOST_ASSERT
-#else
-
-#  ifndef GPCL_WINDOWS
-#    include <cassert>
-#    define GPCL_ASSERT assert
-#  else
-#    include <crtdbg.h>
-#    define GPCL_ASSERT _ASSERT
-#  endif
-
+#if !defined(GPCL_ASSERTION_FAILURE_HANDLER)
+#  define GPCL_ASSERTION_FAILURE_HANDLER ::gpcl::detail::assertion_failure
 #endif
-
-#include <cassert>
-#define GPCL_ASSERT_CONST assert
 
 /// \entity GPCL_ASSERT
 /// General purpose assertion
+#define GPCL_ASSERT(expr)                                                      \
+  do                                                                           \
+  {                                                                            \
+    if (!!(expr))                                                              \
+      break;                                                                   \
+    ::gpcl::detail::assertion_failure(#expr, __FILE__, __LINE__, __func__);    \
+    GPCL_UNREACHABLE("assertion_failure handler should not return");           \
+  } while (false)
+
+#define GPCL_ASSERT_CONST assert
 
 /// Assertion used to verify post-conditions
 #define GPCL_VERIFY(...)                                                       \
@@ -66,6 +64,14 @@
     GPCL_UNREACHABLE(system_category().message(errno).c_str())
 #else
 #  define GPCL_FATAL(errno) GPCL_UNREACHABLE(std::strerror(errno))
+#endif
+
+#ifdef GPCL_HEADER_ONLY
+#  include <gpcl/detail/impl/assertion_failure.ipp>
+#endif
+
+#ifdef GPCL_HEADER_ONLY
+#  include <gpcl/detail/impl/unreachable.ipp>
 #endif
 
 #endif

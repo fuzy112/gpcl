@@ -24,8 +24,4 @@ namespace detail {
 }
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/unreachable.ipp>
-#endif
-
 #endif

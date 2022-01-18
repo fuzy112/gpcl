@@ -14,6 +14,7 @@
 #include <gpcl/detail/compressed_pair.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/type_traits.hpp>
+#include <gpcl/detail/utility.hpp>
 #include <gpcl/optional.hpp>
 
 namespace gpcl {

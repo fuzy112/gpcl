@@ -12,9 +12,7 @@
 #define GPCL_DETAIL_WIN_STACKTRACE_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/error.hpp>
-#include <gpcl/unique_lock.hpp>
 
 #include <cstdint>
 #include <cstring>
@@ -31,7 +29,14 @@
 
 #include <dbghelp.h>
 
+namespace gpcl {
+template <typename MutexType>
+class unique_lock;
+}
+
 namespace gpcl::detail {
+
+class win_recursive_mutex;
 
 template <typename Allocator>
 class basic_win_stacktrace;
@@ -291,98 +296,6 @@ public:
 static auto &g_win_dbg_helper = win_dbg_helper::instance();
 
 template <typename Allocator>
-DECLSPEC_NOINLINE void win_stacktrace_impl(
-    std::size_t skip, std::size_t max_depth,
-    std::vector<win_stacktrace_entry, Allocator> &container) noexcept
-{
-#if GPCL_DETAIL_WIN_STACKTRACE_USE_WALKSTACK64
-  HANDLE process = GetCurrentProcess();
-  HANDLE thread = GetCurrentThread();
-
-  CONTEXT context;
-  memset(&context, 0, sizeof(context));
-  context.ContextFlags = CONTEXT_FULL;
-  RtlCaptureContext(&context);
-
-  DWORD image;
-  STACKFRAME64 stackframe;
-  ZeroMemory(&stackframe, sizeof(stackframe));
-
-#  ifdef _M_IX86
-  image = IMAGE_FILE_MACHINE_I386;
-  stackframe.AddrPC.Offset = context.Eip;
-  stackframe.AddrPC.Mode = AddrModeFlat;
-  stackframe.AddrFrame.Offset = context.Ebp;
-  stackframe.AddrFrame.Mode = AddrModeFlat;
-  stackframe.AddrStack.Offset = context.Esp;
-  stackframe.AddrStack.Mode = AddrModeFlat;
-#  elif _M_X64
-  image = IMAGE_FILE_MACHINE_AMD64;
-  stackframe.AddrPC.Offset = context.Rip;
-  stackframe.AddrPC.Mode = AddrModeFlat;
-  stackframe.AddrFrame.Offset = context.Rsp;
-  stackframe.AddrFrame.Mode = AddrModeFlat;
-  stackframe.AddrStack.Offset = context.Rsp;
-  stackframe.AddrStack.Mode = AddrModeFlat;
-#  elif _M_IA64
-  image = IMAGE_FILE_MACHINE_IA64;
-  stackframe.AddrPC.Offset = context.StIIP;
-  stackframe.AddrPC.Mode = AddrModeFlat;
-  stackframe.AddrFrame.Offset = context.IntSp;
-  stackframe.AddrFrame.Mode = AddrModeFlat;
-  stackframe.AddrBStore.Offset = context.RsBSP;
-  stackframe.AddrBStore.Mode = AddrModeFlat;
-  stackframe.AddrStack.Offset = context.IntSp;
-  stackframe.AddrStack.Mode = AddrModeFlat;
-#  endif
-
-  GPCL_TRY
-  {
-    auto lock = g_win_dbg_helper.lock();
-
-    for (std::size_t i = 0; i < max_depth + skip; ++i)
-    {
-      BOOL result =
-          StackWalk64(image, process, thread, &stackframe, &context, nullptr,
-                      SymFunctionTableAccess64, SymGetModuleBase64, nullptr);
-
-      if (!result)
-        break;
-
-      if (i > skip)
-      {
-        container.emplace_back((PVOID)stackframe.AddrPC.Offset);
-      }
-    }
-  }
-  GPCL_CATCH(...) { container.clear(); }
-  GPCL_CATCH_END
-#else
-
-  std::vector<PVOID, typename std::allocator_traits<
-                         Allocator>::template rebind_alloc<PVOID>>
-      buffer(container.get_allocator());
-
-  if (max_depth == std::size_t(-1))
-    max_depth = 63;
-
-  buffer.resize(max_depth);
-
-  ULONG hash = 0;
-
-  USHORT n =
-      RtlCaptureStackBackTrace(skip, buffer.size(), buffer.data(), &hash);
-  buffer.resize(n);
-
-  container.reserve(buffer.size());
-  for (auto addr : buffer)
-  {
-    container.emplace_back(addr);
-  }
-#endif
-}
-
-template <typename Allocator>
 basic_win_stacktrace<Allocator>
 basic_win_stacktrace<Allocator>::current(size_type skip, size_type max_depth,
                                          const Allocator &alloc) noexcept
@@ -412,6 +325,8 @@ basic_win_stacktrace<Allocator>::current(const Allocator &alloc) noexcept
 }
 
 } // namespace gpcl::detail
+
+#include <gpcl/detail/impl/win_stacktrace.hpp>
 
 #ifdef GPCL_HEADER_ONLY
 #  include <gpcl/detail/impl/win_stacktrace.ipp>
