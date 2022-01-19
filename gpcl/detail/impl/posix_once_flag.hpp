@@ -8,6 +8,9 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
+#ifndef GPCL_DETAIL_IMPL_POSIX_ONCE_FLAG_HPP
+#define GPCL_DETAIL_IMPL_POSIX_ONCE_FLAG_HPP
+
 #include <gpcl/detail/futex.hpp>
 #include <gpcl/detail/posix_once_flag.hpp>
 #include <gpcl/unique_lock.hpp>
@@ -81,3 +84,6 @@ void call_once(detail::posix_once_flag &flag, Callable &&callable,
 }
 
 } // namespace gpcl
+
+
+#endif // GPCL_DETAIL_IMPL_POSIX_ONCE_FLAG_HPP

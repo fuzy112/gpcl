@@ -8,7 +8,9 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <gpcl/detail/error.hpp>
+#ifndef GPCL_DETAIL_IMPL_WIN_FILE_IPP
+#define GPCL_DETAIL_IMPL_WIN_FILE_IPP
+
 #include <gpcl/detail/win_file.hpp>
 #include <gpcl/narrow_cast.hpp>
 
@@ -70,3 +72,6 @@ void win_file::unlink(cwzstring<> filename, error_code &error)
 
 } // namespace detail
 } // namespace gpcl
+
+
+#endif // GPCL_DETAIL_IMPL_WIN_FILE_IPP

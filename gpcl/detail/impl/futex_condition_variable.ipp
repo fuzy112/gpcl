@@ -8,6 +8,9 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
+#ifndef GPCL_DETAIL_IMPL_FUTEX_CONDITION_VARIABLE_IPP
+#define GPCL_DETAIL_IMPL_FUTEX_CONDITION_VARIABLE_IPP
+
 #include <gpcl/detail/futex_condition_variable.hpp>
 #include <limits>
 
@@ -54,3 +57,6 @@ void futex_condition_variable::notify_one()
 
 } // namespace detail
 } // namespace gpcl
+
+
+#endif // GPCL_DETAIL_IMPL_FUTEX_CONDITION_VARIABLE_IPP

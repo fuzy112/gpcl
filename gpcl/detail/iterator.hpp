@@ -11,7 +11,7 @@
 #ifndef GPCL_DETAIL_ITERATOR_HPP
 #define GPCL_DETAIL_ITERATOR_HPP
 
-#include <gpcl/assert.hpp>
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 
 #include <iterator>

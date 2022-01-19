@@ -5,8 +5,8 @@
 #include <gpcl/error.hpp>
 #include <gpcl/is_basic_lockable.hpp>
 #include <gpcl/is_lockable.hpp>
-#include <gpcl/unique_lock.hpp>
 #include <gpcl/scope_success.hpp>
+#include <gpcl/unique_lock.hpp>
 
 #include <tuple>
 #include <type_traits>
@@ -81,14 +81,15 @@ using integer_sequence_range =
                            std::integral_constant<Type, Begin>>;
 
 template <typename... Ms>
-bool try_lock_range_helper(std::integer_sequence<int>, std::tuple<Ms &...> ms)
+bool try_lock_range_helper(std::integer_sequence<int>,
+                           std::tuple<Ms &...> const &)
 {
   return true;
 }
 
 template <int I, int... Is, typename... Ms>
 bool try_lock_range_helper(std::integer_sequence<int, I, Is...>,
-                           std::tuple<Ms &...> ms)
+                           std::tuple<Ms &...> const &ms)
 {
   unique_lock lock_I(std::get<I>(ms), try_to_lock);
   if (lock_I.owns_lock())
@@ -154,8 +155,8 @@ void lock_impl(M1 &m1)
 
 template <typename M1, typename... Ms>
 auto lock(M1 &m1, Ms &...ms)
-    -> std::enable_if_t<is_lockable<M1>::value &&
-                            (is_lockable<Ms>::value && ...) ||
+    -> std::enable_if_t<(is_lockable<M1>::value &&
+                         (is_lockable<Ms>::value && ...)) ||
                         (sizeof...(Ms) == 0 && is_basic_lockable<M1>::value)>
 {
   detail::lock_impl(m1, ms...);
@@ -163,8 +164,8 @@ auto lock(M1 &m1, Ms &...ms)
 
 template <typename M1, typename... Ms>
 auto try_lock(M1 &m1, Ms &...ms)
-    -> std::enable_if_t<is_lockable<M1>::value &&
-                            (is_lockable<Ms>::value && ...) ||
+    -> std::enable_if_t<(is_lockable<M1>::value &&
+                         (is_lockable<Ms>::value && ...)) ||
                         (sizeof...(Ms) == 0 && is_basic_lockable<M1>::value)>
 {
   return detail::try_lock_impl(0, m1, ms...);
@@ -172,8 +173,8 @@ auto try_lock(M1 &m1, Ms &...ms)
 
 template <typename M1, typename... Ms>
 auto unlock(M1 &m1, Ms &...ms)
-    -> std::enable_if_t<is_lockable<M1>::value &&
-                            (is_lockable<Ms>::value && ...) ||
+    -> std::enable_if_t<(is_lockable<M1>::value &&
+                         (is_lockable<Ms>::value && ...)) ||
                         (sizeof...(Ms) == 0 && is_basic_lockable<M1>::value)>
 {
   m1.unlock();

@@ -8,13 +8,15 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
+#ifndef GPCL_DETAIL_IMPL_WIN_CONDITION_VARIABLE_IPP
+#define GPCL_DETAIL_IMPL_WIN_CONDITION_VARIABLE_IPP
+
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
 #include <gpcl/detail/win_condition_variable.hpp>
 #include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/narrow_cast.hpp>
 
-#ifdef GPCL_WINDOWS
 #  include <windows.h>
 
 namespace gpcl {
@@ -71,4 +73,6 @@ bool win_condition_variable::wait_for(unique_lock<win_mutex> &lock,
 } // namespace detail
 } // namespace gpcl
 
-#endif
+
+
+#endif // GPCL_DETAIL_IMPL_WIN_CONDITION_VARIABLE_IPP

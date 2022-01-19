@@ -12,14 +12,14 @@
 #define GPCL_DETAIL_POSIX_MUTEX_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/posix_clock.hpp>
 #include <gpcl/detail/utility.hpp>
+#include <gpcl/detail/posix_clock.hpp>
 
-#ifdef GPCL_POSIX
-#  include <pthread.h>
+#include <pthread.h>
 
 namespace gpcl {
 namespace detail {
+
 
 enum class posix_mutex_protocol
 {
@@ -111,9 +111,9 @@ class posix_recursive_mutex : public posix_mutex_base
       -> posix_mutex_attr &&
   {
     attr.type(posix_mutex_type::recursive);
-#  if defined(GPCL_DEBUG)
+#if defined(GPCL_DEBUG)
     attr.robust(posix_mutex_robust::robust);
-#  endif
+#endif
     return detail::move(attr);
   }
 
@@ -124,10 +124,8 @@ public:
 } // namespace detail
 } // namespace gpcl
 
-#endif
-
 #if defined(GPCL_HEADER_ONLY)
 #  include <gpcl/detail/impl/posix_mutex.ipp>
 #endif
 
-#endif
+#endif // GPCL_DETAIL_POSIX_MUTEX_HPP

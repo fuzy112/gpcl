@@ -76,4 +76,4 @@ To narrow(From F)
 
 } // namespace gpcl
 
-#endif
+#endif // GPCL_NARROW_CAST_HPP

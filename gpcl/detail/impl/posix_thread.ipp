@@ -11,7 +11,7 @@
 #ifndef GPCL_DETAIL_IMPL_POSIX_THREAD_IPP
 #define GPCL_DETAIL_IMPL_POSIX_THREAD_IPP
 
-#include <gpcl/assert.hpp>
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/chrono.hpp>
 #include <gpcl/detail/error.hpp>
 #include <gpcl/detail/posix_thread.hpp>
@@ -92,7 +92,7 @@ void posix_thread::start_thread(thread_attributes const &attr,
                                 unique_ptr<func_base> fn)
 {
   posix_thread_attributes attr1(attr);
-  scope_success release_fn{[&] { fn.release(); }};
+  scope_success release_fn{[&] { (void)fn.release(); }};
   int err =
       pthread_create(&thread_, attr1.get(), posix_thread_function, fn.get());
   if (err)

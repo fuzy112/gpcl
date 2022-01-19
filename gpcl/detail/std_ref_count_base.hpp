@@ -11,7 +11,7 @@
 #ifndef GPCL_DETAIL_STD_REF_COUNT_BASE_HPP
 #define GPCL_DETAIL_STD_REF_COUNT_BASE_HPP
 
-#include <gpcl/assert.hpp>
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/ref_count_operation.hpp>
 

@@ -13,7 +13,7 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/utility.hpp>
-#include <gpcl/assert.hpp>
+#include <gpcl/detail/assert.hpp>
 
 #include <cstddef>
 #include <memory>

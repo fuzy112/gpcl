@@ -15,6 +15,7 @@
 #include <gpcl/span.hpp>
 
 #include <iosfwd>
+#include <string>
 
 namespace gpcl {
 

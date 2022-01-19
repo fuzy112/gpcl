@@ -8,6 +8,9 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
+#ifndef GPCL_DETAIL_IMPL_POSIX_LOCK_FILE_IPP
+#define GPCL_DETAIL_IMPL_POSIX_LOCK_FILE_IPP
+
 #include <gpcl/detail/posix_lock_file.hpp>
 #include <gpcl/unique_lock.hpp>
 #include <fcntl.h>
@@ -98,3 +101,6 @@ void posix_lock_file::unlock()
 
 } // namespace detail
 } // namespace gpcl
+
+
+#endif // GPCL_DETAIL_IMPL_POSIX_LOCK_FILE_IPP

@@ -11,6 +11,8 @@
 #ifndef GPCL_GENERIC_POINTER_CAST_HPP
 #define GPCL_GENERIC_POINTER_CAST_HPP
 
+#include <gpcl/detail/config.hpp>
+
 namespace gpcl {
 
 /// @addtogroup smart_pointer Smart Pointers

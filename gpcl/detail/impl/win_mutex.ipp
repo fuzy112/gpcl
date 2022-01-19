@@ -8,13 +8,15 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <gpcl/assert.hpp>
+#ifndef GPCL_DETAIL_IMPL_WIN_MUTEX_IPP
+#define GPCL_DETAIL_IMPL_WIN_MUTEX_IPP
+
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
 #include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/narrow_cast.hpp>
 
-#ifdef GPCL_WINDOWS
 #  include <windows.h>
 
 namespace gpcl {
@@ -167,4 +169,6 @@ auto win_timed_mutex::try_lock_until(system_clock::time_point tp) -> bool
 
 } // namespace detail
 } // namespace gpcl
-#endif
+
+
+#endif // GPCL_DETAIL_IMPL_WIN_MUTEX_IPP

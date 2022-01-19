@@ -8,12 +8,14 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <gpcl/assert.hpp>
+#ifndef GPCL_DETAIL_IMPL_POSIX_SEMAPHORE_IPP
+#define GPCL_DETAIL_IMPL_POSIX_SEMAPHORE_IPP
+
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/error.hpp>
 #include <gpcl/detail/posix_semaphore.hpp>
 
-#ifdef GPCL_POSIX
-#  include <semaphore.h>
+#include <semaphore.h>
 
 namespace gpcl {
 namespace detail {
@@ -66,4 +68,4 @@ bool posix_semaphore::try_wait()
 } // namespace detail
 } // namespace gpcl
 
-#endif
+#endif // GPCL_DETAIL_IMPL_POSIX_SEMAPHORE_IPP

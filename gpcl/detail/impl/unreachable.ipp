@@ -8,6 +8,9 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
+#ifndef GPCL_DETAIL_IMPL_UNREACHABLE_IPP
+#define GPCL_DETAIL_IMPL_UNREACHABLE_IPP
+
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/unreachable.hpp>
 #include <iostream>
@@ -29,3 +32,6 @@ void unreachable_internal(czstring<> msg, czstring<> file,
 
 } // namespace detail
 } // namespace gpcl
+
+
+#endif // GPCL_DETAIL_IMPL_UNREACHABLE_IPP

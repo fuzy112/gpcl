@@ -11,7 +11,7 @@
 #ifndef GPCL_DETAIL_IMPL_WIN_THREAD_IPP
 #define GPCL_DETAIL_IMPL_WIN_THREAD_IPP
 
-#include <gpcl/assert.hpp>
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
 #include <gpcl/detail/win_thread.hpp>

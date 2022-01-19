@@ -8,14 +8,17 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <gpcl/assert.hpp>
+#ifndef GPCL_DETAIL_IMPL_WIN_SEMAPHORE_IPP
+#define GPCL_DETAIL_IMPL_WIN_SEMAPHORE_IPP
+
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
 #include <gpcl/detail/win_semaphore.hpp>
 #include <gpcl/narrow_cast.hpp>
+
 #include <limits>
 
-#ifdef GPCL_WINDOWS
 
 namespace gpcl {
 namespace detail {
@@ -72,4 +75,5 @@ void win_semaphore::post()
 } // namespace detail
 } // namespace gpcl
 
-#endif
+
+#endif // GPCL_DETAIL_IMPL_WIN_SEMAPHORE_IPP

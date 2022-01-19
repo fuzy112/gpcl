@@ -14,6 +14,7 @@
 #include <gpcl/detail/config.hpp>
 
 #if defined(GPCL_POSIX)
+#  define GPCL_PID_FILE
 #  include <gpcl/detail/posix_pid_file.hpp>
 #endif
 

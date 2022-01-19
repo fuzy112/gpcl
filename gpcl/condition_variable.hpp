@@ -13,15 +13,22 @@
 
 #include <gpcl/assert.hpp>
 #include <gpcl/clock.hpp>
-#include <gpcl/detail/posix_condition_variable.hpp>
-#include <gpcl/detail/win_condition_variable.hpp>
 #include <gpcl/mutex.hpp>
 #include <gpcl/unique_lock.hpp>
+
+#if defined GPCL_POSIX
+#  define GPCL_CONDITION_VARIABLE
+#  include <gpcl/detail/posix_condition_variable.hpp>
+#elif defined GPCL_WINDOWS
+#  define GPCL_CONDITION_VARIABLE
+#  include <gpcl/detail/win_condition_variable.hpp>
+#endif
+
 #include <type_traits>
 
 namespace gpcl {
 
-#if defined(GPCL_POSIX) || defined(GPCL_WINDOWS)
+#if defined(GPCL_CONDITION_VARIABLE)
 
 enum class cv_status : bool
 {

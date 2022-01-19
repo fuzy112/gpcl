@@ -8,13 +8,16 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <gpcl/assert.hpp>
-#include <gpcl/detail/error.hpp>
-#include <gpcl/detail/posix_clock.hpp>
+#ifndef GPCL_DETAIL_IMPL_POSIX_MUTEX_IPP
+#define GPCL_DETAIL_IMPL_POSIX_MUTEX_IPP
+
 #include <gpcl/detail/posix_mutex.hpp>
 
-#ifdef GPCL_POSIX
-#  include <pthread.h>
+#include <gpcl/detail/assert.hpp>
+#include <gpcl/detail/error.hpp>
+#include <gpcl/detail/posix_clock.hpp>
+
+#include <pthread.h>
 
 namespace gpcl {
 namespace detail {
@@ -146,4 +149,4 @@ bool posix_mutex_base::try_lock_until(realtime_clock::time_point tp)
 } // namespace detail
 } // namespace gpcl
 
-#endif
+#endif // GPCL_DETAIL_IMPL_POSIX_MUTEX_IPP

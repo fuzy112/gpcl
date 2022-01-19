@@ -13,6 +13,7 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/mutex.hpp>
+
 #include <cassert>
 #include <memory>
 #include <numeric>
@@ -20,7 +21,7 @@
 namespace gpcl {
 
 /// Simple segregated storage algorithm implementation.
-template <typename SizeType = std::size_t, typename VoidPointer = void * >
+template <typename SizeType = std::size_t, typename VoidPointer = void *>
 class simple_segregated_storage : noncopyable
 {
 public:
@@ -30,25 +31,25 @@ public:
   /// \effects Interleaves a free list through the memory block specified of
   /// `block` of size `sz` bytes, partitioning it into as many
   /// partition_sz-sized chunks as possible. The last chunk is set to point to
-  /// `end`. \preconditions partition_sz >= sizeof(void_pointer ), partition_sz ==
-  /// sizeof(void_pointer ) * i for some i, sz >= partition_sz, block is properly
-  /// aligned for an array of objects of size partition_sz, and block is
-  /// properly aligned for an array of void_pointer . \param block pointer to the block
-  /// \param sz size in bytes
-  /// \param partition_sz chunk size
-  /// \param end the last chunk's next ptr
-  /// \returns pointer to the first chunk (this is always equal to block).
-  /// \complexity O(sz).
-  void_pointer segregate(void_pointer const block, size_type sz, size_type partition_sz,
-                  void_pointer end = nullptr) noexcept
+  /// `end`. \preconditions partition_sz >= sizeof(void_pointer ), partition_sz
+  /// == sizeof(void_pointer ) * i for some i, sz >= partition_sz, block is
+  /// properly aligned for an array of objects of size partition_sz, and block
+  /// is properly aligned for an array of void_pointer . \param block pointer to
+  /// the block \param sz size in bytes \param partition_sz chunk size \param
+  /// end the last chunk's next ptr \returns pointer to the first chunk (this is
+  /// always equal to block). \complexity O(sz).
+  void_pointer segregate(void_pointer const block, size_type sz,
+                         size_type partition_sz,
+                         void_pointer end = nullptr) noexcept
   {
     GPCL_ASSERT(block);
     GPCL_ASSERT(sz >= partition_sz);
 
     void_pointer chunk = block;
-    void_pointer block_end = reinterpret_cast<char *>(block) + sz - partition_sz;
-    while (reinterpret_cast<void_pointer >(reinterpret_cast<char *>(chunk) +
-                                    partition_sz) < block_end)
+    void_pointer block_end =
+        reinterpret_cast<char *>(block) + sz - partition_sz;
+    while (reinterpret_cast<void_pointer>(reinterpret_cast<char *>(chunk) +
+                                          partition_sz) < block_end)
     {
       next_chunk(chunk) = reinterpret_cast<char *>(chunk) + partition_sz;
       chunk = next_chunk(chunk);
@@ -182,7 +183,8 @@ public:
   /// this->malloc_n().
   ///
   /// \complexity O(1).
-  void free_n(void_pointer const chunk, size_type partition_sz, size_type n) noexcept
+  void free_n(void_pointer const chunk, size_type partition_sz,
+              size_type n) noexcept
   {
     add_block(chunk, partition_sz * n, partition_sz);
   }

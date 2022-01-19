@@ -57,3 +57,7 @@
 #include <gpcl/detail/impl/win_stacktrace.ipp>
 #include <gpcl/detail/impl/win_thread.ipp>
 #endif
+
+#ifdef GPCL_BFD
+#include <gpcl/detail/impl/bfd_stacktrace.ipp>
+#endif

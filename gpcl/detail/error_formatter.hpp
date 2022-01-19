@@ -11,7 +11,7 @@
 #ifndef GPCL_DETAIL_ERROR_FORMATTER_HPP
 #define GPCL_DETAIL_ERROR_FORMATTER_HPP
 
-#include <gpcl/assert.hpp>
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/output_iterator_streambuf.hpp>
 

@@ -1667,10 +1667,10 @@ public:
 
     /// Consume an event.
     /// @tparam E an event type.
-    template <typename E, typename = std::void_t<
-                              decltype(std::declval<value_builder &>()
-                                           .handle_event(std::declval<E>()))>>
-    void operator()(E &&e)
+    template <typename E>
+    auto operator()(E &&e)
+        -> std::void_t<decltype(this->handle_event(
+            std::declval<E>()))>
     {
       handle_event(std::forward<E>(e));
     }

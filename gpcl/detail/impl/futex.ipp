@@ -8,6 +8,9 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
+#ifndef GPCL_DETAIL_IMPL_FUTEX_IPP
+#define GPCL_DETAIL_IMPL_FUTEX_IPP
+
 #include <gpcl/detail/futex.hpp>
 #include <sys/syscall.h>
 
@@ -30,3 +33,6 @@ int futex(i32 *uaddr, int futex_op, i32 val, u32 val2, i32 *uaddr2,
 
 } // namespace detail
 } // namespace gpcl
+
+
+#endif // GPCL_DETAIL_IMPL_FUTEX_IPP

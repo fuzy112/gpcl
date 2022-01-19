@@ -8,11 +8,13 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <gpcl/assert.hpp>
+#ifndef GPCL_DETAIL_IMPL_WIN_CLOCK_IPP
+#define GPCL_DETAIL_IMPL_WIN_CLOCK_IPP
+
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/win_clock.hpp>
 
-#ifdef GPCL_WINDOWS
-#  include <windows.h>
+#include <windows.h>
 
 namespace gpcl {
 namespace detail {
@@ -35,4 +37,5 @@ auto system_clock::now() noexcept -> system_clock::time_point
 
 } // namespace detail
 } // namespace gpcl
-#endif
+
+#endif // GPCL_DETAIL_IMPL_WIN_CLOCK_IPP

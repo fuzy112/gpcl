@@ -12,6 +12,7 @@
 #define GPCL_CZSTRING_HPP
 
 #include <gpcl/detail/config.hpp>
+
 #include <cstddef>
 #include <cstdint>
 

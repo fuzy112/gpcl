@@ -8,10 +8,10 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_UNIQUE_HPP
-#define GPCL_UNIQUE_HPP
+#ifndef GPCL_UNIQUE_PTR_HPP
+#define GPCL_UNIQUE_PTR_HPP
 
-#include <gpcl/assert.hpp>
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/compressed_pair.hpp>
 #include <gpcl/detail/config.hpp>
 
@@ -402,4 +402,6 @@ unique_ptr<T, Deleter> wrap_unique(T *ptr, Deleter d = Deleter()) noexcept
 
 } // namespace gpcl
 
-#endif // GPCL_UNIQUE_HPP
+#include <gpcl/assert.hpp>
+
+#endif // GPCL_UNIQUE_PTR_HPP

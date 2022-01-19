@@ -15,6 +15,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/swap.hpp>
 #include <gpcl/error.hpp>
+#include <gpcl/assert.hpp>
 
 #include <tuple>
 

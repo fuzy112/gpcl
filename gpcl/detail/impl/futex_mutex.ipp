@@ -8,6 +8,9 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
+#ifndef GPCL_DETAIL_IMPL_FUTEX_MUTEX_IPP
+#define GPCL_DETAIL_IMPL_FUTEX_MUTEX_IPP
+
 #include <gpcl/detail/futex.hpp>
 #include <gpcl/detail/futex_mutex.hpp>
 
@@ -69,3 +72,6 @@ bool futex_mutex::try_lock() noexcept
 
 } // namespace detail
 } // namespace gpcl
+
+
+#endif // GPCL_DETAIL_IMPL_FUTEX_MUTEX_IPP

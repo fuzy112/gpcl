@@ -13,9 +13,17 @@
 
 #include <gpcl/clock.hpp>
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/posix_mutex.hpp>
-#include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/noncopyable.hpp>
+#include <gpcl/detail/utility.hpp>
+
+#if defined GPCL_POSIX
+#  define GPCL_MUTEX
+#  include <gpcl/detail/posix_mutex.hpp>
+#elif defined GPCL_WINDOWS
+#  define GPCL_MUTEX
+#  include <gpcl/detail/win_mutex.hpp>
+#endif
+
 #include <type_traits>
 
 namespace gpcl {
@@ -31,17 +39,17 @@ public:
 
   auto lock() -> void
   {
-    GPCL_ASSERT(!locked_);
+    // GPCL_ASSERT(!locked_);
     locked_ = true;
   }
 
   auto unlock() -> void
   {
-    GPCL_ASSERT(locked_);
+    // GPCL_ASSERT(locked_);
     locked_ = false;
   }
 
-  auto try_lock() -> bool { return !std::exchange(locked_, true); }
+  auto try_lock() -> bool { return !detail::exchange(locked_, true); }
 
 private:
   bool locked_{};
@@ -182,4 +190,4 @@ private:
 
 } // namespace gpcl
 
-#endif
+#endif // GPCL_MUTEX_HPP

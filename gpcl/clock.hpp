@@ -12,8 +12,14 @@
 #define GPCL_CLOCK_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/posix_clock.hpp>
-#include <gpcl/detail/win_clock.hpp>
+
+#if defined(GPCL_POSIX)
+#  define GPCL_CLOCK
+#  include <gpcl/detail/posix_clock.hpp>
+#elif defined(GPCL_WINDOWS)
+#  define GPCL_CLOCK
+#  include <gpcl/detail/win_clock.hpp>
+#endif
 
 namespace gpcl {
 
@@ -32,4 +38,4 @@ using steady_clock = detail::steady_clock;
 
 } // namespace gpcl
 
-#endif
+#endif // GPCL_CLOCK_HPP

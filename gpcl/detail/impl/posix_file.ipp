@@ -11,7 +11,7 @@
 #ifndef GPCL_DETAIL_IMPL_POSIX_FILE_IPP
 #define GPCL_DETAIL_IMPL_POSIX_FILE_IPP
 
-#include <gpcl/assert.hpp>
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/posix_file.hpp>
 
 #include <fcntl.h>

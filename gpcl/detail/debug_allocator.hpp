@@ -12,6 +12,7 @@
 #define GPCL_DETAIL_DEBUG_ALLOCATOR_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/detail/utility.hpp>
 #include <gpcl/mutex.hpp>
 #include <gpcl/thread.hpp>
 #include <gpcl/scoped_lock.hpp>

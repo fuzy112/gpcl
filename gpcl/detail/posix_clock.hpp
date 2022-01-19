@@ -8,23 +8,19 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_DETAIL_CLOCK_HPP
-#define GPCL_DETAIL_CLOCK_HPP
+#ifndef GPCL_DETAIL_POSIX_CLOCK_HPP
+#define GPCL_DETAIL_POSIX_CLOCK_HPP
 
-#include <gpcl/assert.hpp>
 #include <gpcl/detail/chrono.hpp>
 #include <gpcl/detail/config.hpp>
 
-#ifdef GPCL_POSIX
-
-#  include <ctime>
+#include <ctime>
 
 namespace gpcl {
 namespace detail {
 
 inline chrono::nanoseconds to_duration(const struct timespec *ts) noexcept
 {
-  GPCL_ASSERT(ts);
   return chrono::seconds(ts->tv_sec) + chrono::nanoseconds(ts->tv_nsec);
 }
 
@@ -71,10 +67,9 @@ struct realtime_clock
 
 } // namespace detail
 } // namespace gpcl
-#endif
 
 #if defined(GPCL_HEADER_ONLY)
 #  include <gpcl/detail/impl/posix_clock.ipp>
 #endif
 
-#endif
+#endif // GPCL_DETAIL_POSIX_CLOCK_HPP

@@ -11,6 +11,7 @@
 #ifndef GPCL_VECTOR_HPP
 #define GPCL_VECTOR_HPP
 
+#include <gpcl/assert.hpp>
 #include <gpcl/default_allocator.hpp>
 #include <gpcl/detail/compressed_pair.hpp>
 #include <gpcl/detail/config.hpp>

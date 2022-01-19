@@ -1,8 +1,10 @@
 #ifndef GPCL_DETAIL_IMPL_DEBUG_ALLOCATOR_IPP
 #define GPCL_DETAIL_IMPL_DEBUG_ALLOCATOR_IPP
 
-#include <gpcl/basic_stacktrace.hpp>
 #include <gpcl/detail/debug_allocator.hpp>
+
+#include <gpcl/basic_stacktrace.hpp>
+
 
 namespace gpcl::detail {
 

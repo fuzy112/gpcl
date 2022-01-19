@@ -13,8 +13,6 @@
 
 #include <gpcl/detail/posix_message_queue.hpp>
 
-#ifdef GPCL_POSIX
-
 namespace gpcl {
 namespace detail {
 
@@ -109,6 +107,4 @@ std::size_t posix_message_queue::receive(gpcl::span<char> msg,
 } // namespace detail
 } // namespace gpcl
 
-#endif
-
-#endif
+#endif // GPCL_DETAIL_IMPL_POSIX_MESSAGE_QUEUE_IPP

@@ -31,4 +31,4 @@ namespace chrono = boost::chrono;
 } // namespace detail
 } // namespace gpcl
 
-#endif
+#endif // GPCL_DETAIL_CHRONO_HPP

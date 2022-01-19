@@ -61,6 +61,8 @@ if (UNIX)
 	target_link_libraries(gpcl
 		INTERFACE
 		rt
+		bfd
+		${CMAKE_DL_LIBS}
 		)
 endif ()
 

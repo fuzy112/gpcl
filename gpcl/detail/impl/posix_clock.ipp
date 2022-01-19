@@ -8,14 +8,18 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <gpcl/assert.hpp>
+#ifndef GPCL_DETAIL_IMPL_POSIX_CLOCK_IPP
+#define GPCL_DETAIL_IMPL_POSIX_CLOCK_IPP
+
+#include <gpcl/detail/posix_clock.hpp>
+
+
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/chrono.hpp>
 #include <gpcl/detail/error.hpp>
-#include <gpcl/detail/posix_clock.hpp>
 #include <ctime>
 
-#if defined(GPCL_POSIX)
-#  include <time.h>
+#include <time.h>
 
 namespace gpcl {
 namespace detail {
@@ -37,4 +41,4 @@ realtime_clock::time_point realtime_clock::now() noexcept
 } // namespace detail
 } // namespace gpcl
 
-#endif
+#endif // GPCL_DETAIL_IMPL_POSIX_CLOCK_IPP

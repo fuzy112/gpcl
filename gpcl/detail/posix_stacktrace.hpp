@@ -17,27 +17,63 @@
 
 #include <iomanip>
 #include <iostream>
+#include <map>
 #include <string>
 #include <type_traits>
 #include <vector>
 
 #include <execinfo.h>
 
+#define GPCL_BFD 1
+
 #ifdef __GNUC__
 #  include <cxxabi.h>
 #endif
 
+#ifdef GPCL_BFD
+#  include <gpcl/detail/bfd_stacktrace.hpp>
+#endif
+
 namespace gpcl::detail {
 
-inline std::string gcc_demangle(const char* sym)
+#ifdef __GNUC__
+inline std::string gcc_demangle(const char *sym)
 {
-  std::string name; size_t length = 0; int status = 0;
+  std::string name;
+  size_t length = 0;
+  int status = 0;
   __cxxabiv1::__cxa_demangle(sym, nullptr, &length, &status);
 
   name.resize(length);
   __cxxabiv1::__cxa_demangle(sym, &name[0], &length, &status);
   return name;
 }
+
+/// @todo refactor this function.
+inline std::string cppfilt(std::string_view str)
+{
+  auto start = str.find("_Z");
+  auto end = str.find("+");
+
+  if (start == str.npos || end == str.npos)
+  {
+    return std::string(str);
+  }
+
+  /// @todo optimize memory allocation
+  return std::string(str.substr(0, start)) +
+         gcc_demangle(std::string(str.substr(start, end - start)).c_str()) +
+         std::string(str.substr(end));
+}
+
+#else
+
+inline std::string cppfilt(std::string_view str)
+{
+  return std::string(str);
+}
+
+#endif
 
 struct posix_stacktrace_entry
 {
@@ -55,13 +91,17 @@ struct posix_stacktrace_entry
 
   std::string description() const
   {
+#ifndef GPCL_BFD
     unique_ptr<char *, std::decay_t<decltype(::free)>> strs(
         ::backtrace_symbols(&address, 1), &::free);
     if (!strs)
       return "";
     if (!*strs)
       return "";
-    return std::string(*strs);
+    return cppfilt(*strs);
+#else
+    return bfd_stacktrace_entry_description(address);
+#endif
   }
 
   std::string source_file() const;
@@ -245,11 +285,25 @@ operator<<(std::basic_ostream<CharT, Traits> &os,
   int i(0);
   for (auto &e : st)
   {
-    os << '[' << std::setw(width) << ++i << "] " << e << '\n';
+    os  << std::setw(width) << ++i << "# " << e << '\n';
   }
 
   return os;
 }
+
+#ifdef GPCL_BFD
+
+inline std::string posix_stacktrace_entry::source_file() const
+{
+  return bfd_stacktrace_entry_source_file(address);
+}
+
+inline std::uint_least32_t posix_stacktrace_entry::source_line() const
+{
+  return bfd_stacktrace_entry_source_line(address);
+}
+
+#endif
 
 template <typename Allocator>
 void swap(basic_posix_stacktrace<Allocator> &x,
@@ -259,7 +313,6 @@ void swap(basic_posix_stacktrace<Allocator> &x,
 }
 
 constexpr std::size_t posix_stacktrace_impl_start_buffer_size = 100;
-
 
 template <typename Allocator>
 void posix_stacktrace_impl(
@@ -273,15 +326,18 @@ void posix_stacktrace_impl(
         buffer(container.get_allocator());
     buffer.resize(posix_stacktrace_impl_start_buffer_size);
 
-    int nframes;
+    std::size_t nframes;
 
     do
     {
-      buffer.resize(buffer.size() * 2);
+      if (buffer.size() * 2 > max_depth)
+        buffer.resize(max_depth);
+      else
+        buffer.resize(buffer.size() * 2);
       nframes = backtrace(buffer.data(), buffer.size());
-    } while (nframes == buffer.size());
+    } while (nframes == buffer.size() && nframes < max_depth);
 
-    for (int i = 0; i < nframes; ++i)
+    for (std::size_t i = 0; i < nframes; ++i)
     {
       if (i >= skip)
       {

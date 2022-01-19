@@ -1,8 +1,9 @@
 #ifndef GPCL_DETAIL_IMPL_ASSERTION_FAILURE_IPP
 #define GPCL_DETAIL_IMPL_ASSERTION_FAILURE_IPP
 
-#include <gpcl/basic_stacktrace.hpp>
 #include <gpcl/detail/assertion_failure.hpp>
+
+#include <gpcl/basic_stacktrace.hpp>
 
 #include <iostream>
 

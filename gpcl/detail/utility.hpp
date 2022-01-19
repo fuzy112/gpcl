@@ -39,4 +39,4 @@ inline constexpr T exchange(T &obj, U &&new_value)
 } // namespace detail
 } // namespace gpcl
 
-#endif
+#endif // GPCL_DETAIL_UTILITY_HPP

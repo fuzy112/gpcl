@@ -8,11 +8,13 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <gpcl/assert.hpp>
+#ifndef GPCL_DETAIL_IMPL_UNIQUE_HANDLE_IPP
+#define GPCL_DETAIL_IMPL_UNIQUE_HANDLE_IPP
+
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/unique_handle.hpp>
 
-#ifdef GPCL_WINDOWS
 namespace gpcl {
 namespace detail {
 
@@ -28,4 +30,6 @@ auto invalid_handle_deleter::operator()(pointer h) noexcept -> void
 
 } // namespace detail
 } // namespace gpcl
-#endif
+
+
+#endif // GPCL_DETAIL_IMPL_UNIQUE_HANDLE_IPP
