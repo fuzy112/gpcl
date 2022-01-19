@@ -19,10 +19,10 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Install Doxygen
+    - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y doxygen
+        sudo apt-get install -y doxygen binutils-dev
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
