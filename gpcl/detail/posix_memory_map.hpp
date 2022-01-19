@@ -12,7 +12,7 @@
 #define GPCL_DETAIL_POSIX_MEMORY_MAP_HPP
 
 #include <gpcl/access_mode.hpp>
-#include <gpcl/error.hpp>
+#include <gpcl/detail/error.hpp>
 
 #include <sys/mman.h>
 #include <unistd.h>

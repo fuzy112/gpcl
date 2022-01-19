@@ -274,18 +274,10 @@ operator<<(std::basic_ostream<CharT, Traits> &os,
   if (!sentry)
     return os;
 
-  int width = 1;
-  if (st.size() > 9)
-    width = 2;
-  if (st.size() > 99)
-    width = 3;
-  if (st.size() > 999)
-    width = 4;
-
   int i(0);
   for (auto &e : st)
   {
-    os  << std::setw(width) << ++i << "# " << e << '\n';
+    os  << std::setw(4) << ++i << "# " << e << '\n';
   }
 
   return os;

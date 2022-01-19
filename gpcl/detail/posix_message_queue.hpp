@@ -17,12 +17,11 @@
 #include <gpcl/noncopyable.hpp>
 #include <gpcl/span.hpp>
 #include <gpcl/zstring.hpp>
+
 #include <cstdint>
 #include <memory>
-#include <system_error>
 
-#ifdef GPCL_POSIX
-#  include <mqueue.h>
+#include <mqueue.h>
 
 namespace gpcl {
 namespace detail {
@@ -94,8 +93,6 @@ private:
 
 } // namespace detail
 } // namespace gpcl
-
-#endif
 
 #ifdef GPCL_HEADER_ONLY
 #  include <gpcl/detail/impl/posix_message_queue.ipp>

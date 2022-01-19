@@ -80,7 +80,6 @@ private:
   detail::compressed_pair<pointer, deleter_type> _p;
 
 public:
-
   /// @name Constructors and Destructor
   /// @{
 
@@ -385,7 +384,7 @@ unique_ptr<T> reinterpret_pointer_cast(unique_ptr<U> &&p) noexcept
 
 /// @relates unique_ptr
 template <typename T, typename... Args>
-unique_ptr<T> make_unique(Args &&... args)
+unique_ptr<T> make_unique(Args &&...args)
 {
   return unique_ptr<T>(new T(std::forward<Args>(args)...));
 }

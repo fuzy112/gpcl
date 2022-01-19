@@ -15,10 +15,8 @@
 #include <gpcl/detail/win_clock.hpp>
 #include <gpcl/detail/win_once_flag.hpp>
 #include <gpcl/noncopyable.hpp>
-#include <functional>
 
-#ifdef GPCL_WINDOWS
-#  include <windows.h>
+#include <windows.h>
 
 namespace gpcl {
 namespace detail {
@@ -90,8 +88,6 @@ public:
 };
 } // namespace detail
 } // namespace gpcl
-
-#endif
 
 #ifdef GPCL_HEADER_ONLY
 #  include <gpcl/detail/impl/win_mutex.ipp>

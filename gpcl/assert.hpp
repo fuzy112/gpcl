@@ -15,10 +15,6 @@
 #include <gpcl/detail/assert.hpp>
 
 #ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/assertion_failure.ipp>
-#endif
-
-#ifdef GPCL_HEADER_ONLY
 #  include <gpcl/detail/impl/unreachable.ipp>
 #endif
 

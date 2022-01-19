@@ -36,8 +36,7 @@ public:
 
   constexpr stacktrace_entry(const stacktrace_entry &) = default;
 
-  constexpr stacktrace_entry &
-  operator=(const stacktrace_entry &) = default;
+  constexpr stacktrace_entry &operator=(const stacktrace_entry &) = default;
 
   constexpr native_handle_type native_handle() const noexcept;
 
@@ -59,8 +58,7 @@ public:
                                 const stacktrace_entry &y);
   template <typename CharT, typename Traits>
   friend std::basic_ostream<CharT, Traits> &
-  operator<<(std::basic_ostream<CharT, Traits> &os,
-             const stacktrace_entry &f);
+  operator<<(std::basic_ostream<CharT, Traits> &os, const stacktrace_entry &f);
 };
 
 template <typename Allocator>
@@ -138,5 +136,7 @@ using stacktrace_entry = detail::posix_stacktrace_entry;
 #endif
 
 } // namespace gpcl
+
+#include <gpcl/detail/stacktrace_assertion_failure_hook.hpp>
 
 #endif // GPCL_BASIC_STACKTRACE_HPP

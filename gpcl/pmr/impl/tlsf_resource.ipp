@@ -11,6 +11,7 @@
 #ifndef GPCL_PMR_IMPL_TLSF_RESOURCE_IPP
 #define GPCL_PMR_IMPL_TLSF_RESOURCE_IPP
 
+#include <gpcl/detail/error.hpp>
 #include <gpcl/pmr/tlsf_resource.hpp>
 
 namespace gpcl {
@@ -118,6 +119,5 @@ void tlsf_resource::do_deallocate(void *p, std::size_t bytes,
 
 } // namespace pmr
 } // namespace gpcl
-
 
 #endif // GPCL_PMR_IMPL_TLSF_RESOURCE_IPP
