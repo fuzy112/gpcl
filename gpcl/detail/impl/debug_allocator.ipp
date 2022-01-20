@@ -24,7 +24,7 @@ debug_allocator_data::~debug_allocator_data()
                      << "type: " << record.type->name() << '\n';
     }
 
-    std::abort();
+    std::_Exit(1);
   }
   else
   {
