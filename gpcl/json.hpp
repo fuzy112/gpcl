@@ -1714,19 +1714,7 @@ public:
 };
 
 template <typename K, typename V, typename A>
-class json_std_map_adaptor : public std::map<K, V, std::less<K>, A>
-{
-  using base_type = std::map<K, V, std::less<K>, A>;
-
-public:
-  using std::map<K, V, std::less<K>, A>::map;
-
-  using std::map<K, V, std::less<K>, A>::operator=;
-
-  json_std_map_adaptor(base_type const &b) : base_type(b) {}
-
-  json_std_map_adaptor(base_type &&b) noexcept : base_type(std::move(b)) {}
-};
+using json_std_map_adaptor = std::map<K, V, std::less<K>, A>;
 
 using json = basic_json<std::int64_t, double, std::basic_string,
                         json_std_map_adaptor, std::vector>;
