@@ -1,9 +1,10 @@
 #ifndef GPCL_DETAIL_IMPL_WIN_STACKTRACE_HPP
 #define GPCL_DETAIL_IMPL_WIN_STACKTRACE_HPP
 
-#include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/detail/win_stacktrace.hpp>
 #include <gpcl/unique_lock.hpp>
+
+#include <winnt.h>
 
 namespace gpcl::detail {
 template <typename Allocator>

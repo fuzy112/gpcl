@@ -19,6 +19,8 @@
 #include <gpcl/swap.hpp>
 #include <gpcl/zstring.hpp>
 
+#include <winnt.h>
+
 namespace gpcl {
 namespace detail {
 

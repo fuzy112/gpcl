@@ -12,6 +12,9 @@
 #define GPCL_DETAIL_IMPL_WIN_STACKTRACE_IPP
 
 #include <gpcl/detail/win_stacktrace.hpp>
+#include <gpcl/detail/win_mutex.hpp>
+
+#include <DbgHelp.h>
 
 namespace gpcl::detail {
 

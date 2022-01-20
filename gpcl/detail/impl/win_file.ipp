@@ -14,6 +14,8 @@
 #include <gpcl/detail/win_file.hpp>
 #include <gpcl/narrow_cast.hpp>
 
+#include <fileapi.h>
+
 namespace gpcl {
 namespace detail {
 

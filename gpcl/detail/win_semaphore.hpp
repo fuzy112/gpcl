@@ -17,12 +17,10 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <numeric>
 #include <limits>
+#include <numeric>
 
-#ifdef GPCL_WINDOWS
-
-#  include <windows.h>
+#include <winnt.h>
 
 namespace gpcl {
 namespace detail {
@@ -39,7 +37,7 @@ public:
   GPCL_DECL auto wait() -> void;
   GPCL_DECL auto post() -> void;
 
-#  undef max
+#undef max
   static constexpr std::ptrdiff_t max() noexcept
   {
     return (std::numeric_limits<LONG>::max)();
@@ -53,8 +51,6 @@ private:
 };
 } // namespace detail
 } // namespace gpcl
-
-#endif
 
 #ifdef GPCL_HEADER_ONLY
 #  include <gpcl/detail/impl/win_semaphore.ipp>

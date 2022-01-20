@@ -3,7 +3,8 @@
 
 #include <gpcl/detail/config.hpp>
 
-#include <windows.h>
+
+#include <synchapi.h>
 
 namespace gpcl {
 namespace detail {

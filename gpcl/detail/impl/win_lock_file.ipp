@@ -14,7 +14,7 @@
 #include <gpcl/detail/win_lock_file.hpp>
 #include <gpcl/narrow_cast.hpp>
 
-#include <Windows.h>
+#include <fileapi.h>
 
 namespace gpcl {
 namespace detail {

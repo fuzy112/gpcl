@@ -12,16 +12,16 @@
 #define GPCL_DETAIL_WIN_CONDITION_VARIABLE_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/noncopyable.hpp>
 #include <gpcl/time.hpp>
 #include <gpcl/unique_lock.hpp>
 
-#ifdef GPCL_WINDOWS
-#  include <windows.h>
+#include <synchapi.h>
 
 namespace gpcl {
 namespace detail {
+
+class win_mutex;
 
 class win_condition_variable : noncopyable
 {
@@ -53,7 +53,6 @@ private:
 };
 } // namespace detail
 } // namespace gpcl
-#endif
 
 #ifdef GPCL_HEADER_ONLY
 #  include <gpcl/detail/impl/win_condition_variable.ipp>

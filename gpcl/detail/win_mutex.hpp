@@ -16,7 +16,7 @@
 #include <gpcl/detail/win_once_flag.hpp>
 #include <gpcl/noncopyable.hpp>
 
-#include <windows.h>
+#include <winnt.h>
 
 namespace gpcl {
 namespace detail {

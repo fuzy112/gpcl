@@ -14,7 +14,8 @@
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/win_clock.hpp>
 
-#include <windows.h>
+#include <profileapi.h>
+
 
 namespace gpcl {
 namespace detail {

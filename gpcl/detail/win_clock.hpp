@@ -14,7 +14,6 @@
 #include <gpcl/detail/chrono.hpp>
 #include <gpcl/detail/config.hpp>
 
-#if defined(GPCL_WINDOWS)
 namespace gpcl {
 namespace detail {
 
@@ -44,8 +43,6 @@ public:
 
 } // namespace detail
 } // namespace gpcl
-
-#endif
 
 #ifdef GPCL_HEADER_ONLY
 #  include <gpcl/detail/impl/win_clock.ipp>

@@ -20,9 +20,7 @@
 #include <ostream>
 #include <type_traits>
 
-#ifdef GPCL_WINDOWS
-#  include <process.h>
-#  include <windows.h>
+#include <process.h>
 
 namespace gpcl {
 namespace detail {
@@ -156,8 +154,6 @@ private:
 
 } // namespace detail
 } // namespace gpcl
-
-#endif
 
 #ifdef GPCL_HEADER_ONLY
 #  include <gpcl/detail/impl/win_thread.ipp>

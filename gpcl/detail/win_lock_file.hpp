@@ -15,7 +15,8 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
 #include <gpcl/noncopyable.hpp>
-#include <Windows.h>
+
+#include <winnt.h>
 
 namespace gpcl {
 namespace detail {

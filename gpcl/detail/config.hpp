@@ -62,7 +62,12 @@
 #ifdef GPCL_WINDOWS
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
-#    include <windows.h>
+#  endif
+#  ifndef _WIN32_WINNT
+#    define _WIN32_WINNT _WIN32_WINNT_WINBLUE
+#  endif
+#  ifndef NTDDI_VERSION
+#    define NTDDI_VERSION NTDDI_WINBLUE
 #  endif
 #endif
 

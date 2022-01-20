@@ -25,10 +25,6 @@
 #  pragma comment(lib, "dbghelp")
 #endif
 
-#include <windows.h>
-
-#include <dbghelp.h>
-
 namespace gpcl {
 template <typename MutexType>
 class unique_lock;

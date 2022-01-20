@@ -17,7 +17,7 @@
 #include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/narrow_cast.hpp>
 
-#  include <windows.h>
+#include <synchapi.h>
 
 namespace gpcl {
 namespace detail {
@@ -169,6 +169,5 @@ auto win_timed_mutex::try_lock_until(system_clock::time_point tp) -> bool
 
 } // namespace detail
 } // namespace gpcl
-
 
 #endif // GPCL_DETAIL_IMPL_WIN_MUTEX_IPP

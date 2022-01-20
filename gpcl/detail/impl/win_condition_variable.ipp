@@ -17,7 +17,7 @@
 #include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/narrow_cast.hpp>
 
-#  include <windows.h>
+#include <synchapi.h>
 
 namespace gpcl {
 namespace detail {
@@ -72,7 +72,5 @@ bool win_condition_variable::wait_for(unique_lock<win_mutex> &lock,
 
 } // namespace detail
 } // namespace gpcl
-
-
 
 #endif // GPCL_DETAIL_IMPL_WIN_CONDITION_VARIABLE_IPP
