@@ -14,8 +14,8 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/utility.hpp>
 #include <gpcl/mutex.hpp>
-#include <gpcl/thread.hpp>
 #include <gpcl/scoped_lock.hpp>
+#include <gpcl/thread.hpp>
 
 #include <cstdlib>
 #include <iostream>
@@ -52,14 +52,6 @@ public:
 
 inline debug_allocator_data &g_debug_alloc_data =
     debug_allocator_data::instance();
-
-GPCL_DECL void debug_allocator_double_free(void *p, std::size_t size,
-                                           std::size_t count
-#if !defined GPCL_NO_RTTI
-                                           ,
-                                           std::type_info const &type
-#endif
-);
 
 template <typename T>
 class debug_allocator
