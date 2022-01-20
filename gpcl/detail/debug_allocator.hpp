@@ -49,8 +49,7 @@ public:
   static GPCL_DECL debug_allocator_data &instance();
 };
 
-inline debug_allocator_data &g_debug_alloc_data =
-    debug_allocator_data::instance();
+inline auto &g_debug_alloc_data = debug_allocator_data::instance();
 
 template <typename T>
 class debug_allocator
@@ -95,7 +94,7 @@ public:
 
   void deallocate(T *p, std::size_t n) const
   {
-    if (p == 0 || n == 0)
+    if (n == 0)
       return;
     scoped_lock lock(g_debug_alloc_data.mtx);
 
