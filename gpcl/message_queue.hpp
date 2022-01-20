@@ -12,11 +12,16 @@
 #define GPCL_MESSAGE_QUEUE_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/posix_message_queue.hpp>
 #include <gpcl/expected.hpp>
 
-namespace gpcl {
 #ifdef GPCL_POSIX
+#  define GPCL_MESSAGE_QUEUE
+
+#  include <gpcl/detail/posix_message_queue.hpp>
+#endif
+
+namespace gpcl {
+#ifdef GPCL_MESSAGE_QUEUE
 
 class message_queue
 {

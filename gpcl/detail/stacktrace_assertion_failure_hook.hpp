@@ -9,10 +9,9 @@
 
 namespace gpcl::detail {
 
-[[noreturn]] inline void assertion_failure_hook(const char *expr,
-                                                const char *file,
-                                                std::uint_least32_t line,
-                                                const char *func)
+inline void assertion_failure(const char *expr, const char *file,
+                              std::uint_least32_t line, const char *func,
+                              assertion_failure_hook_tag)
 {
   thread_local static bool assertion_failed = false;
 
@@ -25,9 +24,8 @@ namespace gpcl::detail {
   std::clog << file << ":" << line << ": In function '" << func << "': "
             << "Assertion failed: " << expr << "\n";
   std::clog << "Backtrace:\n";
-  std::clog << basic_stacktrace<std::allocator<stacktrace_entry>>::current()
+  std::clog << basic_stacktrace<std::allocator<stacktrace_entry>>::current(2)
             << std::endl;
-  std::abort();
 }
 
 } // namespace gpcl::detail

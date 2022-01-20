@@ -11,7 +11,7 @@
 #include <cstring>
 
 #if !defined(GPCL_ASSERTION_FAILURE_HANDLER)
-#  define GPCL_ASSERTION_FAILURE_HANDLER ::gpcl::detail::assertion_failure
+#  define GPCL_ASSERTION_FAILURE_HANDLER assertion_failure
 #endif
 
 /// \entity GPCL_ASSERT
@@ -21,8 +21,10 @@
   {                                                                            \
     if (!!(expr))                                                              \
       break;                                                                   \
-    ::gpcl::detail::assertion_failure(#expr, __FILE__, __LINE__, __func__);    \
-    GPCL_UNREACHABLE("assertion_failure handler should not return");           \
+    GPCL_ASSERTION_FAILURE_HANDLER(                                            \
+        #expr, __FILE__, __LINE__, __func__,                                   \
+        ::gpcl::detail::assertion_failure_hook_tag{});                         \
+    std::abort();                                                              \
   } while (false)
 
 #define GPCL_ASSERT_CONST assert
@@ -55,6 +57,5 @@
 #else
 #  define GPCL_FATAL(errno) GPCL_UNREACHABLE(std::strerror(errno))
 #endif
-
 
 #endif // GPCL_DETAIL_ASSERT_HPP

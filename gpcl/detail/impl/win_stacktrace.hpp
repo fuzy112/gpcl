@@ -1,10 +1,9 @@
 #ifndef GPCL_DETAIL_IMPL_WIN_STACKTRACE_HPP
 #define GPCL_DETAIL_IMPL_WIN_STACKTRACE_HPP
 
+#include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/detail/win_stacktrace.hpp>
 #include <gpcl/unique_lock.hpp>
-#include <gpcl/detail/win_mutex.hpp>
-
 
 namespace gpcl::detail {
 template <typename Allocator>
@@ -24,9 +23,8 @@ DECLSPEC_NOINLINE void win_stacktrace_impl(
     buffer.resize(max_depth);
 
     ULONG hash = 0;
-
-    USHORT n =
-        RtlCaptureStackBackTrace(skip, buffer.size(), buffer.data(), &hash);
+    USHORT n = RtlCaptureStackBackTrace((DWORD)skip + 1, (DWORD)buffer.size(),
+                                        buffer.data(), &hash);
     buffer.resize(n);
 
     container.reserve(buffer.size());

@@ -160,8 +160,4 @@ private:
 
 } // namespace gpcl
 
-#if defined(GPCL_HEADER_ONLY)
-#  include <gpcl/detail/posix_condition_variable.hpp>
-#endif
-
 #endif // GPCL_CONDITION_VARIABLE_HPP

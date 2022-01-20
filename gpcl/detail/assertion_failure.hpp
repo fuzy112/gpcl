@@ -8,18 +8,11 @@
 
 namespace gpcl::detail {
 
-inline void assertion_failure_hook(...)
+struct assertion_failure_hook_tag
 {
-  std::abort();
-}
+};
 
-[[noreturn]] inline void assertion_failure(const char *expr, const char *file,
-                                           std::uint_least32_t line,
-                                           const char *func)
-{
-  assertion_failure_hook(expr, file, line, func);
-  abort();
-}
+inline void assertion_failure(...) {}
 
 } // namespace gpcl::detail
 
