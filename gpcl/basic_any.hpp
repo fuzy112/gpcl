@@ -14,6 +14,7 @@
 #include <gpcl/detail/any_manager.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/in_place_type.hpp>
+#include <gpcl/typeid.hpp>
 
 namespace gpcl {
 
@@ -219,17 +220,14 @@ public:
   /// Determines if the basic_any contains a value.
   bool has_value() const noexcept { return manage_; }
 
-#ifndef GPCL_NO_RTTI
-/// Returns the type info of the contained value.
-  const std::type_info &
-  type() const noexcept
+  /// Returns the type info of the contained value.
+  const type_info &type() const noexcept
   {
     if (manage_)
-      return *static_cast<const std::type_info *>(
+      return *static_cast<const type_info *>(
           manage_(nullptr, &data_, any_manage_op::get_type_info));
-    return typeid(void);
+    return typeid_<void>();
   }
-#endif
 
   /// @}
 };
@@ -237,17 +235,9 @@ public:
 /// Determines if the basic_any contains a value of type `T`.
 /// @relates gpcl::basic_any
 template <typename T, std::size_t S, std::size_t A>
-#if defined GPCL_NO_RTTI
-    [[deprecated("Calling holds_type<T>() when RTTI disabled is deprecated.")]]
-#endif
 bool holds_type(const basic_any<S, A> &a)
 {
-#ifdef GPCL_NO_RTTI
-  (void)a;
-  GPCL_UNREACHABLE("unsupported");
-#else
-  return a.type() == typeid(T);
-#endif
+  return a.type() == typeid_<T>();
 }
 
 template <std::size_t LocalSize, std::size_t LocalAlign>

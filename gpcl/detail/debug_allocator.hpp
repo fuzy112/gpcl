@@ -17,11 +17,11 @@
 #include <gpcl/mutex.hpp>
 #include <gpcl/scoped_lock.hpp>
 #include <gpcl/thread.hpp>
+#include <gpcl/typeid.hpp>
 
 #include <cstdlib>
 #include <iostream>
 #include <map>
-#include <typeinfo>
 
 namespace gpcl {
 namespace detail {
@@ -30,9 +30,7 @@ struct alloc_record
 {
   thread_id tid{};
 
-#if !defined GPCL_NO_RTTI
-  const std::type_info *type{};
-#endif
+  const type_info *type{};
 
   std::size_t size{};
   std::size_t count{};
@@ -85,13 +83,11 @@ public:
   {
     scoped_lock lock(g_debug_alloc_data.mtx);
     void *p = std::malloc(sizeof(T) * n);
-    g_debug_alloc_data.alloc_records_map[p] = alloc_record
-    {
-      this_thread::id(),
-#if !defined GPCL_NO_RTTI
-          &typeid(T),
-#endif
-          sizeof(T), n
+    g_debug_alloc_data.alloc_records_map[p] = alloc_record{
+        this_thread::id(),
+        &typeid_<T>(),
+        sizeof(T),
+        n,
     };
 
     return static_cast<T *>(p);

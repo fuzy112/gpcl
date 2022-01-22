@@ -16,15 +16,15 @@ using stacktrace_errinfo =
 std::string to_string(cerrno_errinfo const &ei)
 {
   std::ostringstream ss;
-  ss << "[" << typeid(filename_errinfo::tag *).name() << " ] = { " << ei.value()
-     << ", " << std::quoted(std::strerror(ei.value())) << " }";
+  ss << "[" << gpcl::typeid_<filename_errinfo::tag *>().name() << " ] = { "
+     << ei.value() << ", " << std::quoted(std::strerror(ei.value())) << " }";
   return ss.str();
 }
 
 std::string to_string(filename_errinfo const &ei)
 {
   std::ostringstream ss;
-  ss << "[" << typeid(filename_errinfo::tag *).name()
+  ss << "[" << gpcl::typeid_<filename_errinfo::tag *>().name()
      << "] = " << std::quoted(ei.value());
   return ss.str();
 }

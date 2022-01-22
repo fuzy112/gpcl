@@ -14,15 +14,13 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/utility.hpp>
 #include <gpcl/detail/assert.hpp>
+#include <gpcl/typeid.hpp>
 
 #include <cstddef>
 #include <memory>
 #include <new>
 #include <type_traits>
 
-#if !defined GPCL_NO_RTTI
-#include <typeinfo>
-#endif
 
 namespace gpcl {
 namespace detail {
@@ -45,9 +43,7 @@ union any_data
 enum class any_manage_op : char
 {
   get_pointer = 1,
-#ifndef GPCL_NO_RTTI
   get_type_info = 2,
-#endif
   clone = 3,
   move = 4,
   destroy = 5,
@@ -83,14 +79,12 @@ struct any_manager
     return static_cast<T *>(source->remote_addr);
   }
 
-#ifndef GPCL_NO_RTTI
   // get the type_info of T.
-  static const std::type_info *get_type_info(const any_data_t *source) noexcept
+  static const type_info *get_type_info(const any_data_t *source) noexcept
   {
     (void)source;
-    return &typeid(T);
+    return &typeid_<T>();
   }
-#endif
 
   // clone the data.
   static void clone(any_data_t *dest, const any_data_t *source, std::true_type)
@@ -146,7 +140,7 @@ struct any_manager
 
 #ifndef GPCL_NO_RTTI
     case any_manage_op::get_type_info:
-      return const_cast<std::type_info *>(get_type_info(source));
+      return const_cast<type_info *>(get_type_info(source));
 #endif
 
     case any_manage_op::clone:

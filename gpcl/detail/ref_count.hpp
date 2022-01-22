@@ -18,6 +18,7 @@
 #include <gpcl/detail/utility.hpp>
 #include <gpcl/scope_fail.hpp>
 #include <gpcl/unique_ptr.hpp>
+#include <gpcl/typeid.hpp>
 
 #include <memory>
 #include <utility>
@@ -63,10 +64,8 @@ protected:
     case ref_count_operation_t::get_deleter:
       return s->get_deleter();
 
-#if !defined GPCL_NO_RTTI
     case ref_count_operation_t::get_deleter_type_info:
       return s->get_deleter_type_info();
-#endif
 
     default:
       GPCL_UNREACHABLE("invalid ref_count operation");
@@ -140,12 +139,10 @@ public:
 
   inline Deleter *get_deleter() noexcept { return &p_.second(); }
 
-#if !defined GPCL_NO_RTTI
-  static inline std::type_info *get_deleter_type_info() noexcept
+  static inline type_info *get_deleter_type_info() noexcept
   {
-    return const_cast<std::type_info *>(std::addressof(typeid(Deleter)));
+    return const_cast<type_info *>(std::addressof(typeid_<Deleter>()));
   }
-#endif
 
 public:
   explicit inline ref_count_ptr(ref_count_base::operation_func_t op_func,
@@ -197,12 +194,10 @@ public:
 
   inline std::nullptr_t get_deleter() noexcept { return nullptr; }
 
-#if !defined GPCL_NO_RTTI
-  static inline std::type_info *get_deleter_type_info() noexcept
+  static inline type_info *get_deleter_type_info() noexcept
   {
     return nullptr;
   }
-#endif
 
 public:
   template <typename... Args>

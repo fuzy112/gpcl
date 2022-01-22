@@ -109,7 +109,7 @@ public:
   /// @name Target access
   /// @{
 
-  const std::type_info &target_type() const noexcept { return data_.type(); }
+  const type_info &target_type() const noexcept { return data_.type(); }
 
   const void *target() const noexcept { return data_.raw_value(); }
 

@@ -12,8 +12,10 @@
 #define GPCL_PMR_POLYMORPHIC_ALLOCATOR_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/error.hpp>
 #include <gpcl/pmr/default_resource.hpp>
 #include <gpcl/pmr/memory_resource.hpp>
+
 #include <limits>
 
 namespace gpcl {

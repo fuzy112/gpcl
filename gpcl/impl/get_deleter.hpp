@@ -22,11 +22,11 @@ Deleter *get_deleter(const shared_ptr<T> &p) noexcept
   if (p.use_count() == 0)
     return nullptr;
 #if !defined GPCL_NO_RTTI
-  auto* ty = static_cast<const std::type_info *>(
+  auto* ty = static_cast<const type_info *>(
       p.s_->operate(detail::get_deleter_type_info));
   if (!ty)
     return nullptr;
-  if (*ty != typeid(Deleter))
+  if (*ty != typeid_<Deleter>())
     return nullptr;
 #endif
   return static_cast<Deleter *>(p.s_->operate(detail::get_deleter));

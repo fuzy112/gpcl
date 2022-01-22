@@ -86,7 +86,7 @@
 #endif
 
 #if __cpp_exceptions
-#  undef GPCL_NO_EXCEPTIONS
+// #  undef GPCL_NO_EXCEPTIONS
 #else
 #  define GPCL_NO_EXCEPTIONS 1
 #endif
@@ -106,7 +106,7 @@
 #endif
 
 #if __cpp_rtti
-#  undef GPCL_NO_RTTI
+// #  undef GPCL_NO_RTTI
 #else
 #  define GPCL_NO_RTTI 1
 #endif

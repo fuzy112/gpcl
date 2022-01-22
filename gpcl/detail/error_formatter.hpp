@@ -31,7 +31,7 @@ public:
   template <typename OutIt>
   static OutIt format(OutIt out, const E &)
   {
-    std::string_view str = typeid(E).name();
+    std::string_view str = typeid_<E>().name();
     return std::copy(str.begin(), str.end(), out);
   }
 #else

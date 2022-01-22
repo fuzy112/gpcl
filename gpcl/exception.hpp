@@ -2,12 +2,12 @@
 #define GPCL_EXCEPTION_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/typeid.hpp>
 
 #include <ostream>
 #include <sstream>
 #include <string>
 #include <type_traits>
-#include <typeinfo>
 #include <utility>
 
 namespace gpcl {
@@ -35,7 +35,7 @@ class error_info_base
 public:
   virtual ~error_info_base() = default;
 
-  virtual const std::type_info &type() const noexcept = 0;
+  virtual const type_info &type() const noexcept = 0;
 
   virtual std::string to_string() const = 0;
 };
@@ -111,7 +111,7 @@ public:
 
   value_type const &value() const { return value_; }
 
-  std::type_info const &type() const noexcept { return typeid(error_info); }
+  type_info const &type() const noexcept { return typeid_<error_info>(); }
 
   std::string to_string() const override
   {
@@ -123,7 +123,7 @@ template <typename Tag, typename T>
 std::string to_string(error_info<Tag, T> const &errinfo)
 {
   std::ostringstream oss;
-  oss << "[" << typeid(Tag *).name() << "] = { "
+  oss << "[" << typeid_<Tag *>().name() << "] = { "
       << detail::translate_error_info_value(errinfo.value()) << " }";
   return oss.str();
 }
@@ -185,12 +185,13 @@ public:
   }
 
   template <typename ErrorInfo>
-  friend ErrorInfo const *get_error_info(exception const &exc) noexcept
+  friend typename ErrorInfo::value_type const *
+  get_error_info(exception const &exc) noexcept
   {
     for (error_info_base *ei = exc.error_infos_; ei != nullptr; ei = ei->next_)
     {
-      if (auto r = dynamic_cast<ErrorInfo const *>(ei))
-        return r;
+      if (ei->type() == typeid_<ErrorInfo>())
+        return std::addressof(static_cast<ErrorInfo const *>(ei)->value());
     }
     return nullptr;
   }

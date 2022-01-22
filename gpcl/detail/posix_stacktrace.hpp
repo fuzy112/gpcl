@@ -274,6 +274,8 @@ operator<<(std::basic_ostream<CharT, Traits> &os,
   if (!sentry)
     return os;
 
+  os << '\n';
+
   int i(0);
   for (auto &e : st)
   {
