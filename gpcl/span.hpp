@@ -299,7 +299,7 @@ public:
 
   // extensions
 
-  template <typename Allocator = gpcl::default_allocator<value_type>>
+  template <typename Allocator = std::allocator<value_type>>
   [[nodiscard]] std::vector<value_type, Allocator>
   to_vector(Allocator alloc = Allocator()) const
   {

@@ -33,9 +33,9 @@ int main()
   { 
     std::cout << variant_to<char>(v) << std::endl; 
   }
-  GPCL_CATCH(gpcl::bad_lexical_cast const &)
+  GPCL_CATCH(gpcl::exception const &e)
   {
-    std::cout << "bad_lexical_cast\n";
+    std::cout << e << std::endl;
   }
   GPCL_CATCH_END
 #endif

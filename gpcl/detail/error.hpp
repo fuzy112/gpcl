@@ -159,7 +159,6 @@ using error_condition = std::error_condition;
 
 #endif
 
-#include <gpcl/basic_stacktrace.hpp>
 #include <gpcl/exception.hpp>
 
 namespace gpcl {

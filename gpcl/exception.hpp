@@ -2,10 +2,9 @@
 #define GPCL_EXCEPTION_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/lexical_cast.hpp>
 
 #include <ostream>
-#include <set>
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <typeinfo>
@@ -13,8 +12,26 @@
 
 namespace gpcl {
 
+class exception;
+
+template <typename Tag, typename T>
+class error_info;
+
+template <typename E, typename Tag, typename T>
+E &&operator<<(E &&e, error_info<Tag, T> &&info);
+
+GPCL_DECL
+std::string diagnostic_information(exception const &exc);
+
 class error_info_base
 {
+  friend exception;
+  template <typename E, typename Tag, typename T>
+  friend E &&operator<<(E &&e, error_info<Tag, T> &&info);
+  friend GPCL_DECL std::string diagnostic_information(exception const &exc);
+
+  error_info_base *next_ = nullptr;
+
 public:
   virtual ~error_info_base() = default;
 
@@ -22,9 +39,6 @@ public:
 
   virtual std::string to_string() const = 0;
 };
-
-template <typename Tag, typename T>
-class error_info;
 
 template <typename Tag, typename T>
 std::string to_string(error_info<Tag, T> const &errinfo);
@@ -35,6 +49,23 @@ std::string to_string_impl(error_info<Tag, T> const &errinfo)
 {
   return to_string(errinfo);
 }
+
+template <typename T, decltype(std::declval<std::ostringstream &>()
+                                   << std::declval<const T &>(),
+                               0) = 0>
+std::string to_string(const T &value)
+{
+  std::ostringstream ss;
+  ss << value;
+  return ss.str();
+}
+
+template <typename T>
+std::string translate_error_info_value(const T &value)
+{
+  return to_string(value);
+}
+
 } // namespace detail
 
 template <typename Tag, typename T>
@@ -93,7 +124,7 @@ std::string to_string(error_info<Tag, T> const &errinfo)
 {
   std::ostringstream oss;
   oss << "[" << typeid(Tag *).name() << "] = { "
-      << lexical_cast<std::string>(errinfo.value()) << " }";
+      << detail::translate_error_info_value(errinfo.value()) << " }";
   return oss.str();
 }
 
@@ -105,47 +136,21 @@ operator<<(std::basic_ostream<CharT, Traits> &out,
   return out << to_string(errinfo);
 }
 
-class exception;
-
-GPCL_DECL
-std::string diagnostic_information(exception const &exc);
-
 class exception
 {
   friend GPCL_DECL std::string diagnostic_information(exception const &exc);
 
-  struct error_info_compare
+  error_info_base *error_infos_ = nullptr;
+
+  void release() noexcept
   {
-    using is_transparent = int;
-
-    bool operator()(const error_info_base *x,
-                    const error_info_base *y) const noexcept
+    while (error_infos_)
     {
-      if (!y)
-        return false;
-      if (!x)
-        return true;
-      return x->type().before(y->type());
+      auto tmp = error_infos_->next_;
+      delete error_infos_;
+      error_infos_ = tmp;
     }
-
-    bool operator()(const error_info_base *x,
-                    std::type_info const &y) const noexcept
-    {
-      if (!x)
-        return true;
-      return x->type().before(y);
-    }
-
-    bool operator()(const std::type_info &x,
-                    const error_info_base *y) const noexcept
-    {
-      if (!y)
-        return false;
-      return x.before(y->type());
-    }
-  };
-
-  std::set<error_info_base *, error_info_compare> error_infos_;
+  }
 
 public:
   exception() noexcept {}
@@ -155,41 +160,37 @@ public:
 
   // exception(exception &other) : exception(std::move(other)) {}
 
-  exception(exception &&other) noexcept
-      : error_infos_(std::move(other).error_infos_)
+  exception(exception &&other) noexcept : error_infos_(other.error_infos_)
   {
-    other.error_infos_.clear();
+    other.error_infos_ = nullptr;
   }
 
   exception &operator=(exception &&other) noexcept
   {
-    error_infos_.swap(other.error_infos_);
+    release();
+    error_infos_ = other.error_infos_;
+    other.error_infos_ = nullptr;
     return *this;
   }
 
-  virtual ~exception()
-  {
-    for (auto *p : error_infos_)
-    {
-      delete p;
-    }
-  }
+  virtual ~exception() { release(); }
 
   template <typename E, typename Tag, typename T>
   friend E &&operator<<(E &&e, error_info<Tag, T> &&info)
   {
     error_info_base *copy = new error_info<Tag, T>(std::move(info));
-    e.error_infos_.insert(copy);
+    copy->next_ = e.error_infos_;
+    e.error_infos_ = copy;
     return std::forward<E>(e);
   }
 
   template <typename ErrorInfo>
   friend ErrorInfo const *get_error_info(exception const &exc) noexcept
   {
-    auto iter = error_infos_.find(typeid(ErrorInfo));
-    if (iter != error_infos_.cend())
+    for (error_info_base *ei = exc.error_infos_; ei != nullptr; ei = ei->next_)
     {
-      return *iter;
+      if (auto r = dynamic_cast<ErrorInfo const *>(ei))
+        return r;
     }
     return nullptr;
   }

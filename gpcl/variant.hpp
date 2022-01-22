@@ -20,12 +20,12 @@
 
 #include <cstddef>
 #include <exception>
-#include <utility>
 #include <limits>
+#include <utility>
 
 namespace gpcl {
 
-class bad_variant_access : public std::exception
+class bad_variant_access : virtual public std::exception
 {
 public:
   bad_variant_access() = default;
@@ -230,7 +230,8 @@ protected:
     if (other.index_ == I)
     {
       using type = variant_alternative_t<I, variant<Types...>>;
-      ::new (unsafe_get<type>(this)) type{std::move(*(unsafe_get<type>(&other)))};
+      ::new (unsafe_get<type>(this))
+          type{std::move(*(unsafe_get<type>(&other)))};
       this->index_ = I;
       return;
     }

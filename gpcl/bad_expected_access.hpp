@@ -13,6 +13,7 @@
 
 #include <gpcl/detail/error_formatter.hpp>
 #include <gpcl/detail/utility.hpp>
+#include <gpcl/exception.hpp>
 #include <gpcl/expected_fwd.hpp>
 
 #include <exception>
@@ -20,7 +21,8 @@
 namespace gpcl {
 
 template <>
-class bad_expected_access<void> : public std::exception
+class bad_expected_access<void> : virtual public std::exception,
+                                  virtual public gpcl::exception
 {
 public:
   explicit bad_expected_access() = default;

@@ -1,7 +1,6 @@
 #ifndef GPCL_DETAIL_IMPL_ASSERTION_FAILURE_IPP
 #define GPCL_DETAIL_IMPL_ASSERTION_FAILURE_IPP
 
-#include <gpcl/assert.hpp>
 #include <gpcl/basic_stacktrace.hpp>
 #include <gpcl/debugstream.hpp>
 #include <gpcl/detail/assertion_failure.hpp>

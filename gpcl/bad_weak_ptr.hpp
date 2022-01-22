@@ -12,13 +12,14 @@
 #define GPCL_BAD_WEAK_PTR_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/exception.hpp>
 
 #include <exception>
 
 namespace gpcl {
 
 /// @see gpcl::weak_ptr
-class bad_weak_ptr : public std::exception
+class bad_weak_ptr : virtual public std::exception
 {
 public:
   bad_weak_ptr() noexcept = default;

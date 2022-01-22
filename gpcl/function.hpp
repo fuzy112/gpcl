@@ -21,7 +21,7 @@
 
 namespace gpcl {
 
-class bad_function_call : public std::exception
+class bad_function_call : virtual public std::exception
 {
 public:
   bad_function_call() = default;

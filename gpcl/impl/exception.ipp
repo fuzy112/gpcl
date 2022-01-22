@@ -16,9 +16,9 @@ std::string diagnostic_information(exception const &exc)
     oss << typeid(exc).name() << ":\n";
   }
 
-  for (error_info_base *errinfo : exc.error_infos_)
+  for (error_info_base *ei = exc.error_infos_; ei != nullptr; ei = ei->next_)
   {
-    oss << errinfo->to_string() << "\n";
+    oss << "  " << ei->to_string() << "\n";
   }
 
   return oss.str();

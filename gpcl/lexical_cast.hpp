@@ -11,8 +11,8 @@
 #ifndef GPCL_LEXICAL_CAST_HPP
 #define GPCL_LEXICAL_CAST_HPP
 
-#include <gpcl/error.hpp>
 #include <gpcl/basic_spanstream.hpp>
+#include <gpcl/error.hpp>
 
 #include <cstring>
 #include <exception>
@@ -46,11 +46,10 @@ struct is_input_streamable<
 {
 };
 
-class bad_lexical_cast : public std::exception
+class bad_lexical_cast : virtual public std::exception,
+                         virtual public gpcl::exception
 {
 public:
-  using std::exception::exception;
-
   const char *what() const noexcept final { return "bad lexical cast"; }
 };
 
@@ -102,7 +101,6 @@ void lexical_cast_extract_result(std::basic_istream<CharType> &is,
   GPCL_THROW(bad_lexical_cast());
 }
 
-
 template <typename CharType>
 void lexical_cast_extract_result(basic_ispanstream<CharType> &is,
                                  std::basic_string<CharType> &result)
@@ -117,9 +115,9 @@ void lexical_cast_extract_result(basic_ispanstream<CharType> &is,
   GPCL_THROW(bad_lexical_cast());
 }
 
-
 template <typename CharType, typename Target>
-void lexical_cast_extract_result(std::basic_istream<CharType> &is, Target &result)
+void lexical_cast_extract_result(std::basic_istream<CharType> &is,
+                                 Target &result)
 {
   if (is)
   {
@@ -169,7 +167,8 @@ struct lexical_cast_impl
   Target operator()(const CharType *s, std::size_t n) const
   {
     Target result{};
-    basic_ispanstream<CharType> is(span<CharType>(const_cast<CharType *>(s), n));
+    basic_ispanstream<CharType> is(
+        span<CharType>(const_cast<CharType *>(s), n));
     lexical_cast_extract_result(is, result);
     return result;
   }
