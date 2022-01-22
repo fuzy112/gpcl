@@ -37,7 +37,7 @@ auto bind_front(Fn &&fn, Ts &&...xs)
 {
   return [fn = static_cast<Fn &&>(fn),
           xs = std::make_tuple(std::forward<Ts>(xs)...)](
-             auto &&...ys) -> decltype(auto) {
+             auto &&...ys) mutable -> decltype(auto) {
     return std::apply(fn, std::tuple_cat(xs, std::forward_as_tuple(ys...)));
   };
 }
