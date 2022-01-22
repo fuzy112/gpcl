@@ -20,8 +20,13 @@
 #include <type_traits>
 #include <vector>
 
+#if defined(GPCL_NO_STACKTRACE)
+#  error "This header should not be included."
+#endif
+
 #if defined _MSC_VER && defined GPCL_SEPARATE_COMPILATION &&                   \
-    !defined GPCL_SOURCE && !defined GPCL_DISABLE_AUTO_LINKING
+    !defined GPCL_SOURCE && !defined GPCL_DISABLE_AUTO_LINKING &&              \
+    !defined(GPCL_NO_STACKTRACE)
 #  pragma comment(lib, "dbghelp")
 #endif
 
@@ -107,7 +112,7 @@ public:
       os << desc;
 
     if (line)
-      return os << " at " << file << ":" << std::dec << line;
+      return os << " at " << file << '(' << std::dec << line << ')';
 
     auto binary = f.binary_file();
     if (!binary.empty())

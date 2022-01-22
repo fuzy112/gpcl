@@ -14,6 +14,10 @@
 #include <gpcl/detail/win_stacktrace.hpp>
 #include <gpcl/detail/win_mutex.hpp>
 
+#if defined(GPCL_NO_STACKTRACE)
+#  error "This header should no be included."
+#endif
+
 #include <DbgHelp.h>
 
 namespace gpcl::detail {
