@@ -11,6 +11,7 @@
 #ifndef GPCL_DETAIL_WIN_THREAD_HPP
 #define GPCL_DETAIL_WIN_THREAD_HPP
 
+#include <gpcl/bind_front.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/unique_handle.hpp>
 #include <gpcl/thread_attributes.hpp>
@@ -83,7 +84,7 @@ public:
   explicit win_thread(thread_attributes const &attr, F &&f, Args... args)
   {
     (void)attr;
-    start_thread(std::bind(f, args...));
+    start_thread(bind_front(f, args...));
   }
 
   win_thread(win_thread &&other) noexcept = default;
