@@ -1,7 +1,10 @@
 #include <gpcl/debugstream.hpp>
-#include <gpcl/detail/win_process.hpp>
 //#include <gpcl/impl/win_main.hpp>
 #include <gpcl/stacktrace.hpp>
+
+#if defined(GPCL_WINDOWS)
+#  include <gpcl/detail/win_process.hpp>
+#endif
 
 int main(int argc, char **argv)
 {
