@@ -24,6 +24,7 @@
 #endif
 
 #include <memory>
+#include <string>
 
 namespace gpcl {
 
@@ -123,21 +124,26 @@ public:
   current(size_type skip,
           allocator_type const &alloc = allocator_type()) noexcept
   {
+    (void)skip;
     return basic_stacktrace(alloc);
   }
   static basic_stacktrace
   current(size_type skip, size_type max_depth,
           allocator_type const &alloc = allocator_type()) noexcept
   {
+    (void)skip;
+    (void)max_depth;
     return basic_stacktrace(alloc);
   }
 
   const_reference operator[](size_type pos) const noexcept
   {
+    (void)pos;
     GPCL_ASSERT(false);
   }
   const_reference at(size_type pos) const
   {
+    (void)pos;
     GPCL_THROW(std::out_of_range("stacktrace::at"));
   }
 
