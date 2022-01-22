@@ -5,6 +5,7 @@
 
 #include <streambuf>
 #include <sstream>
+#include <iostream>
 
 #include <debugapi.h>
 
@@ -42,8 +43,11 @@ protected:
       }
     }
 
+    OutputDebugStringA(s.c_str());
+
+    std::clog << this->str();
     this->str(std::basic_string<char, Traits>());
-    OutputDebugStringA(this->str().c_str());
+
     return 0;
   }
 };

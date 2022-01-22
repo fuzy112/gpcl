@@ -11,7 +11,7 @@
 #include <cstring>
 
 #if !defined(GPCL_ASSERTION_FAILURE_HANDLER)
-#  define GPCL_ASSERTION_FAILURE_HANDLER assertion_failure
+#  define GPCL_ASSERTION_FAILURE_HANDLER ::gpcl::detail::assertion_failure
 #endif
 
 /// \entity GPCL_ASSERT
@@ -21,9 +21,7 @@
   {                                                                            \
     if (!!(expr))                                                              \
       break;                                                                   \
-    GPCL_ASSERTION_FAILURE_HANDLER(                                            \
-        #expr, __FILE__, __LINE__, __func__,                                   \
-        ::gpcl::detail::assertion_failure_hook_tag{});                         \
+    GPCL_ASSERTION_FAILURE_HANDLER(#expr, __FILE__, __LINE__, __func__);       \
     std::abort();                                                              \
   } while (false)
 

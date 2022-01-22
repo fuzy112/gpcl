@@ -29,38 +29,26 @@ set (TEST_FIXTURES
 	syncbuf
 	)
 
-
-set (TEST_FIXTURES_HEADER_ONLY)
-set (TEST_FIXTURES_SEPARATE)
-
 include(GenerateExportHeader)
 
 foreach (name ${TEST_FIXTURES})
 	aux_source_directory("${name}" fixture_sources)
-
-	add_library("${name}-header_only" STATIC ${fixture_sources})
-	target_compile_definitions("${name}-header_only" PUBLIC "-D$<UPPER_CASE:${name}>_STATIC_DEFINE")
-	target_link_libraries("${name}-header_only" PUBLIC gpcl::gpcl)
-	list (APPEND TEST_FIXTURES_HEADER_ONLY "${name}-header_only")
-
-	add_library("${name}-separate" ${fixture_sources})
-	GENERATE_EXPORT_HEADER("${name}-separate" BASE_NAME "${name}")
-	target_link_libraries("${name}-separate" PUBLIC gpcl::separate)
-	list (APPEND TEST_FIXTURES_SEPARATE "${name}-separate")
+	add_library("${name}" ${fixture_sources})
+	GENERATE_EXPORT_HEADER("${name}")
+	if (NOT BUILD_SHARED_LIBS)
+	 	target_compile_definitions("${name}" PUBLIC "-D$<UPPER_CASE:${name}>_STATIC_DEFINE")
+	endif ()
+	target_link_libraries("${name}" PUBLIC gpcl::gpcl)
 endforeach()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(tests ${TESTS_SRCS} include_src.cpp)
-target_link_libraries(tests PRIVATE gpcl::gpcl ${TEST_FIXTURES_HEADER_ONLY})
-
-add_executable(tests-separate ${TESTS_SRCS})
-target_link_libraries(tests-separate PRIVATE gpcl::separate ${TEST_FIXTURES_SEPARATE})
+target_link_libraries(tests PRIVATE gpcl::gpcl ${TEST_FIXTURES})
 
 include(doctest.cmake)
 
-doctest_discover_tests(tests TEST_PREFIX "*header only*")
-doctest_discover_tests(tests-separate TEST_PREFIX "*separate*")
+doctest_discover_tests(tests)
 
 add_executable(meta-test meta_test.cpp)
 target_link_libraries(meta-test PRIVATE gpcl::gpcl)

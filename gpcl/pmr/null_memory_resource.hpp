@@ -24,8 +24,4 @@ GPCL_DECL memory_resource *null_memory_resource() noexcept;
 } // namespace pmr
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/pmr/impl/null_memory_resource.ipp>
-#endif
-
 #endif // GPCL_PMR_NULL_MEMORY_RESOURCE_HPP

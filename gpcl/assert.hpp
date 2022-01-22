@@ -14,8 +14,4 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/assert.hpp>
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/unreachable.ipp>
-#endif
-
 #endif // GPCL_ASSERT_HPP

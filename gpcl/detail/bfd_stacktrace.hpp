@@ -14,8 +14,4 @@ GPCL_DECL std::uint_least32_t bfd_stacktrace_entry_source_line(const void *addre
 
 }
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/bfd_stacktrace.ipp>
-#endif
-
 #endif // GPCL_DETAIL_BFD_STACKTRACE_HPP

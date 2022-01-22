@@ -12,12 +12,9 @@
 #define GPCL_SOURCE 1
 #endif
 
-#ifndef GPCL_SEPARATE_COMPILATION
-#error "GPCL_SEPARATE_COMPILATION is not defined"
-#endif
-
 #include <gpcl/detail/config.hpp>
 
+#include <gpcl/detail/impl/assertion_failure.ipp>
 #include <gpcl/detail/impl/debug_allocator.ipp>
 #include <gpcl/detail/impl/error.ipp>
 #include <gpcl/detail/impl/get_mutex_for_address.ipp>

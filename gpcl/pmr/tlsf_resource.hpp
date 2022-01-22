@@ -73,8 +73,4 @@ private:
 } // namespace pmr
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/pmr/impl/tlsf_resource.ipp>
-#endif
-
 #endif // GPCL_PMR_TLSF_RESOURCE_HPP

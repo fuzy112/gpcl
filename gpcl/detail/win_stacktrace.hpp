@@ -321,8 +321,4 @@ basic_win_stacktrace<Allocator>::current(const Allocator &alloc) noexcept
 
 #include <gpcl/detail/impl/win_stacktrace.hpp>
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/win_stacktrace.ipp>
-#endif
-
 #endif // GPCL_DETAIL_WIN_STACKTRACE_HPP

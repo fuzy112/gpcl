@@ -23,8 +23,4 @@ GPCL_DECL memory_resource *new_delete_resource() noexcept;
 } // namespace pmr
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/pmr/impl/new_delete_resource.ipp>
-#endif
-
 #endif // GPCL_PMR_NEW_DELETE_RESOURCE_HPP

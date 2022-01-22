@@ -44,22 +44,33 @@ find_package(Boost
     COMPONENTS system
     )
 
-add_library(gpcl INTERFACE)
+file(GLOB_RECURSE GPCL_HEADERS CONFIGURE_DEPENDS
+	gpcl/*.hpp
+	gpcl/*.ipp
+)
+
+set(GPCL_SOURCES lib/src.cpp)
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+add_library(gpcl ${GPCL_HEADERS} ${GPCL_SOURCES})
 add_library(gpcl::gpcl ALIAS gpcl)
+
+target_compile_features(gpcl PUBLIC cxx_std_17)
 
 find_package(Threads QUIET)
 if (Threads_FOUND)
-	target_link_libraries (gpcl INTERFACE Threads::Threads)
+	target_link_libraries (gpcl PUBLIC Threads::Threads)
 endif()
 
 target_include_directories(gpcl
-	INTERFACE
+	PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 	)
 if (UNIX)
 	target_link_libraries(gpcl
-		INTERFACE
+		PUBLIC
 		rt
 		bfd
 		${CMAKE_DL_LIBS}
@@ -68,7 +79,7 @@ endif ()
 
 if (WIN32)
 	target_link_libraries(gpcl
-		INTERFACE
+		PUBLIC
 		DbgHelp
 		)
 endif()
@@ -84,6 +95,19 @@ if (GPCL_ENABLE_PCH)
 		$<BUILD_INTERFACE:gpcl.hpp>
 	)
 endif ()
+
+get_target_property(library_type gpcl TYPE)
+
+if ("${library_type}" STREQUAL "SHARED_LIBRARY")
+	target_compile_definitions(gpcl PUBLIC GPCL_DYN_LINK=1)
+endif ()
+
+set_target_properties(gpcl
+	PROPERTIES
+	SOVERSION 600
+	VERSION 0.6.0
+	DEFINE_SYMBOL GPCL_SOURCE
+)
 
 include (FetchContent)
 FetchContent_Declare(
@@ -122,8 +146,6 @@ if (Doxygen_FOUND AND GPCL_BUILD_DOC)
 	endif ()
 endif ()
 
-
-add_subdirectory(lib)
 add_subdirectory(tools)
 
 add_subdirectory(examples)
@@ -140,8 +162,9 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/gpcl-config.cmake"
 install(DIRECTORY gpcl DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES gpcl.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-install(TARGETS gpcl separate EXPORT gpcl-targets)
+install(TARGETS gpcl EXPORT gpcl-targets)
 install(EXPORT gpcl-targets NAMESPACE gpcl::
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
 
 include(CPack)
+

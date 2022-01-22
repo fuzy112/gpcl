@@ -13,10 +13,15 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/mutex.hpp>
-#include <gpcl/shared_ptr.hpp>
+
+namespace gpcl
+{
+
+template <typename T> class shared_ptr;
+
+}
 
 namespace gpcl ::detail {
-
 
 #if GPCL_DETAIL_MUTEX_FOR_ADDRESS_USE_SHARED_PTR
 typedef shared_ptr<mutex> mutex_for_address_ptr;
@@ -28,9 +33,5 @@ GPCL_DECL
 mutex_for_address_ptr get_mutex_for_address(void const *key);
 
 } // namespace gpcl::detail
-
-#if defined GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/get_mutex_for_address.ipp>
-#endif
 
 #endif // GPCL_DETAIL_GET_MUTEX_FOR_ADDRESS_HPP

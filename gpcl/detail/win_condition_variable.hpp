@@ -54,8 +54,4 @@ private:
 } // namespace detail
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/win_condition_variable.ipp>
-#endif
-
 #endif

@@ -11,14 +11,13 @@
 #ifndef GPCL_BASIC_SYNCBUF_HPP
 #define GPCL_BASIC_SYNCBUF_HPP
 
-#include <gpcl/default_allocator.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/get_mutex_for_address.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/mutex.hpp>
+#include <gpcl/scoped_lock.hpp>
 #include <gpcl/shared_ptr.hpp>
 #include <gpcl/swap.hpp>
-#include <gpcl/scoped_lock.hpp>
 #include <gpcl/weak_ptr.hpp>
 
 #include <streambuf>
@@ -28,7 +27,7 @@ namespace gpcl {
 
 /// basic_syncbuf is a synchronized wrapper for a @ref std::basic_streambuf.
 template <typename CharType, typename Traits = std::char_traits<CharType>,
-          typename Allocator = gpcl::default_allocator<CharType>>
+          typename Allocator = std::allocator<CharType>>
 class basic_syncbuf : public std::basic_streambuf<CharType, Traits>
 {
 public:
@@ -37,6 +36,7 @@ public:
 
 private:
   // state flags.
+  
   enum flags
   {
     none = 0,

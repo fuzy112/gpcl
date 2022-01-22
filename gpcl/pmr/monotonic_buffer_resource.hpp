@@ -71,8 +71,4 @@ private:
 } // namespace pmr
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/pmr/impl/monotonic_buffer_resource.ipp>
-#endif
-
 #endif // GPCL_PMR_MONOTONIC_BUFFER_RESOURCE_HPP

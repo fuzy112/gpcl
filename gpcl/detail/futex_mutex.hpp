@@ -51,8 +51,4 @@ constexpr futex_mutex::futex_mutex() noexcept : fut_(futex_unlocked) {}
 } // namespace detail
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/futex_mutex.ipp>
-#endif
-
 #endif // GPCL_DETAIL_FUTEX_MUTEX_HPP

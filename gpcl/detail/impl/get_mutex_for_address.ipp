@@ -14,6 +14,7 @@
 #include <gpcl/detail/get_mutex_for_address.hpp>
 #include <gpcl/pool_allocator.hpp>
 #include <gpcl/scoped_lock.hpp>
+#include <gpcl/shared_ptr.hpp>
 #include <gpcl/weak_ptr.hpp>
 
 #include <unordered_map>
@@ -31,7 +32,8 @@ public:
   shared_ptr<std::unordered_map<const void *, weak_ptr<mutex>>> lock()
   {
     auto plock = make_shared<scoped_lock<recursive_mutex>>(mutex_);
-    return shared_ptr<std::unordered_map<const void *, weak_ptr<mutex>>>(plock, &map_);
+    return shared_ptr<std::unordered_map<const void *, weak_ptr<mutex>>>(plock,
+                                                                         &map_);
   }
 };
 

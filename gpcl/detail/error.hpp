@@ -199,8 +199,4 @@ inline void print_error(czstring<> what) noexcept
 } // namespace detail
 } // namespace gpcl
 
-#if defined(GPCL_HEADER_ONLY)
-#  include <gpcl/detail/impl/error.ipp>
-#endif
-
 #endif

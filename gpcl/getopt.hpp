@@ -174,8 +174,4 @@ GPCL_DECL std::ostream &operator<<(std::ostream &out, const getopt &parser);
 
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/impl/getopt.ipp>
-#endif
-
 #endif // GPCL_GETOPT_HPP

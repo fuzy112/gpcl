@@ -79,6 +79,7 @@ public:
 
   bool try_join_for_impl(DWORD ms)
   {
+    GPCL_ASSERT(joinable());
     switch (WaitForSingleObject(process_information_.hProcess, ms))
     {
     case WAIT_OBJECT_0:

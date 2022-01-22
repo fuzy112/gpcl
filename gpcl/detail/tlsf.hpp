@@ -90,8 +90,4 @@ GPCL_DECL int tlsf_check_pool(pool_t pool);
 } // namespace detail
 } // namespace gpcl
 
-#if defined(GPCL_HEADER_ONLY)
-#  include <gpcl/detail/impl/tlsf.ipp>
-#endif
-
 #endif // GPCL_DETAIL_TLSF_HPP

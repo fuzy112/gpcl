@@ -300,8 +300,4 @@ public:
 
 } // namespace gpcl::ext::sqlite
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/ext/impl/sqlite.ipp>
-#endif
-
 #endif // GPCL_EXT_SQLITE_HPP

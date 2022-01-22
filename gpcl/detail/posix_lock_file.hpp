@@ -58,8 +58,4 @@ private:
 } // namespace detail
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/posix_lock_file.ipp>
-#endif
-
 #endif

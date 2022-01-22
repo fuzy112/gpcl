@@ -44,8 +44,5 @@ constexpr futex_condition_variable::futex_condition_variable() noexcept
 } // namespace detail
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/futex_condition_variable.ipp>
-#endif
 
 #endif // GPCL_DETAIL_FUTEX_CONDITION_VARIABLE_HPP

@@ -34,8 +34,4 @@ private:
 } // namespace detail
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/posix_pid_file.ipp>
-#endif
-
 #endif // GPCL_DETAIL_POSIX_PID_FILE_HPP

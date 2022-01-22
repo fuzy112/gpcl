@@ -3,7 +3,7 @@
 
 #include <gpcl/detail/config.hpp>
 
-#if defined(_WIN32)
+#if defined(GPCL_WINDOWS)
 
 #  if defined(_MSC_VER)
 #    pragma comment(linker, "/subsystem:windows")
@@ -12,7 +12,7 @@
 #  include <WinBase.h>
 #  include <stdlib.h>
 
-GPCL_DECL int __cdecl main(int argc, char **argv);
+int __cdecl main(int argc, char **argv);
 
 int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                       LPSTR lpCmdLine, int nShowCmd)

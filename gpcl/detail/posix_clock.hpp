@@ -68,8 +68,4 @@ struct realtime_clock
 } // namespace detail
 } // namespace gpcl
 
-#if defined(GPCL_HEADER_ONLY)
-#  include <gpcl/detail/impl/posix_clock.ipp>
-#endif
-
 #endif // GPCL_DETAIL_POSIX_CLOCK_HPP

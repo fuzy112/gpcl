@@ -52,8 +52,4 @@ private:
 } // namespace detail
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/win_semaphore.ipp>
-#endif
-
 #endif

@@ -4,15 +4,11 @@
 #include <gpcl/detail/config.hpp>
 
 #include <cstdint>
-#include <cstdlib>
 
 namespace gpcl::detail {
 
-struct assertion_failure_hook_tag
-{
-};
-
-inline void assertion_failure(...) {}
+GPCL_DECL void assertion_failure(const char *expr, const char *file,
+                                 std::uint_least32_t line, const char *func);
 
 } // namespace gpcl::detail
 

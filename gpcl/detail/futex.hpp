@@ -148,8 +148,5 @@ inline bool futex_wait_until(i32 *uaddr, i32 old,
 } // namespace detail
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/futex.ipp>
-#endif
 
 #endif // GPCL_DETAIL_FUTEX_HPP

@@ -167,8 +167,4 @@ inline void swap(posix_file &x, posix_file &y) noexcept
 
 #include <gpcl/detail/impl/posix_file.hpp>
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/posix_file.ipp>
-#endif // GPCL_HEADER_ONLY
-
 #endif // GPCL_DETAIL_POSIX_FILE_HPP

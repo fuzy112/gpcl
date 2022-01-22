@@ -94,8 +94,4 @@ private:
 } // namespace detail
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/posix_message_queue.ipp>
-#endif
-
 #endif // GPCL_POSIX_posix_message_queue_HPP

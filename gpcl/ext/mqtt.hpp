@@ -441,8 +441,4 @@ struct async_loop_guard : gpcl::noncopyable
 
 #endif
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/ext/impl/mqtt.ipp>
-#endif
-
 #endif

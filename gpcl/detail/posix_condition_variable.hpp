@@ -17,8 +17,7 @@
 #include <gpcl/time.hpp>
 #include <gpcl/unique_lock.hpp>
 
-#ifdef GPCL_POSIX
-#  include <pthread.h>
+#include <pthread.h>
 
 namespace gpcl {
 namespace detail {
@@ -51,11 +50,5 @@ private:
 
 } // namespace detail
 } // namespace gpcl
-
-#endif
-
-#if defined(GPCL_HEADER_ONLY)
-#  include <gpcl/detail/impl/posix_condition_variable.ipp>
-#endif
 
 #endif

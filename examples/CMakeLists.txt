@@ -1,6 +1,6 @@
 function (add_example_executable target)
     add_executable(${target} ${ARGN})
-    target_link_libraries(${target} PRIVATE gpcl::separate)
+    target_link_libraries(${target} PRIVATE gpcl::gpcl)
 
     if (BUILD_TESTING)
         add_test(NAME "*example*${target}" COMMAND ${target})
@@ -23,3 +23,4 @@ if (MSVC)
 endif ()
 
 add_subdirectory(stacktrace)
+add_subdirectory(process)

@@ -21,9 +21,8 @@
 #include <iostream>
 #include <type_traits>
 
-#ifdef GPCL_POSIX
-#  include <pthread.h>
-#  include <sys/types.h>
+#include <pthread.h>
+#include <sys/types.h>
 
 namespace gpcl {
 namespace detail {
@@ -36,17 +35,17 @@ GPCL_DECL bool posix_thread_interrupted();
 
 class posix_thread_id
 {
-#  if defined GPCL_CONFIG_POSIX_THREAD_ID_IS_TID
+#if defined GPCL_CONFIG_POSIX_THREAD_ID_IS_TID
   pid_t value_ = 0;
 
   explicit posix_thread_id(pid_t id) : value_(id) {}
 
-#  else
+#else
   pthread_t value_ = 0;
 
   explicit posix_thread_id(pthread_t id) : value_(id) {}
 
-#  endif
+#endif
 
   friend posix_thread;
 
@@ -177,11 +176,4 @@ private:
 } // namespace detail
 } // namespace gpcl
 
-#endif
-
-#if defined(GPCL_HEADER_ONLY)
-#  include <gpcl/detail/impl/posix_thread.ipp>
-#endif
-
 #endif // GPCL_DETAIL_POSIX_THREAD_HPP
-

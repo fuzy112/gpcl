@@ -191,8 +191,4 @@ using stacktrace_entry = detail::posix_stacktrace_entry;
 
 } // namespace gpcl
 
-#if !defined(GPCL_NO_STACKTRACE)
-#  include <gpcl/detail/stacktrace_assertion_failure_hook.hpp>
-#endif
-
 #endif // GPCL_BASIC_STACKTRACE_HPP

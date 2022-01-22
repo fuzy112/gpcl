@@ -47,8 +47,4 @@ GPCL_DEFINE_MAKE_ERROR_CODE(gpcl::json_errc, gpcl::json_category())
 
 GPCL_SPECIALIZE_IS_ERROR_CODE_ENUM(gpcl::json_errc, true)
 
-#if defined GPCL_HEADER_ONLY
-#  include <gpcl/impl/json_error.ipp>
-#endif
-
 #endif // GPCL_JSON_ERROR_HPP

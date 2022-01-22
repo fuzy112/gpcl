@@ -124,8 +124,4 @@ public:
 } // namespace detail
 } // namespace gpcl
 
-#if defined(GPCL_HEADER_ONLY)
-#  include <gpcl/detail/impl/posix_mutex.ipp>
-#endif
-
 #endif // GPCL_DETAIL_POSIX_MUTEX_HPP

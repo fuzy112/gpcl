@@ -8,7 +8,9 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#pragma once
+#ifndef GPCL_DETAIL_WIN_MUTEX_HPP
+#define GPCL_DETAIL_WIN_MUTEX_HPP
+
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/unique_handle.hpp>
@@ -89,6 +91,4 @@ public:
 } // namespace detail
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/win_mutex.ipp>
-#endif
+#endif // GPCL_DETAIL_WIN_MUTEX_HPP

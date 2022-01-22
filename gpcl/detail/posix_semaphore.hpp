@@ -12,12 +12,12 @@
 #define GPCL_DETAIL_POSIX_SEMAPHORE_HPP
 
 #include <gpcl/detail/config.hpp>
+
 #include <cstddef>
 #include <cstdint>
 
-#if defined(GPCL_POSIX)
-#  include <limits.h>
-#  include <semaphore.h>
+#include <limits.h>
+#include <semaphore.h>
 
 namespace gpcl {
 namespace detail {
@@ -50,11 +50,5 @@ private:
 
 } // namespace detail
 } // namespace gpcl
-
-#endif
-
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/posix_semaphore.ipp>
-#endif
 
 #endif

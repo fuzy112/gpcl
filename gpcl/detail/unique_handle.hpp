@@ -8,13 +8,13 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#pragma once
-#include <gpcl/detail/config.hpp>
+#ifndef GPCL_DETAIL_UNIQUE_HANDLE_HPP
+#define GPCL_DETAIL_UNIQUE_HANDLE_HPP
 
+#include <gpcl/detail/config.hpp>
 #include <gpcl/unique_resource.hpp>
 
-#ifdef GPCL_WINDOWS
-#  include <windows.h>
+#include <winnt.h>
 
 namespace gpcl {
 
@@ -46,8 +46,4 @@ using null_handle = unique_resource<::HANDLE, null_handle_deleter>;
 
 } // namespace gpcl
 
-#  ifdef GPCL_HEADER_ONLY
-#    include <gpcl/detail/impl/unique_handle.ipp>
-#  endif
-
-#endif
+#endif // GPCL_DETAIL_UNIQUE_HANDLE_HPP

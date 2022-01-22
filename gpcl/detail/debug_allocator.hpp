@@ -11,6 +11,7 @@
 #ifndef GPCL_DETAIL_DEBUG_ALLOCATOR_HPP
 #define GPCL_DETAIL_DEBUG_ALLOCATOR_HPP
 
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/utility.hpp>
 #include <gpcl/mutex.hpp>
@@ -103,10 +104,7 @@ public:
     scoped_lock lock(g_debug_alloc_data.mtx);
 
     auto iter = g_debug_alloc_data.alloc_records_map.find(p);
-    if (iter == g_debug_alloc_data.alloc_records_map.cend())
-    {
-      debug_allocator_double_free(p, sizeof(T), n, typeid(T));
-    }
+    GPCL_ASSERT(iter != g_debug_alloc_data.alloc_records_map.cend());
     free(p);
     g_debug_alloc_data.alloc_records_map.erase(iter);
   }
@@ -114,9 +112,5 @@ public:
 
 } // namespace detail
 } // namespace gpcl
-
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/detail/impl/debug_allocator.ipp>
-#endif
 
 #endif // GPCL_DETAIL_DEBUG_ALLOCATOR_HPP

@@ -24,8 +24,5 @@ GPCL_DECL void set_default_resource(memory_resource *resource) noexcept;
 } // namespace pmr
 } // namespace gpcl
 
-#ifdef GPCL_HEADER_ONLY
-#  include <gpcl/pmr/impl/default_resource.ipp>
-#endif
 
 #endif // GPCL_PMR_DEFAULT_RESOURCE_HPP
