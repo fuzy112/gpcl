@@ -17,6 +17,7 @@
 #endif
 
 #include <gpcl/detail/config.hpp>
+
 #include <gpcl/detail/impl/debug_allocator.ipp>
 #include <gpcl/detail/impl/error.ipp>
 #include <gpcl/detail/impl/get_mutex_for_address.ipp>
@@ -53,10 +54,12 @@
 #include <gpcl/detail/impl/win_lock_file.ipp>
 #include <gpcl/detail/impl/win_mutex.ipp>
 #include <gpcl/detail/impl/win_semaphore.ipp>
-#include <gpcl/detail/impl/win_stacktrace.ipp>
+#if !defined(GPCL_NO_STACKTRACE)
+#  include <gpcl/detail/impl/win_stacktrace.ipp>
+#endif
 #include <gpcl/detail/impl/win_thread.ipp>
 #endif
 
-#ifdef GPCL_BFD
+#if defined(GPCL_BFD) && !defined(GPCL_NO_STACKTRACE)
 #include <gpcl/detail/impl/bfd_stacktrace.ipp>
 #endif
