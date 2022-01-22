@@ -17,7 +17,7 @@
 namespace gpcl {
 
 inline namespace errors {
-using namespace detail::errors;
+using namespace ::gpcl::detail::errors;
 }
 
 } // namespace gpcl

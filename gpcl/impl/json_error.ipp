@@ -85,47 +85,6 @@ error_category const &json_category() noexcept
   return instance;
 }
 
-/// The class json_error defines an exception object thrown when processing JSON
-/// data.
-class json_error : public system_error
-{
-  const char *const_message_ = nullptr;
-
-public:
-  explicit json_error(json_errc errc)
-      : system_error(static_cast<int>(errc), json_category())
-  {
-  }
-
-  explicit json_error(json_errc errc, const std::string &what)
-      : system_error(static_cast<int>(errc), json_category(), what)
-  {
-  }
-
-  explicit json_error(json_errc errc, const char *what)
-      : system_error(static_cast<int>(errc), json_category(), what)
-  {
-  }
-
-  struct const_string_tag
-  {
-  };
-
-  json_error(json_errc errc, const char *what, const_string_tag)
-      : system_error(static_cast<int>(errc), json_category()),
-        const_message_(what)
-  {
-  }
-
-  const char *what() const noexcept
-  {
-    if (const_message_)
-      return const_message_;
-
-    return system_error::what();
-  }
-};
-
 void throw_json_error(json_errc errc, const char *message, bool)
 {
   GPCL_THROW(json_error(errc, message, json_error::const_string_tag{}));

@@ -142,7 +142,7 @@ public:
     {
       std::ptrdiff_t diff = reinterpret_cast<char *>(next_chunk(*p)) -
                             reinterpret_cast<char *>(*p);
-      if (diff != partition_sz)
+      if (diff != std::ptrdiff_t(partition_sz))
       {
         m = 0;
         p = &next_chunk(*p);

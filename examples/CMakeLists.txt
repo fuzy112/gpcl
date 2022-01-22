@@ -24,3 +24,5 @@ endif ()
 
 add_subdirectory(stacktrace)
 add_subdirectory(process)
+add_subdirectory(polymorphic_allocator)
+add_subdirectory(exception)

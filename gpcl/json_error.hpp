@@ -12,6 +12,7 @@
 #define GPCL_JSON_ERROR_HPP
 
 #include <gpcl/error.hpp>
+#include <gpcl/exception.hpp>
 
 namespace gpcl {
 
@@ -31,6 +32,9 @@ enum class json_errc
   failed_to_parse,
 };
 
+using json_type_errinfo =
+    error_info<struct json_type_err_tag, std::pair<std::string, std::string>>;
+
 /// Throws a json_error with a static message.
 [[noreturn]] GPCL_DECL void throw_json_error(json_errc errc,
                                              const char *message, bool);
@@ -46,5 +50,52 @@ GPCL_DECL error_category const &json_category() noexcept;
 GPCL_DEFINE_MAKE_ERROR_CODE(gpcl::json_errc, gpcl::json_category())
 
 GPCL_SPECIALIZE_IS_ERROR_CODE_ENUM(gpcl::json_errc, true)
+
+namespace gpcl {
+
+/// The class json_error defines an exception object thrown when processing JSON
+/// data.
+class json_error : virtual public system_error, virtual public exception
+{
+  const char *const_message_ = nullptr;
+
+public:
+  explicit json_error(json_errc errc)
+      : system_error(static_cast<int>(errc), json_category()),
+        gpcl::exception()
+  {
+  }
+
+  explicit json_error(json_errc errc, const std::string &what)
+      : system_error(static_cast<int>(errc), json_category(), what),
+        gpcl::exception()
+  {
+  }
+
+  explicit json_error(json_errc errc, const char *what)
+      : system_error(static_cast<int>(errc), json_category(), what),
+        gpcl::exception()
+  {
+  }
+
+  struct const_string_tag
+  {
+  };
+
+  json_error(json_errc errc, const char *what, const_string_tag)
+      : system_error(static_cast<int>(errc), json_category()),
+        const_message_(what)
+  {
+  }
+
+  const char *what() const noexcept
+  {
+    if (const_message_)
+      return const_message_;
+
+    return system_error::what();
+  }
+};
+} // namespace gpcl
 
 #endif // GPCL_JSON_ERROR_HPP

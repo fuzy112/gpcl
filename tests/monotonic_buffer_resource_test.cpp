@@ -2,6 +2,7 @@
 
 #include <gpcl/pmr/monotonic_buffer_resource.hpp>
 #include <gpcl/pmr/new_delete_resource.hpp>
+#include <gpcl/pmr/synchronised_pool_resource.hpp>
 #include <gpcl/pmr/tlsf_resource.hpp>
 
 #include <map>
@@ -15,6 +16,10 @@ bool is_aligned(void const *ptr, std::size_t alignment)
 
 class checking_resource : public gpcl::pmr::memory_resource
 {
+public:
+  ~checking_resource() { CHECK(allocated_memory_info_.empty()); }
+
+protected:
   void *do_allocate(std::size_t bytes, std::size_t alignment) override
   {
     auto p = upstream_->allocate(bytes, alignment);
@@ -59,7 +64,18 @@ TEST_CASE("monotonic_buffer_resource")
 TEST_CASE("tlsf_resource")
 {
   checking_resource resource1;
-  gpcl::pmr::tlsf_resource resource(&resource1);
+  {
+    gpcl::pmr::tlsf_resource resource(&resource1);
+
+    auto p = resource.allocate(20, 32);
+    resource.deallocate(p, 20, 32);
+  }
+}
+
+TEST_CASE("synchronised_pool_resource")
+{
+  checking_resource resource1;
+  gpcl::pmr::synchronised_pool_resource resource(&resource1);
 
   auto p = resource.allocate(20, 32);
   resource.deallocate(p, 20, 32);

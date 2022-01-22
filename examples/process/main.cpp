@@ -8,6 +8,9 @@
 
 int main(int argc, char **argv)
 {
+  (void)argc;
+  (void)argv;
+
 #if defined(GPCL_WINDOWS)
   GPCL_TRY
   {
@@ -15,8 +18,8 @@ int main(int argc, char **argv)
         gpcl::detail::win_process::command_line_tag{}, "notepad.exe");
     if (!proc.try_join_for(gpcl::chrono::seconds(5)))
     {
-      // proc.kill();
-      // proc.join();
+      proc.kill();
+      proc.join();
     }
     
     gpcl::cdebug() << "Exit code: " << proc.exit_code() << std::endl;

@@ -49,7 +49,7 @@ public:
 
   /// Converting copy constructor.
   template <typename Y,
-            std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
+            std::enable_if_t<std::is_convertible<Y *, T *>::value, int> = 0>
   weak_ptr(const weak_ptr<Y> &r) noexcept : p_(r.p_),
                                             s_(r.s_)
   {
@@ -59,7 +59,7 @@ public:
 
   /// Construct a weak_ptr from a shared_ptr.
   template <typename Y,
-            std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
+            std::enable_if_t<std::is_convertible<Y *, T *>::value, int> = 0>
   weak_ptr(const shared_ptr<Y> &r) noexcept;
 
   /// Move constructor.
@@ -71,7 +71,7 @@ public:
 
   /// Converting move constructor.
   template <typename Y,
-            std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
+            std::enable_if_t<std::is_convertible<Y *, T *>::value, int> = 0>
   weak_ptr(weak_ptr<Y> &&r) noexcept
       : p_(detail::exchange(r.p_, nullptr)),
         s_(detail::exchange(r.s_, nullptr))
@@ -97,7 +97,7 @@ public:
 
   /// Converting copy assignment.
   template <typename Y,
-            std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
+            std::enable_if_t<std::is_convertible<Y *, T *>::value, int> = 0>
   weak_ptr &operator=(const weak_ptr<Y> &r) noexcept
   {
     weak_ptr(r).swap(*this);
@@ -113,7 +113,7 @@ public:
 
   /// Converting move assignment.
   template <typename Y,
-            std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
+            std::enable_if_t<std::is_convertible<Y *, T *>::value, int> = 0>
   weak_ptr &operator=(weak_ptr<Y> &&r) noexcept
   {
     weak_ptr(std::move(r)).swap(*this);
@@ -122,7 +122,7 @@ public:
 
   /// Assignment a shared_ptr to a weak_ptr.
   template <typename Y,
-            std::enable_if_t<std::is_convertible_v<Y *, T *>, int> = 0>
+            std::enable_if_t<std::is_convertible<Y *, T *>::value, int> = 0>
   weak_ptr &operator=(const shared_ptr<Y> &r) noexcept;
 
   /// Reset to nullptr.

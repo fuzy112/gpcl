@@ -23,7 +23,12 @@
 #  define GPCL_CATCH(x) catch (x)
 #  define GPCL_RETHROW throw
 #  define GPCL_CATCH_END }
-#  define GPCL_THROW(x) throw x
+#  define GPCL_THROW(x)                                                        \
+    throw ::std::move(::gpcl::enable_error_info(x)                             \
+                      << ::gpcl::detail::source_file_errinfo(__FILE__)         \
+                      << ::gpcl::detail::source_line_errinfo(__LINE__)         \
+                      << ::gpcl::detail::func_name_errinfo(__func__))
+
 #else
 #  define GPCL_TRY                                                             \
     {                                                                          \
@@ -35,7 +40,7 @@
     do                                                                         \
     {                                                                          \
       (void)sizeof((x));                                                       \
-      std::terminate();                                                            \
+      std::terminate();                                                        \
     } while (false)
 #endif
 
@@ -67,14 +72,14 @@ using errc::make_error_condition;
 
 #  define GPCL_SPECIALIZE_IS_ERROR_CODE_ENUM(enum_type, value)                 \
     template <>                                                                \
-    struct boost::system::is_error_code_enum<enum_type>                      \
+    struct boost::system::is_error_code_enum<enum_type>                        \
         : std::bool_constant<value>                                            \
     {                                                                          \
     };
 
 #  define GPCL_SPECIALIZE_IS_ERROR_CONDITION_ENUM(enum_type, value)            \
     template <>                                                                \
-    struct boost::system::is_error_condition_enum<enum_type>                 \
+    struct boost::system::is_error_condition_enum<enum_type>                   \
         : std::bool_constant<value>                                            \
     {                                                                          \
     };
@@ -121,14 +126,13 @@ using error_condition = std::error_condition;
 
 #  define GPCL_SPECIALIZE_IS_ERROR_CODE_ENUM(enum_type, value)                 \
     template <>                                                                \
-    struct std::is_error_code_enum<enum_type> : std::bool_constant<value>    \
+    struct std::is_error_code_enum<enum_type> : std::bool_constant<value>      \
     {                                                                          \
     };
 
 #  define GPCL_IS_DECLARE_ERROR_CONDITION_ENUM(enum_type, value)               \
     template <>                                                                \
-    struct std::is_error_condition_enum<enum_type>                           \
-        : std::bool_constant<value>                                            \
+    struct std::is_error_condition_enum<enum_type> : std::bool_constant<value> \
     {                                                                          \
     };
 
@@ -155,10 +159,20 @@ using error_condition = std::error_condition;
 
 #endif
 
+#include <gpcl/basic_stacktrace.hpp>
+#include <gpcl/exception.hpp>
+
 namespace gpcl {
 namespace detail {
 
 inline namespace errors {
+
+using source_file_errinfo =
+    error_info<struct source_file_errinfo_, const char *>;
+using source_line_errinfo = error_info<struct source_line_errinfo_, unsigned>;
+using func_name_errinfo = error_info<struct func_name_errinfo_, const char *>;
+using pretty_func_name_errinfo =
+    error_info<struct pretty_func_name_errinfo_, const char *>;
 
 class interrupted : public std::exception
 {

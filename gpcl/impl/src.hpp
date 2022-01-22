@@ -20,6 +20,7 @@
 #include <gpcl/detail/impl/get_mutex_for_address.ipp>
 #include <gpcl/detail/impl/tlsf.ipp>
 #include <gpcl/detail/impl/unreachable.ipp>
+#include <gpcl/impl/exception.ipp>
 #include <gpcl/impl/getopt.ipp>
 #include <gpcl/impl/json_error.ipp>
 #include <gpcl/pmr/impl/default_resource.ipp>

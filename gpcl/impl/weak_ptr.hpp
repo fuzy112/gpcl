@@ -17,7 +17,7 @@
 namespace gpcl {
 
 template <typename T>
-template <typename Y, std::enable_if_t<std::is_convertible_v<Y *, T *>, int>>
+template <typename Y, std::enable_if_t<std::is_convertible<Y *, T *>::value, int>>
 weak_ptr<T>::weak_ptr(const shared_ptr<Y> &r) noexcept : p_(r.p_),
                                                          s_(r.s_)
 {
@@ -26,7 +26,7 @@ weak_ptr<T>::weak_ptr(const shared_ptr<Y> &r) noexcept : p_(r.p_),
 }
 
 template <typename T>
-template <typename Y, std::enable_if_t<std::is_convertible_v<Y *, T *>, int>>
+template <typename Y, std::enable_if_t<std::is_convertible<Y *, T *>::value, int>>
 weak_ptr<T> &weak_ptr<T>::operator=(const shared_ptr<Y> &r) noexcept
 {
   weak_ptr(r).swap(*this);

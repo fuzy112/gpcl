@@ -23,6 +23,7 @@ set (TESTS_SRCS
 	bind_front_test.cpp
 	thread_test.cpp
 	scope_test.cpp
+	exception.cpp
 )
 
 set (TEST_FIXTURES

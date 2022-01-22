@@ -1,0 +1,1 @@
+ADD_EXAMPLE_EXECUTABLE(polymorphic_allocator main.cpp)
