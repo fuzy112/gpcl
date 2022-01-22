@@ -11,11 +11,11 @@
 #ifndef GPCL_FUNCTION_HPP
 #define GPCL_FUNCTION_HPP
 
+#include <gpcl/assert.hpp>
 #include <gpcl/basic_any.hpp>
 #include <gpcl/detail/config.hpp>
-#include <gpcl/swap.hpp>
 #include <gpcl/error.hpp>
-#include <gpcl/assert.hpp>
+#include <gpcl/swap.hpp>
 
 #include <tuple>
 
@@ -72,8 +72,8 @@ public:
 
   function(std::nullptr_t) noexcept {}
 
-  template <typename F,
-            typename = std::enable_if_t<!std::is_same_v<std::decay_t<F>, function>>>
+  template <typename F, typename = std::enable_if_t<
+                            !std::is_same_v<std::decay_t<F>, function>>>
   function(F &&f) : data_(std::forward<F>(f))
   {
     invoke_ = [](const void *pf, Args... args) -> Result {
