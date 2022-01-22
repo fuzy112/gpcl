@@ -29,13 +29,13 @@
     {                                                                          \
       if (true)
 #  define GPCL_CATCH(x) else
-#  define GPCL_RETHROW std::abort()
+#  define GPCL_RETHROW std::terminate()
 #  define GPCL_CATCH_END }
 #  define GPCL_THROW(x)                                                        \
     do                                                                         \
     {                                                                          \
       (void)sizeof((x));                                                       \
-      std::abort();                                                            \
+      std::terminate();                                                            \
     } while (false)
 #endif
 
