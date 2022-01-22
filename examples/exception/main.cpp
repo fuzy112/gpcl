@@ -16,8 +16,8 @@ using stacktrace_errinfo =
 std::string to_string(cerrno_errinfo const &ei)
 {
   std::ostringstream ss;
-  ss << "[cerrno_errinfo] = { " << ei.value() << ", "
-     << std::quoted(std::strerror(ei.value())) << " }";
+  ss << "[" << typeid(filename_errinfo::tag *).name() << " ] = { " << ei.value()
+     << ", " << std::quoted(std::strerror(ei.value())) << " }";
   return ss.str();
 }
 
