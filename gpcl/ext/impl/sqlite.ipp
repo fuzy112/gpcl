@@ -12,6 +12,7 @@
 #define GPCL_EXT_IMPL_SQLITE_IPP
 
 #include <gpcl/assert.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/ext/sqlite.hpp>
 
 #include <cassert>

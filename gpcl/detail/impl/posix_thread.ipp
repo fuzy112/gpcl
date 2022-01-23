@@ -13,8 +13,8 @@
 
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/chrono.hpp>
-#include <gpcl/detail/error.hpp>
 #include <gpcl/detail/posix_thread.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/scope_success.hpp>
 
 #include <signal.h>

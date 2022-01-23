@@ -13,6 +13,7 @@
 
 #include <gpcl/access_mode.hpp>
 #include <gpcl/detail/posix_memory_map.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 
 #include <cstdint>
 

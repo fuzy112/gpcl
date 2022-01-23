@@ -12,7 +12,7 @@
 #define GPCL_DETAIL_IMPL_WIN_CONDITION_VARIABLE_IPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/error.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/detail/win_condition_variable.hpp>
 #include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/narrow_cast.hpp>

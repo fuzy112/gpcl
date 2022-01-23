@@ -12,6 +12,7 @@
 #define GPCL_DETAIL_IMPL_POSIX_LOCK_FILE_IPP
 
 #include <gpcl/detail/posix_lock_file.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/unique_lock.hpp>
 #include <fcntl.h>
 #include <unistd.h>
@@ -24,8 +25,10 @@ void posix_lock_file::lock()
   unique_lock<mutex_type> lk{mtx_};
 
   GPCL_ASSERT(!owns_lock());
-  file_.open(open_or_create, filename_.c_str(),
-             posix_file::access_mode::readwrite).value();
+  file_
+      .open(open_or_create, filename_.c_str(),
+            posix_file::access_mode::readwrite)
+      .value();
 
   // Lock the whole file.
   if (::lockf(file_.native_handle(), F_LOCK, 0) == -1)
@@ -43,8 +46,10 @@ bool posix_lock_file::try_lock()
   unique_lock<mutex_type> lk{mtx_};
 
   GPCL_ASSERT(!owns_lock());
-  file_.open(open_or_create, filename_.c_str(),
-             posix_file::access_mode::readwrite).value();
+  file_
+      .open(open_or_create, filename_.c_str(),
+            posix_file::access_mode::readwrite)
+      .value();
 
   // try locking the file.
   if (lockf(file_.native_handle(), F_TLOCK, 0) == -1)
@@ -101,6 +106,5 @@ void posix_lock_file::unlock()
 
 } // namespace detail
 } // namespace gpcl
-
 
 #endif // GPCL_DETAIL_IMPL_POSIX_LOCK_FILE_IPP

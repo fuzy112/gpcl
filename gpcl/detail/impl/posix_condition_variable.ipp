@@ -8,7 +8,7 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <gpcl/detail/error.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/detail/posix_clock.hpp>
 #include <gpcl/detail/posix_condition_variable.hpp>
 #include <gpcl/detail/posix_mutex.hpp>

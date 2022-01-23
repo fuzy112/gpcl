@@ -16,7 +16,7 @@
 
 #include <gpcl/detail/impl/assertion_failure.ipp>
 #include <gpcl/detail/impl/debug_allocator.ipp>
-#include <gpcl/detail/impl/error.ipp>
+#include <gpcl/detail/impl/throw_system_error.ipp>
 #include <gpcl/detail/impl/get_mutex_for_address.ipp>
 #include <gpcl/detail/impl/strerror.ipp>
 #include <gpcl/detail/impl/tlsf.ipp>

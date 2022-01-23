@@ -13,7 +13,7 @@
 
 #include <gpcl/assert.hpp>
 #include <gpcl/detail/config.hpp>
-#include <gpcl/error.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/inttypes.hpp>
 #include <gpcl/narrow_cast.hpp>
 #include <limits>

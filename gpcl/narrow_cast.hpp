@@ -43,8 +43,7 @@ constexpr To narrow_cast(From F) noexcept
   return T;
 }
 
-class bad_narrow_cast : virtual public std::exception,
-                        virtual public gpcl::exception
+class bad_narrow_cast : virtual public std::exception
 {
 public:
   bad_narrow_cast() = default;

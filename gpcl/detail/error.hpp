@@ -23,11 +23,7 @@
 #  define GPCL_CATCH(x) catch (x)
 #  define GPCL_RETHROW throw
 #  define GPCL_CATCH_END }
-#  define GPCL_THROW(x)                                                        \
-    throw ::std::move(::gpcl::enable_error_info(x)                             \
-                      << ::gpcl::source_file_errinfo(__FILE__)                 \
-                      << ::gpcl::source_line_errinfo(__LINE__)                 \
-                      << ::gpcl::func_name_errinfo(__func__))
+#  define GPCL_THROW(x) throw x
 
 #else
 #  define GPCL_TRY                                                             \
@@ -54,7 +50,7 @@
     do                                                                         \
     {                                                                          \
       (void)sizeof((x));                                                       \
-      ::gpcl::throw_exception(x);                             \
+      ::std::abort();                                                          \
     } while (false)
 #endif
 
@@ -173,50 +169,5 @@ using error_condition = std::error_condition;
 
 #endif
 
-#include <gpcl/exception.hpp>
-
-namespace gpcl {
-namespace detail {
-
-inline namespace errors {
-
-class interrupted : public std::exception
-{
-public:
-  interrupted() = default;
-  czstring<> what() const noexcept final { return "thread interrupted"; }
-};
-} // namespace errors
-
-#if defined(GPCL_POSIX)
-[[noreturn]] GPCL_DECL void throw_system_error(int err, czstring<> what);
-#elif defined(GPCL_WINDOWS)
-[[noreturn]] GPCL_DECL void throw_system_error(DWORD err, czstring<> what);
-#endif
-
-[[noreturn]] inline void throw_system_error(czstring<> what)
-{
-#if defined(GPCL_WINDOWS)
-  throw_system_error(GetLastError(), what);
-#elif defined(GPCL_POSIX)
-  throw_system_error(errno, what);
-#endif
-}
-
-template <typename Errc, typename std::enable_if<!std::is_integral<Errc>::value,
-                                                 int>::type = 0>
-[[noreturn]] inline void throw_system_error(Errc errc, czstring<> what)
-{
-  GPCL_THROW(system_error(make_error_code(errc), what));
-}
-
-GPCL_DECL void print_error(int err, czstring<> what) noexcept;
-inline void print_error(czstring<> what) noexcept
-{
-  print_error(errno, what);
-}
-
-} // namespace detail
-} // namespace gpcl
 
 #endif

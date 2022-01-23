@@ -11,8 +11,9 @@
 #ifndef GPCL_DETAIL_POSIX_MEMORY_MAP_HPP
 #define GPCL_DETAIL_POSIX_MEMORY_MAP_HPP
 
+#include <gpcl/detail/config.hpp>
 #include <gpcl/access_mode.hpp>
-#include <gpcl/detail/error.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 
 #include <sys/mman.h>
 #include <unistd.h>

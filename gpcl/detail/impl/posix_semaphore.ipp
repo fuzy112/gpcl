@@ -12,8 +12,8 @@
 #define GPCL_DETAIL_IMPL_POSIX_SEMAPHORE_IPP
 
 #include <gpcl/detail/assert.hpp>
-#include <gpcl/detail/error.hpp>
 #include <gpcl/detail/posix_semaphore.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 
 #include <semaphore.h>
 

@@ -11,6 +11,7 @@
 #ifndef GPCL_DETAIL_IMPL_WIN_LOCK_FILE_IPP
 #define GPCL_DETAIL_IMPL_WIN_LOCK_FILE_IPP
 
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/detail/win_lock_file.hpp>
 #include <gpcl/narrow_cast.hpp>
 
@@ -91,6 +92,5 @@ void win_lock_file::unlock()
 
 } // namespace detail
 } // namespace gpcl
-
 
 #endif // GPCL_DETAIL_IMPL_WIN_LOCK_FILE_IPP

@@ -13,13 +13,9 @@
 
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/error.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/detail/win_thread.hpp>
 #include <gpcl/unique_ptr.hpp>
-
-#ifdef GPCL_USE_BOOST_SYSTEM_ERROR
-#  include <boost/exception/diagnostic_information.hpp>
-#endif
 
 #include <process.h>
 

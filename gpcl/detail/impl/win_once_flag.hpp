@@ -2,7 +2,7 @@
 #define GPCL_DETAIL_IMPL_WIN_ONCE_FLAG_HPP
 
 #include <gpcl/detail/win_once_flag.hpp>
-#include <gpcl/error.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/scope_exit.hpp>
 
 namespace gpcl {

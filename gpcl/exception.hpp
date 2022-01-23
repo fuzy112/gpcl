@@ -2,7 +2,10 @@
 #define GPCL_EXCEPTION_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/error.hpp>
 #include <gpcl/typeid.hpp>
+#include <gpcl/debugstream.hpp>
+#include <gpcl/stacktrace.hpp>
 
 #include <iomanip>
 #include <ostream>
@@ -300,16 +303,23 @@ std::string diagnostic_information(E const &exc)
   return oss.str();
 }
 
-#ifndef GPCL_NO_EXCEPTIONS
 template <typename E>
 [[noreturn]] void throw_exception(E &&e)
 {
-  throw enable_error_info(std::forward<E>(e));
-}
-#else
-GPCL_DECL [[noreturn]] void throw_exception(std::exception const &e);
+#if defined GPCL_NO_EXCEPTIONS
+  cdebug() << "Trying to an exception, but exception support is disabled.\n"
+           << enable_error_info(e) << "\nTracing back:\n"
+           << stacktrace::current() << "\nTerminating..." << std::endl;
 #endif
+  GPCL_THROW(enable_error_info(std::move(e)));
+}
 
 } // namespace gpcl
+
+#define GPCL_THROW_EXCEPTION(exc)                                              \
+  ::gpcl::throw_exception(::gpcl::enable_error_info(exc)                       \
+                          << ::gpcl::source_file_errinfo(__FILE__)             \
+                          << ::gpcl::source_line_errinfo(__LINE__)             \
+                          << ::gpcl::func_name_errinfo(__func__))
 
 #endif // GPCL_EXCEPTION_HPP

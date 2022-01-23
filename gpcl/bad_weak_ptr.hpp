@@ -12,7 +12,6 @@
 #define GPCL_BAD_WEAK_PTR_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/exception.hpp>
 
 #include <exception>
 

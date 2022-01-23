@@ -46,8 +46,7 @@ struct is_input_streamable<
 {
 };
 
-class bad_lexical_cast : virtual public std::exception,
-                         virtual public gpcl::exception
+class bad_lexical_cast : virtual public std::exception
 {
 public:
   const char *what() const noexcept final { return "bad lexical cast"; }

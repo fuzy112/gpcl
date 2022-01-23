@@ -29,6 +29,12 @@
 #  define GPCL_DECL
 #endif
 
+#if defined(GPCL_DYN_LINK) && defined(GPCL_SOURCE)
+#  define GPCL_EXPORT_DECL GPCL_DECL
+#else
+#  define GPCL_EXPORT_DECL
+#endif
+
 #define __STDC_WANT_LIB_EXT1__ 1
 #define __STDC_WANT_SECURE_LIB__ 1
 

@@ -12,6 +12,9 @@
 #define GPCL_DETAIL_IMPL_POSIX_MESSAGE_QUEUE_IPP
 
 #include <gpcl/detail/posix_message_queue.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
+
+#include <string>
 
 namespace gpcl {
 namespace detail {

@@ -14,8 +14,8 @@
 #include <gpcl/buffer.hpp>
 #include <gpcl/creation_tag.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/detail/utility.hpp>
-#include <gpcl/error.hpp>
 #include <gpcl/expected.hpp>
 #include <gpcl/noncopyable.hpp>
 #include <gpcl/zstring.hpp>

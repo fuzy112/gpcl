@@ -14,6 +14,7 @@
 #include <gpcl/detail/futex.hpp>
 #include <gpcl/detail/posix_once_flag.hpp>
 #include <gpcl/unique_lock.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 
 #include <atomic>
 #include <climits>

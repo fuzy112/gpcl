@@ -4,7 +4,7 @@
 #include <gpcl/clock.hpp>
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/error.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/narrow_cast.hpp>
 #include <gpcl/noncopyable.hpp>
 

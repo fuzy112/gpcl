@@ -14,8 +14,8 @@
 #include <gpcl/detail/posix_mutex.hpp>
 
 #include <gpcl/detail/assert.hpp>
-#include <gpcl/detail/error.hpp>
 #include <gpcl/detail/posix_clock.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 
 #include <pthread.h>
 
