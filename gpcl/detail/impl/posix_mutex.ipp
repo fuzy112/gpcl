@@ -13,9 +13,11 @@
 
 #include <gpcl/detail/posix_mutex.hpp>
 
+#include <gpcl/debugstream.hpp>
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/posix_clock.hpp>
 #include <gpcl/detail/throw_system_error.hpp>
+#include <gpcl/strerror.hpp>
 
 #include <pthread.h>
 
@@ -103,7 +105,7 @@ posix_mutex_base::~posix_mutex_base()
 {
   int err = pthread_mutex_destroy(&mtx_);
   if (err)
-    print_error(err, "pthread_mutex_destroy");
+    cdebug() << strerror(err);
 }
 
 void posix_mutex_base::lock()
