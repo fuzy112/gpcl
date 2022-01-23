@@ -16,15 +16,38 @@ using stacktrace_errinfo =
 std::string to_string(cerrno_errinfo const &ei)
 {
   std::ostringstream ss;
-  ss << "[" << gpcl::typeid_<filename_errinfo::tag *>().name() << " ] = { "
-     << ei.value() << ", " << std::quoted(std::strerror(ei.value())) << " }";
+  std::string str;
+  str.resize(100);
+
+#if defined(__STDC_LIB_EXT1__)
+  strerror_s(&str[0], str.size(), ei.value());
+#elif defined(GPCL_POSIX)
+  int err;
+  do
+  {
+    err = strerror_r(ei.value(), &str[0], str.size());
+    if (err == EINVAL)
+      str = "Unknown error";
+    if (err == 0)
+      break;
+    str.resize(str.size() * 2);
+  } while (err == ERANGE);
+#else
+  str = std::strerror(ei.value());
+#endif
+  str.resize(strlen(str.c_str()));
+
+  ss << "["
+     << "cerrno_errinfo"
+     << " ] = { " << ei.value() << ", " << std::quoted(str) << " }";
   return ss.str();
 }
 
 std::string to_string(filename_errinfo const &ei)
 {
   std::ostringstream ss;
-  ss << "[" << gpcl::typeid_<filename_errinfo::tag *>().name()
+  ss << "["
+     << "filename_errinfo"
      << "] = " << std::quoted(ei.value());
   return ss.str();
 }

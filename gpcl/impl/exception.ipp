@@ -1,31 +1,20 @@
 #pragma once
 
+#include <gpcl/debugstream.hpp>
 #include <gpcl/exception.hpp>
+#include <gpcl/stacktrace.hpp>
 
 namespace gpcl {
 
-std::string diagnostic_information(exception const &exc)
+#if defined GPCL_NO_EXCEPTIONS
+void throw_exception(std::exception const &e)
 {
-  std::ostringstream oss;
-#if defined(GPCL_NO_RTTI)
-  oss << "Unknown exception:\n";
-#else
-  if (auto *std_except = dynamic_cast<std::exception const *>(&exc))
-  {
-    oss << std_except->what() << ":\n";
-  }
-  else
-  {
-    oss << typeid(exc).name() << ":\n";
-  }
-#endif
-
-  for (error_info_base *ei = exc.error_infos_; ei != nullptr; ei = ei->next_)
-  {
-    oss << "  " << ei->to_string() << "\n";
-  }
-
-  return oss.str();
+  cdebug() << "Trying to an exception [" << e.what()
+           << "], but exception support is disabled.\n"
+           << "\nTracing back:\n"
+           << stacktrace::current() << "\nTerminating..." << std::endl;
+  std::terminate();
 }
+#endif
 
 } // namespace gpcl

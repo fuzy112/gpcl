@@ -4,6 +4,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/typeid.hpp>
 
+#include <iomanip>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -20,15 +21,16 @@ class error_info;
 template <typename E, typename Tag, typename T>
 E &&operator<<(E &&e, error_info<Tag, T> &&info);
 
-GPCL_DECL
-std::string diagnostic_information(exception const &exc);
+template <typename E>
+std::string diagnostic_information(E const &exc);
 
 class error_info_base
 {
   friend exception;
   template <typename E, typename Tag, typename T>
   friend E &&operator<<(E &&e, error_info<Tag, T> &&info);
-  friend GPCL_DECL std::string diagnostic_information(exception const &exc);
+  template <typename E>
+  friend std::string diagnostic_information(E const &exc);
 
   error_info_base *next_ = nullptr;
 
@@ -138,7 +140,8 @@ operator<<(std::basic_ostream<CharT, Traits> &out,
 
 class exception
 {
-  friend GPCL_DECL std::string diagnostic_information(exception const &exc);
+  template <typename E>
+  friend std::string diagnostic_information(E const &exc);
 
   error_info_base *error_infos_ = nullptr;
 
@@ -157,8 +160,6 @@ public:
 
   exception(const exception &) = delete;
   exception &operator=(const exception &) = delete;
-
-  // exception(exception &other) : exception(std::move(other)) {}
 
   exception(exception &&other) noexcept : error_infos_(other.error_infos_)
   {
@@ -195,6 +196,15 @@ public:
     }
     return nullptr;
   }
+
+private:
+  template <typename E,
+            typename std::enable_if<std::is_base_of<gpcl::exception, E>::value,
+                                    int>::type = 0>
+  error_info_base *get_first_error_info(const E &e) noexcept
+  {
+    return e.error_infos_;
+  }
 };
 
 template <typename E>
@@ -208,6 +218,32 @@ public:
   {
   }
 };
+
+using source_file_errinfo =
+    error_info<struct source_file_errinfo_, const char *>;
+using source_line_errinfo = error_info<struct source_line_errinfo_, unsigned>;
+using func_name_errinfo = error_info<struct func_name_errinfo_, const char *>;
+
+inline std::string to_string(source_file_errinfo const &ei)
+{
+  std::ostringstream oss;
+  oss << "[source_file_errinfo] = " << std::quoted(ei.value());
+  return oss.str();
+}
+
+inline std::string to_string(source_line_errinfo const &ei)
+{
+  std::ostringstream oss;
+  oss << "[source_line_errinfo] = " << ei.value();
+  return oss.str();
+}
+
+inline std::string to_string(func_name_errinfo const &ei)
+{
+  std::ostringstream oss;
+  oss << "[func_name_errinfo] = " << std::quoted(ei.value());
+  return oss.str();
+}
 
 template <typename E,
           typename std::enable_if<
@@ -233,6 +269,50 @@ operator<<(std::basic_ostream<CharT, Traits> &out, const exception &exc)
 {
   return out << diagnostic_information(exc);
 }
+
+template <typename E,
+          typename std::enable_if<std::is_base_of<std::exception, E>::value,
+                                  int>::type = 0>
+const char *exception_name(const E &e) noexcept
+{
+  return e.what();
+}
+
+template <typename E,
+          typename std::enable_if<!std::is_base_of<std::exception, E>::value,
+                                  int>::type = 0>
+const char *exception_name(const E &) noexcept
+{
+  return typeid_<E>().name();
+}
+
+template <typename E>
+std::string diagnostic_information(E const &exc)
+{
+  std::ostringstream oss;
+  oss << exception_name(exc) << ":\n";
+
+  gpcl::exception const *exc_ = dyn_cast<gpcl::exception>(&exc);
+  if (!exc_)
+    return oss.str();
+
+  for (error_info_base *ei = exc_->error_infos_; ei != nullptr; ei = ei->next_)
+  {
+    oss << "  " << ei->to_string() << "\n";
+  }
+
+  return oss.str();
+}
+
+#ifndef GPCL_NO_EXCEPTIONS
+template <typename E>
+[[noreturn]] void throw_exception(E&& e)
+{
+  throw enable_error_info(std::forward<E>(e));
+}
+#else
+GPCL_DECL [[noreturn]] void throw_exception(std::exception const &e);
+#endif
 
 } // namespace gpcl
 

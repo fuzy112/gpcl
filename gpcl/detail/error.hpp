@@ -25,22 +25,36 @@
 #  define GPCL_CATCH_END }
 #  define GPCL_THROW(x)                                                        \
     throw ::std::move(::gpcl::enable_error_info(x)                             \
-                      << ::gpcl::detail::source_file_errinfo(__FILE__)         \
-                      << ::gpcl::detail::source_line_errinfo(__LINE__)         \
-                      << ::gpcl::detail::func_name_errinfo(__func__))
+                      << ::gpcl::source_file_errinfo(__FILE__)                 \
+                      << ::gpcl::source_line_errinfo(__LINE__)                 \
+                      << ::gpcl::func_name_errinfo(__func__))
 
 #else
 #  define GPCL_TRY                                                             \
     {                                                                          \
-      if (true)
-#  define GPCL_CATCH(x) else
+      if (true)                                                                \
+                                                                               \
+      {
+
+#  define GPCL_CATCH(x)                                                        \
+    ;                                                                          \
+    }                                                                          \
+                                                                               \
+    else if (false)                                                            \
+    {                                                                          \
+      [&](x)
 #  define GPCL_RETHROW std::terminate()
-#  define GPCL_CATCH_END }
+#  define GPCL_CATCH_END                                                       \
+                                                                               \
+    ;                                                                          \
+    }                                                                          \
+    }
+
 #  define GPCL_THROW(x)                                                        \
     do                                                                         \
     {                                                                          \
       (void)sizeof((x));                                                       \
-      std::terminate();                                                        \
+      ::gpcl::throw_exception(x);                             \
     } while (false)
 #endif
 
@@ -165,13 +179,6 @@ namespace gpcl {
 namespace detail {
 
 inline namespace errors {
-
-using source_file_errinfo =
-    error_info<struct source_file_errinfo_, const char *>;
-using source_line_errinfo = error_info<struct source_line_errinfo_, unsigned>;
-using func_name_errinfo = error_info<struct func_name_errinfo_, const char *>;
-using pretty_func_name_errinfo =
-    error_info<struct pretty_func_name_errinfo_, const char *>;
 
 class interrupted : public std::exception
 {
