@@ -18,6 +18,7 @@
 #include <gpcl/detail/impl/debug_allocator.ipp>
 #include <gpcl/detail/impl/error.ipp>
 #include <gpcl/detail/impl/get_mutex_for_address.ipp>
+#include <gpcl/detail/impl/strerror.ipp>
 #include <gpcl/detail/impl/tlsf.ipp>
 #include <gpcl/detail/impl/unreachable.ipp>
 #include <gpcl/impl/exception.ipp>

@@ -179,9 +179,12 @@ public:
   template <typename E, typename Tag, typename T>
   friend E &&operator<<(E &&e, error_info<Tag, T> &&info)
   {
-    error_info_base *copy = new error_info<Tag, T>(std::move(info));
-    copy->next_ = e.error_infos_;
-    e.error_infos_ = copy;
+    error_info_base **p = &e.error_infos_;
+
+    while (*p)
+      p = &(*p)->next_;
+
+    *p = new error_info<Tag, T>(std::move(info));
     return std::forward<E>(e);
   }
 
@@ -195,15 +198,6 @@ public:
         return std::addressof(static_cast<ErrorInfo const *>(ei)->value());
     }
     return nullptr;
-  }
-
-private:
-  template <typename E,
-            typename std::enable_if<std::is_base_of<gpcl::exception, E>::value,
-                                    int>::type = 0>
-  error_info_base *get_first_error_info(const E &e) noexcept
-  {
-    return e.error_infos_;
   }
 };
 
@@ -263,9 +257,11 @@ wrapped_exception<typename std::decay<E>::type> enable_error_info(E &&e)
   return wrapped_exception<typename std::decay<E>::type>(std::forward<E>(e));
 }
 
-template <typename CharT, typename Traits>
+template <typename CharT, typename Traits, typename E,
+          typename Enable = typename std::enable_if<
+              std::is_base_of<exception, E>::value>::type>
 std::basic_ostream<CharT, Traits> &
-operator<<(std::basic_ostream<CharT, Traits> &out, const exception &exc)
+operator<<(std::basic_ostream<CharT, Traits> &out, const E &exc)
 {
   return out << diagnostic_information(exc);
 }
@@ -290,7 +286,7 @@ template <typename E>
 std::string diagnostic_information(E const &exc)
 {
   std::ostringstream oss;
-  oss << exception_name(exc) << ":\n";
+  oss << "Exception [" << exception_name(exc) << "]\n";
 
   gpcl::exception const *exc_ = dyn_cast<gpcl::exception>(&exc);
   if (!exc_)
@@ -306,7 +302,7 @@ std::string diagnostic_information(E const &exc)
 
 #ifndef GPCL_NO_EXCEPTIONS
 template <typename E>
-[[noreturn]] void throw_exception(E&& e)
+[[noreturn]] void throw_exception(E &&e)
 {
   throw enable_error_info(std::forward<E>(e));
 }

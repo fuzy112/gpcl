@@ -38,12 +38,14 @@
 #include <gpcl/condition_variable.hpp>
 #include <gpcl/const_buffer.hpp>
 #include <gpcl/creation_tag.hpp>
+#include <gpcl/debugstream.hpp>
 #include <gpcl/decay_copy.hpp>
 #include <gpcl/default_allocator.hpp>
 #include <gpcl/enable_shared_from.hpp>
 #include <gpcl/enable_shared_from_this.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/event.hpp>
+#include <gpcl/exception.hpp>
 #include <gpcl/expected.hpp>
 #include <gpcl/expected_fwd.hpp>
 #include <gpcl/file.hpp>
@@ -69,6 +71,7 @@
 #include <gpcl/json_size.hpp>
 #include <gpcl/json_tag.hpp>
 #include <gpcl/lexical_cast.hpp>
+#include <gpcl/lock.hpp>
 #include <gpcl/lock_file.hpp>
 #include <gpcl/make_any.hpp>
 #include <gpcl/make_basic_any.hpp>
@@ -92,6 +95,10 @@
 #include <gpcl/pool.hpp>
 #include <gpcl/pool_allocator.hpp>
 #include <gpcl/propagate_const.hpp>
+#include <gpcl/scope_exit.hpp>
+#include <gpcl/scope_fail.hpp>
+#include <gpcl/scope_success.hpp>
+#include <gpcl/scoped_lock.hpp>
 #include <gpcl/semaphore.hpp>
 #include <gpcl/shared_memory_object.hpp>
 #include <gpcl/shared_ptr.hpp>
@@ -100,6 +107,7 @@
 #include <gpcl/spanbuf.hpp>
 #include <gpcl/spanstream.hpp>
 #include <gpcl/stacktrace.hpp>
+#include <gpcl/strerror.hpp>
 #include <gpcl/swap.hpp>
 #include <gpcl/syncbuf.hpp>
 #include <gpcl/tag_invoke.hpp>
@@ -107,6 +115,7 @@
 #include <gpcl/thread_attributes.hpp>
 #include <gpcl/time.hpp>
 #include <gpcl/type_identity.hpp>
+#include <gpcl/typeid.hpp>
 #include <gpcl/unexpected.hpp>
 #include <gpcl/unique_lock.hpp>
 #include <gpcl/unique_ptr.hpp>
