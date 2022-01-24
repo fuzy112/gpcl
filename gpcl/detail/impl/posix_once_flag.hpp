@@ -26,9 +26,8 @@
 #  include <gnu/libc-version.h>
 #endif
 
-#if !defined(GPCL_LINUX)
-#  include <csetjmp>
-#endif
+# include <csetjmp>
+
 
 namespace gpcl {
 
