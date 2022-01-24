@@ -1,5 +1,7 @@
 #include <gpcl/lexical_cast.hpp>
 #include <gpcl/variant.hpp>
+#include <gpcl/exception.hpp>
+
 #include <iostream>
 
 using gpcl::lexical_cast;
@@ -33,9 +35,9 @@ int main()
   { 
     std::cout << variant_to<char>(v) << std::endl; 
   }
-  GPCL_CATCH(gpcl::exception const &e)
+  GPCL_CATCH(std::exception const &e)
   {
-    std::cout << e << std::endl;
+    std::cout << gpcl::diagnostic_information(e) << std::endl;
   }
   GPCL_CATCH_END
 #endif

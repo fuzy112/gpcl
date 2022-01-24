@@ -14,6 +14,7 @@
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/output_iterator_streambuf.hpp>
+#include <gpcl/typeid.hpp>
 
 #include <exception>
 #include <ostream>
