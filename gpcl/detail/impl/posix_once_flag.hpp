@@ -39,7 +39,7 @@ void call_once(detail::posix_once_flag &flag, Callable &&callable,
   using namespace gpcl::detail;
 
   std::exception_ptr exc;
-  jmp_buf jb;
+  std::jmp_buf jb;
 
   gpcl::function<void()> func = [&] {
     GPCL_TRY { callable(std::forward<Args>(args)...); }
