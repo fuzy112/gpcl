@@ -61,7 +61,7 @@ TEST_CASE("once_flag recursive")
   REQUIRE(var2 == 1);
 }
 
-#  if __cpp_exceptions
+#  if !defined(GPCL_NO_EXCEPTIONS)
 TEST_CASE("once_flag exception")
 {
   once_flag once;

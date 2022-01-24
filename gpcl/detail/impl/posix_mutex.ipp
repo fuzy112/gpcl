@@ -47,37 +47,51 @@ posix_mutex_protocol posix_mutex_attr::protocol() const noexcept
 
 void posix_mutex_attr::protocol(posix_mutex_protocol prtl) noexcept
 {
+#if !defined(__CYGWIN__)
   const int b = static_cast<int>(prtl);
   int err = ::pthread_mutexattr_setprotocol(&attr_, b);
   GPCL_VERIFY(!err);
+#endif
 }
 
 int posix_mutex_attr::priority_ceiling() const noexcept
 {
+#if !defined(__CYGWIN__)
   int prio = -1;
   int err = ::pthread_mutexattr_getprioceiling(&attr_, &prio);
   GPCL_VERIFY(!err);
   return prio;
+#else
+  return 0;
+#endif
 }
 
 void posix_mutex_attr::priority_ceiling(int prio) noexcept
 {
+#if !defined(__CYGWIN__)
   int err = ::pthread_mutexattr_setprioceiling(&attr_, prio);
   GPCL_VERIFY(err);
+#endif
 }
 
 posix_mutex_robust posix_mutex_attr::robust() const noexcept
 {
+#if !defined(__CYGWIN__)
   int r;
   int err = ::pthread_mutexattr_getrobust(&attr_, &r);
   GPCL_VERIFY(!err);
   return static_cast<posix_mutex_robust>(r);
+#else
+  return posix_mutex_robust();
+#endif
 }
 
 void posix_mutex_attr::robust(posix_mutex_robust r) noexcept
 {
+#if !defined(__CYGWIN__)
   int err = ::pthread_mutexattr_setrobust(&attr_, static_cast<int>(r));
   GPCL_VERIFY(!err);
+#endif
 }
 
 posix_mutex_type posix_mutex_attr::type() const noexcept

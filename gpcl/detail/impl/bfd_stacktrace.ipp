@@ -4,22 +4,33 @@
 #include <gpcl/detail/bfd_stacktrace.hpp>
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/posix_mutex.hpp>
 #include <gpcl/noncopyable.hpp>
 #include <gpcl/scoped_lock.hpp>
 #include <gpcl/unique_ptr.hpp>
+#include <gpcl/mutex.hpp>
 
-#include <string_view>
-#include <vector>
-#include <unordered_map>
 #include <sstream>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+
+/* Hack for BFD */
+#ifndef PACKAGE
+#  define PACKAGE "gpcl"
+#endif
 
 #include <bfd.h>
-#include <dlfcn.h>
+
+#if defined(GPCL_POSIX)
+#  include <dlfcn.h>
+#endif
+
+#if defined(__CYGWIN__) || defined(GPCL_WINDOWS)
+#  include <Windows.h>
+#  include <psapi.h>
+#endif
 
 namespace gpcl::detail {
-
-class posix_recursive_mutex;
 
 struct bfd_deleter
 {
@@ -51,7 +62,7 @@ public:
     return s;
   }
 
-  posix_recursive_mutex mtx;
+  recursive_mutex mtx;
   std::unordered_map<fbase_address, bfd_cache> cached_bfds;
 };
 
@@ -74,6 +85,7 @@ inline bfd_cache *cached_bfd_from_address(const void *address,
 {
   GPCL_TRY
   {
+#if !defined(__CYGWIN__) && !defined(GPCL_WINDOWS)
     Dl_info info{};
     if (0 == dladdr(address, &info)) // zero indicates failure
       return nullptr;
@@ -81,13 +93,33 @@ inline bfd_cache *cached_bfd_from_address(const void *address,
     symbol_address && (*symbol_address = info.dli_saddr);
     symbol_name && (*symbol_name = info.dli_sname);
 
+    const void *fbase = info.dli_fbase;
+    const char *fname = info.dli_fname;
+
+#else
+    HMODULE hModule;
+    if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                            (LPCSTR)address, &hModule))
+      return nullptr;
+
+    MODULEINFO info;
+    if (!GetModuleInformation(GetCurrentProcess(), hModule, &info,
+                              sizeof(info)))
+      return nullptr;
+
+    const void *fbase = info.lpBaseOfDll;
+    char fname[255];
+    if (!GetModuleFileNameA(hModule, fname, sizeof(fname)))
+      return nullptr;
+
+#endif
     scoped_lock lock(g_bfd_context.mtx);
     const auto [iter, new_inserted] =
-        g_bfd_context.cached_bfds.try_emplace(info.dli_fbase);
+        g_bfd_context.cached_bfds.try_emplace(fbase);
     if (new_inserted)
     {
-      auto &[abfd, symtab, fbase] = iter->second;
-      auto *abfd_ = bfd_openr(info.dli_fname, nullptr);
+      auto &[abfd, symtab, rfbase] = iter->second;
+      auto *abfd_ = bfd_openr(fname, nullptr);
       if (!abfd_)
       {
         g_bfd_context.cached_bfds.erase(iter);
@@ -103,7 +135,7 @@ inline bfd_cache *cached_bfd_from_address(const void *address,
         auto n = bfd_canonicalize_symtab(abfd.get(), symtab.data());
         symtab.resize(n);
       }
-      fbase = std::intptr_t(info.dli_fbase);
+      rfbase = std::intptr_t(fbase);
     }
     return &iter->second;
   }

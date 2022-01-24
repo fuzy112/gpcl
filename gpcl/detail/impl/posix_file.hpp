@@ -16,6 +16,7 @@
 namespace gpcl {
 namespace detail {
 
+#if defined(GPCL_LINUX)
 template <typename ConstBufferSequence>
 expected<std::size_t, error_code>
 posix_file::write_some_at(offset_type off, const ConstBufferSequence &bs)
@@ -28,7 +29,9 @@ posix_file::write_some_at(offset_type off, const ConstBufferSequence &bs)
   }
   return nbytes;
 }
+#endif
 
+#if defined(GPCL_LINUX)
 template <typename MutableBufferSequence>
 expected<size_t, error_code>
 posix_file::read_some_at(offset_type off, const MutableBufferSequence &bs)
@@ -41,6 +44,7 @@ posix_file::read_some_at(offset_type off, const MutableBufferSequence &bs)
   }
   return nbytes;
 }
+#endif
 
 template <typename ConstBufferSequence>
 expected<std::size_t, error_code>

@@ -12,28 +12,31 @@
 #define GPCL_DETAIL_POSIX_MUTEX_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/utility.hpp>
 #include <gpcl/detail/posix_clock.hpp>
+#include <gpcl/detail/utility.hpp>
 
 #include <pthread.h>
 
 namespace gpcl {
 namespace detail {
 
-
 enum class posix_mutex_protocol
 {
+#if !defined(__CYGWIN__)
   prio_inherit = PTHREAD_PRIO_INHERIT,
   prio_none = PTHREAD_PRIO_NONE,
   prio_protect = PTHREAD_PRIO_PROTECT,
+#endif
 };
 
 enum class posix_mutex_robust
 {
+#if !defined(__CYGWIN__)
   stalled = PTHREAD_MUTEX_STALLED, // no action if thread terminated while
                                    // holding the mutex
 
   robust = PTHREAD_MUTEX_ROBUST, // robust
+#endif
 };
 
 enum class posix_mutex_type
@@ -79,7 +82,7 @@ protected:
 public:
   using native_handle_type = pthread_mutex_t *;
 
-  constexpr posix_mutex_base() : mtx_(PTHREAD_MUTEX_INITIALIZER) {}
+  constexpr posix_mutex_base() = default;
 
   GPCL_DECL explicit posix_mutex_base(const posix_mutex_attr &attr);
 
@@ -96,7 +99,15 @@ public:
   native_handle_type native_handle() noexcept { return &mtx_; }
 
 private:
-  pthread_mutex_t mtx_{};
+#if defined(__CYGWIN__)
+  union __attribute__((may_alias))
+  {
+    long mtx_init_ = 19;
+    pthread_mutex_t mtx_;
+  };
+#else
+  pthread_mutex_t mtx_ = PTHREAD_MUTEX_INITIALIZER;
+#endif
 };
 
 class posix_normal_mutex : public posix_mutex_base

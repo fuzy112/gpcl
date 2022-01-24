@@ -11,8 +11,8 @@
 #ifndef GPCL_DETAIL_POSIX_MEMORY_MAP_HPP
 #define GPCL_DETAIL_POSIX_MEMORY_MAP_HPP
 
-#include <gpcl/detail/config.hpp>
 #include <gpcl/access_mode.hpp>
+#include <gpcl/detail/config.hpp>
 #include <gpcl/detail/throw_system_error.hpp>
 
 #include <sys/mman.h>
@@ -42,10 +42,17 @@ std::pair<void *, std::size_t> memory_map(const MemoryMappable &mappable,
   if (!size)
     size = mappable.size();
 
+#if defined(GPCL_LINUX)
   options.flags |= MAP_SHARED_VALIDATE;
+#endif
 
+#if defined(GPCL_LINUX)
   void *ret = ::mmap64((void *)address, size, prot, options.flags,
                        mappable.native_handle(), offset);
+#else
+  void *ret = ::mmap((void *)address, size, prot, options.flags,
+                     mappable.native_handle(), offset);
+#endif
   if (ret == MAP_FAILED)
     throw_system_error(__func__);
   return {ret, size};

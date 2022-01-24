@@ -127,6 +127,16 @@
 #  pragma comment(lib, "gpcl")
 #endif
 
+#if defined(__MINGW64__) && !defined(GPCL_NO_BFD)
+#  define GPCL_NO_BFD
+#endif
+
+#ifdef __has_include
+#  if __has_include(<bfd.h>) && !defined(GPCL_NO_BFD)
+#    define GPCL_BFD 1
+#  endif
+#endif
+
 /// Main namespace of GPCL
 namespace gpcl {
 

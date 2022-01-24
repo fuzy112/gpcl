@@ -26,8 +26,10 @@ void assertion_failure(const char *expr, const char *file,
 #endif
            << ": In function '" << func << "': "
            << "Assertion failed: " << expr << "\n"
+#if defined(GPCL_STACKTRACE)
            << "Backtrace:\n"
            << basic_stacktrace<std::allocator<stacktrace_entry>>::current(2)
+#endif
            << std::endl;
 }
 

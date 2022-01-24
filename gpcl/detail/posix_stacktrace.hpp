@@ -24,8 +24,6 @@
 
 #include <execinfo.h>
 
-#define GPCL_BFD 1
-
 #ifdef __GNUC__
 #  include <cxxabi.h>
 #endif

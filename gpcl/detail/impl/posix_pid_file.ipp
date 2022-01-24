@@ -17,7 +17,6 @@
 
 #include <climits>
 #include <libgen.h>
-#include <sys/inotify.h>
 
 namespace gpcl {
 namespace detail {

@@ -11,7 +11,7 @@ namespace gpcl::detail {
 
 void strerror_impl(std::string &str, int errnum)
 {
-#if defined(__STDC_LIB_EXT1__) || defined(__STDC_SECURE_LIB__)
+#if defined(__STDC_LIB_EXT1__) || (defined(__STDC_SECURE_LIB__) && defined(_WIN32))
   str.resize(128);
   strerror_s(&str[0], str.size(), errnum);
   str.resize(strlen(str.c_str()));

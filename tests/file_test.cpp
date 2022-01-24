@@ -42,6 +42,7 @@ TEST_CASE("file read write")
   REQUIRE(file::unlink(file_name));
 }
 
+#if !defined(__CYGWIN__)
 TEST_CASE("file read write at")
 {
   czstring<> file_name = "file_test2.bin";
@@ -62,5 +63,6 @@ TEST_CASE("file read write at")
   REQUIRE(hello == buf);
   REQUIRE(file::unlink(file_name));
 }
+#endif
 
 #endif

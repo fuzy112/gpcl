@@ -3,7 +3,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/semaphore.hpp>
 
-#if defined(GPCL_POSIX)
+#if defined(GPCL_LINUX)
 
 #  include <gpcl/detail/futex_atomic_wait.hpp>
 #  include <thread>

@@ -25,27 +25,53 @@ class posix_once_flag;
 
 template <typename Callable, typename... Args>
 void call_once(detail::posix_once_flag &flag, Callable &&callable,
-               Args &&... args);
+               Args &&...args);
 
 namespace detail {
 class posix_once_flag
 {
 public:
-  explicit constexpr posix_once_flag() : data_(PTHREAD_ONCE_INIT) {}
+  explicit constexpr posix_once_flag()
+#if defined(__CYGWIN__)
+      : data_init_
+  {
+    19, 0
+  }
+#else
+      : data_
+  {
+    PTHREAD_ONCE_INIT
+  }
+#endif
+  {
+  }
 
   posix_once_flag(const posix_once_flag &) = delete;
   posix_once_flag &operator=(const posix_once_flag &) = delete;
 
   template <typename Callable, typename... Args>
   friend void ::gpcl::call_once(posix_once_flag &flag, Callable &&callable,
-                                Args &&... args);
+                                Args &&...args);
 
   typedef pthread_once_t *native_handle_type;
 
   native_handle_type native_handle() { return &data_; }
 
 private:
+#if defined(__CYGWIN__)
+  struct __attribute__((may_alias)) data_s
+  {
+    long mutex;
+    long flag;
+  };
+  union __attribute__((may_alias))
+  {
+    data_s data_init_;
+    pthread_once_t data_;
+  };
+#else
   pthread_once_t data_;
+#endif
 };
 
 inline __thread gpcl::function<void()> *posix_once_functor;

@@ -57,7 +57,11 @@ memory_map(const anonymous_shared_memory_impl &mem, access_mode mode,
 
   options.flags |= MAP_SHARED | MAP_ANONYMOUS;
 
+#if defined(GPCL_LINUX)
   void *ret = ::mmap64((void *)address, size, prot, options.flags, -1, 0);
+#else
+  void *ret = ::mmap((void *)address, size, prot, options.flags, -1, 0);
+#endif
   if (ret == MAP_FAILED)
     throw_system_error(__func__);
   return {ret, size};

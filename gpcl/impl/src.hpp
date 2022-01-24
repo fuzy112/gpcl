@@ -31,9 +31,6 @@
 #include <gpcl/pmr/impl/tlsf_resource.ipp>
 
 #ifdef GPCL_POSIX
-#include <gpcl/detail/impl/futex.ipp>
-#include <gpcl/detail/impl/futex_condition_variable.ipp>
-#include <gpcl/detail/impl/futex_mutex.ipp>
 #include <gpcl/detail/impl/posix_clock.ipp>
 #include <gpcl/detail/impl/posix_condition_variable.ipp>
 #include <gpcl/detail/impl/posix_file.ipp>
@@ -43,6 +40,12 @@
 #include <gpcl/detail/impl/posix_pid_file.ipp>
 #include <gpcl/detail/impl/posix_semaphore.ipp>
 #include <gpcl/detail/impl/posix_thread.ipp>
+#endif
+
+#ifdef GPCL_LINUX
+#include <gpcl/detail/impl/futex.ipp>
+#include <gpcl/detail/impl/futex_condition_variable.ipp>
+#include <gpcl/detail/impl/futex_mutex.ipp>
 #endif
 
 #ifdef GPCL_WINDOWS
@@ -61,4 +64,8 @@
 
 #if defined(GPCL_BFD) && !defined(GPCL_NO_STACKTRACE)
 #include <gpcl/detail/impl/bfd_stacktrace.ipp>
+#endif
+
+#if defined(__CYGWIN__) && !defined(GPCL_NO_STACKTRACE)
+#include <gpcl/detail/impl/win_stacktrace.ipp>
 #endif

@@ -76,6 +76,16 @@ if (UNIX)
 		${CMAKE_DL_LIBS}
 		)
 endif ()
+if (CYGWIN)
+	target_link_libraries(gpcl
+		PUBLIC
+		bfd
+		iberty
+		intl
+		z
+		${CMAKE_DL_LIBS}
+		)
+endif ()
 
 if (WIN32)
 	target_link_libraries(gpcl
@@ -86,6 +96,9 @@ endif()
 
 if (MINGW)
     target_compile_options(gpcl INTERFACE "-Wa,-mbig-obj")
+	target_link_libraries(gpcl
+		PUBLIC
+	)
 endif ()
 
 if (GPCL_ENABLE_PCH)

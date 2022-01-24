@@ -128,9 +128,11 @@ posix_thread::~posix_thread()
 
 void posix_thread::name(czstring<> s)
 {
+#if defined(GPCL_LINUX)
   int err = pthread_setname_np(thread_, s);
   if (err)
     throw_system_error(err, "pthread_setname_np");
+#endif
 }
 
 void posix_thread::join()

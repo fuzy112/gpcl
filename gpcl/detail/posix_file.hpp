@@ -31,7 +31,11 @@ namespace detail {
 class posix_file
 {
 public:
+#if !defined(__CYGWIN__)
   typedef off64_t offset_type;
+#else
+  typedef _off64_t offset_type;
+#endif
 
   typedef int native_handle_type;
 

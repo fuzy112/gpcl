@@ -24,6 +24,8 @@
 #  error "This header should not be included."
 #endif
 
+#include <Windows.h>
+
 #if defined _MSC_VER && defined GPCL_SEPARATE_COMPILATION &&                   \
     !defined GPCL_SOURCE && !defined GPCL_DISABLE_AUTO_LINKING &&              \
     !defined(GPCL_NO_STACKTRACE)
@@ -95,6 +97,9 @@ public:
   operator<<(std::basic_ostream<CharT, Traits> &os,
              const win_stacktrace_entry &f)
   {
+#if defined(GPCL_BFD) || defined(__CYGWIN__)
+    return os << f.description();
+#else
     typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
     if (!sentry)
       return os;
@@ -119,6 +124,7 @@ public:
       os << " in " << binary;
 
     return os;
+#endif
   }
 };
 
@@ -273,6 +279,7 @@ void swap(basic_win_stacktrace<Allocator> &x,
   x.swap(y);
 }
 
+#if !defined(__CYGWIN__) && !defined(GPCL_BFD)
 struct win_dbg_helper
 {
 private:
@@ -289,6 +296,7 @@ public:
 };
 
 static auto &g_win_dbg_helper = win_dbg_helper::instance();
+#endif
 
 template <typename Allocator>
 basic_win_stacktrace<Allocator>

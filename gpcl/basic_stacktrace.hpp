@@ -12,15 +12,27 @@
 #define GPCL_BASIC_STACKTRACE_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/swap.hpp>
 
 #if defined(GPCL_NO_STACKTRACE)
-#  define GPCL_STACKTRACE 1
-#elif defined(GPCL_WINDOWS)
+#  define GPCL_STACKTRACE 0
+#elif defined(GPCL_WINDOWS) || defined(__CYGWIN__)
 #  include <gpcl/detail/win_stacktrace.hpp>
 #  define GPCL_STACKTRACE 1
-#elif defined(GPCL_POSIX)
+#elif defined(GPCL_POSIX) && !defined(__CYGWIN__)
 #  include <gpcl/detail/posix_stacktrace.hpp>
 #  define GPCL_STACKTRACE 1
+#endif
+
+#ifndef GPCL_STACKTRACE
+#  define GPCL_NO_STACKTRACE
+#  define GPCL_STACKTRACE 0
+#endif
+
+#ifdef GPCL_NO_STACKTRACE
+#  include <gpcl/detail/error.hpp>
+
+#  include <stdexcept>
 #endif
 
 #include <memory>
@@ -139,7 +151,7 @@ public:
   const_reference operator[](size_type pos) const noexcept
   {
     (void)pos;
-    GPCL_ASSERT(false);
+    std::terminate();
   }
   const_reference at(size_type pos) const
   {
@@ -147,15 +159,27 @@ public:
     GPCL_THROW(std::out_of_range("stacktrace::at"));
   }
 
-  const_iterator begin() const noexcept { return nullptr; }
-  const_iterator cbegin() const noexcept { return nullptr; }
-  const_iterator end() const noexcept { return nullptr; }
-  const_iterator cencd() const noexcept { return nullptr; }
+  const_iterator begin() const noexcept { return const_iterator(); }
+  const_iterator cbegin() const noexcept { return const_iterator(); }
+  const_iterator end() const noexcept { return const_iterator(); }
+  const_iterator cencd() const noexcept { return const_iterator(); }
 
-  reverse_const_iterator rbegin() const noexcept { return nullptr; }
-  reverse_const_iterator crbegin() const noexcept { return nullptr; }
-  reverse_const_iterator rend() const noexcept { return nullptr; }
-  reverse_const_iterator crend() const noexcept { return nullptr; }
+  reverse_const_iterator rbegin() const noexcept
+  {
+    return reverse_const_iterator();
+  }
+  reverse_const_iterator crbegin() const noexcept
+  {
+    return reverse_const_iterator();
+  }
+  reverse_const_iterator rend() const noexcept
+  {
+    return reverse_const_iterator();
+  }
+  reverse_const_iterator crend() const noexcept
+  {
+    return reverse_const_iterator();
+  }
 
   size_type size() const noexcept { return 0; }
   size_type max_size() const noexcept { return 0; }
@@ -185,11 +209,11 @@ operator<<(std::basic_ostream<CharT, Traits> &os,
   return os;
 };
 
-#elif defined(GPCL_WINDOWS)
+#elif defined(GPCL_WINDOWS) || defined(__CYGWIN__)
 template <typename Allocator>
 using basic_stacktrace = detail::basic_win_stacktrace<Allocator>;
 using stacktrace_entry = detail::win_stacktrace_entry;
-#elif defined(GPCL_POSIX)
+#elif defined(GPCL_POSIX) && !defined(__CYGWIN__)
 template <typename Allocator>
 using basic_stacktrace = detail::basic_posix_stacktrace<Allocator>;
 using stacktrace_entry = detail::posix_stacktrace_entry;

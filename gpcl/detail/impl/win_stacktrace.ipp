@@ -11,17 +11,22 @@
 #ifndef GPCL_DETAIL_IMPL_WIN_STACKTRACE_IPP
 #define GPCL_DETAIL_IMPL_WIN_STACKTRACE_IPP
 
-#include <gpcl/detail/win_stacktrace.hpp>
 #include <gpcl/detail/win_mutex.hpp>
+#include <gpcl/detail/win_stacktrace.hpp>
 
 #if defined(GPCL_NO_STACKTRACE)
 #  error "This header should no be included."
 #endif
 
-#include <DbgHelp.h>
+#if !defined(__CYGWIN__) && !defined(GPCL_BFD)
+#  include <DbgHelp.h>
+#else
+#  include <gpcl/detail/bfd_stacktrace.hpp>
+#endif
 
 namespace gpcl::detail {
 
+#if !defined(__CYGWIN__) && !defined(GPCL_BFD)
 win_dbg_helper::win_dbg_helper()
 {
   auto lk = lock();
@@ -114,6 +119,25 @@ std::string win_stacktrace_entry::binary_file() const
   }
   return "";
 }
+
+#else
+
+std::string win_stacktrace_entry::description() const
+{
+  return bfd_stacktrace_entry_description(addr_);
+}
+
+std::string win_stacktrace_entry::source_file() const
+{
+  return bfd_stacktrace_entry_source_file(addr_);
+}
+
+std::uint_least32_t win_stacktrace_entry::source_line() const
+{
+  return bfd_stacktrace_entry_source_line(addr_);
+}
+
+#endif
 
 } // namespace gpcl::detail
 
