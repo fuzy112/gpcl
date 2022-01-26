@@ -220,7 +220,7 @@ std::string bfd_stacktrace_entry_description(const void *address) noexcept
 
   if (!info.func.empty())
   {
-    ss << info.func;
+    ss << info.func << "()";
   }
   else if (info.symbol_address)
   {

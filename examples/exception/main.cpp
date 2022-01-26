@@ -7,8 +7,16 @@
 using cerrno_errinfo = gpcl::error_info<struct cerrno_errinfo_, int>;
 using filename_errinfo =
     gpcl::error_info<struct filename_errinfo_, std::string>;
-using stacktrace_errinfo =
-    gpcl::error_info<struct stacktrace_errinfo_, gpcl::stacktrace>;
+
+struct stacktrace_errinfo
+    : gpcl::error_info<stacktrace_errinfo, gpcl::stacktrace>
+{
+  stacktrace_errinfo()
+      : gpcl::error_info<stacktrace_errinfo, gpcl::stacktrace>(
+            gpcl::stacktrace::current())
+  {
+  }
+};
 
 std::string to_string(cerrno_errinfo const &ei)
 {
@@ -44,7 +52,7 @@ FILE *openFile(const char *name)
   if (!p)
     GPCL_THROW_EXCEPTION(my_error()
                          << cerrno_errinfo(errno) << filename_errinfo(name)
-                         << stacktrace_errinfo(gpcl::stacktrace::current()));
+                         << stacktrace_errinfo());
   return p;
 }
 #ifdef _MSC_VER
