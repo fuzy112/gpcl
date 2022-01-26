@@ -1,12 +1,17 @@
 #ifndef GPCL_EXCEPTION_HPP
 #define GPCL_EXCEPTION_HPP
 
+#include <gpcl/debugstream.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
-#include <gpcl/typeid.hpp>
-#include <gpcl/debugstream.hpp>
+#include <gpcl/generic_pointer_cast.hpp>
+#include <gpcl/intrusive_list.hpp>
+#include <gpcl/intrusive_ptr.hpp>
+#include <gpcl/noncopyable.hpp>
 #include <gpcl/stacktrace.hpp>
+#include <gpcl/typeid.hpp>
 
+#include <atomic>
 #include <iomanip>
 #include <ostream>
 #include <sstream>
@@ -22,27 +27,47 @@ template <typename Tag, typename T>
 class error_info;
 
 template <typename E, typename Tag, typename T>
-E &&operator<<(E &&e, error_info<Tag, T> &&info);
+E &&operator<<(E &&e, error_info<Tag, T> &&info) noexcept;
 
 template <typename E>
 std::string diagnostic_information(E const &exc);
 
-class error_info_base
+class error_info_base : public intrusive_list_node<error_info_base>
 {
   friend exception;
   template <typename E, typename Tag, typename T>
-  friend E &&operator<<(E &&e, error_info<Tag, T> &&info);
+  friend E &&operator<<(E &&e, error_info<Tag, T> &&info) noexcept;
   template <typename E>
   friend std::string diagnostic_information(E const &exc);
 
-  error_info_base *next_ = nullptr;
+  mutable std::atomic_long ref_count_{1};
+
+protected:
+  virtual ~error_info_base()
+  {
+    if (in_list())
+      gpcl::delete_entry(this);
+  }
 
 public:
-  virtual ~error_info_base() = default;
-
   virtual const type_info &type() const noexcept = 0;
 
   virtual std::string to_string() const = 0;
+
+  friend inline void
+  intrusive_ref_count_inc(const error_info_base *errinfo) noexcept
+  {
+    errinfo->ref_count_ += 1;
+  }
+
+  friend inline void
+  intrusive_ref_count_dec(const error_info_base *errinfo) noexcept
+  {
+    if (errinfo->ref_count_.fetch_sub(1) == 1)
+    {
+      delete errinfo;
+    }
+  }
 };
 
 template <typename Tag, typename T>
@@ -74,8 +99,13 @@ std::string translate_error_info_value(const T &value)
 } // namespace detail
 
 template <typename Tag, typename T>
-class error_info : public error_info_base
+class error_info;
+
+template <typename Tag, typename T>
+class error_info_impl : public error_info_base, private noncopyable
 {
+  friend error_info<Tag, T>;
+
 public:
   using tag = Tag;
   using value_type = T;
@@ -83,46 +113,92 @@ public:
 private:
   value_type value_;
 
-public:
+private:
   template <typename Enable = typename std::enable_if<
                 std::is_default_constructible<T>::value>::type>
-  error_info() : value_()
-  {
-  }
-
-  error_info(error_info &&other) noexcept(
-      std::is_nothrow_move_constructible<T>::value)
-      : value_(std::move_if_noexcept(other.value_))
+  error_info_impl() : value_()
   {
   }
 
   template <typename... Args>
-  explicit error_info(Args &&...args) : value_(std::forward<Args>(args)...)
+  explicit error_info_impl(Args &&... args)
+      : value_(std::forward<Args>(args)...)
   {
   }
 
   template <typename U, typename... Args>
-  explicit error_info(std::initializer_list<U> il, Args &&...args)
+  explicit error_info_impl(std::initializer_list<U> il, Args &&... args)
       : value_(il, std::forward<Args>(args)...)
   {
   }
 
-  error_info &operator=(error_info &&other) noexcept(
-      std::is_nothrow_move_assignable<T>::value)
-  {
-    value_ = std::move_if_noexcept(other.value_);
-    return *this;
-  }
+protected:
+  ~error_info_impl() override {}
 
+public:
   value_type const &value() const { return value_; }
 
-  type_info const &type() const noexcept { return typeid_<error_info>(); }
-
-  std::string to_string() const override
+  type_info const &type() const noexcept override
   {
-    return detail::to_string_impl(*this);
+    return typeid_<error_info<Tag, T>>();
   }
+
+  std::string to_string() const override;
 };
+
+template <typename Tag, typename T>
+class error_info
+{
+  friend exception;
+
+public:
+  using impl_type = error_info_impl<Tag, T>;
+
+  using value_type = T;
+  using tag = Tag;
+
+private:
+  intrusive_ptr<impl_type> impl_;
+
+public:
+  template <typename Enable = typename std::enable_if<
+                std::is_default_constructible<T>::value>::type>
+  error_info() : impl_(new impl_type())
+  {
+  }
+
+  template <typename... Args>
+  explicit error_info(Args &&... args)
+      : impl_(new impl_type(std::forward<Args>(args)...))
+  {
+  }
+
+  template <typename U, typename... Args>
+  explicit error_info(std::initializer_list<U> il, Args &&... args)
+      : impl_(new impl_type(il, std::forward<Args>(args)...))
+  {
+  }
+
+  explicit error_info(impl_type *impl) noexcept : impl_(impl, true) {}
+
+  explicit error_info(const impl_type *impl) = delete;
+
+  error_info(const error_info &) = default;
+  error_info(error_info &&) noexcept = default;
+  error_info &operator=(const error_info &) = default;
+  error_info &operator=(error_info &&) noexcept = default;
+
+  value_type const &value() const { return impl_->value(); }
+
+  type_info const &type() const noexcept { return typeid_<error_info>(); }
+};
+
+template <typename Tag, typename T>
+std::string error_info_impl<Tag, T>::to_string() const
+{
+  return detail::to_string_impl(
+      error_info<Tag, T>(const_cast<error_info_impl *>(this)));
+}
 
 template <typename Tag, typename T>
 std::string to_string(error_info<Tag, T> const &errinfo)
@@ -146,15 +222,15 @@ class exception
   template <typename E>
   friend std::string diagnostic_information(E const &exc);
 
-  error_info_base *error_infos_ = nullptr;
+  intrusive_list<error_info_base> error_info_list_;
 
   void release() noexcept
   {
-    while (error_infos_)
+    while (!error_info_list_.empty())
     {
-      auto tmp = error_infos_->next_;
-      delete error_infos_;
-      error_infos_ = tmp;
+      auto &ei = error_info_list_.back();
+      error_info_list_.pop_back();
+      intrusive_ref_count_dec(&ei);
     }
   }
 
@@ -164,30 +240,38 @@ public:
   exception(const exception &) = delete;
   exception &operator=(const exception &) = delete;
 
-  exception(exception &&other) noexcept : error_infos_(other.error_infos_)
+  exception(exception &&other) noexcept
+      : error_info_list_(std::move(other.error_info_list_))
   {
-    other.error_infos_ = nullptr;
   }
 
   exception &operator=(exception &&other) noexcept
   {
-    release();
-    error_infos_ = other.error_infos_;
-    other.error_infos_ = nullptr;
+    error_info_list_ = std::move(other.error_info_list_);
     return *this;
   }
 
   virtual ~exception() { release(); }
 
-  template <typename E, typename Tag, typename T>
-  friend E &&operator<<(E &&e, error_info<Tag, T> &&info)
+  // void swap(exception &other) noexcept
+  // {
+  //   using gpcl::swap;
+
+  //   swap(error_info_list_, other.error_info_list_);
+  // }
+
+  template <typename Tag, typename T>
+  void add_error_info(error_info<Tag, T> &&info) noexcept
   {
-    error_info_base **p = &e.error_infos_;
+    auto &ei = *info.impl_;
+    info.impl_.release();
+    error_info_list_.push_back(ei);
+  }
 
-    while (*p)
-      p = &(*p)->next_;
-
-    *p = new error_info<Tag, T>(std::move(info));
+  template <typename E, typename Tag, typename T>
+  friend E &&operator<<(E &&e, error_info<Tag, T> &&info) noexcept
+  {
+    e.add_error_info(std::move(info));
     return std::forward<E>(e);
   }
 
@@ -195,10 +279,12 @@ public:
   friend typename ErrorInfo::value_type const *
   get_error_info(exception const &exc) noexcept
   {
-    for (error_info_base *ei = exc.error_infos_; ei != nullptr; ei = ei->next_)
+    for (const error_info_base &ei : exc.error_info_list_)
     {
-      if (ei->type() == typeid_<ErrorInfo>())
-        return std::addressof(static_cast<ErrorInfo const *>(ei)->value());
+      if (ei.type() == typeid_<ErrorInfo>())
+        return std::addressof(
+            static_pointer_cast<const typename ErrorInfo::impl_type>(&ei)
+                ->value());
     }
     return nullptr;
   }
@@ -295,9 +381,9 @@ std::string diagnostic_information(E const &exc)
   if (!exc_)
     return oss.str();
 
-  for (error_info_base *ei = exc_->error_infos_; ei != nullptr; ei = ei->next_)
+  for (const error_info_base &ei : exc_->error_info_list_)
   {
-    oss << "  " << ei->to_string() << "\n";
+    oss << "  " << ei.to_string() << "\n";
   }
 
   return oss.str();

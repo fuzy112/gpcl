@@ -39,11 +39,9 @@ public:
     next = this;
   }
 
-  ~intrusive_list_node_base() noexcept
-  {
-    GPCL_ASSERT(prev == this);
-    GPCL_ASSERT(next == this);
-  }
+  bool in_list() const noexcept { return !(prev == this && next == this); }
+
+  ~intrusive_list_node_base() noexcept { GPCL_ASSERT(!in_list()); }
 
   void swap(intrusive_list_node_base &other) noexcept
   {
@@ -61,7 +59,6 @@ inline void swap(intrusive_list_node_base &x,
 {
   x.swap(y);
 }
-
 
 inline void insert_between(intrusive_list_node_base *node,
                            intrusive_list_node_base *prev,
@@ -113,12 +110,12 @@ public:
   using pointer = T *;
   using difference_type = std::ptrdiff_t;
   using iterator_category = std::bidirectional_iterator_tag;
+  using node_type =
+      intrusive_list_node<typename std::remove_const<T>::type, Tag>;
 
   constexpr intrusive_list_iterator() noexcept : data_() {}
 
-  explicit constexpr intrusive_list_iterator(
-      intrusive_list_node<T, Tag> *p) noexcept
-      : data_(p)
+  explicit constexpr intrusive_list_iterator(node_type *p) noexcept : data_(p)
   {
   }
 
@@ -132,13 +129,13 @@ public:
 
   intrusive_list_iterator &operator++()
   {
-    data_ = data_->next;
+    data_ = static_cast<node_type *>(data_->next);
     return *this;
   }
 
   intrusive_list_iterator &operator--()
   {
-    data_ = data_->prev;
+    data_ = static_cast<node_type *>(data_->prev);
     return *this;
   }
 
@@ -169,7 +166,7 @@ public:
   }
 
 private:
-  intrusive_list_node<T, Tag> *data_;
+  node_type *data_;
 };
 
 template <typename T, typename Tag>
@@ -187,19 +184,46 @@ public:
 
   constexpr intrusive_list() noexcept = default;
 
+  intrusive_list(intrusive_list &&other) noexcept
+  {
+    if (!other.empty())
+      replace_entry(&other.head_, &head_);
+  }
+
   intrusive_list(const intrusive_list &&) = delete;
 
   ~intrusive_list() noexcept { clear(); }
 
-  intrusive_list &operator=(const intrusive_list &) = delete;
+  intrusive_list &operator=(intrusive_list &&other)
+  {
+    if (this == &other)
+    {
+      return *this;
+    }
+    this->clear();
+    if (!other.empty())
+    {
+      replace_entry(&other.head_, &head_);
+    }
+    return *this;
+  }
 
-  iterator begin() noexcept { return iterator{head_.next}; }
+  iterator begin() noexcept
+  {
+    return iterator{static_cast<node_type *>(head_.next)};
+  }
 
-  iterator end() noexcept { return iterator{&head_}; }
+  iterator end() noexcept { return iterator{static_cast<node_type *>(&head_)}; }
 
-  const_iterator begin() const noexcept { return const_iterator{head_.next}; }
+  const_iterator begin() const noexcept
+  {
+    return const_iterator{static_cast<node_type *>(head_.next)};
+  }
 
-  const_iterator end() const noexcept { return const_iterator{&head_}; }
+  const_iterator end() const noexcept
+  {
+    return const_iterator{static_cast<node_type *>(&head_)};
+  }
 
   const_iterator cbegin() const noexcept { return begin(); }
 
@@ -325,6 +349,12 @@ private:
   // Use next as the head and prev as the tail.
   mutable intrusive_list_node<T, Tag> head_;
 };
+
+// template <typename T, typename Tag>
+// void swap(intrusive_list<T, Tag> &x, intrusive_list<T, Tag> &y) noexcept
+// {
+//   x.swap(y);
+// }
 
 } // namespace gpcl
 
