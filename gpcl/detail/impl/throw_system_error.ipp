@@ -5,9 +5,9 @@
 
 namespace gpcl {
 
-template [[noreturn]] void
+template GPCL_NORETURN_UNLESS_CLANG void
 throw_exception(detail::system_error &&e);
-template [[noreturn]] void
+template GPCL_NORETURN_UNLESS_CLANG void
 throw_exception(detail::system_error &e);
 
 } // namespace gpcl

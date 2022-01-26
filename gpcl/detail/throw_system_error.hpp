@@ -10,9 +10,15 @@ namespace gpcl {
 template <typename E>
 [[noreturn]] void throw_exception(E &&e);
 
-extern template [[noreturn]] GPCL_EXPORT_DECL void
+#if defined(__clang__)
+#  define GPCL_NORETURN_UNLESS_CLANG
+#else
+#  define GPCL_NORETURN_UNLESS_CLANG [[noreturn]]
+#endif
+
+extern template GPCL_NORETURN_UNLESS_CLANG GPCL_EXPORT_DECL void
 throw_exception(detail::system_error &&e);
-extern template [[noreturn]] GPCL_EXPORT_DECL void
+extern template GPCL_NORETURN_UNLESS_CLANG GPCL_EXPORT_DECL void
 throw_exception(detail::system_error &e);
 
 namespace detail {
