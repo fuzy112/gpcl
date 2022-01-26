@@ -138,8 +138,7 @@ inline bfd_cache *cached_bfd_from_address(const void *address,
         break;
       win32_module_name.resize(win32_module_name.size() * 2);
     }
-    const char *f
-    name = win32_module_name.c_str();
+    const char *fname = win32_module_name.c_str();
 
 #  if defined(__CYGWIN__)
     ssize_t posix_name_size = cygwin_conv_path(

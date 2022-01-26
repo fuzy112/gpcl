@@ -90,7 +90,7 @@ std::string tag_invoke(fmt_error_info_fn<Tag, T> const &, const T &v)
 {
   using error_info_detail::operator<<;
   std::ostringstream ss;
-  ss << "[" << typeid_<Tag *>().name() << "] = " << v;
+  ss << "[" << typeid_<Tag *>().name() << "] = {" << v << "}";
   return ss.str();
 }
 

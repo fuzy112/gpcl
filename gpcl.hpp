@@ -44,8 +44,10 @@
 #include <gpcl/enable_shared_from.hpp>
 #include <gpcl/enable_shared_from_this.hpp>
 #include <gpcl/error.hpp>
+#include <gpcl/error_info.hpp>
 #include <gpcl/event.hpp>
 #include <gpcl/exception.hpp>
+#include <gpcl/excfwd.hpp>
 #include <gpcl/expected.hpp>
 #include <gpcl/expected_fwd.hpp>
 #include <gpcl/file.hpp>
@@ -58,6 +60,7 @@
 #include <gpcl/in_place.hpp>
 #include <gpcl/in_place_type.hpp>
 #include <gpcl/intrusive_list.hpp>
+#include <gpcl/intrusive_ptr.hpp>
 #include <gpcl/inttypes.hpp>
 #include <gpcl/is_basic_lockable.hpp>
 #include <gpcl/is_lockable.hpp>
@@ -75,6 +78,7 @@
 #include <gpcl/lock_file.hpp>
 #include <gpcl/make_any.hpp>
 #include <gpcl/make_basic_any.hpp>
+#include <gpcl/make_iomanip.hpp>
 #include <gpcl/make_shared.hpp>
 #include <gpcl/memory_mapped_region.hpp>
 #include <gpcl/message_queue.hpp>
@@ -113,6 +117,7 @@
 #include <gpcl/tag_invoke.hpp>
 #include <gpcl/thread.hpp>
 #include <gpcl/thread_attributes.hpp>
+#include <gpcl/throw_exception.hpp>
 #include <gpcl/time.hpp>
 #include <gpcl/type_identity.hpp>
 #include <gpcl/typeid.hpp>

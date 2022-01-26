@@ -8,34 +8,33 @@ using cerrno_errinfo = gpcl::error_info<struct cerrno_errinfo_, int>;
 using filename_errinfo =
     gpcl::error_info<struct filename_errinfo_, std::string>;
 
-struct stacktrace_errinfo
-    : gpcl::error_info<stacktrace_errinfo, gpcl::stacktrace>
-{
-  stacktrace_errinfo()
-      : gpcl::error_info<stacktrace_errinfo, gpcl::stacktrace>(
-            gpcl::stacktrace::current())
-  {
-  }
-};
+using stacktrace_errinfo =
+    gpcl::error_info<struct stacktrace_errinfo_, gpcl::stacktrace>;
 
-std::string to_string(cerrno_errinfo const &ei)
+std::string tag_invoke(cerrno_errinfo::format_fn, int err)
 {
   std::ostringstream ss;
 
   ss << "["
      << "cerrno_errinfo"
-     << " ] = { " << ei.value() << ", "
-     << std::quoted(gpcl::strerror(ei.value())) << " }";
+     << "] = { " << err << ", " << std::quoted(gpcl::strerror(err)) << " }";
   return ss.str();
 }
 
-std::string to_string(filename_errinfo const &ei)
+std::string tag_invoke(filename_errinfo::format_fn, std::string filename)
 {
   std::ostringstream ss;
   ss << "["
      << "filename_errinfo"
-     << "] = " << std::quoted(ei.value());
+     << "] = " << std::quoted(filename);
   return ss.str();
+}
+
+auto tag_invoke(stacktrace_errinfo::format_fn, const gpcl::stacktrace &st)
+{
+  return gpcl::make_iomanip([&st](auto &s) {
+    s << "[stacktrace] = { " << st << " }";
+  });
 }
 
 class my_error : virtual public std::exception, virtual public gpcl::exception
@@ -52,7 +51,7 @@ FILE *openFile(const char *name)
   if (!p)
     GPCL_THROW_EXCEPTION(my_error()
                          << cerrno_errinfo(errno) << filename_errinfo(name)
-                         << stacktrace_errinfo());
+                         << stacktrace_errinfo(gpcl::stacktrace::current()));
   return p;
 }
 #ifdef _MSC_VER

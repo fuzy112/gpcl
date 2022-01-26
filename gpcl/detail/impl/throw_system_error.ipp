@@ -13,7 +13,7 @@
 
 
 #include <gpcl/detail/throw_system_error.hpp>
-#include <gpcl/exception.hpp>
+#include <gpcl/throw_exception.hpp>
 
 namespace gpcl {
 

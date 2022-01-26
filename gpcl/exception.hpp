@@ -16,15 +16,14 @@
 #include <gpcl/error_info.hpp>
 #include <gpcl/excfwd.hpp>
 #include <gpcl/intrusive_list.hpp>
-
-#include <iomanip>
+#include <gpcl/make_iomanip.hpp>
 
 namespace gpcl {
 
 class exception
 {
   template <typename E>
-  friend std::string diagnostic_information(E const &exc);
+  friend auto diagnostic_information(E const &exc);
 
   intrusive_list<detail::error_info_base> error_info_list_;
 
@@ -41,7 +40,7 @@ class exception
 public:
   exception() noexcept {}
 
-  exception(const exception &) = delete;
+  exception(const exception &) = default;
   exception &operator=(const exception &) = delete;
 
   exception(exception &&other) noexcept
@@ -58,18 +57,20 @@ public:
   virtual ~exception() { release(); }
 
   template <typename Tag, typename T>
+  void add_error_info(const error_info<Tag, T> &info) noexcept
+  {
+    auto &ei = *info.impl_;
+    auto impl_ptr = info.impl_;
+    impl_ptr.release();
+    error_info_list_.push_back(ei);
+  }
+
+  template <typename Tag, typename T>
   void add_error_info(error_info<Tag, T> &&info) noexcept
   {
     auto &ei = *info.impl_;
     info.impl_.release();
     error_info_list_.push_back(ei);
-  }
-
-  template <typename E, typename Tag, typename T>
-  friend E &&operator<<(E &&e, error_info<Tag, T> &&info) noexcept
-  {
-    e.add_error_info(std::move(info));
-    return std::forward<E>(e);
   }
 
   template <typename ErrorInfo>
@@ -87,69 +88,37 @@ public:
   }
 };
 
-template <typename E>
-class wrapped_exception : virtual public E, virtual public exception
-{
-  static_assert(!std::is_base_of<gpcl::exception, E>::value, "");
-
-public:
-  template <typename T>
-  explicit wrapped_exception(T &&e) : E(std::forward<T>(e))
-  {
-  }
-};
-
-using source_file_errinfo =
-    error_info<struct source_file_errinfo_, const char *>;
-using source_line_errinfo = error_info<struct source_line_errinfo_, unsigned>;
-using func_name_errinfo = error_info<struct func_name_errinfo_, const char *>;
-
-inline std::string to_string(source_file_errinfo const &ei)
-{
-  std::ostringstream oss;
-  oss << "[source_file_errinfo] = " << std::quoted(ei.value());
-  return oss.str();
-}
-
-inline std::string to_string(source_line_errinfo const &ei)
-{
-  std::ostringstream oss;
-  oss << "[source_line_errinfo] = " << ei.value();
-  return oss.str();
-}
-
-inline std::string to_string(func_name_errinfo const &ei)
-{
-  std::ostringstream oss;
-  oss << "[func_name_errinfo] = " << std::quoted(ei.value());
-  return oss.str();
-}
-
-template <typename E,
-          typename std::enable_if<
-              std::is_base_of<exception, typename std::decay<E>::type>::value,
-              int>::type = 0>
-E enable_error_info(E &&e) noexcept
-{
-  return std::forward<E>(e);
-}
-
-template <typename E,
-          typename std::enable_if<
-              !std::is_base_of<exception, typename std::decay<E>::type>::value,
-              int>::type = 0>
-wrapped_exception<typename std::decay<E>::type> enable_error_info(E &&e)
-{
-  return wrapped_exception<typename std::decay<E>::type>(std::forward<E>(e));
-}
-
-template <typename CharT, typename Traits, typename E,
-          typename Enable = typename std::enable_if<
-              std::is_base_of<exception, E>::value>::type>
+template <
+    typename CharT, typename Traits, typename E,
+    typename std::enable_if<std::is_base_of<exception, E>::value, int>::type>
 std::basic_ostream<CharT, Traits> &
 operator<<(std::basic_ostream<CharT, Traits> &out, const E &exc)
 {
   return out << diagnostic_information(exc);
+}
+
+template <typename E, typename ErrorInfo,
+          typename std::enable_if<
+              std::is_base_of<exception, typename std::decay<E>::type>::value &&
+                  is_error_info<typename std::decay<ErrorInfo>::type>::value,
+              int>::type>
+E &&operator<<(E &&e, ErrorInfo &&err_info) noexcept
+{
+  e.add_error_info(std::forward<ErrorInfo>(err_info));
+  return std::forward<E>(e);
+}
+
+template <
+    typename E, typename... ErrorInfos,
+    typename std::enable_if<
+        std::conjunction<
+            std::is_base_of<exception, typename std::decay<E>::type>,
+            is_error_info<typename std::decay<ErrorInfos>::type>...>::value,
+        int>::type>
+E &&operator<<(E &&e, const std::tuple<ErrorInfos...> &error_infos) noexcept
+{
+  std::apply([&e](auto &&...err_infos) { [](...) {}(&(e << err_infos)...); });
+  return std::forward<E>(e);
 }
 
 template <typename E,
@@ -169,41 +138,23 @@ const char *exception_name(const E &) noexcept
 }
 
 template <typename E>
-std::string diagnostic_information(E const &exc)
+auto diagnostic_information(const E &e)
 {
-  std::ostringstream oss;
-  oss << "Exception [" << exception_name(exc) << "]\n";
+  return make_iomanip([&](std::ostream &s) {
+    s << "Exception [" << exception_name(e) << "]\n";
 
-  gpcl::exception const *exc_ = dyn_cast<gpcl::exception>(&exc);
-  if (!exc_)
-    return oss.str();
+    gpcl::exception const *ge = dyn_cast<gpcl::exception>(&e);
+    if (!ge)
+      return;
 
-  for (const detail::error_info_base &ei : exc_->error_info_list_)
-  {
-    oss << "  ";
-    ei.format_to(oss) << "\n";
-  }
-
-  return oss.str();
-}
-
-template <typename E>
-[[noreturn]] void throw_exception(E &&e)
-{
-#if defined GPCL_NO_EXCEPTIONS
-  cdebug() << "Trying to an exception, but exception support is disabled.\n"
-           << enable_error_info(e) << "\nTracing back:\n"
-           << stacktrace::current() << "\nTerminating..." << std::endl;
-#endif
-  GPCL_THROW(enable_error_info(std::move(e)));
+    for (const detail::error_info_base &ei : ge->error_info_list_)
+    {
+      s << "  ";
+      ei.format_to(s) << "\n";
+    }
+  });
 }
 
 } // namespace gpcl
-
-#define GPCL_THROW_EXCEPTION(exc)                                              \
-  ::gpcl::throw_exception(::gpcl::enable_error_info(exc)                       \
-                          << ::gpcl::source_file_errinfo(__FILE__)             \
-                          << ::gpcl::source_line_errinfo(__LINE__)             \
-                          << ::gpcl::func_name_errinfo(__func__))
 
 #endif // GPCL_EXCEPTION_HPP

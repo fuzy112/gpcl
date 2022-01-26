@@ -4,5 +4,7 @@
 
 DOCTEST_REGISTER_EXCEPTION_TRANSLATOR(gpcl::exception const &exc)
 {
-  return gpcl::diagnostic_information(exc).c_str();
+  std::ostringstream ss;
+  ss << gpcl::diagnostic_information(exc);
+  return doctest::String(ss.str().c_str());
 }

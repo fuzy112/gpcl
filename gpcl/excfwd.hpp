@@ -4,6 +4,7 @@
 #include <gpcl/detail/config.hpp>
 
 #include <iosfwd>
+#include <tuple>
 #include <type_traits>
 
 namespace gpcl {
@@ -21,14 +22,40 @@ std::basic_ostream<CharT, Traits> &
 operator<<(std::basic_ostream<CharT, Traits> &os,
            error_info<Tag, T> const &err_info);
 
+template <typename CharT, typename Traits, typename E,
+          typename std::enable_if<std::is_base_of<exception, E>::value,
+                                  int>::type = 0>
+std::basic_ostream<CharT, Traits> &
+operator<<(std::basic_ostream<CharT, Traits> &out, const E &exc);
+
+template <typename T>
+struct is_error_info : std::false_type
+{
+};
+
+template <typename Tag, typename T>
+struct is_error_info<error_info<Tag, T>> : std::true_type
+{
+};
+
+template <typename E, typename ErrorInfo,
+          typename std::enable_if<
+              std::is_base_of<exception, typename std::decay<E>::type>::value &&
+                  is_error_info<typename std::decay<ErrorInfo>::type>::value,
+              int>::type = 0>
+E &&operator<<(E &&e, ErrorInfo &&err_info) noexcept;
+
 template <
-    typename E, typename Tag, typename T,
+    typename E, typename... ErrorInfos,
     typename std::enable_if<
-        std::is_base_of<typename std::decay<E>::type, E>::value, int>::type = 0>
-E &&operator<<(const E &e, const error_info<Tag, T> &err_info) noexcept;
+        std::conjunction<
+            std::is_base_of<exception, typename std::decay<E>::type>,
+            is_error_info<typename std::decay<ErrorInfos>::type>...>::value,
+        int>::type = 0>
+E &&operator<<(E &&e, const std::tuple<ErrorInfos...> &error_infos) noexcept;
 
 template <typename E>
-std::string diagnostic_information(const E &e);
+auto diagnostic_information(const E &e);
 
 } // namespace gpcl
 

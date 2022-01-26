@@ -116,7 +116,8 @@
         "__tree": "cpp",
         "__tuple": "cpp",
         "queue": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "csetjmp": "cpp"
     },
     "svn.ignoreMissingSvnWarning": true
 }
