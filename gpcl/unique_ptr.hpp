@@ -168,18 +168,14 @@ public:
     return *this;
   }
 
-  template <class U, class E>
-#ifdef GPCL_DOXYGEN
-  unique_ptr &
-#else
-  typename std::enable_if<
-      !std::is_array<U>::value &&
-          std::is_convertible<typename unique_ptr<U, E>::pointer,
-                              pointer>::value &&
-          std::is_assignable<Deleter &, E &&>::value,
-      unique_ptr &>::type
-#endif
-  operator=(unique_ptr<U, E> &&r) noexcept
+  template <class U, class E,
+            typename std::enable_if<
+                !std::is_array<U>::value &&
+                    std::is_convertible<typename unique_ptr<U, E>::pointer,
+                                        pointer>::value &&
+                    std::is_assignable<Deleter &, E &&>::value,
+                int>::type = 0>
+  unique_ptr &operator=(unique_ptr<U, E> &&r) noexcept
   {
     reset(r.release());
     get_deleter() = std::forward<E>(r.get_deleter());
@@ -384,7 +380,7 @@ unique_ptr<T> reinterpret_pointer_cast(unique_ptr<U> &&p) noexcept
 
 /// @relates unique_ptr
 template <typename T, typename... Args>
-unique_ptr<T> make_unique(Args &&...args)
+unique_ptr<T> make_unique(Args &&... args)
 {
   return unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
