@@ -18,6 +18,7 @@
 #include <gpcl/scoped_lock.hpp>
 #include <gpcl/unique_ptr.hpp>
 #include <gpcl/mutex.hpp>
+#include <gpcl/scope_exit.hpp>
 
 #include <sstream>
 #include <string_view>
@@ -108,6 +109,10 @@ inline bfd_cache *cached_bfd_from_address(const void *address,
 
 #else
     HMODULE hModule;
+    scope_exit cleanup{[&]{
+      FreeLibrary(hModule);
+    }};
+
     if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
                             (LPCSTR)address, &hModule))
       return nullptr;
