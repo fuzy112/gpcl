@@ -1,4 +1,16 @@
-#pragma once
+//
+// intrusive_ptr.hpp
+// ~~~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+#ifndef GPCL_INTRUSIVE_PTR_HPP
+#define GPCL_INTRUSIVE_PTR_HPP
+
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/swap.hpp>
@@ -309,3 +321,6 @@ intrusive_ptr<T> reinterpret_pointer_cast(const intrusive_ptr<U> &p) noexcept
 }
 
 } // namespace gpcl
+
+
+#endif // GPCL_INTRUSIVE_PTR_HPP

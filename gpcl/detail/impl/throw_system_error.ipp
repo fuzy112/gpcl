@@ -1,4 +1,16 @@
-#pragma once
+//
+// throw_system_error.ipp
+// ~~~~~~~~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+#ifndef GPCL_DETAIL_IMPL_THROW_SYSTEM_ERROR_IPP
+#define GPCL_DETAIL_IMPL_THROW_SYSTEM_ERROR_IPP
+
 
 #include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/exception.hpp>
@@ -33,3 +45,6 @@ void throw_system_error(int err, czstring<> what)
 #endif
 
 } // namespace gpcl::detail
+
+
+#endif // GPCL_DETAIL_IMPL_THROW_SYSTEM_ERROR_IPP
