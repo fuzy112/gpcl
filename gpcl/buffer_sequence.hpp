@@ -61,10 +61,15 @@ const Buffer *buffer_sequence_begin(const Buffer &b) noexcept
   return std::addressof(b);
 }
 
-template <typename Container,
-          std::enable_if_t<!std::is_convertible<const Container *,
-                                                const const_buffer *>::value,
-                           int> = 0>
+template <
+    typename Container,
+    std::enable_if_t<
+        !std::is_convertible<const Container *, const const_buffer *>::value &&
+            std::is_convertible_v<
+                typename std::iterator_traits<decltype(std::begin(
+                    std::declval<Container const &>()))>::value_type,
+                const_buffer>,
+        int> = 0>
 auto buffer_sequence_begin(const Container &b) noexcept
 {
   return std::begin(b);
@@ -79,10 +84,15 @@ const Buffer *buffer_sequence_end(const Buffer &b) noexcept
   return std::addressof(b) + 1;
 }
 
-template <typename Container,
-          std::enable_if_t<!std::is_convertible<const Container *,
-                                                const const_buffer *>::value,
-                           int> = 0>
+template <
+    typename Container,
+    std::enable_if_t<
+        !std::is_convertible<const Container *, const const_buffer *>::value &&
+            std::is_convertible_v<
+                typename std::iterator_traits<decltype(std::end(
+                    std::declval<Container const &>()))>::value_type,
+                const_buffer>,
+        int> = 0>
 auto buffer_sequence_end(const Container &b) noexcept
 {
   return std::end(b);
