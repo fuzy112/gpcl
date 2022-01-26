@@ -26,8 +26,8 @@ struct is_reference_countable : std::false_type
 
 template <typename T>
 struct is_reference_countable<
-    T, decltype(intrusive_ref_count_inc(std::declval<const T *>()),
-                intrusive_ref_count_dec(std::declval<const T *>()), void())>
+    T, decltype(intrusive_ref_count_inc(std::declval<const T &>()),
+                intrusive_ref_count_dec(std::declval<const T &>()), void())>
     : std::true_type
 {
 };
@@ -50,14 +50,14 @@ public:
   {
     if (inc && p_)
     {
-      intrusive_ref_count_inc(p_);
+      intrusive_ref_count_inc(*p_);
     }
   }
 
   intrusive_ptr(const intrusive_ptr &other) : p_(other.p_)
   {
     if (p_)
-      intrusive_ref_count_inc(p_);
+      intrusive_ref_count_inc(*p_);
   }
 
   template <typename U,
@@ -66,7 +66,7 @@ public:
   intrusive_ptr(const intrusive_ptr<U> &other) : p_(other.p_)
   {
     if (p_)
-      intrusive_ref_count_inc(p_);
+      intrusive_ref_count_inc(*p_);
   }
 
   intrusive_ptr(intrusive_ptr &&other) noexcept : p_(other.p_)
@@ -86,7 +86,7 @@ public:
   {
     if (p_ == nullptr)
       return;
-    intrusive_ref_count_dec(p_);
+    intrusive_ref_count_dec(*p_);
     p_ = nullptr;
   }
 
@@ -147,7 +147,7 @@ public:
   {
     if (p_)
     {
-      intrusive_ref_count_dec(p_);
+      intrusive_ref_count_dec(*p_);
       p_ = nullptr;
     }
   }
