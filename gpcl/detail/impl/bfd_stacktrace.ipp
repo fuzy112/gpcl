@@ -14,11 +14,11 @@
 #include <gpcl/detail/bfd_stacktrace.hpp>
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/mutex.hpp>
 #include <gpcl/noncopyable.hpp>
+#include <gpcl/scope_exit.hpp>
 #include <gpcl/scoped_lock.hpp>
 #include <gpcl/unique_ptr.hpp>
-#include <gpcl/mutex.hpp>
-#include <gpcl/scope_exit.hpp>
 
 #include <sstream>
 #include <string_view>
@@ -39,6 +39,10 @@
 #if defined(__CYGWIN__) || defined(GPCL_WINDOWS)
 #  include <Windows.h>
 #  include <psapi.h>
+#endif
+
+#if defined(__CYGWIN__)
+#  include <sys/cygwin.h>
 #endif
 
 namespace gpcl::detail {
@@ -109,9 +113,7 @@ inline bfd_cache *cached_bfd_from_address(const void *address,
 
 #else
     HMODULE hModule;
-    scope_exit cleanup{[&]{
-      FreeLibrary(hModule);
-    }};
+    scope_exit cleanup{[&] { FreeLibrary(hModule); }};
 
     if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
                             (LPCSTR)address, &hModule))
@@ -123,9 +125,34 @@ inline bfd_cache *cached_bfd_from_address(const void *address,
       return nullptr;
 
     const void *fbase = info.lpBaseOfDll;
-    char fname[255];
-    if (!GetModuleFileNameA(hModule, fname, sizeof(fname)))
+    std::string win32_module_name;
+
+    win32_module_name.resize(255);
+    for (;;)
+    {
+      DWORD size = GetModuleFileNameA(hModule, &win32_module_name[0],
+                                      win32_module_name.size());
+      if (size == 0)
+        return nullptr;
+      if (size != win32_module_name.size())
+        break;
+      win32_module_name.resize(win32_module_name.size() * 2);
+    }
+    const char *f
+    name = win32_module_name.c_str();
+
+#  if defined(__CYGWIN__)
+    ssize_t posix_name_size = cygwin_conv_path(
+        CCP_WIN_A_TO_POSIX, win32_module_name.c_str(), nullptr, 0);
+    if (posix_name_size < 0)
       return nullptr;
+    std::string posix_module_name;
+    posix_module_name.resize(posix_name_size);
+    if (cygwin_conv_path(CCP_WIN_A_TO_POSIX, win32_module_name.c_str(),
+                         &posix_module_name[0], posix_name_size))
+      return nullptr;
+    fname = posix_module_name.c_str();
+#  endif
 
 #endif
     scoped_lock lock(g_bfd_context.mtx);
