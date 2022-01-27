@@ -43,7 +43,7 @@ template <typename E, typename ErrorInfo,
               std::is_base_of<exception, typename std::decay<E>::type>::value &&
                   is_error_info<typename std::decay<ErrorInfo>::type>::value,
               int>::type = 0>
-E &&operator<<(E &&e, ErrorInfo &&err_info) noexcept;
+auto operator<<(const E &e, ErrorInfo &&err_info) noexcept;
 
 template <
     typename E, typename... ErrorInfos,
@@ -52,7 +52,8 @@ template <
             std::is_base_of<exception, typename std::decay<E>::type>,
             is_error_info<typename std::decay<ErrorInfos>::type>...>::value,
         int>::type = 0>
-E &&operator<<(E &&e, const std::tuple<ErrorInfos...> &error_infos) noexcept;
+auto operator<<(const E &e,
+                const std::tuple<ErrorInfos...> &error_infos) noexcept;
 
 template <typename E>
 auto diagnostic_information(const E &e);

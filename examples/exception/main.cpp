@@ -38,6 +38,8 @@ auto tag_invoke(stacktrace_errinfo::format_fn, const gpcl::stacktrace &st)
 
 class my_error : virtual public std::exception, virtual public gpcl::exception
 {
+public:
+  const char *what() const noexcept override { return "my_error"; }
 };
 
 #ifdef _MSC_VER

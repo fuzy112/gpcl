@@ -40,10 +40,16 @@ wrapped_exception<typename std::decay<E>::type> enable_error_info(E &&e)
   return wrapped_exception<typename std::decay<E>::type>(std::forward<E>(e));
 }
 
+namespace detail {
 using source_file_errinfo =
     error_info<struct source_file_errinfo_, const char *>;
 using source_line_errinfo = error_info<struct source_line_errinfo_, unsigned>;
 using func_name_errinfo = error_info<struct func_name_errinfo_, const char *>;
+} // namespace detail
+
+using detail::func_name_errinfo;
+using detail::source_file_errinfo;
+using detail::source_line_errinfo;
 
 namespace detail {
 inline decltype(auto) tag_invoke(source_file_errinfo::format_fn,
@@ -73,7 +79,7 @@ template <typename E>
            << enable_error_info(e) << "\nTracing back:\n"
            << stacktrace::current() << "\nTerminating..." << std::endl;
 #endif
-  GPCL_THROW(enable_error_info(std::move(e)));
+  GPCL_THROW(enable_error_info(std::forward<E>(e)));
 }
 
 #define GPCL_THROW_EXCEPTION(exc)                                              \

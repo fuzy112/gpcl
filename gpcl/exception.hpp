@@ -15,13 +15,21 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error_info.hpp>
 #include <gpcl/excfwd.hpp>
-#include <gpcl/intrusive_list.hpp>
+#include <gpcl/generic_pointer_cast.hpp>
 #include <gpcl/make_iomanip.hpp>
 
 namespace gpcl {
 
 class exception
 {
+  template <
+      typename E, typename ErrorInfo,
+      typename std::enable_if<
+          std::is_base_of<exception, typename std::decay<E>::type>::value &&
+              is_error_info<typename std::decay<ErrorInfo>::type>::value,
+          int>::type>
+  friend auto operator<<(const E &e, ErrorInfo &&err_info) noexcept;
+
   template <typename E>
   friend auto diagnostic_information(E const &exc);
 
@@ -29,67 +37,99 @@ class exception
   friend typename ErrorInfo::value_type const *
   get_error_info(const exception &e) noexcept;
 
-  intrusive_list<detail::error_info_base> error_info_list_;
+protected:
+  detail::error_info_base const *list_ = nullptr;
 
-  void release() noexcept
+public:
+  exception() noexcept = default;
+
+  exception(const exception &) = default;
+  exception &operator=(const exception &) = default;
+
+  exception(exception &&other) noexcept = default;
+
+  exception &operator=(exception &&other) noexcept = default;
+
+  virtual ~exception() = default;
+
+protected:
+  static const detail::error_info_base *&
+  next(const detail::error_info_base *e) noexcept
   {
-    while (!error_info_list_.empty())
-    {
-      auto &ei = error_info_list_.back();
-      error_info_list_.pop_back();
-      intrusive_ref_count_dec(ei);
-    }
+    GPCL_ASSERT(e);
+    return e->next_;
+  }
+
+  void update_error_infos() { list_ = nullptr; }
+};
+
+namespace detail {
+
+template <typename Base, typename... ErrorInfos>
+class exception_with_error_info : public Base
+{
+  std::tuple<ErrorInfos...> error_infos_;
+
+protected:
+  void update_error_infos()
+  {
+    // Base::update_error_infos();
+
+    const error_info_base **pp = &this->list_;
+    while (*pp)
+      pp = &this->next(*pp);
+    *pp = link_error_infos(error_infos_);
   }
 
 public:
-  exception() noexcept {}
-
-  exception(const exception &) = default;
-  exception &operator=(const exception &) = delete;
-
-  exception(exception &&other) noexcept
-      : error_info_list_(std::move(other.error_info_list_))
+  exception_with_error_info(const Base &base,
+                            const std::tuple<ErrorInfos...> &error_infos)
+      : Base(base),
+        error_infos_(error_infos)
   {
+    update_error_infos();
   }
 
-  exception &operator=(exception &&other) noexcept
+  exception_with_error_info(const exception_with_error_info &other)
+      : Base(static_cast<const Base &>(other)),
+        error_infos_(other.error_infos_)
   {
-    error_info_list_ = std::move(other.error_info_list_);
+    update_error_infos();
+  }
+
+  exception_with_error_info &operator=(const exception_with_error_info &other)
+  {
+    static_cast<Base &>(*this) = static_cast<const Base &>(other);
+    error_infos_ = other.error_infos_;
+    update_error_infos();
     return *this;
   }
-
-  virtual ~exception() { release(); }
-
-  template <typename Tag, typename T>
-  void add_error_info(const error_info<Tag, T> &info) noexcept
-  {
-    auto &ei = *info.impl_;
-    auto impl_ptr = info.impl_;
-    impl_ptr.release();
-    error_info_list_.push_back(ei);
-  }
-
-  template <typename Tag, typename T>
-  void add_error_info(error_info<Tag, T> &&info) noexcept
-  {
-    auto &ei = *info.impl_;
-    info.impl_.release();
-    error_info_list_.push_back(ei);
-  }
 };
+
+} // namespace detail
 
 template <typename ErrorInfo>
 typename ErrorInfo::value_type const *
 get_error_info(exception const &exc) noexcept
 {
-  for (const detail::error_info_base &ei : exc.error_info_list_)
+  for (const detail::error_info_base *p = exc.list_; p != nullptr;
+       p = exc.next(p))
   {
-    if (ei.type() == typeid_<ErrorInfo *>())
-      return std::addressof(
-          static_pointer_cast<const typename ErrorInfo::impl_type>(&ei)
-              ->value());
+    if (p->type() == typeid_<ErrorInfo *>())
+      return std::addressof(static_pointer_cast<const ErrorInfo>(p)->value());
   }
   return nullptr;
+}
+
+template <typename E, typename ErrorInfo,
+          typename std::enable_if<
+              std::is_base_of<exception, typename std::decay<E>::type>::value &&
+                  is_error_info<typename std::decay<ErrorInfo>::type>::value,
+              int>::type>
+auto operator<<(const E &e, ErrorInfo &&err_info) noexcept
+{
+  return detail::exception_with_error_info<
+      E, typename std::decay<ErrorInfo>::type>(e, std::make_tuple(err_info));
 }
 
 template <
@@ -101,17 +141,6 @@ operator<<(std::basic_ostream<CharT, Traits> &out, const E &exc)
   return out << diagnostic_information(exc);
 }
 
-template <typename E, typename ErrorInfo,
-          typename std::enable_if<
-              std::is_base_of<exception, typename std::decay<E>::type>::value &&
-                  is_error_info<typename std::decay<ErrorInfo>::type>::value,
-              int>::type>
-E &&operator<<(E &&e, ErrorInfo &&err_info) noexcept
-{
-  e.add_error_info(std::forward<ErrorInfo>(err_info));
-  return std::forward<E>(e);
-}
-
 template <
     typename E, typename... ErrorInfos,
     typename std::enable_if<
@@ -119,10 +148,9 @@ template <
             std::is_base_of<exception, typename std::decay<E>::type>,
             is_error_info<typename std::decay<ErrorInfos>::type>...>::value,
         int>::type>
-E &&operator<<(E &&e, const std::tuple<ErrorInfos...> &error_infos) noexcept
+auto operator<<(E &&e, const std::tuple<ErrorInfos...> &error_infos) noexcept
 {
-  std::apply([&e](auto &&...err_infos) { [](...) {}(&(e << err_infos)...); });
-  return std::forward<E>(e);
+  return detail::exception_with_error_info<E, ErrorInfos...>(e, error_infos);
 }
 
 template <typename E,
@@ -151,8 +179,10 @@ auto diagnostic_information(const E &e)
     if (!ge)
       return;
 
-    for (const detail::error_info_base &ei : ge->error_info_list_)
+    for (const detail::error_info_base *p = ge->list_; p != nullptr;
+         p = ge->next(p))
     {
+      auto &ei = *p;
       s << "  ";
       ei.format_to(s) << "\n";
     }
