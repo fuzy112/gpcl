@@ -57,6 +57,10 @@ E &&operator<<(E &&e, const std::tuple<ErrorInfos...> &error_infos) noexcept;
 template <typename E>
 auto diagnostic_information(const E &e);
 
+template <typename ErrorInfo>
+typename ErrorInfo::value_type const *
+get_error_info(exception const &exc) noexcept;
+
 } // namespace gpcl
 
 #endif // GPCL_EXCFWD_HPP

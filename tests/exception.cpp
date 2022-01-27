@@ -1,5 +1,7 @@
 #include <gpcl/exception.hpp>
 
+#include <sstream>
+
 #include "doctest.h"
 
 DOCTEST_REGISTER_EXCEPTION_TRANSLATOR(gpcl::exception const &exc)

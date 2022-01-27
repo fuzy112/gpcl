@@ -15,6 +15,9 @@ template <typename Tag, typename T>
 class error_info
 {
   friend ::gpcl::exception;
+  template <typename ErrorInfo>
+  friend typename ErrorInfo::value_type const *
+  get_error_info(exception const &exc) noexcept;
 
 private:
   using impl_type = detail::error_info_impl<Tag, T>;
@@ -25,14 +28,10 @@ public:
 
   using format_fn = detail::fmt_error_info_fn<Tag, T>;
 
-  inline static constexpr format_fn& format = detail::fmt_error_info<Tag, T>;
+  inline static constexpr format_fn &format = detail::fmt_error_info<Tag, T>;
 
 private:
   intrusive_ptr<impl_type> impl_;
-
-//   explicit error_info(intrusive_ptr<T> impl) noexcept : impl_(std::move(impl))
-//   {
-//   }
 
 public:
   template <typename Enable = typename std::enable_if<
@@ -77,7 +76,7 @@ void swap(error_info<Tag, T> &x, error_info<Tag, T> &y) noexcept
 }
 
 template <typename Tag, typename T>
-std::ostream& operator<<(std::ostream &os, error_info<Tag, T> const &ei)
+std::ostream &operator<<(std::ostream &os, error_info<Tag, T> const &ei)
 {
   return os << error_info<Tag, T>::format(ei.value());
 }

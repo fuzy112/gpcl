@@ -25,6 +25,10 @@ class exception
   template <typename E>
   friend auto diagnostic_information(E const &exc);
 
+  template <typename ErrorInfo>
+  friend typename ErrorInfo::value_type const *
+  get_error_info(const exception &e) noexcept;
+
   intrusive_list<detail::error_info_base> error_info_list_;
 
   void release() noexcept
@@ -72,21 +76,21 @@ public:
     info.impl_.release();
     error_info_list_.push_back(ei);
   }
-
-  template <typename ErrorInfo>
-  friend typename ErrorInfo::value_type const *
-  get_error_info(exception const &exc) noexcept
-  {
-    for (const detail::error_info_base &ei : exc.error_info_list_)
-    {
-      if (ei.type() == typeid_<ErrorInfo *>())
-        return std::addressof(
-            static_pointer_cast<const typename ErrorInfo::impl_type>(&ei)
-                ->value());
-    }
-    return nullptr;
-  }
 };
+
+template <typename ErrorInfo>
+typename ErrorInfo::value_type const *
+get_error_info(exception const &exc) noexcept
+{
+  for (const detail::error_info_base &ei : exc.error_info_list_)
+  {
+    if (ei.type() == typeid_<ErrorInfo *>())
+      return std::addressof(
+          static_pointer_cast<const typename ErrorInfo::impl_type>(&ei)
+              ->value());
+  }
+  return nullptr;
+}
 
 template <
     typename CharT, typename Traits, typename E,

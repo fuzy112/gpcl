@@ -4,10 +4,9 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error_info_base.hpp>
 
+#include <gpcl/make_iomanip.hpp>
 #include <gpcl/noncopyable.hpp>
 #include <gpcl/tag_invoke.hpp>
-
-#include <sstream>
 
 namespace gpcl::detail {
 
@@ -86,12 +85,12 @@ operator<<(std::basic_ostream<CharT, Traits> &os, const T &)
 } // namespace error_info_detail
 
 template <typename Tag, typename T>
-std::string tag_invoke(fmt_error_info_fn<Tag, T> const &, const T &v)
+auto tag_invoke(fmt_error_info_fn<Tag, T>, const T &v)
 {
-  using error_info_detail::operator<<;
-  std::ostringstream ss;
-  ss << "[" << typeid_<Tag *>().name() << "] = {" << v << "}";
-  return ss.str();
+  return gpcl::make_iomanip([&](auto &s) {
+    using error_info_detail::operator<<;
+    s << '[' << typeid_<Tag *>().name() << "] = {" << v << '}';
+  });
 }
 
 template <typename Tag, typename T>

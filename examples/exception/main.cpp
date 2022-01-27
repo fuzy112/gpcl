@@ -32,9 +32,8 @@ std::string tag_invoke(filename_errinfo::format_fn, std::string filename)
 
 auto tag_invoke(stacktrace_errinfo::format_fn, const gpcl::stacktrace &st)
 {
-  return gpcl::make_iomanip([&st](auto &s) {
-    s << "[stacktrace] = { " << st << " }";
-  });
+  return gpcl::make_iomanip(
+      [&st](auto &s) { s << "[stacktrace] = { " << st << " }"; });
 }
 
 class my_error : virtual public std::exception, virtual public gpcl::exception
@@ -65,6 +64,13 @@ int main()
     FILE *fp = openFile("non-existing-file.txt");
     std::fclose(fp);
   }
-  GPCL_CATCH(my_error const &exc) { gpcl::cdebug() << exc << std::endl; }
+  GPCL_CATCH(my_error const &exc)
+  {
+    gpcl::cdebug() << exc << std::endl;
+    if (auto filename = gpcl::get_error_info<filename_errinfo>(exc))
+    {
+      gpcl::cdebug() << "filename: " << *filename << std::endl;
+    }
+  }
   GPCL_CATCH_END
 }

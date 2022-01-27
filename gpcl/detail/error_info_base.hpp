@@ -11,12 +11,6 @@ namespace gpcl::detail {
 
 class error_info_base : public intrusive_list_node<error_info_base>
 {
-  friend exception;
-  template <typename E, typename Tag, typename T>
-  friend E &&operator<<(E &&e, error_info<Tag, T> &&info) noexcept;
-  template <typename E>
-  friend std::string diagnostic_information(E const &exc);
-
   mutable std::atomic_long ref_count_{1};
 
 protected:
@@ -42,7 +36,7 @@ public:
   {
     if (errinfo.ref_count_.fetch_sub(1) == 1)
     {
-      delete &errinfo;
+      delete std::addressof(errinfo);
     }
   }
 };
