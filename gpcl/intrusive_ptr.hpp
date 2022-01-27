@@ -11,8 +11,8 @@
 #ifndef GPCL_INTRUSIVE_PTR_HPP
 #define GPCL_INTRUSIVE_PTR_HPP
 
-
 #include <gpcl/detail/config.hpp>
+#include <gpcl/generic_pointer_cast.hpp>
 #include <gpcl/swap.hpp>
 
 #include <type_traits>
@@ -26,9 +26,9 @@ struct is_reference_countable : std::false_type
 
 template <typename T>
 struct is_reference_countable<
-    T, decltype(intrusive_ref_count_inc(std::declval<const T &>()),
-                intrusive_ref_count_dec(std::declval<const T &>()), void())>
-    : std::true_type
+    T, decltype(intrusive_ref_count_inc(std::declval<T &>()),
+                intrusive_ref_count_dec(std::declval<T &>()), void())>
+    : std::negation<std::is_reference<T>>
 {
 };
 
@@ -36,6 +36,13 @@ template <typename T>
 class intrusive_ptr
 {
   static_assert(is_reference_countable<T>::value, "");
+
+  static constexpr bool inc_nothrow =
+      noexcept(intrusive_ref_count_inc(std::declval<T &>()));
+  static constexpr bool dec_nothrow =
+      noexcept(intrusive_ref_count_dec(std::declval<T &>()));
+
+  static_assert(dec_nothrow, "decrementing ref count must not throw");
 
   T *p_ = nullptr;
 
@@ -46,7 +53,7 @@ public:
 
   explicit constexpr intrusive_ptr(T *p) noexcept : p_(p) {}
 
-  intrusive_ptr(T *p, bool inc) : p_(p)
+  intrusive_ptr(T *p, bool inc) noexcept(inc_nothrow) : p_(p)
   {
     if (inc && p_)
     {
@@ -54,7 +61,7 @@ public:
     }
   }
 
-  intrusive_ptr(const intrusive_ptr &other) : p_(other.p_)
+  intrusive_ptr(const intrusive_ptr &other) noexcept(inc_nothrow) : p_(other.p_)
   {
     if (p_)
       intrusive_ref_count_inc(*p_);
@@ -63,7 +70,8 @@ public:
   template <typename U,
             typename std::enable_if<std::is_convertible<U *, T *>::value,
                                     int>::type = 0>
-  intrusive_ptr(const intrusive_ptr<U> &other) : p_(other.p_)
+  intrusive_ptr(const intrusive_ptr<U> &other) noexcept(inc_nothrow)
+      : p_(other.p_)
   {
     if (p_)
       intrusive_ref_count_inc(*p_);
@@ -90,7 +98,7 @@ public:
     p_ = nullptr;
   }
 
-  intrusive_ptr &operator=(const intrusive_ptr &other)
+  intrusive_ptr &operator=(const intrusive_ptr &other) noexcept(inc_nothrow)
   {
     intrusive_ptr(other).swap(*this);
     return *this;
@@ -99,7 +107,7 @@ public:
   template <typename U,
             typename std::enable_if<std::is_convertible<U *, T *>::value,
                                     int>::type = 0>
-  intrusive_ptr &operator=(const intrusive_ptr<U> &other)
+  intrusive_ptr &operator=(const intrusive_ptr<U> &other) noexcept(inc_nothrow)
   {
     intrusive_ptr(other).swap(*this);
     return *this;
@@ -163,28 +171,33 @@ public:
   template <typename U,
             typename std::enable_if<std::is_convertible<U *, T *>::value,
                                     int>::type = 0>
-  void reset(U *p, bool inc)
+  void reset(U *p, bool inc) noexcept(inc_nothrow)
   {
     intrusive_ptr(p, inc).swap(*this);
   }
 
-  void release() noexcept { p_ = nullptr; }
+  T *release() noexcept
+  {
+    T *r = p_;
+    p_ = nullptr;
+    return r;
+  }
 };
 
 template <class T1, class T2>
-bool operator==(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y)
+bool operator==(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y) noexcept
 {
   return x.get() == y.get();
 }
 
 template <class T1, class T2>
-bool operator!=(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y)
+bool operator!=(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y) noexcept
 {
   return x.get() != y.get();
 }
 
 template <class T1, class T2>
-bool operator<(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y)
+bool operator<(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y) noexcept
 {
   using CT = typename std::common_type<T1 *, T2 *>::type;
 
@@ -192,19 +205,19 @@ bool operator<(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y)
 }
 
 template <class T1, class T2>
-bool operator<=(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y)
+bool operator<=(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y) noexcept
 {
   return !(y < x);
 }
 
 template <class T1, class T2>
-bool operator>(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y)
+bool operator>(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y) noexcept
 {
   return y < x;
 }
 
 template <class T1, class T2>
-bool operator>=(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y)
+bool operator>=(const intrusive_ptr<T1> &x, const intrusive_ptr<T2> &y) noexcept
 {
   return !(x < y);
 }
@@ -234,49 +247,49 @@ bool operator!=(std::nullptr_t, const intrusive_ptr<T> &x) noexcept
 }
 
 template <class T>
-bool operator<(const intrusive_ptr<T> &x, std::nullptr_t)
+bool operator<(const intrusive_ptr<T> &x, std::nullptr_t) noexcept
 {
   return std::less<typename intrusive_ptr<T>::pointer>()(x.get(), nullptr);
 }
 
 template <class T>
-bool operator<(std::nullptr_t, const intrusive_ptr<T> &y)
+bool operator<(std::nullptr_t, const intrusive_ptr<T> &y) noexcept
 {
   return std::less<typename intrusive_ptr<T>::pointer>()(nullptr, y.get());
 }
 
 template <class T>
-bool operator<=(const intrusive_ptr<T> &x, std::nullptr_t)
+bool operator<=(const intrusive_ptr<T> &x, std::nullptr_t) noexcept
 {
   return !(nullptr < x);
 }
 
 template <class T>
-bool operator<=(std::nullptr_t, const intrusive_ptr<T> &y)
+bool operator<=(std::nullptr_t, const intrusive_ptr<T> &y) noexcept
 {
   return !(y < nullptr);
 }
 
 template <class T>
-bool operator>(const intrusive_ptr<T> &x, std::nullptr_t)
+bool operator>(const intrusive_ptr<T> &x, std::nullptr_t) noexcept
 {
   return nullptr < x;
 }
 
 template <class T>
-bool operator>(std::nullptr_t, const intrusive_ptr<T> &y)
+bool operator>(std::nullptr_t, const intrusive_ptr<T> &y) noexcept
 {
   return y < nullptr;
 }
 
 template <class T>
-bool operator>=(const intrusive_ptr<T> &x, std::nullptr_t)
+bool operator>=(const intrusive_ptr<T> &x, std::nullptr_t) noexcept
 {
   return !(x < nullptr);
 }
 
 template <class T>
-bool operator>=(std::nullptr_t, const intrusive_ptr<T> &y)
+bool operator>=(std::nullptr_t, const intrusive_ptr<T> &y) noexcept
 {
   return !(nullptr < y);
 }
@@ -297,30 +310,29 @@ void swap(intrusive_ptr<T> &x, intrusive_ptr<T> &y) noexcept
 template <typename T, typename Y>
 intrusive_ptr<T> static_pointer_cast(const intrusive_ptr<Y> &p) noexcept
 {
-  return intrusive_ptr<T>(static_cast<T *>(p.get()), true);
+  return intrusive_ptr<T>(static_pointer_cast<T>(p.get()), true);
 }
 
 #if !defined GPCL_NO_RTTI
 template <typename T, typename U>
 intrusive_ptr<T> dynamic_pointer_cast(const intrusive_ptr<U> &p) noexcept
 {
-  return intrusive_ptr<T>(dynamic_cast<T *>(p.get()), true);
+  return intrusive_ptr<T>(dynamic_pointer_cast<T>(p.get()), true);
 }
 #endif
 
 template <typename T, typename U>
 intrusive_ptr<T> const_pointer_cast(const intrusive_ptr<U> &p) noexcept
 {
-  return intrusive_ptr<T>(const_cast<T *>(p.get()), true);
+  return intrusive_ptr<T>(const_pointer_cast<T>(p.get()), true);
 }
 
 template <typename T, typename U>
 intrusive_ptr<T> reinterpret_pointer_cast(const intrusive_ptr<U> &p) noexcept
 {
-  return intrusive_ptr<T>(reinterpret_cast<T *>(p.get()), true);
+  return intrusive_ptr<T>(reinterpret_pointer_cast<T>(p.get()), true);
 }
 
 } // namespace gpcl
-
 
 #endif // GPCL_INTRUSIVE_PTR_HPP
