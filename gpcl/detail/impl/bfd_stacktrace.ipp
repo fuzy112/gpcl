@@ -17,13 +17,13 @@
 #include <gpcl/mutex.hpp>
 #include <gpcl/noncopyable.hpp>
 #include <gpcl/scope_exit.hpp>
+#include <gpcl/scoped_array.hpp>
 #include <gpcl/scoped_lock.hpp>
 #include <gpcl/unique_ptr.hpp>
 
 #include <sstream>
 #include <string_view>
 #include <unordered_map>
-#include <vector>
 
 /* Hack for BFD */
 #ifndef PACKAGE
@@ -57,8 +57,9 @@ using unique_bfd = unique_ptr<bfd, bfd_deleter>;
 struct bfd_cache : noncopyable
 {
   unique_bfd abfd;
-  std::vector<asymbol *> symtab;
-  std::intptr_t fbase;
+  scoped_array<asymbol *> symtab;
+  size_t symcount{};
+  std::intptr_t fbase{};
 };
 
 using fbase_address = const void *;
@@ -159,7 +160,7 @@ inline bfd_cache *cached_bfd_from_address(const void *address,
         g_bfd_context.cached_bfds.try_emplace(fbase);
     if (new_inserted)
     {
-      auto &[abfd, symtab, rfbase] = iter->second;
+      auto &[abfd, symtab, symcount, rfbase] = iter->second;
       auto *abfd_ = bfd_openr(fname, nullptr);
       if (!abfd_)
       {
@@ -172,9 +173,9 @@ inline bfd_cache *cached_bfd_from_address(const void *address,
       auto needed_storage = bfd_get_symtab_upper_bound(abfd_);
       if (needed_storage > 0)
       {
-        symtab.resize(needed_storage / sizeof(void *));
-        auto n = bfd_canonicalize_symtab(abfd.get(), symtab.data());
-        symtab.resize(n);
+        symtab.reset(new asymbol *[needed_storage / sizeof(void *)]);
+        auto n = bfd_canonicalize_symtab(abfd.get(), symtab.get());
+        symcount = n;
       }
       rfbase = std::intptr_t(fbase);
     }
@@ -208,7 +209,7 @@ inline line_info bfd_get_line_from_address(const void *address)
   if (!module_bfd)
     return {};
 
-  auto &[abfd, symtab, fbase] = *module_bfd;
+  auto &[abfd, symtab, symcount, fbase] = *module_bfd;
 
   for (auto *section = abfd->sections; section; section = section->next)
   {
@@ -226,7 +227,7 @@ inline line_info bfd_get_line_from_address(const void *address)
     const char *func;
     unsigned line;
 
-    if (bfd_find_nearest_line(abfd.get(), section, symtab.data(), offset, &file,
+    if (bfd_find_nearest_line(abfd.get(), section, symtab.get(), offset, &file,
                               &func, &line))
     {
       return line_info{
