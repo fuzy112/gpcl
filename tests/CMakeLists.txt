@@ -24,6 +24,7 @@ set (TESTS_SRCS
 	thread_test.cpp
 	scope_test.cpp
 	exception.cpp
+	scoped_array_test.cpp
 )
 
 set (TEST_FIXTURES
