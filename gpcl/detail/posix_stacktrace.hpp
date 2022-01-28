@@ -46,20 +46,19 @@ inline std::string cppfilt(std::string_view str)
     return std::string(str);
   }
 
-  size_t length = 0;
   int status = 0;
   unique_ptr<char, void (*)(void *)> demangled_name(
       abi::__cxa_demangle(std::string(str.substr(start, end - start)).c_str(),
-                          nullptr, &length, &status),
+                          nullptr, nullptr, &status),
       ::free);
   if (status == 0)
   {
     std::ostringstream ss;
 
-    ss << str.substr(0, start) << std::string_view(demangled_name.get(), length)
-       << str.substr(end);
+    ss << str.substr(0, start) << demangled_name.get() << str.substr(end);
 
-    return ss.str();
+    if (ss)
+      return ss.str();
   }
   return std::string(str);
 }
