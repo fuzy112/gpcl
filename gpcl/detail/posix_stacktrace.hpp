@@ -35,19 +35,7 @@
 namespace gpcl::detail {
 
 #ifdef __GNUC__
-inline std::string gcc_demangle(const char *sym)
-{
-  std::string name;
-  size_t length = 0;
-  int status = 0;
-  __cxxabiv1::__cxa_demangle(sym, nullptr, &length, &status);
 
-  name.resize(length);
-  __cxxabiv1::__cxa_demangle(sym, &name[0], &length, &status);
-  return name;
-}
-
-/// @todo refactor this function.
 inline std::string cppfilt(std::string_view str)
 {
   auto start = str.find("_Z");
@@ -58,10 +46,22 @@ inline std::string cppfilt(std::string_view str)
     return std::string(str);
   }
 
-  /// @todo optimize memory allocation
-  return std::string(str.substr(0, start)) +
-         gcc_demangle(std::string(str.substr(start, end - start)).c_str()) +
-         std::string(str.substr(end));
+  size_t length = 0;
+  int status = 0;
+  unique_ptr<char, void (*)(void *)> demangled_name(
+      abi::__cxa_demangle(std::string(str.substr(start, end - start)).c_str(),
+                          nullptr, &length, &status),
+      ::free);
+  if (status == 0)
+  {
+    std::ostringstream ss;
+
+    ss << str.substr(0, start) << std::string_view(demangled_name.get(), length)
+       << str.substr(end);
+
+    return ss.str();
+  }
+  return std::string(str);
 }
 
 #else
@@ -277,7 +277,7 @@ operator<<(std::basic_ostream<CharT, Traits> &os,
   int i(0);
   for (auto &e : st)
   {
-    os  << std::setw(4) << ++i << "# " << e << '\n';
+    os << std::setw(4) << ++i << "# " << e << '\n';
   }
 
   return os;
