@@ -33,8 +33,8 @@ public:
         requested_size_(requested_size),
         chunk_size_(std::lcm(requested_size_,
                              std::lcm(sizeof(void *), sizeof(size_type)))),
-        block_list_(),
-        next_size_(32)
+        next_size_(32),
+        block_list_()
   {
     GPCL_ASSERT(upstream != nullptr);
     GPCL_ASSERT(requested_size != 0);
