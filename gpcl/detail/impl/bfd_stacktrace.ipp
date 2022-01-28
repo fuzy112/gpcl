@@ -58,7 +58,6 @@ struct bfd_cache : noncopyable
 {
   unique_bfd abfd;
   scoped_array<asymbol *> symtab;
-  size_t symcount{};
   std::intptr_t fbase{};
 };
 
@@ -160,7 +159,7 @@ inline bfd_cache *cached_bfd_from_address(const void *address,
         g_bfd_context.cached_bfds.try_emplace(fbase);
     if (new_inserted)
     {
-      auto &[abfd, symtab, symcount, rfbase] = iter->second;
+      auto &[abfd, symtab, rfbase] = iter->second;
       auto *abfd_ = bfd_openr(fname, nullptr);
       if (!abfd_)
       {
@@ -174,8 +173,7 @@ inline bfd_cache *cached_bfd_from_address(const void *address,
       if (needed_storage > 0)
       {
         symtab.reset(new asymbol *[needed_storage / sizeof(void *)]);
-        auto n = bfd_canonicalize_symtab(abfd.get(), symtab.get());
-        symcount = n;
+        bfd_canonicalize_symtab(abfd.get(), symtab.get());
       }
       rfbase = std::intptr_t(fbase);
     }
@@ -209,7 +207,7 @@ inline line_info bfd_get_line_from_address(const void *address)
   if (!module_bfd)
     return {};
 
-  auto &[abfd, symtab, symcount, fbase] = *module_bfd;
+  auto &[abfd, symtab, fbase] = *module_bfd;
 
   for (auto *section = abfd->sections; section; section = section->next)
   {
