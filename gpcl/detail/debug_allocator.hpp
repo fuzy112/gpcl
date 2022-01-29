@@ -83,7 +83,7 @@ public:
     scoped_lock lock(g_debug_alloc_data.mtx);
     void *p = std::malloc(sizeof(T) * n);
     g_debug_alloc_data.alloc_records_map[p] = alloc_record{
-        this_thread::id(),
+        this_thread::get_id(),
         &typeid_<T>(),
         sizeof(T),
         n,

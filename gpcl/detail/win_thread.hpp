@@ -112,7 +112,7 @@ public:
 
   auto native_handle() const -> native_handle_type { return thread_.get(); }
 
-  GPCL_DECL win_thread_id id() const;
+  GPCL_DECL win_thread_id get_id() const;
 
   static GPCL_DECL void yield();
 

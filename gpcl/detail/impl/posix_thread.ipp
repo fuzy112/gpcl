@@ -113,7 +113,10 @@ void *posix_thread_function(void *arg) noexcept
   sigaddset(&set, SIGTERM);
   pthread_sigmask(SIG_BLOCK, &set, nullptr);
 
+  int oldstate{};
+  pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
   fn->run();
+  pthread_setcancelstate(oldstate, nullptr);
 
   return nullptr;
 }
@@ -162,7 +165,7 @@ auto posix_thread::yield() -> void
 
 #if GPCL_CONFIG_POSIX_THREAD_ID_IS_TID
 
-posix_thread_id posix_thread::id() const
+posix_thread_id posix_thread::get_id() const
 {
   pthread_id_np_t tid;
   int err = pthread_getthreadid_np(&thread_, &tid);
@@ -180,7 +183,7 @@ posix_thread_id posix_thread::this_thread_id()
 
 #else
 
-posix_thread_id posix_thread::id() const
+posix_thread_id posix_thread::get_id() const
 {
   return posix_thread_id{thread_};
 }

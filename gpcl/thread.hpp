@@ -85,7 +85,7 @@ public:
     return impl_.native_handle();
   }
 
-  [[nodiscard]] thread_id id() const { return impl_.id(); }
+  [[nodiscard]] thread_id get_id() const { return impl_.get_id(); }
 
   // extensions
 #ifdef GPCL_POSIX
@@ -107,7 +107,7 @@ inline auto yield() -> void
   thread::impl_type::yield();
 }
 
-inline thread_id id()
+inline thread_id get_id()
 {
   return thread::impl_type::this_thread_id();
 }

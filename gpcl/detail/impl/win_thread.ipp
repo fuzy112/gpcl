@@ -82,7 +82,7 @@ auto win_thread::start_thread_impl(func_base *fn) -> void
   }
 }
 
-auto win_thread::id() const -> win_thread_id
+auto win_thread::get_id() const -> win_thread_id
 {
   auto value = ::GetThreadId(native_handle());
   if (!value)
