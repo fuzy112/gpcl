@@ -39,10 +39,10 @@ public:
                                 std::size_t maxmsg, std::size_t msgsize);
   GPCL_DECL posix_message_queue(open_only_t, czstring<> name);
 
-  inline posix_message_queue() : q_(-1) {}
+  inline posix_message_queue() : q_(0) {}
 
   inline posix_message_queue(posix_message_queue &&other) noexcept
-      : q_(std::exchange(other.q_, -1))
+      : q_(std::exchange(other.q_, mqd_t()))
   {
   }
 

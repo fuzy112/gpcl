@@ -155,9 +155,9 @@ void posix_thread::detach()
 
 auto posix_thread::yield() -> void
 {
-  int err = pthread_yield();
+  int err = sched_yield();
   if (err)
-    throw_system_error(err, "pthread_yield");
+    throw_system_error("sched_yield");
 }
 
 #if GPCL_CONFIG_POSIX_THREAD_ID_IS_TID

@@ -71,7 +71,7 @@ public:
   [[nodiscard]] const pthread_mutexattr_t *get() const { return &attr_; }
 
 private:
-  pthread_mutexattr_t attr_{};
+  mutable pthread_mutexattr_t attr_{};
 };
 
 class posix_mutex_base

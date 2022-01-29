@@ -21,6 +21,7 @@
 
 #include <atomic>
 #include <climits>
+#include <exception>
 
 #ifdef __GLIBC__
 #  include <gnu/libc-version.h>
@@ -28,6 +29,7 @@
 
 # include <csetjmp>
 
+#include <pthread.h>
 
 namespace gpcl {
 
@@ -44,12 +46,21 @@ void call_once(detail::posix_once_flag &flag, Callable &&callable,
     GPCL_TRY { callable(std::forward<Args>(args)...); }
     GPCL_CATCH(...)
     {
+#ifndef __FreeBSD__
       exc = std::current_exception();
       std::longjmp(jb, 1);
+#else
+      goto cleanup;
+      pthread_cleanup_push(NULL, NULL);
+cleanup:
+      pthread_cleanup_pop(1);
+      throw;
+#endif
     }
     GPCL_CATCH_END
   };
-  posix_once_functor = &func;
+  ::gpcl::detail::posix_once_functor = &func;
+#ifndef __FreeBSD__
   if (setjmp(jb) != 0)
   {
 
@@ -82,14 +93,15 @@ void call_once(detail::posix_once_flag &flag, Callable &&callable,
       GPCL_UNREACHABLE("pthread_mutex_unlock");
     }
 #else
-#  error "unsupported platform"
+    { pthread_cleanup_pop(1); }
 #endif
     std::rethrow_exception(exc);
   }
+#endif
 
   int err = pthread_once(&flag.data_, []() {
-    auto &functor = *posix_once_functor;
-    posix_once_functor = nullptr;
+    auto &functor = *::gpcl::detail::posix_once_functor;
+    ::gpcl::detail::posix_once_functor = nullptr;
     functor();
   });
 

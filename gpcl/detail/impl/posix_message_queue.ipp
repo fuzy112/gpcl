@@ -30,7 +30,7 @@ posix_message_queue::posix_message_queue(create_only_t, czstring<> name,
   attr.mq_msgsize = msgsize;
 
   this->q_ = mq_open(name, O_RDWR | O_CREAT | O_EXCL, 0666, &attr);
-  if (this->q_ == -1)
+  if (this->q_ == 0)
   {
     throw_system_error(__PRETTY_FUNCTION__);
   }
@@ -45,7 +45,7 @@ posix_message_queue::posix_message_queue(open_or_create_t, czstring<> name,
   attr.mq_msgsize = msgsize;
 
   this->q_ = mq_open(name, O_RDWR | O_CREAT, 0666, &attr);
-  if (this->q_ == -1)
+  if (this->q_ == 0)
   {
     throw_system_error(__PRETTY_FUNCTION__);
   }
@@ -54,7 +54,7 @@ posix_message_queue::posix_message_queue(open_or_create_t, czstring<> name,
 posix_message_queue::posix_message_queue(open_only_t, czstring<> name)
 {
   this->q_ = mq_open(name, O_RDWR);
-  if (this->q_ == -1)
+  if (this->q_ == 0)
   {
     throw_system_error(__PRETTY_FUNCTION__);
   }
@@ -62,7 +62,7 @@ posix_message_queue::posix_message_queue(open_only_t, czstring<> name)
 
 posix_message_queue::~posix_message_queue() noexcept
 {
-  if (q_ != -1)
+  if (q_ != 0)
   {
     GPCL_VERIFY_0(::mq_close(q_));
   }
@@ -84,7 +84,7 @@ void posix_message_queue::unlink(czstring<> name, std::error_code &ec)
 void posix_message_queue::send(gpcl::span<const char> msg, unsigned int prio,
                                std::error_code &ec)
 {
-  GPCL_ASSERT(q_ != -1);
+  GPCL_ASSERT(q_ != 0);
   if (-1 == mq_send(q_, msg.data(), msg.size_bytes(), prio))
   {
     return ec.assign(errno, std::system_category());
@@ -95,7 +95,7 @@ void posix_message_queue::send(gpcl::span<const char> msg, unsigned int prio,
 std::size_t posix_message_queue::receive(gpcl::span<char> msg,
                                          std::error_code &ec)
 {
-  GPCL_ASSERT(q_ != -1);
+  GPCL_ASSERT(q_ != 0);
   unsigned int prio{};
   ssize_t len = mq_receive(q_, msg.data(), msg.size_bytes(), &prio);
   if (-1 == len)

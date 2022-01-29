@@ -39,9 +39,9 @@ public:
   }
 #else
       : data_
-  {
+   (
     PTHREAD_ONCE_INIT
-  }
+   )
 #endif
   {
   }

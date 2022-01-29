@@ -44,6 +44,8 @@ std::pair<void *, std::size_t> memory_map(const MemoryMappable &mappable,
 
 #if defined(GPCL_LINUX)
   options.flags |= MAP_SHARED_VALIDATE;
+#else
+  options.flags |= MAP_SHARED;
 #endif
 
 #if defined(GPCL_LINUX)
