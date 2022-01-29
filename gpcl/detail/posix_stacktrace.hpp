@@ -33,6 +33,10 @@
 #  include <gpcl/detail/bfd_stacktrace.hpp>
 #endif
 
+#ifdef GPCL_LLVM
+#  include <gpcl/detail/llvm_stacktrace.hpp>
+#endif
+
 namespace gpcl::detail {
 
 #ifdef __GNUC__
@@ -89,7 +93,11 @@ struct posix_stacktrace_entry
 
   std::string description() const
   {
-#ifndef GPCL_BFD
+#if defined(GPCL_BFD)
+    return bfd_stacktrace_entry_description(address);
+#elif defined(GPCL_LLVM)
+    return llvm_stacktrace_entry_description(address);
+#else
     unique_ptr<char *, std::decay_t<decltype(::free)>> strs(
         ::backtrace_symbols(&address, 1), &::free);
     if (!strs)
@@ -97,8 +105,6 @@ struct posix_stacktrace_entry
     if (!*strs)
       return "";
     return cppfilt(*strs);
-#else
-    return bfd_stacktrace_entry_description(address);
 #endif
   }
 
@@ -283,7 +289,7 @@ operator<<(std::basic_ostream<CharT, Traits> &os,
   return os;
 }
 
-#ifdef GPCL_BFD
+#if defined(GPCL_BFD)
 
 inline std::string posix_stacktrace_entry::source_file() const
 {
@@ -293,6 +299,18 @@ inline std::string posix_stacktrace_entry::source_file() const
 inline std::uint_least32_t posix_stacktrace_entry::source_line() const
 {
   return bfd_stacktrace_entry_source_line(address);
+}
+
+#elif defined(GPCL_LLVM)
+
+inline std::string posix_stacktrace_entry::source_file() const
+{
+  return llvm_stacktrace_entry_source_file(address);
+}
+
+inline std::uint_least32_t posix_stacktrace_entry::source_line() const
+{
+  return llvm_stacktrace_entry_source_line(address);
 }
 
 #endif

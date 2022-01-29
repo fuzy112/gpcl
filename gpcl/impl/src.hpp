@@ -69,3 +69,7 @@
 #if defined(__CYGWIN__) && !defined(GPCL_NO_STACKTRACE)
 #include <gpcl/detail/impl/win_stacktrace.ipp>
 #endif
+
+#if defined(GPCL_LLVM)
+#include <gpcl/detail/impl/llvm_stacktrace.ipp>
+#endif

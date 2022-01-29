@@ -58,6 +58,13 @@ if (Threads_FOUND)
 	target_link_libraries (gpcl PUBLIC Threads::Threads)
 endif()
 
+find_package(LLVM QUIET)
+if (LLVM_FOUND)
+	target_include_directories (gpcl PUBLIC ${LLVM_INCLUDE_DIRS})
+	target_link_libraries (gpcl PUBLIC LLVMSymbolize)
+	target_compile_definitions (gpcl PUBLIC GPCL_LLVM=1)
+endif()
+
 target_include_directories(gpcl
 	PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
