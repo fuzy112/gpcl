@@ -17,3 +17,9 @@ TEST_CASE("thread id")
   CHECK(id1 == id2);
   CHECK(!!id1);
 }
+
+TEST_CASE("thread::hardware_concurrency")
+{
+  CHECK(gpcl::thread::hardware_concurrency() != 0);
+}
+

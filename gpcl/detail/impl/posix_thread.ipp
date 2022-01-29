@@ -25,6 +25,10 @@
 #  include <sys/syscall.h>
 #endif
 
+#ifdef __FreeBSD__
+#  include <sys/sysctl.h>
+#endif
+
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -193,6 +197,31 @@ posix_thread_id posix_thread::this_thread_id()
   return posix_thread_id{pthread_self()};
 }
 
+#endif
+
+#if defined(__FreeBSD__)
+unsigned int posix_thread::hardware_concurrency()
+{
+  int s;
+  int mib[2] = { CTL_HW, HW_NCPU };
+  int ncpu{};
+  size_t len = sizeof(ncpu);
+
+  s = sysctl(mib, 2, &ncpu, &len, nullptr, 0);
+  if (s == -1)
+    throw_system_error(__func__);
+  return ncpu;
+}
+#elif defined(__linux__)
+unsigned int posix_thread::hardware_concurrency()
+{
+  return sysconf(_SC_NPROCESSORS_CONF);
+}
+#else
+unsigned int posix_thread::hardware_concurrency()
+{
+  return 0;
+}
 #endif
 
 } // namespace detail

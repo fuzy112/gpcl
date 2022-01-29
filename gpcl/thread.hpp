@@ -92,6 +92,11 @@ public:
   auto name(czstring<> n) -> void { impl_.name(n); }
 #endif
 
+  static unsigned int hardware_concurrency()
+  {
+    return impl_type::hardware_concurrency();
+  }
+
 private:
   impl_type impl_;
 };
