@@ -12,33 +12,28 @@ cmake_minimum_required(VERSION 3.16)
 
 project(GPCL CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
-set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
-
-option (GPCL_ENABLE_LTO "Enable link time optimisation" OFF)
-
+include(GNUInstallDirs)
 include(CheckIPOSupported)
+include(CTest)
+include(FetchContent)
+include(CPack)
+
+
+option(GPCL_ENABLE_LTO "Enable link time optimisation" OFF)
+option(GPCL_BUILD_TESTING "enable testing support" ON)
+option(GPCL_BUILD_DOC "enable document generation" ON)
+option(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE "link to external cppreference documentation" TRUE)
+
 check_ipo_supported(RESULT ipo_supported)
 if (ipo_supported AND GPCL_ENABLE_LTO)
 	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
-include(GNUInstallDirs)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_SUFFIX})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIB_SUFFIX})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-option(GPCL_BUILD_TESTING "enable testing support" ON)
 if (NOT DEFINED BUILD_TESTING)
    set (BUILD_TESTING ${GPCL_BUILD_TESTING})
 endif()
 
-option(GPCL_BUILD_DOC "enable document generation" ON)
-
-include(CTest)
 
 find_package(Boost
     COMPONENTS system
@@ -125,7 +120,6 @@ set_target_properties(gpcl
 	DEFINE_SYMBOL GPCL_SOURCE
 )
 
-include (FetchContent)
 FetchContent_Declare(
 	cppreference
 	URL https://upload.cppreference.com/mwiki/images/1/16/html_book_20190607.tar.xz
@@ -133,9 +127,6 @@ FetchContent_Declare(
 )
 
 find_package(Doxygen)
-
-option (GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE "link to external cppreference documentation" TRUE)
-
 if (Doxygen_FOUND AND GPCL_BUILD_DOC)
 
 	FetchContent_MakeAvailable(cppreference)
@@ -151,7 +142,7 @@ if (Doxygen_FOUND AND GPCL_BUILD_DOC)
 	SET (DOXYGEN_EXTRACT_PRIVATE YES)
 	# set (DOXYGEN_EXCLUDE_SYMBOLS "*::detail::*;*_detail::*")
 	set (DOXYGEN_STRIP_FROM_INC_PATH ".")
-    doxygen_add_docs(doc README.md lib gpcl)
+	doxygen_add_docs(doc README.md lib gpcl)
 
 	find_package(Python COMPONENTS Interpreter QUIET)
 	if (Python_FOUND)
@@ -182,5 +173,4 @@ install(TARGETS gpcl EXPORT gpcl-targets)
 install(EXPORT gpcl-targets NAMESPACE gpcl::
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
 
-include(CPack)
 

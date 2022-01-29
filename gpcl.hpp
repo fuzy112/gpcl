@@ -102,6 +102,7 @@
 #include <gpcl/scope_exit.hpp>
 #include <gpcl/scope_fail.hpp>
 #include <gpcl/scope_success.hpp>
+#include <gpcl/scoped_array.hpp>
 #include <gpcl/scoped_lock.hpp>
 #include <gpcl/semaphore.hpp>
 #include <gpcl/shared_memory_object.hpp>
