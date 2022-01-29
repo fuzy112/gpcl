@@ -68,22 +68,16 @@ target_include_directories(gpcl
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 	)
-if (UNIX)
-	target_link_libraries(gpcl
-		PUBLIC
-		rt
-		execinfo
-		${CMAKE_DL_LIBS}
-		)
-endif ()
 
-if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-    target_link_options(gpcl PUBLIC "-rdynamic")
-    target_link_libraries(gpcl
-	    PUBLIC
-	    bfd
-	    )
-endif()
+if (UNIX)
+	target_link_libraries (gpcl PUBLIC rt ${CMAKE_DL_LIBS})
+	if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+		target_link_options(gpcl PUBLIC "-rdynamic")
+		target_link_libraries(gpcl PUBLIC bfd)
+	else()
+		target_link_libraries(gpcl PUBLIC execinfo)
+	endif()
+endif ()
 
 if (CYGWIN)
 	target_link_libraries(gpcl

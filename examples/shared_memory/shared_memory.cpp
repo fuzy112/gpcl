@@ -1,11 +1,13 @@
 #include <gpcl/memory_mapped_region.hpp>
 #include <gpcl/shared_memory_object.hpp>
-
+#include <gpcl/debugstream.hpp>
+#include <gpcl/exception.hpp>
 #include <gpcl/anonymous_shared_memory.hpp>
 
 int main()
 {
-  struct remove_shm
+	GPCL_TRY {
+		struct remove_shm
   {
     remove_shm() { gpcl::shared_memory_object::remove("/my_shared_object"); }
     ~remove_shm() { gpcl::shared_memory_object::remove("/my_shared_object"); }
@@ -23,5 +25,7 @@ int main()
       gpcl::anonymous_shared_memory(1024), gpcl::read_write);
 
   std::memset(mapped2.address(), 1, mapped2.size());
-
+ } GPCL_CATCH (const std::exception &exc) {
+	 gpcl::cdebug() << gpcl::diagnostic_information(exc) << std::endl;
+ } GPCL_CATCH_END
 }
