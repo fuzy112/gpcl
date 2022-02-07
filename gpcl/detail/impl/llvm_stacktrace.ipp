@@ -28,10 +28,10 @@ struct llvm_line_info : llvm::DILineInfo
 
 inline recursive_mutex obj_map_mutex;
 inline std::unordered_map<std::string,
-                   llvm::object::OwningBinary<llvm::object::ObjectFile>>
+                          llvm::object::OwningBinary<llvm::object::ObjectFile>>
     obj_map;
 
-optional<llvm_line_info> llvm_symbolize_code(const void *address)
+optional<llvm_line_info> llvm_symbolize_code(const void *volatile address)
 {
   Dl_info info{};
 
@@ -40,8 +40,6 @@ optional<llvm_line_info> llvm_symbolize_code(const void *address)
 
   std::uint64_t object_address = (std::uint64_t)info.dli_fbase;
   auto &&object_name = info.dli_fname;
-
-  auto entry_offset = (std::uint64_t)address - object_address;
 
   llvm::object::ObjectFile *obj = nullptr;
 
@@ -60,34 +58,40 @@ optional<llvm_line_info> llvm_symbolize_code(const void *address)
 
     obj = owning_obj_ref.getBinary();
   }
-  auto section = std::find_if(
-      obj->section_begin(), obj->section_end(),
-      [=](llvm::object::SectionRef section) {
-        if (!section.isText())
-          return false;
 
-        if (section.getAddress() >= object_address)
-          return (std::uint64_t)address >= section.getAddress() &&
-                 (std::uint64_t)address <
-                     section.getAddress() + section.getSize();
-        return entry_offset >= section.getAddress() &&
-               entry_offset < section.getAddress() + section.getSize();
-      });
-  if (section == obj->section_end())
+  std::uint64_t offset = 0;
+  llvm::object::SectionRef section;
+  
+  for (auto sect : obj->sections())
+  {
+    if (!sect.isText())
+      continue;
+
+    const bool relative = sect.getAddress() < object_address;
+    offset = (std::uint64_t)address - (relative ? object_address : 0) -
+             sect.getAddress();
+    if (offset < sect.getSize())
+    {
+      section = sect;
+      break;
+    }
+  }
+  if (!section.getObject())
     return nullopt;
 
+  static thread_local llvm::symbolize::LLVMSymbolizer symbolizer;
 
-  llvm::symbolize::LLVMSymbolizer symbolizer;
-  auto line_info =
-      symbolizer.symbolizeCode(*obj, llvm::object::SectionedAddress{
-                                         (std::uint64_t)address,
-                                         section->getIndex(),
-                                     });
+  llvm::object::SectionedAddress sectioned_address = {
+      section.getAddress() + offset,
+      section.getIndex(),
+  };
+
+  auto line_info = symbolizer.symbolizeCode(*obj, sectioned_address);
 
   if (!line_info)
     return nullopt;
   llvm_line_info ret{};
-  static_cast<llvm::DILineInfo &>(ret) = *line_info;
+  static_cast<llvm::DILineInfo &>(ret) = std::move(*line_info);
   ret.module_name = info.dli_fname;
   return ret;
 }

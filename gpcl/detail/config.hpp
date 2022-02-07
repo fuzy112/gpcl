@@ -114,6 +114,10 @@
 #  define GPCL_CONFIG_GETOPT_LONG_OPT_EQUAL_SIZE 1
 #endif
 
+#ifndef GPCL_DETAIL_MUTEX_FOR_ADDRESS_USE_SHARED_PTR
+#  define GPCL_DETAIL_MUTEX_FOR_ADDRESS_USE_SHARED_PTR 1
+#endif
+
 #if __cpp_rtti
 // #  undef GPCL_NO_RTTI
 #else

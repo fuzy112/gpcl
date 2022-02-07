@@ -23,6 +23,8 @@ option(GPCL_ENABLE_LTO "Enable link time optimisation" OFF)
 option(GPCL_BUILD_TESTING "enable testing support" ON)
 option(GPCL_BUILD_DOC "enable document generation" ON)
 option(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE "link to external cppreference documentation" TRUE)
+option(GPCL_ENABLE_PCH "Enable precompiled headers" OFF)
+option(GPCL_FIX_FILE_PATH "Use source directory as working directory when compiling" TRUE)
 
 check_ipo_supported(RESULT ipo_supported)
 if (ipo_supported AND GPCL_ENABLE_LTO)
@@ -35,9 +37,10 @@ if (NOT DEFINED BUILD_TESTING)
 endif()
 
 
-find_package(Boost
-    COMPONENTS system
-    )
+find_package(Boost COMPONENTS system QUIET)
+find_package(Threads QUIET)
+find_package(LLVM QUIET)
+find_package(Doxygen)
 
 file(GLOB_RECURSE GPCL_HEADERS CONFIGURE_DEPENDS
 	gpcl/*.hpp
@@ -51,19 +54,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 add_library(gpcl ${GPCL_HEADERS} ${GPCL_SOURCES})
 add_library(gpcl::gpcl ALIAS gpcl)
 
+
 target_compile_features(gpcl PUBLIC cxx_std_17)
-
-find_package(Threads QUIET)
-if (Threads_FOUND)
-	target_link_libraries (gpcl PUBLIC Threads::Threads)
-endif()
-
-find_package(LLVM QUIET)
-if (LLVM_FOUND)
-	target_include_directories (gpcl PUBLIC ${LLVM_INCLUDE_DIRS})
-	target_link_libraries (gpcl PUBLIC LLVMSymbolize)
-	target_compile_definitions (gpcl PUBLIC GPCL_LLVM=1)
-endif()
 
 target_include_directories(gpcl
 	PUBLIC
@@ -71,11 +63,27 @@ target_include_directories(gpcl
 	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 	)
 
+
+
+if (Threads_FOUND)
+	target_link_libraries (gpcl PUBLIC Threads::Threads)
+endif()
+
+if (LLVM_FOUND)
+	target_include_directories (gpcl PUBLIC ${LLVM_INCLUDE_DIRS})
+	#target_link_libraries (gpcl PUBLIC LLVMSymbolize)
+	target_link_libraries (gpcl PUBLIC LLVM)
+	target_compile_definitions (gpcl PUBLIC GPCL_LLVM=1)
+endif()
+
 if (UNIX)
 	target_link_libraries (gpcl PUBLIC rt ${CMAKE_DL_LIBS})
 	if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 		target_link_options(gpcl PUBLIC "-rdynamic")
+
+        if (NOT LLVM_FOUND)
 		target_link_libraries(gpcl PUBLIC bfd)
+        endif ()
 	else()
 		target_link_libraries(gpcl PUBLIC execinfo)
 	endif()
@@ -114,6 +122,8 @@ if (GPCL_ENABLE_PCH)
 	)
 endif ()
 
+target_compile_features(gpcl PUBLIC cxx_std_17)
+
 get_target_property(library_type gpcl TYPE)
 
 if ("${library_type}" STREQUAL "SHARED_LIBRARY")
@@ -133,7 +143,6 @@ FetchContent_Declare(
 	URL_HASH SHA256=8f97b2baa749c748a2e022d785f1a2e95aa851a3075987dfcf38baf65e0e486d
 )
 
-find_package(Doxygen)
 if (Doxygen_FOUND AND GPCL_BUILD_DOC)
 
 	FetchContent_MakeAvailable(cppreference)

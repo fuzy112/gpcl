@@ -16,12 +16,16 @@
 #include <gpcl/exception.hpp>
 #include <gpcl/make_iomanip.hpp>
 
+#ifdef GPCL_NO_EXCEPTIONS
+#  include <gpcl/stacktrace.hpp>
+#endif
+
 #include <iomanip>
 
 namespace gpcl {
 
 template <typename E>
-class wrapped_exception : virtual public E, virtual public exception
+class wrapped_exception : public E, virtual public exception
 {
   static_assert(!std::is_base_of<gpcl::exception, E>::value, "");
 
@@ -50,18 +54,26 @@ wrapped_exception<typename std::decay<E>::type> enable_error_info(E &&e)
   return wrapped_exception<typename std::decay<E>::type>(std::forward<E>(e));
 }
 
+template <typename E>
+[[noreturn]] void throw_exception(E &&e)
+{
+#if defined GPCL_NO_EXCEPTIONS
+  cdebug()
+      << "Trying to throw an exception, but exception support is disabled.\n"
+      << enable_error_info(e) << "\nTracing back:\n"
+      << stacktrace::current() << "\nTerminating..." << std::endl;
+#endif
+  GPCL_THROW(enable_error_info(std::forward<E>(e)));
+}
+
+// Common error infos
+
 namespace detail {
 using source_file_errinfo =
     error_info<struct source_file_errinfo_, const char *>;
 using source_line_errinfo = error_info<struct source_line_errinfo_, unsigned>;
 using func_name_errinfo = error_info<struct func_name_errinfo_, const char *>;
-} // namespace detail
 
-using detail::func_name_errinfo;
-using detail::source_file_errinfo;
-using detail::source_line_errinfo;
-
-namespace detail {
 inline decltype(auto) tag_invoke(source_file_errinfo::format_fn,
                                  const char *source_file)
 {
@@ -81,22 +93,28 @@ inline decltype(auto) tag_invoke(func_name_errinfo::format_fn,
 }
 } // namespace detail
 
-template <typename E>
-[[noreturn]] void throw_exception(E &&e)
-{
-#if defined GPCL_NO_EXCEPTIONS
-  cdebug() << "Trying to an exception, but exception support is disabled.\n"
-           << enable_error_info(e) << "\nTracing back:\n"
-           << stacktrace::current() << "\nTerminating..." << std::endl;
+using function_name_error_info = detail::func_name_errinfo;
+#if defined(__GNUC__)
+#  define GPCL_FUNCTION_NAME_ERROR_INFO_CURRENT()                              \
+    ::gpcl::function_name_error_info(__PRETTY_FUNCTION__)
+#else
+#  define GPCL_FUNCTION_NAME_ERROR_INFO_CURRENT()                              \
+    ::gpcl::function_name_error_info(__func__)
 #endif
-  GPCL_THROW(enable_error_info(std::forward<E>(e)));
-}
+
+using source_file_error_info = detail::source_file_errinfo;
+#define GPCL_SOURCE_FILE_ERROR_INFO_CURRENT()                                  \
+  ::gpcl::source_file_error_info(__FILE__)
+
+using source_line_error_info = detail::source_line_errinfo;
+#define GPCL_SOURCE_LINE_ERROR_INFO_CURRENT()                                  \
+  ::gpcl::source_line_error_info(__LINE__)
 
 #define GPCL_THROW_EXCEPTION(exc)                                              \
   ::gpcl::throw_exception(::gpcl::enable_error_info(exc)                       \
-                          << ::gpcl::source_file_errinfo(__FILE__)             \
-                          << ::gpcl::source_line_errinfo(__LINE__)             \
-                          << ::gpcl::func_name_errinfo(__func__))
+                          << GPCL_FUNCTION_NAME_ERROR_INFO_CURRENT()           \
+                          << GPCL_SOURCE_FILE_ERROR_INFO_CURRENT()             \
+                          << GPCL_SOURCE_LINE_ERROR_INFO_CURRENT())
 
 } // namespace gpcl
 

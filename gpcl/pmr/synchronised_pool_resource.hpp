@@ -37,7 +37,7 @@ class synchronised_pool_resource : public memory_resource
 
   using allocation_result = std::tuple<void *, std::size_t, std::size_t>;
 
-  std::set<allocation_result, polymorphic_allocator<allocation_result>>
+  std::set<allocation_result, std::less<allocation_result>, polymorphic_allocator<allocation_result>>
       blocks_from_upstream_;
 
   std::map<std::size_t, pool_type, std::less<std::size_t>,

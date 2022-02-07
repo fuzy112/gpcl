@@ -62,7 +62,7 @@
 #include <gpcl/detail/impl/win_thread.ipp>
 #endif
 
-#if defined(GPCL_BFD) && !defined(GPCL_NO_STACKTRACE)
+#if defined(GPCL_BFD) && !defined(GPCL_NO_STACKTRACE) && !defined(GPCL_LLVM)
 #include <gpcl/detail/impl/bfd_stacktrace.ipp>
 #endif
 
@@ -70,6 +70,6 @@
 #include <gpcl/detail/impl/win_stacktrace.ipp>
 #endif
 
-#if defined(GPCL_LLVM)
+#if defined(GPCL_LLVM) && !defined(GPCL_NO_STACKTRACE)
 #include <gpcl/detail/impl/llvm_stacktrace.ipp>
 #endif
