@@ -62,6 +62,7 @@
 #include <gpcl/intrusive_list.hpp>
 #include <gpcl/intrusive_ptr.hpp>
 #include <gpcl/inttypes.hpp>
+#include <gpcl/invoke.hpp>
 #include <gpcl/is_basic_lockable.hpp>
 #include <gpcl/is_lockable.hpp>
 #include <gpcl/ispanstream.hpp>

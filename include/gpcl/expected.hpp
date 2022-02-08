@@ -20,8 +20,7 @@
 #include <gpcl/in_place.hpp>
 #include <gpcl/optional_fwd.hpp>
 #include <gpcl/unexpected.hpp>
-
-#include <functional>
+#include <gpcl/invoke.hpp>
 
 namespace gpcl {
 
@@ -413,7 +412,7 @@ public:
   {
     if (*this)
     {
-      return rebind<U>(std::invoke(detail::forward<F>(f), **this));
+      return rebind<U>(gpcl::invoke(detail::forward<F>(f), **this));
     }
     else
     {
@@ -431,7 +430,7 @@ public:
   {
     if (*this)
     {
-      std::invoke(detail::forward<F>(f), **this);
+      gpcl::invoke(detail::forward<F>(f), **this);
       return rebind<U>();
     }
     else
@@ -451,7 +450,7 @@ public:
     if (*this)
     {
       return rebind<U>(
-          std::invoke(detail::forward<F>(f), *detail::move(*this)));
+          gpcl::invoke(detail::forward<F>(f), *detail::move(*this)));
     }
     else
     {
@@ -469,7 +468,7 @@ public:
   {
     if (*this)
     {
-      std::invoke(detail::forward<F>(f), *detail::move(*this));
+      gpcl::invoke(detail::forward<F>(f), *detail::move(*this));
       return rebind<U>();
     }
     else
@@ -492,7 +491,7 @@ public:
   {
     if (*this)
     {
-      return std::invoke(detail::forward<F>(f), **this);
+      return gpcl::invoke(detail::forward<F>(f), **this);
     }
     else
     {
@@ -513,7 +512,7 @@ public:
   {
     if (*this)
     {
-      return std::invoke(detail::forward<F>(f), *detail::move(*this));
+      return gpcl::invoke(detail::forward<F>(f), *detail::move(*this));
     }
     else
     {
@@ -529,7 +528,7 @@ public:
   {
     if (*this)
     {
-      return std::invoke(detail::forward<F>(f));
+      return gpcl::invoke(detail::forward<F>(f));
     }
     else
     {
@@ -608,7 +607,7 @@ public:
     }
     else
     {
-      return unexpected<E>(std::invoke(detail::forward<F>(f), (*this).error()));
+      return unexpected<E>(gpcl::invoke(detail::forward<F>(f), (*this).error()));
     }
   }
 
@@ -626,7 +625,7 @@ public:
     else
     {
       return unexpected<E>(
-          std::invoke(detail::forward<F>(f), detail::move(*this).error()));
+          gpcl::invoke(detail::forward<F>(f), detail::move(*this).error()));
     }
   }
 
@@ -648,7 +647,7 @@ public:
     }
     else
     {
-      return std::invoke(detail::forward<F>(f), (*this).error());
+      return gpcl::invoke(detail::forward<F>(f), (*this).error());
     }
   }
 
@@ -669,7 +668,7 @@ public:
     }
     else
     {
-      return std::invoke(detail::forward<F>(f), detail::move(*this).error());
+      return gpcl::invoke(detail::forward<F>(f), detail::move(*this).error());
     }
   }
 
@@ -691,7 +690,7 @@ public:
     }
     else
     {
-      return std::invoke(detail::forward<F>(f), (*this).error());
+      return gpcl::invoke(detail::forward<F>(f), (*this).error());
     }
   }
 
@@ -712,7 +711,7 @@ public:
     }
     else
     {
-      return std::invoke(detail::forward<F>(f), detail::move(*this).error());
+      return gpcl::invoke(detail::forward<F>(f), detail::move(*this).error());
     }
   }
 
@@ -760,11 +759,11 @@ public:
   {
     if (*this)
     {
-      return std::invoke(detail::forward<F>(f), **this);
+      return gpcl::invoke(detail::forward<F>(f), **this);
     }
     else
     {
-      return std::invoke(detail::forward<D>(d), this->error());
+      return gpcl::invoke(detail::forward<D>(d), this->error());
     }
   }
 
@@ -779,11 +778,11 @@ public:
   {
     if (*this)
     {
-      return std::invoke(detail::forward<F>(f), *detail::move(*this));
+      return gpcl::invoke(detail::forward<F>(f), *detail::move(*this));
     }
     else
     {
-      return std::invoke(detail::forward<D>(d), detail::move(*this).error());
+      return gpcl::invoke(detail::forward<D>(d), detail::move(*this).error());
     }
   }
 

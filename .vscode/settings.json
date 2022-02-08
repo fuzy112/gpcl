@@ -117,7 +117,24 @@
         "__tuple": "cpp",
         "queue": "cpp",
         "stack": "cpp",
-        "csetjmp": "cpp"
+        "csetjmp": "cpp",
+        "*.h++": "cpp",
+        "strstream": "cpp",
+        "complex": "cpp",
+        "cfenv": "cpp",
+        "__functional_base_03": "cpp",
+        "filesystem": "cpp"
     },
-    "svn.ignoreMissingSvnWarning": true
+    "svn.ignoreMissingSvnWarning": true,
+    "C/C++ Include Guard.Comment Style": "Line",
+    "C/C++ Include Guard.Header Extensions": [
+        ".h",
+        ".hpp",
+        ".h++",
+        ".hh",
+        ".ipp"
+    ],
+    "C/C++ Include Guard.Macro Type": "Filepath",
+    "C/C++ Include Guard.Path Skip": 1,
+    "C/C++ Include Guard.Remove Extension": false
 }

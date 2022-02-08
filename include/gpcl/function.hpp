@@ -15,6 +15,7 @@
 #include <gpcl/basic_any.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
+#include <gpcl/invoke.hpp>
 #include <gpcl/swap.hpp>
 
 #include <tuple>
@@ -72,17 +73,16 @@ public:
 
   function(std::nullptr_t) noexcept {}
 
-  template <
-      typename F,
-      typename = std::enable_if_t<
-          !std::is_same_v<std::decay_t<F>, function> &&
-          std::is_convertible_v<
-              decltype(std::declval<F>()(std::declval<Args>()...)), Result>>>
+  template <typename F,
+            typename = std::enable_if_t<
+                !std::is_same_v<std::decay_t<F>, function> &&
+                std::is_convertible_v<
+                    typename gpcl::invoke_result<F, Args...>::type, Result>>>
   function(F &&f) : data_(std::forward<F>(f))
   {
     invoke_ = [](void *pf, Args... args) -> Result {
       auto f = static_cast<std::decay_t<F> *>(pf);
-      return (*f)(std::move(args)...);
+      return gpcl::invoke(*f, std::move(args)...);
     };
   }
 

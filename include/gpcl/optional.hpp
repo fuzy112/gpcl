@@ -17,8 +17,7 @@
 #include <gpcl/error.hpp>
 #include <gpcl/optional_fwd.hpp>
 #include <gpcl/swap.hpp>
-
-#include <functional>
+#include <gpcl/invoke.hpp>
 
 namespace gpcl {
 
@@ -546,7 +545,7 @@ public:
   {
     if (*this)
     {
-      return std::invoke(std::forward<F>(f), value());
+      return gpcl::invoke(std::forward<F>(f), value());
     }
     else
     {
@@ -560,7 +559,7 @@ public:
   {
     if (*this)
     {
-      return std::invoke(std::forward<F>(f), value());
+      return gpcl::invoke(std::forward<F>(f), value());
     }
     else
     {
@@ -574,7 +573,7 @@ public:
   {
     if (*this)
     {
-      return std::invoke(std::forward<F>(f), std::move(value()));
+      return gpcl::invoke(std::forward<F>(f), std::move(value()));
     }
     else
     {
@@ -588,7 +587,7 @@ public:
   {
     if (*this)
     {
-      return std::invoke(std::forward<F>(f), std::move(value()));
+      return gpcl::invoke(std::forward<F>(f), std::move(value()));
     }
     else
     {

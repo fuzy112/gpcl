@@ -9,6 +9,7 @@ set(TESTS_SRCS
     function_test.cpp
     futex_atomic_wait_test.cpp
     future_test.cpp
+    invoke_test.cpp
     lexical_cast_test.cpp
     lock_file_test.cpp
     main.cpp

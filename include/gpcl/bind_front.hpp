@@ -13,6 +13,7 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/noncopyable.hpp>
+#include <gpcl/invoke.hpp>
 
 #include <functional>
 #include <tuple>
@@ -26,7 +27,7 @@ auto bind_front(Fn &&fn, Ts &&...xs)
 {
   return [fn = static_cast<Fn &&>(fn), ... xs = static_cast<Ts &&>(xs)](
              auto &&...ys) mutable -> decltype(auto) {
-    return fn(xs..., static_cast<decltype(ys) &&>(ys)...);
+    return gpcl::invoke(fn, xs..., static_cast<decltype(ys) &&>(ys)...);
   };
 }
 
