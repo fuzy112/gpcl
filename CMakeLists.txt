@@ -42,7 +42,7 @@ if(NOT DEFINED BUILD_TESTING)
 endif()
 
 find_package(Threads)
-find_package(LLVM)
+find_package(LLVM NO_MODULE)
 find_package(Doxygen)
 find_package(BFD)
 find_package(Backtrace)

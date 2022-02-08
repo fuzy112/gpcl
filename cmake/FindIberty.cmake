@@ -1,5 +1,8 @@
-find_library(IBERTY_LIBRARY NAMES libiberty.a iberty)
-find_path(IBERTY_INCLUDE_DIR NAMES libiberty.h)
+find_library(Iberty_LIBRARY NAMES libiberty.a iberty)
+find_path(Iberty_INCLUDE_DIR 
+  NAMES libiberty.h 
+  PATHS libiberty
+  HINTS /usr/include/libiberty)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Iberty DEFAULT_MSG Iberty_LIBRARY Iberty_INCLUDE_DIR)
