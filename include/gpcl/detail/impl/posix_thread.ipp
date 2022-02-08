@@ -212,7 +212,7 @@ unsigned int posix_thread::hardware_concurrency()
     throw_system_error(__func__);
   return ncpu;
 }
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__CYGWIN__)
 unsigned int posix_thread::hardware_concurrency()
 {
   return sysconf(_SC_NPROCESSORS_CONF);
