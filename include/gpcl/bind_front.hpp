@@ -24,8 +24,8 @@ namespace gpcl {
 template <typename Fn, typename... Ts>
 auto bind_front(Fn &&fn, Ts &&...xs)
 {
-  return [fn = static_cast<Fn &&>(fn),
-          ... xs = static_cast<Ts &&>(xs)](auto &&...ys) -> decltype(auto) {
+  return [fn = static_cast<Fn &&>(fn), ... xs = static_cast<Ts &&>(xs)](
+             auto &&...ys) mutable -> decltype(auto) {
     return fn(xs..., static_cast<decltype(ys) &&>(ys)...);
   };
 }

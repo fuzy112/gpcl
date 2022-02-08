@@ -16,8 +16,9 @@
 #include <gpcl/thread_attributes.hpp>
 #include <gpcl/unique_ptr.hpp>
 #include <gpcl/zstring.hpp>
+#include <gpcl/bind_front.hpp>
+#include <gpcl/function.hpp>
 
-#include <functional>
 #include <iostream>
 #include <type_traits>
 
@@ -91,7 +92,7 @@ public:
   template <typename F, typename... Args>
   posix_thread(thread_attributes const &attr, F &&f, Args... args)
   {
-    start_thread(attr, std::bind(detail::forward<F>(f), args...));
+    start_thread(attr, gpcl::bind_front(detail::forward<F>(f), args...));
   }
 
   GPCL_DECL ~posix_thread();
@@ -141,33 +142,13 @@ public:
   static GPCL_DECL unsigned int hardware_concurrency();
 
 private:
-  class func_base
-  {
-  public:
-    virtual ~func_base() = default;
-
-    virtual void run() noexcept = 0;
-  };
-
-  template <typename F>
-  class func : public func_base
-  {
-  public:
-    explicit func(F f) : f_(detail::move(f)) {}
-
-    void run() noexcept final { f_(); }
-
-  private:
-    F f_;
-  };
-
   GPCL_DECL void start_thread(thread_attributes const &attr,
-                              unique_ptr<func_base> fn);
+                              unique_ptr<function<void()>> fn);
 
   template <typename F, decltype(std::declval<F>()(), int{}) = 0>
   void start_thread(thread_attributes const &attr, F &&f)
   {
-    auto fn = gpcl::make_unique<func<F>>(detail::forward<F>(f));
+    auto fn = gpcl::make_unique<function<void()>>(detail::forward<F>(f));
     start_thread(attr, std::move(fn));
   }
 

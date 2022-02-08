@@ -8,8 +8,8 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_FUNCTION_HPP
-#define GPCL_FUNCTION_HPP
+#ifndef INCLUDE_GPCL_FUNCTION_HPP
+#define INCLUDE_GPCL_FUNCTION_HPP
 
 #include <gpcl/assert.hpp>
 #include <gpcl/basic_any.hpp>
@@ -49,9 +49,9 @@ template <typename Result, typename... Args, std::size_t LocalSize>
 class function<Result(Args...), LocalSize>
 {
   using any_t = basic_any<LocalSize>;
-  using invoke_t = Result (*)(const void *, Args...);
+  using invoke_t = Result (*)(void *, Args...);
 
-  any_t data_;
+  mutable any_t data_;
   invoke_t invoke_ = nullptr;
 
 public:
@@ -72,12 +72,16 @@ public:
 
   function(std::nullptr_t) noexcept {}
 
-  template <typename F, typename = std::enable_if_t<
-                            !std::is_same_v<std::decay_t<F>, function>>>
+  template <
+      typename F,
+      typename = std::enable_if_t<
+          !std::is_same_v<std::decay_t<F>, function> &&
+          std::is_convertible_v<
+              decltype(std::declval<F>()(std::declval<Args>()...)), Result>>>
   function(F &&f) : data_(std::forward<F>(f))
   {
-    invoke_ = [](const void *pf, Args... args) -> Result {
-      auto f = static_cast<const std::decay_t<F> *>(pf);
+    invoke_ = [](void *pf, Args... args) -> Result {
+      auto f = static_cast<std::decay_t<F> *>(pf);
       return (*f)(std::move(args)...);
     };
   }
@@ -124,7 +128,7 @@ public:
   /// @throws bad_function_call if `bool(*this)` is false.
   result_type operator()(Args... args) const
   {
-    if (const void *value = data_.raw_value())
+    if (void *value = data_.raw_value())
       return invoke_(value, std::move(args)...);
     GPCL_THROW(bad_function_call());
   }
@@ -175,4 +179,4 @@ void swap(function<Signature, LocalSize> &x,
 
 } // namespace gpcl
 
-#endif // GPCL_FUNCTION_HPP
+#endif // INCLUDE_GPCL_FUNCTION_HPP

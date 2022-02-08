@@ -12,14 +12,13 @@ cmake_minimum_required(VERSION 3.16)
 
 project(GPCL CXX)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 include(GNUInstallDirs)
 include(CheckIPOSupported)
 include(CTest)
 include(FetchContent)
-include(CPack)
 include(CMakePackageConfigHelpers)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 option(GPCL_ENABLE_LTO "Enable link time optimisation" OFF)
 option(GPCL_BUILD_TESTING "enable testing support" ON)
@@ -27,11 +26,11 @@ option(GPCL_BUILD_DOC "enable document generation" ON)
 option(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE
        "link to external cppreference documentation" TRUE)
 option(GPCL_ENABLE_PCH "Enable precompiled headers" OFF)
-option(GPCL_FIX_FILE_PATH
-       "Use source directory as working directory when compiling" TRUE)
 option(GPCL_ENABLE_LLVM "Link to LLVM if found" TRUE)
-option(GPCL_LINK_TO_LLVM_SO "Link to libLLVM.so rather than LLVMSymbolize" FALSE)
+option(GPCL_LINK_TO_LLVM_SO "Link to libLLVM.so rather than LLVMSymbolize"
+       FALSE)
 option(GPCL_ENABLE_BFD "Link to BFD if found" TRUE)
+option(BUILD_SHARED_LIBS "Create shared libraies" TRUE)
 
 check_ipo_supported(RESULT ipo_supported)
 if(ipo_supported AND GPCL_ENABLE_LTO)
@@ -66,16 +65,20 @@ endif()
 if(LLVM_FOUND AND "${GPCL_ENABLE_LLVM}")
   target_include_directories(gpcl PUBLIC ${LLVM_INCLUDE_DIRS})
   if(NOT GPCL_LINK_TO_LLVM_SO)
-    target_link_libraries (gpcl PUBLIC LLVMSymbolize)
+    target_link_libraries(gpcl PUBLIC LLVMSymbolize)
   else()
     target_link_libraries(gpcl PUBLIC LLVM)
   endif()
   target_compile_definitions(gpcl PUBLIC GPCL_LLVM=1)
-  set(GPCL_LLVM TRUE CACHE BOOL "")
+  set(GPCL_LLVM
+      TRUE
+      CACHE BOOL "")
 elseif(BFD_FOUND AND "${GPCL_ENABLE_BFD}")
   target_link_libraries(gpcl PUBLIC BFD::BFD)
   target_compile_definitions(gpcl PUBLIC GPCL_BFD=1)
-  set(GPCL_BFD TRUE CACHE BOOL "")
+  set(GPCL_BFD
+      TRUE
+      CACHE BOOL "")
 endif()
 
 if(Backtrace_FOUND)
@@ -143,8 +146,8 @@ if(Doxygen_FOUND AND GPCL_BUILD_DOC)
   set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
   set(DOXYGEN_EXTRACT_PRIVATE YES)
   # set (DOXYGEN_EXCLUDE_SYMBOLS "*::detail::*;*_detail::*")
-  set(DOXYGEN_STRIP_FROM_INC_PATH ".")
-  doxygen_add_docs(doc README.md src gpcl)
+  set(DOXYGEN_STRIP_FROM_INC_PATH "include")
+  doxygen_add_docs(doc README.md src include)
 
   find_package(
     Python
@@ -173,8 +176,7 @@ configure_package_config_file(
   PATH_VARS CMAKE_INSTALL_LIBDIR)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/gpcl-config.cmake"
-              "cmake/FindBFD.cmake"
-              "cmake/FindIberty.cmake"
+              "cmake/FindBFD.cmake" "cmake/FindIberty.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
 
 install(DIRECTORY include/gpcl DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
@@ -186,5 +188,9 @@ install(
   NAMESPACE gpcl::
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
 
-install(FILES "LICENSE_1_0.txt"
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/gpcl)
+install(FILES "LICENSE_1_0.txt" "README.md"
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/gpcl)
+
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE_1_0.txt")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+include(CPack)

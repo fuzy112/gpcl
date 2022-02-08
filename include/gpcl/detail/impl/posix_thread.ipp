@@ -93,7 +93,7 @@ struct posix_thread_attributes : noncopyable
 };
 
 void posix_thread::start_thread(thread_attributes const &attr,
-                                unique_ptr<func_base> fn)
+                                unique_ptr<function<void()>> fn)
 {
   posix_thread_attributes attr1(attr);
   scope_success release_fn{[&] { (void)fn.release(); }};
@@ -108,8 +108,8 @@ void posix_thread::start_thread(thread_attributes const &attr,
 void *posix_thread_function(void *arg) noexcept
 {
   GPCL_ASSERT(arg != nullptr);
-  auto fn = unique_ptr<posix_thread::func_base>(
-      reinterpret_cast<posix_thread::func_base *>(arg));
+  auto fn =
+      unique_ptr<function<void()>>(reinterpret_cast<function<void()> *>(arg));
 
   sigset_t set;
   sigemptyset(&set);
@@ -119,7 +119,7 @@ void *posix_thread_function(void *arg) noexcept
 
   int oldstate{};
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
-  fn->run();
+  (*fn)();
   pthread_setcancelstate(oldstate, nullptr);
 
   return nullptr;
@@ -203,7 +203,7 @@ posix_thread_id posix_thread::this_thread_id()
 unsigned int posix_thread::hardware_concurrency()
 {
   int s;
-  int mib[2] = { CTL_HW, HW_NCPU };
+  int mib[2] = {CTL_HW, HW_NCPU};
   int ncpu{};
   size_t len = sizeof(ncpu);
 

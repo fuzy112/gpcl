@@ -4,7 +4,7 @@ find_path(BFD_INCLUDE_DIR NAMES bfd.h)
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BFD DEFAULT_MSG BFD_LIBRARY BFD_INCLUDE_DIR)
 
-find_package(Iberty)
+find_package(Iberty QUIET)
 
 if(BFD_FOUND AND NOT TARGET BFD::BFD)
   add_library(BFD::BFD UNKNOWN IMPORTED)
@@ -19,7 +19,7 @@ if(BFD_FOUND AND NOT TARGET BFD::BFD)
   endif()
 endif()
 
-set(BFD_LIBRARIES "${BFD_LIBRARY}")
-set(BFD_INCLUDE_DIRS "${BFD_INCLUDE_DIR}")
+set(BFD_LIBRARIES "${BFD_LIBRARY}" "${Iberty_LIBRARIES}")
+set(BFD_INCLUDE_DIRS "${BFD_INCLUDE_DIR}" "${Iberty_INCLUDE_DIRS}")
 
 mark_as_advanced(BFD_LIBRARY BFD_INCLUDE_DIR)
