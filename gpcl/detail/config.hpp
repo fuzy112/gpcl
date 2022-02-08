@@ -131,6 +131,10 @@
 #  pragma comment(lib, "gpcl")
 #endif
 
+#ifndef GPCL_BACKTRACE_HEADER
+#  define GPCL_BACKTRACE_HEADER <execinfo.h>
+#endif
+
 /// Main namespace of GPCL
 namespace gpcl {
 

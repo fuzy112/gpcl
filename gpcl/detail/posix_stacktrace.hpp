@@ -23,7 +23,7 @@
 #include <type_traits>
 #include <vector>
 
-#include <execinfo.h>
+#include GPCL_BACKTRACE_HEADER
 
 #if defined(GPCL_LLVM)
 #  include <gpcl/detail/llvm_stacktrace.hpp>

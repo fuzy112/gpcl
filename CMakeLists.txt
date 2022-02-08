@@ -46,6 +46,7 @@ find_package(Threads)
 find_package(LLVM)
 find_package(Doxygen)
 find_package(BFD)
+find_package(Backtrace)
 
 file(GLOB_RECURSE GPCL_HEADERS CONFIGURE_DEPENDS gpcl/*.hpp gpcl/*.ipp)
 
@@ -76,12 +77,14 @@ elseif(BFD_FOUND)
   target_compile_definitions(gpcl PUBLIC GPCL_BFD=1)
 endif()
 
-if(UNIX AND NOT APPLE)
-  target_link_libraries(gpcl PUBLIC rt)
+if(Backtrace_FOUND)
+  target_link_libraries(gpcl PUBLIC "${Backtrace_LIBRARIES}")
+  target_include_directories(gpcl PUBLIC "${Backtrace_INCLUDE_DIRS}")
+  target_compile_definitions(gpcl PUBLIC GPCL_BACKTRACE_HEADER="${Backtrace_HEADER}")
 endif()
 
-if(UNIX AND NOT APPLE AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-  target_link_libraries(gpcl PUBLIC execinfo)
+if(UNIX AND NOT APPLE)
+  target_link_libraries(gpcl PUBLIC rt)
 endif()
 
 if(WIN32)
