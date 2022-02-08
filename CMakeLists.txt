@@ -48,19 +48,15 @@ find_package(Doxygen)
 find_package(BFD)
 find_package(Backtrace)
 
-file(GLOB_RECURSE GPCL_HEADERS CONFIGURE_DEPENDS gpcl/*.hpp gpcl/*.ipp)
-
-set(GPCL_SOURCES lib/src.cpp)
-
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_library(gpcl ${GPCL_HEADERS} ${GPCL_SOURCES})
+add_library(gpcl src/src.cpp)
 add_library(gpcl::gpcl ALIAS gpcl)
 
 target_compile_features(gpcl PUBLIC cxx_std_17)
 
 target_include_directories(
-  gpcl PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  gpcl PUBLIC $<BUILD_INTERFACE:${GPCL_SOURCE_DIR}/include>
               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 if(Threads_FOUND)
@@ -103,7 +99,7 @@ if(MINGW)
 endif()
 
 if(GPCL_ENABLE_PCH)
-  target_precompile_headers(gpcl INTERFACE $<BUILD_INTERFACE:gpcl.hpp>)
+  target_precompile_headers(gpcl INTERFACE $<BUILD_INTERFACE:<gpcl.hpp>>)
 endif()
 
 target_compile_features(gpcl PUBLIC cxx_std_17)
@@ -127,7 +123,6 @@ FetchContent_Declare(
     SHA256=8f97b2baa749c748a2e022d785f1a2e95aa851a3075987dfcf38baf65e0e486d)
 
 if(Doxygen_FOUND AND GPCL_BUILD_DOC)
-
   FetchContent_MakeAvailable(cppreference)
   if(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE)
     list(
@@ -149,7 +144,7 @@ if(Doxygen_FOUND AND GPCL_BUILD_DOC)
   set(DOXYGEN_EXTRACT_PRIVATE YES)
   # set (DOXYGEN_EXCLUDE_SYMBOLS "*::detail::*;*_detail::*")
   set(DOXYGEN_STRIP_FROM_INC_PATH ".")
-  doxygen_add_docs(doc README.md lib gpcl)
+  doxygen_add_docs(doc README.md src gpcl)
 
   find_package(
     Python
@@ -182,11 +177,14 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/gpcl-config.cmake"
               "cmake/FindIberty.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
 
-install(DIRECTORY gpcl DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(FILES gpcl.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY include/gpcl DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES include/gpcl.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install(TARGETS gpcl EXPORT gpcl-targets)
 install(
   EXPORT gpcl-targets
   NAMESPACE gpcl::
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
+
+install(FILES "LICENSE_1_0.txt"
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/gpcl)

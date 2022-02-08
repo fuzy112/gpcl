@@ -1,4 +1,4 @@
-file(GLOB_RECURSE SOURCES "${GPCL_SOURCE_DIR}/gpcl/*.?pp")
+file(GLOB_RECURSE SOURCES "${GPCL_SOURCE_DIR}/include/gpcl/*.?pp")
 
 function(generate_copyright_notation_for_file filename OUT_VAR)
   get_filename_component(filename "${filename}" NAME)
