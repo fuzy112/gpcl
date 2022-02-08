@@ -1,1 +1,1 @@
-ADD_EXAMPLE_EXECUTABLE(exception main.cpp)
+add_example_executable(exception main.cpp)

@@ -18,34 +18,33 @@ include(CTest)
 include(FetchContent)
 include(CPack)
 
-
 option(GPCL_ENABLE_LTO "Enable link time optimisation" OFF)
 option(GPCL_BUILD_TESTING "enable testing support" ON)
 option(GPCL_BUILD_DOC "enable document generation" ON)
-option(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE "link to external cppreference documentation" TRUE)
+option(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE
+       "link to external cppreference documentation" TRUE)
 option(GPCL_ENABLE_PCH "Enable precompiled headers" OFF)
-option(GPCL_FIX_FILE_PATH "Use source directory as working directory when compiling" TRUE)
+option(GPCL_FIX_FILE_PATH
+       "Use source directory as working directory when compiling" TRUE)
 
 check_ipo_supported(RESULT ipo_supported)
-if (ipo_supported AND GPCL_ENABLE_LTO)
-	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+if(ipo_supported AND GPCL_ENABLE_LTO)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
-
-if (NOT DEFINED BUILD_TESTING)
-   set (BUILD_TESTING ${GPCL_BUILD_TESTING})
+if(NOT DEFINED BUILD_TESTING)
+  set(BUILD_TESTING ${GPCL_BUILD_TESTING})
 endif()
 
-
-find_package(Boost COMPONENTS system QUIET)
+find_package(
+  Boost
+  COMPONENTS system
+  QUIET)
 find_package(Threads QUIET)
 find_package(LLVM QUIET)
 find_package(Doxygen)
 
-file(GLOB_RECURSE GPCL_HEADERS CONFIGURE_DEPENDS
-	gpcl/*.hpp
-	gpcl/*.ipp
-)
+file(GLOB_RECURSE GPCL_HEADERS CONFIGURE_DEPENDS gpcl/*.hpp gpcl/*.ipp)
 
 set(GPCL_SOURCES lib/src.cpp)
 
@@ -54,139 +53,129 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 add_library(gpcl ${GPCL_HEADERS} ${GPCL_SOURCES})
 add_library(gpcl::gpcl ALIAS gpcl)
 
-
 target_compile_features(gpcl PUBLIC cxx_std_17)
 
-target_include_directories(gpcl
-	PUBLIC
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-	)
+target_include_directories(
+  gpcl PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+              $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-
-
-if (Threads_FOUND)
-	target_link_libraries (gpcl PUBLIC Threads::Threads)
+if(Threads_FOUND)
+  target_link_libraries(gpcl PUBLIC Threads::Threads)
 endif()
 
-if (LLVM_FOUND)
-	target_include_directories (gpcl PUBLIC ${LLVM_INCLUDE_DIRS})
-	#target_link_libraries (gpcl PUBLIC LLVMSymbolize)
-	target_link_libraries (gpcl PUBLIC LLVM)
-	target_compile_definitions (gpcl PUBLIC GPCL_LLVM=1)
+if(LLVM_FOUND)
+  target_include_directories(gpcl PUBLIC ${LLVM_INCLUDE_DIRS})
+  # target_link_libraries (gpcl PUBLIC LLVMSymbolize)
+  target_link_libraries(gpcl PUBLIC LLVM)
+  target_compile_definitions(gpcl PUBLIC GPCL_LLVM=1)
 endif()
 
-if (UNIX)
-	target_link_libraries (gpcl PUBLIC rt ${CMAKE_DL_LIBS})
-	if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-		target_link_options(gpcl PUBLIC "-rdynamic")
+if(UNIX)
+  target_link_libraries(gpcl PUBLIC rt ${CMAKE_DL_LIBS})
+  if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    target_link_options(gpcl PUBLIC "-rdynamic")
 
-        if (NOT LLVM_FOUND)
-		target_link_libraries(gpcl PUBLIC bfd)
-        endif ()
-	else()
-		target_link_libraries(gpcl PUBLIC execinfo)
-	endif()
-endif ()
-
-if (CYGWIN)
-	target_link_libraries(gpcl
-		PUBLIC
-		bfd
-		iberty
-		intl
-		z
-		${CMAKE_DL_LIBS}
-		)
-endif ()
-
-if (WIN32)
-	target_link_libraries(gpcl
-		PUBLIC
-		DbgHelp
-		)
+    if(NOT LLVM_FOUND)
+      target_link_libraries(gpcl PUBLIC bfd)
+    endif()
+  else()
+    target_link_libraries(gpcl PUBLIC execinfo)
+  endif()
 endif()
 
-if (MINGW)
-    target_compile_options(gpcl INTERFACE "-Wa,-mbig-obj")
-	target_link_libraries(gpcl
-		PUBLIC
-	)
-endif ()
+if(CYGWIN)
+  target_link_libraries(gpcl PUBLIC bfd iberty intl z ${CMAKE_DL_LIBS})
+endif()
 
-if (GPCL_ENABLE_PCH)
-	target_precompile_headers(
-		gpcl
-		INTERFACE
-		$<BUILD_INTERFACE:gpcl.hpp>
-	)
-endif ()
+if(WIN32)
+  target_link_libraries(gpcl PUBLIC DbgHelp)
+endif()
+
+if(MINGW)
+  target_compile_options(gpcl INTERFACE "-Wa,-mbig-obj")
+  target_link_libraries(gpcl PUBLIC)
+endif()
+
+if(GPCL_ENABLE_PCH)
+  target_precompile_headers(gpcl INTERFACE $<BUILD_INTERFACE:gpcl.hpp>)
+endif()
 
 target_compile_features(gpcl PUBLIC cxx_std_17)
 
 get_target_property(library_type gpcl TYPE)
 
-if ("${library_type}" STREQUAL "SHARED_LIBRARY")
-	target_compile_definitions(gpcl PUBLIC GPCL_DYN_LINK=1)
-endif ()
+if("${library_type}" STREQUAL "SHARED_LIBRARY")
+  target_compile_definitions(gpcl PUBLIC GPCL_DYN_LINK=1)
+endif()
 
-set_target_properties(gpcl
-	PROPERTIES
-	SOVERSION 600
-	VERSION 0.6.0
-	DEFINE_SYMBOL GPCL_SOURCE
-)
+set_target_properties(
+  gpcl
+  PROPERTIES SOVERSION 600
+             VERSION 0.6.0
+             DEFINE_SYMBOL GPCL_SOURCE)
 
 FetchContent_Declare(
-	cppreference
-	URL https://upload.cppreference.com/mwiki/images/1/16/html_book_20190607.tar.xz
-	URL_HASH SHA256=8f97b2baa749c748a2e022d785f1a2e95aa851a3075987dfcf38baf65e0e486d
-)
+  cppreference
+  URL https://upload.cppreference.com/mwiki/images/1/16/html_book_20190607.tar.xz
+  URL_HASH
+    SHA256=8f97b2baa749c748a2e022d785f1a2e95aa851a3075987dfcf38baf65e0e486d)
 
-if (Doxygen_FOUND AND GPCL_BUILD_DOC)
+if(Doxygen_FOUND AND GPCL_BUILD_DOC)
 
-	FetchContent_MakeAvailable(cppreference)
-	if (GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE)
-		list (APPEND DOXYGEN_TAGFILES "${cppreference_SOURCE_DIR}/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/")
-	else ()
-		list (APPEND DOXYGEN_TAGFILES "${cppreference_SOURCE_DIR}/cppreference-doxygen-local.tag.xml=${cppreference_SOURCE_DIR}/reference/en/")
-	endif ()
-	set (DOXYGEN_PREDEFINED GPCL_DOXYGEN)
+  FetchContent_MakeAvailable(cppreference)
+  if(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE)
+    list(
+      APPEND
+      DOXYGEN_TAGFILES
+      "${cppreference_SOURCE_DIR}/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/"
+    )
+  else()
+    list(
+      APPEND
+      DOXYGEN_TAGFILES
+      "${cppreference_SOURCE_DIR}/cppreference-doxygen-local.tag.xml=${cppreference_SOURCE_DIR}/reference/en/"
+    )
+  endif()
+  set(DOXYGEN_PREDEFINED GPCL_DOXYGEN)
 
-	set (DOXYGEN_JAVADOC_AUTOBRIEF YES)
-	set (DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
-	SET (DOXYGEN_EXTRACT_PRIVATE YES)
-	# set (DOXYGEN_EXCLUDE_SYMBOLS "*::detail::*;*_detail::*")
-	set (DOXYGEN_STRIP_FROM_INC_PATH ".")
-	doxygen_add_docs(doc README.md lib gpcl)
+  set(DOXYGEN_JAVADOC_AUTOBRIEF YES)
+  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
+  set(DOXYGEN_EXTRACT_PRIVATE YES)
+  # set (DOXYGEN_EXCLUDE_SYMBOLS "*::detail::*;*_detail::*")
+  set(DOXYGEN_STRIP_FROM_INC_PATH ".")
+  doxygen_add_docs(doc README.md lib gpcl)
 
-	find_package(Python COMPONENTS Interpreter QUIET)
-	if (Python_FOUND)
-		add_custom_target(serv_doc
-			${Python_EXECUTABLE} -m http.server 3333
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
-			USES_TERMINAL)
-	endif ()
-endif ()
+  find_package(
+    Python
+    COMPONENTS Interpreter
+    QUIET)
+  if(Python_FOUND)
+    add_custom_target(
+      serv_doc
+      ${Python_EXECUTABLE} -m http.server 3333
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
+      USES_TERMINAL)
+  endif()
+endif()
 
 add_subdirectory(tools)
 
 add_subdirectory(examples)
 
-if (BUILD_TESTING)
-	add_subdirectory(tests)
-endif ()
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()
 
 configure_file(gpcl-config.cmake.in gpcl-config.cmake @ONLY)
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/gpcl-config.cmake" 
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/gpcl-config.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
 
 install(DIRECTORY gpcl DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES gpcl.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install(TARGETS gpcl EXPORT gpcl-targets)
-install(EXPORT gpcl-targets NAMESPACE gpcl::
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
-
-
+install(
+  EXPORT gpcl-targets
+  NAMESPACE gpcl::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
