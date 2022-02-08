@@ -80,6 +80,10 @@ if(UNIX AND NOT APPLE)
   target_link_libraries(gpcl PUBLIC rt)
 endif()
 
+if(UNIX AND NOT APPLE AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+  target_link_libraries(gpcl PUBLIC execinfo)
+endif()
+
 if(WIN32)
   target_link_libraries(gpcl PUBLIC DbgHelp)
 endif()
