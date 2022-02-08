@@ -1,30 +1,31 @@
 set(TESTS_SRCS
-    main.cpp
+    any_test.cpp
+    bind_front_test.cpp
+    buffers_test.cpp
+    condition_variable_test.cpp
+    exception.cpp
     expected_test.cpp
-    monotonic_buffer_resource_test.cpp
-    time_test.cpp
     file_test.cpp
-    lock_file_test.cpp
+    function_test.cpp
+    futex_atomic_wait_test.cpp
     future_test.cpp
-    unique_resource_test.cpp
-    pid_file.cpp
+    lexical_cast_test.cpp
+    lock_file_test.cpp
+    main.cpp
+    monotonic_buffer_resource_test.cpp
     mutex_test.cpp
     once_flag_test.cpp
-    futex_atomic_wait_test.cpp
-    any_test.cpp
-    function_test.cpp
-    unique_ptr_test.cpp
-    vector_test.cpp
+    pid_file.cpp
+    scope_test.cpp
+    scoped_array_test.cpp
     shared_ptr_test.cpp
-    condition_variable_test.cpp
     simple_segregated_storage_test.cpp
     syncbuf_test.cpp
-    buffers_test.cpp
-    bind_front_test.cpp
     thread_test.cpp
-    scope_test.cpp
-    exception.cpp
-    scoped_array_test.cpp)
+    time_test.cpp
+    unique_ptr_test.cpp
+    unique_resource_test.cpp
+    vector_test.cpp)
 
 set(TEST_FIXTURES syncbuf)
 
