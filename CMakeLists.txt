@@ -18,6 +18,8 @@ include(CTest)
 include(FetchContent)
 include(CPack)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 option(GPCL_ENABLE_LTO "Enable link time optimisation" OFF)
 option(GPCL_BUILD_TESTING "enable testing support" ON)
 option(GPCL_BUILD_DOC "enable document generation" ON)
@@ -40,9 +42,10 @@ find_package(
   Boost
   COMPONENTS system
   QUIET)
-find_package(Threads QUIET)
-find_package(LLVM QUIET)
+find_package(Threads)
+find_package(LLVM)
 find_package(Doxygen)
+find_package(BFD)
 
 file(GLOB_RECURSE GPCL_HEADERS CONFIGURE_DEPENDS gpcl/*.hpp gpcl/*.ipp)
 
@@ -68,23 +71,13 @@ if(LLVM_FOUND)
   # target_link_libraries (gpcl PUBLIC LLVMSymbolize)
   target_link_libraries(gpcl PUBLIC LLVM)
   target_compile_definitions(gpcl PUBLIC GPCL_LLVM=1)
+elseif(BFD_FOUND)
+  target_link_libraries(gpcl PUBLIC bfd::bfd)
+  target_compile_definitions(gpcl PUBLIC GPCL_BFD=1)
 endif()
 
-if(UNIX)
-  target_link_libraries(gpcl PUBLIC rt ${CMAKE_DL_LIBS})
-  if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-    target_link_options(gpcl PUBLIC "-rdynamic")
-
-    if(NOT LLVM_FOUND)
-      target_link_libraries(gpcl PUBLIC bfd)
-    endif()
-  else()
-    target_link_libraries(gpcl PUBLIC execinfo)
-  endif()
-endif()
-
-if(CYGWIN)
-  target_link_libraries(gpcl PUBLIC bfd iberty intl z ${CMAKE_DL_LIBS})
+if(UNIX AND NOT APPLE)
+  target_link_libraries(gpcl PUBLIC rt)
 endif()
 
 if(WIN32)
