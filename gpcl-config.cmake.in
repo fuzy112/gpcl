@@ -8,5 +8,23 @@
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 #
 
-get_filename_component(DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-include("${DIR}/gpcl-targets.cmake")
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+set_and_check(GPCL_DIR "@PACKAGE_CMAKE_INSTALL_LIBDIR@/cmake/gpcl")
+list(APPEND CMAKE_MODULE_PATH "${GPCL_DIR}")
+
+if(@GPCL_BFD@)
+find_dependency(BFD)
+endif()
+if(@GPCL_LLVM@)
+find_dependency(LLVM)
+endif()
+find_dependency(Threads)
+find_dependency(Backtrace)
+include("${GPCL_DIR}/gpcl-targets.cmake")
+
+list(POP_BACK CMAKE_MODULE_PATH)
+
+check_required_components(gpcl)

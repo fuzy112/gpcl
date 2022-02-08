@@ -17,6 +17,7 @@ include(CheckIPOSupported)
 include(CTest)
 include(FetchContent)
 include(CPack)
+include(CMakePackageConfigHelpers)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -28,6 +29,9 @@ option(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE
 option(GPCL_ENABLE_PCH "Enable precompiled headers" OFF)
 option(GPCL_FIX_FILE_PATH
        "Use source directory as working directory when compiling" TRUE)
+option(GPCL_ENABLE_LLVM "Link to LLVM if found" TRUE)
+option(GPCL_LINK_TO_LLVM_SO "Link to libLLVM.so rather than LLVMSymbolize" FALSE)
+option(GPCL_ENABLE_BFD "Link to BFD if found" TRUE)
 
 check_ipo_supported(RESULT ipo_supported)
 if(ipo_supported AND GPCL_ENABLE_LTO)
@@ -38,10 +42,6 @@ if(NOT DEFINED BUILD_TESTING)
   set(BUILD_TESTING ${GPCL_BUILD_TESTING})
 endif()
 
-find_package(
-  Boost
-  COMPONENTS system
-  QUIET)
 find_package(Threads)
 find_package(LLVM)
 find_package(Doxygen)
@@ -67,20 +67,26 @@ if(Threads_FOUND)
   target_link_libraries(gpcl PUBLIC Threads::Threads)
 endif()
 
-if(LLVM_FOUND)
+if(LLVM_FOUND AND "${GPCL_ENABLE_LLVM}")
   target_include_directories(gpcl PUBLIC ${LLVM_INCLUDE_DIRS})
-  # target_link_libraries (gpcl PUBLIC LLVMSymbolize)
-  target_link_libraries(gpcl PUBLIC LLVM)
+  if(NOT GPCL_LINK_TO_LLVM_SO)
+    target_link_libraries (gpcl PUBLIC LLVMSymbolize)
+  else()
+    target_link_libraries(gpcl PUBLIC LLVM)
+  endif()
   target_compile_definitions(gpcl PUBLIC GPCL_LLVM=1)
-elseif(BFD_FOUND)
-  target_link_libraries(gpcl PUBLIC bfd::bfd)
+  set(GPCL_LLVM TRUE CACHE BOOL "")
+elseif(BFD_FOUND AND "${GPCL_ENABLE_BFD}")
+  target_link_libraries(gpcl PUBLIC BFD::BFD)
   target_compile_definitions(gpcl PUBLIC GPCL_BFD=1)
+  set(GPCL_BFD TRUE CACHE BOOL "")
 endif()
 
 if(Backtrace_FOUND)
   target_link_libraries(gpcl PUBLIC "${Backtrace_LIBRARIES}")
   target_include_directories(gpcl PUBLIC "${Backtrace_INCLUDE_DIRS}")
-  target_compile_definitions(gpcl PUBLIC GPCL_BACKTRACE_HEADER="${Backtrace_HEADER}")
+  target_compile_definitions(gpcl
+                             PUBLIC GPCL_BACKTRACE_HEADER="${Backtrace_HEADER}")
 endif()
 
 if(UNIX AND NOT APPLE)
@@ -166,9 +172,14 @@ if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
 
-configure_file(gpcl-config.cmake.in gpcl-config.cmake @ONLY)
+configure_package_config_file(
+  gpcl-config.cmake.in gpcl-config.cmake
+  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gpcl"
+  PATH_VARS CMAKE_INSTALL_LIBDIR)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/gpcl-config.cmake"
+              "cmake/FindBFD.cmake"
+              "cmake/FindIberty.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
 
 install(DIRECTORY gpcl DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
