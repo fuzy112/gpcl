@@ -26,13 +26,13 @@
 namespace gpcl {
 
 #if defined(GPCL_POSIX)
-constexpr std::ptrdiff_t semaphore_default_least_max_value =
+inline constexpr std::ptrdiff_t semaphore_default_least_max_value =
     gpcl::detail::posix_semaphore::max();
 #elif defined(GPCL_WINDOWS)
-constexpr std::ptrdiff_t semaphore_default_least_max_value =
+inline constexpr std::ptrdiff_t semaphore_default_least_max_value =
     (gpcl::detail::win_semaphore::max)();
 #else
-constexpr std::ptrdiff_t semaphore_default_least_max_value = 0;
+inline constexpr std::ptrdiff_t semaphore_default_least_max_value = 0;
 #endif
 
 template <std::ptrdiff_t LeastMaxValue = semaphore_default_least_max_value>

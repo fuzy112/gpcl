@@ -11,8 +11,9 @@
 #ifndef GPCL_MUTEX_HPP
 #define GPCL_MUTEX_HPP
 
-#include <gpcl/clock.hpp>
 #include <gpcl/detail/config.hpp>
+
+#include <gpcl/clock.hpp>
 #include <gpcl/noncopyable.hpp>
 #include <gpcl/detail/utility.hpp>
 

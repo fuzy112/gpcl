@@ -27,7 +27,7 @@ struct unexpect_t
   explicit unexpect_t() = default;
 };
 
-constexpr unexpect_t unexpect{};
+inline constexpr unexpect_t unexpect{};
 
 /// Used as a wrapper to store the unexpected value.
 /// @tparam E must not be void.

@@ -35,8 +35,13 @@
 #  define GPCL_EXPORT_DECL
 #endif
 
+#ifndef __STDC_WANT_LIB_EXT1__
 #define __STDC_WANT_LIB_EXT1__ 1
+#endif
+
+#ifndef __STDC_WANT_SECURE_LIB__
 #define __STDC_WANT_SECURE_LIB__ 1
+#endif
 
 #ifdef _WIN32
 #  define GPCL_WINDOWS
@@ -135,9 +140,5 @@
 #  define GPCL_BACKTRACE_HEADER <execinfo.h>
 #endif
 
-/// Main namespace of GPCL
-namespace gpcl {
-
-} // namespace gpcl
 
 #endif // GPCL_DETAIL_CONFIG_HPP

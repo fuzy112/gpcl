@@ -39,7 +39,7 @@ public:
 # pragma warning(push)
 # pragma warning(disable : 4245)
 #endif
-constexpr std::size_t variant_npos = -1;
+inline constexpr std::size_t variant_npos = -1;
 #if defined _MSC_VER
 # pragma warning(pop)
 #endif
@@ -1107,7 +1107,7 @@ private:
 template <typename Visitor, typename... Variants>
 constexpr decltype(auto) visit(Visitor &&visitor, Variants &&...variants);
 #else
-constexpr detail::visit_impl visit{};
+inline constexpr detail::visit_impl visit{};
 #endif
 
 #if defined GPCL_DOXYGEN

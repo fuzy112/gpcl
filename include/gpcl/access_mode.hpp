@@ -20,8 +20,8 @@ enum class access_mode
   read_write,
 };
 
-constexpr access_mode read_only = access_mode::read_only;
-constexpr access_mode read_write = access_mode::read_write;
+inline constexpr access_mode read_only = access_mode::read_only;
+inline constexpr access_mode read_write = access_mode::read_write;
 
 } // namespace gpcl
 

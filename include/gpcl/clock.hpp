@@ -12,6 +12,7 @@
 #define GPCL_CLOCK_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/detail/chrono.hpp>
 
 #if defined(GPCL_POSIX)
 #  define GPCL_CLOCK
