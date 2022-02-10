@@ -26,19 +26,26 @@ enum json_print_style : long
   json_print_pretty = 1,
 };
 
-inline const int json_style_xalloc = std::ios_base::xalloc();
+namespace detail {
+inline int json_style_xalloc()
+{
+  static const std::ios_base::Init init;
+  static const int v = std::ios_base::xalloc();
+  return v;
+}
+} // namespace detail
 
 template <typename CharType, typename Traits>
 inline auto &operator<<(std::basic_ostream<CharType, Traits> &os,
                         json_print_style style)
 {
-  os.iword(json_style_xalloc) = static_cast<long>(style);
+  os.iword(detail::json_style_xalloc()) = static_cast<long>(style);
   return os;
 }
 
 inline json_print_style get_json_print_style(std::ios_base &os)
 {
-  return static_cast<json_print_style>(os.iword(json_style_xalloc));
+  return static_cast<json_print_style>(os.iword(detail::json_style_xalloc()));
 }
 
 } // namespace gpcl
