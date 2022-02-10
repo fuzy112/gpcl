@@ -42,7 +42,7 @@ private:
 inline std::pair<void *, std::size_t>
 memory_map(const anonymous_shared_memory_impl &mem, access_mode mode,
            std::ptrdiff_t offset, std::size_t size, const void *address,
-           posix_memory_map_options options)
+           posix_memory_map_options options, error_code &error)
 {
   (void)offset;
   GPCL_ASSERT(offset == 0);
@@ -63,7 +63,12 @@ memory_map(const anonymous_shared_memory_impl &mem, access_mode mode,
   void *ret = ::mmap((void *)address, size, prot, options.flags, -1, 0);
 #endif
   if (ret == MAP_FAILED)
-    throw_system_error(__func__);
+  {
+    error = {errno, system_category()};
+    return {};
+  }
+
+  error = {};
   return {ret, size};
 }
 

@@ -20,10 +20,10 @@
 #  define GPCL_TRY                                                             \
     {                                                                          \
       try
-#  define GPCL_CATCH(x) catch (x)
+#  define GPCL_CATCH(...) catch (__VA_ARGS__)
 #  define GPCL_RETHROW throw
 #  define GPCL_CATCH_END }
-#  define GPCL_THROW(x) throw x
+#  define GPCL_THROW(...) throw __VA_ARGS__
 
 #else
 #  define GPCL_TRY                                                             \
@@ -32,7 +32,7 @@
                                                                                \
       {
 
-#  define GPCL_CATCH(x)                                                        \
+#  define GPCL_CATCH(...)                                                        \
     ;                                                                          \
     }                                                                          \
                                                                                \
@@ -46,10 +46,10 @@
     }                                                                          \
     }
 
-#  define GPCL_THROW(x)                                                        \
+#  define GPCL_THROW(...)                                                        \
     do                                                                         \
     {                                                                          \
-      (void)sizeof((x));                                                       \
+      (void)sizeof((__VA_ARGS__));                                                       \
       ::std::abort();                                                          \
     } while (false)
 #endif

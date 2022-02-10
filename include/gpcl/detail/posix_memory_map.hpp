@@ -28,10 +28,10 @@ struct posix_memory_map_options
 };
 
 template <typename MemoryMappable>
-std::pair<void *, std::size_t> memory_map(const MemoryMappable &mappable,
-                                          access_mode mode, offset_t offset,
-                                          std::size_t size, const void *address,
-                                          posix_memory_map_options options)
+std::pair<void *, std::size_t>
+memory_map(const MemoryMappable &mappable, access_mode mode, offset_t offset,
+           std::size_t size, const void *address,
+           posix_memory_map_options options, error_code &error)
 {
   int prot;
   if (mode == access_mode::read_write)
@@ -56,7 +56,11 @@ std::pair<void *, std::size_t> memory_map(const MemoryMappable &mappable,
                      mappable.native_handle(), offset);
 #endif
   if (ret == MAP_FAILED)
-    throw_system_error(__func__);
+  {
+    error = {errno, system_category()};
+    return {};
+  }
+  error = {};
   return {ret, size};
 }
 
@@ -66,9 +70,9 @@ struct posix_memory_map_impl
   std::pair<void *, std::size_t>
   operator()(const MemoryMappable &mappable, access_mode mode, offset_t offset,
              std::size_t size, const void *address,
-             posix_memory_map_options options) const
+             posix_memory_map_options options, error_code &error) const
   {
-    return memory_map(mappable, mode, offset, size, address, options);
+    return memory_map(mappable, mode, offset, size, address, options, error);
   }
 
   inline static void unmap(const void *addr, std::size_t length) noexcept

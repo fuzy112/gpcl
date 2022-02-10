@@ -23,14 +23,16 @@ namespace gpcl {
 class shared_memory_object : noncopyable
 {
 public:
-  posix_shared_memory(open_only_t, czstring<> name, access_mode access,
-                      mode_t mode = default_mode);
+  class factory;
 
-  posix_shared_memory(open_or_create_t, czstring<> name, access_mode access,
-                      mode_t mode = default_mode);
+  shared_memory_object(open_only_t, czstring<> name, access_mode access,
+                       mode_t mode = default_mode);
 
-  posix_shared_memory(create_only_t, czstring<> name, access_mode access,
-                      mode_t mode = default_mode);
+  shared_memory_object(open_or_create_t, czstring<> name, access_mode access,
+                       mode_t mode = default_mode);
+
+  shared_memory_object(create_only_t, czstring<> name, access_mode access,
+                       mode_t mode = default_mode);
 
   static error_code remove(czstring<> name);
 
@@ -40,11 +42,16 @@ public:
 
   std::size_t size() const;
 
-  void truncate(std::size_t size) const;
+  void truncate(std::size_t size);
+
+  void truncate(std::size_t size, error_code &error);
 };
 #elif defined GPCL_POSIX
 using shared_memory_object = detail::posix_shared_memory;
 #endif
+
+inline constexpr shared_memory_object::factory make_shared_memory_object = {};
+
 } // namespace gpcl
 
 #endif // GPCL_SHARED_MEMORY_OBJECT_HPP

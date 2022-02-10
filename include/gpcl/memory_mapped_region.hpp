@@ -11,7 +11,9 @@
 #ifndef GPCL_MEMORY_MAPPED_REGION_HPP
 #define GPCL_MEMORY_MAPPED_REGION_HPP
 
+#include <gpcl/assert.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/error.hpp>
 #include <gpcl/unique_ptr.hpp>
 
 #if defined GPCL_POSIX
@@ -32,7 +34,7 @@ using offset_t = long;
 
 class memory_mapped_region
 {
-  std::pair<void *, std::size_t> p_;
+  std::pair<void *, std::size_t> p_{nullptr, 0};
 
 public:
   /// Create a mapped region for a mappable object.
@@ -42,21 +44,50 @@ public:
                        offset_t offset = 0, std::size_t size = 0,
                        const void *address = 0,
                        memory_map_options options = memory_map_options{})
-      : p_(memory_map(mappable, mode, offset, size, address, options))
   {
+    map(mappable, mode, offset, size, address, options);
   }
 
   memory_mapped_region() noexcept = default;
 
   memory_mapped_region(memory_mapped_region &&other) noexcept { swap(other); }
 
-  ~memory_mapped_region() { memory_map.unmap(p_); }
+  ~memory_mapped_region() { unmap(); }
 
   void swap(memory_mapped_region &other) noexcept
   {
     using gpcl::swap;
     swap(p_, other.p_);
   }
+
+  template <typename MemoryMappable>
+  void map(const MemoryMappable &mappable, access_mode mode,
+           offset_t offset = 0, std::size_t size = 0, const void *address = 0,
+           memory_map_options options = memory_map_options{})
+  {
+    error_code ec;
+    map(mappable, mode, offset, size, address, options, ec);
+    if (ec)
+      GPCL_THROW(system_error(ec, __func__));
+  }
+
+  template <typename MemoryMappable>
+  void map(const MemoryMappable &mappable, access_mode mode, offset_t offset,
+           std::size_t size, const void *address, memory_map_options options,
+           error_code &error)
+  {
+    GPCL_ASSERT(!is_mapped());
+    p_ = memory_map(mappable, mode, offset, size, address, options, error);
+  }
+
+  void unmap() noexcept
+  {
+    if (is_mapped())
+      memory_map.unmap(p_);
+    p_ = {};
+  }
+
+  bool is_mapped() const noexcept { return !!address(); }
 
   void *address() const noexcept { return p_.first; }
 

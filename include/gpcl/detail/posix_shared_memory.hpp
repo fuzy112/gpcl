@@ -15,51 +15,39 @@
 #include <gpcl/creation_tag.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
-#include <gpcl/noncopyable.hpp>
 #include <gpcl/unique_resource.hpp>
 #include <gpcl/zstring.hpp>
 
 #include <fcntl.h>
+#include <limits.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <limits.h>
 
 namespace gpcl::detail {
 
-class posix_shared_memory : noncopyable
+class posix_shared_memory;
+
+class posix_shared_memory
 {
 public:
-  posix_shared_memory(open_only_t, czstring<> name, access_mode access,
-                      mode_t mode = S_IRUSR | S_IWUSR)
-  {
-    if (access == access_mode::read_write)
-      open(name, O_RDWR, mode);
-    else
-      open(name, O_RDONLY, mode);
-  }
+  struct factory;
 
-  posix_shared_memory(open_or_create_t, czstring<> name, access_mode access,
-                      mode_t mode = S_IRUSR | S_IWUSR)
-  {
-    if (access == access_mode::read_write)
-      open(name, O_CREAT | O_RDWR, mode);
-    else
-      open(name, O_CREAT | O_RDONLY, mode);
-  }
+  posix_shared_memory() noexcept = default;
 
-  posix_shared_memory(create_only_t, czstring<> name, access_mode access,
+  template <typename CreationTag>
+  posix_shared_memory(CreationTag tag, czstring<> name, access_mode access,
                       mode_t mode = S_IRUSR | S_IWUSR)
   {
-    if (access == access_mode::read_write)
-      open(name, O_CREAT | O_EXCL | O_RDWR, mode);
-    else
-      open(name, O_CREAT | O_EXCL | O_RDONLY, mode);
+    error_code error;
+    open(tag, name, access, mode, error);
+    if (error)
+      GPCL_THROW(system_error(error, __func__));
   }
 
   static error_code remove(czstring<> name)
   {
-    return {::shm_unlink(name), generic_category()};
+    return {::shm_unlink(name), system_category()};
   }
 
   using native_handle_type = int;
@@ -74,14 +62,50 @@ public:
     return s.st_size;
   }
 
-  void truncate(std::size_t size) const
+  void truncate(std::size_t size, error_code &error)
   {
     if (::ftruncate(fd_.get(), size) == -1)
-      throw_system_error(__func__);
+      error = {errno, system_category()};
+    else
+      error = {};
+  }
+
+  void truncate(std::size_t size)
+  {
+    error_code error;
+    truncate(size, error);
+    if (error)
+      GPCL_THROW(system_error{error, __func__});
   }
 
 private:
-  void open(czstring<> name, int oflag, ::mode_t mode)
+  void open(open_only_t, czstring<> name, access_mode access, error_code &error)
+  {
+    if (access == access_mode::read_write)
+      open(name, O_RDWR, 0, error);
+    else
+      open(name, O_RDONLY, 0, error);
+  }
+
+  void open(open_or_create_t, czstring<> name, access_mode access, mode_t mode,
+            error_code &error)
+  {
+    if (access == access_mode::read_write)
+      open(name, O_CREAT | O_RDWR, mode, error);
+    else
+      open(name, O_CREAT | O_RDONLY, mode, error);
+  }
+
+  void open(create_only_t, czstring<> name, access_mode access, mode_t mode,
+            error_code &error)
+  {
+    if (access == access_mode::read_write)
+      open(name, O_CREAT | O_EXCL | O_RDWR, mode, error);
+    else
+      open(name, O_CREAT | O_EXCL | O_RDONLY, mode, error);
+  }
+
+  void open(czstring<> name, int oflag, ::mode_t mode, error_code &error)
   {
     GPCL_ASSERT(name);
     GPCL_ASSERT(::strlen(name) < NAME_MAX);
@@ -90,7 +114,9 @@ private:
     fd_ = make_unique_resource_checked<int, fd_deleter>(
         ::shm_open(name, oflag, mode), -1, fd_deleter{});
     if (!fd_)
-      throw_system_error(__func__);
+      error = {errno, system_category()};
+    else
+      error = {};
   }
 
   struct fd_deleter
@@ -99,6 +125,26 @@ private:
   };
 
   unique_resource<int, fd_deleter> fd_;
+};
+
+struct posix_shared_memory::factory
+{
+  template <typename CreationTag>
+  posix_shared_memory operator()(CreationTag t, czstring<> name,
+                                 access_mode access, mode_t mode,
+                                 error_code &error) const
+  {
+    posix_shared_memory memory;
+    memory.open(t, name, access, mode, error);
+    return memory;
+  }
+
+  template <typename CreationTag>
+  posix_shared_memory operator()(CreationTag t, czstring<> name,
+                                 access_mode access, error_code &error) const
+  {
+    return make_posix_shared_memory(t, name, access, S_IRUSR | S_IWUSR, error);
+  }
 };
 
 } // namespace gpcl::detail
