@@ -11,17 +11,14 @@
 #ifndef GPCL_DETAIL_STRERROR_HPP
 #define GPCL_DETAIL_STRERROR_HPP
 
-
 #include <gpcl/detail/config.hpp>
-
-#include <string>
 
 namespace gpcl::detail {
 
-GPCL_DECL
-void strerror_impl(std::string &str, int errnum);
+template <typename StrType>
+void strerror_impl(StrType &str, int errnum);
 } // namespace gpcl::detail
-  
 
+#include <gpcl/detail/impl/strerror.hpp>
 
 #endif // GPCL_DETAIL_STRERROR_HPP

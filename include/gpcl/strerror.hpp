@@ -11,7 +11,6 @@
 #ifndef GPCL_STRERROR_HPP
 #define GPCL_STRERROR_HPP
 
-
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/strerror.hpp>
 
@@ -23,11 +22,13 @@ inline std::string strerror(int errnum)
   return str;
 }
 
-inline void strerror(std::string &str, int errnum)
+template <typename Allocator>
+inline void
+strerror(std::basic_string<char, std::char_traits<char>, Allocator> &str,
+         int errnum)
 {
   detail::strerror_impl(str, errnum);
 }
 } // namespace gpcl
-
 
 #endif // GPCL_STRERROR_HPP
