@@ -29,7 +29,7 @@ inline constexpr T &&move(T &obj) noexcept
 }
 
 template <typename T, typename U>
-inline constexpr T exchange(T &obj, U &&new_value)
+inline constexpr T exchange(T &obj, U &&new_value) noexcept(noexcept(obj = detail::forward<U>(new_value)))
 {
   T old_value = detail::move(obj);
   obj = detail::forward<U>(new_value);
