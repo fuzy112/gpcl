@@ -1,9 +1,11 @@
 #ifndef GPCL_ARRAY_HPP
 #define GPCL_ARRAY_HPP
 
+#include <gpcl/assert.hpp>
 #include <gpcl/default_allocator.hpp>
 #include <gpcl/detail/compressed_pair.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/error.hpp>
 #include <gpcl/noncopyable.hpp>
 #include <gpcl/propagate_const.hpp>
 #include <gpcl/scope_fail.hpp>
@@ -32,26 +34,32 @@ public:
   {
     auto *const s = std::allocator_traits<Allocator>::allocate(p_.first(), n_);
     std::size_t i = 0;
-    scope_fail cleanup{[&] {
+    GPCL_TRY
+    {
+      while (i != n)
+      {
+        std::allocator_traits<Allocator>::destroy(p_.first(), &s[i]);
+        ++i;
+      }
+      p_.second() = s;
+    }
+    GPCL_CATCH(...)
+    {
       while (i > 0)
       {
         std::allocator_traits<Allocator>::destroy(p_.first(), &s[i - 1]);
         --i;
       }
       std::allocator_traits<Allocator>::deallocate(p_.first(), s, n_);
-    }};
-    while (i != n)
-    {
-      std::allocator_traits<Allocator>::destroy(p_.first(), &s[i]);
-      ++i;
+      GPCL_RETHROW;
     }
-    p_.second() = s;
+    GPCL_CATCH_END
   }
 
   ~array()
   {
     std::size_t i = n_;
-    auto *s = p_.second();
+    T *s = p_.second();
     while (i > 0)
     {
       std::allocator_traits<Allocator>::destroy(p_.first(), &s[i - 1]);

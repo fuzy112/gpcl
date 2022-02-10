@@ -39,12 +39,12 @@ public:
 
   inline constexpr duration(u64 secs, u32 nanos) : secs_(secs), nanos_(nanos)
   {
-    GPCL_ASSERT_CONST(nanos <= 999'999'999);
+    GPCL_ASSERT(nanos <= 999'999'999);
   }
 
   inline static constexpr duration from_timespec(const timespec *ts)
   {
-    GPCL_ASSERT_CONST(ts);
+    GPCL_ASSERT(ts);
     return duration(ts->tv_sec, ts->tv_nsec);
   }
 
@@ -70,53 +70,53 @@ public:
 
   inline constexpr bool is_zero() const
   {
-    GPCL_ASSERT_CONST(nanos_ < 1'000'000'000);
+    GPCL_ASSERT(nanos_ < 1'000'000'000);
     return secs_ == 0 && nanos_ == 0;
   }
 
   inline constexpr u64 as_secs() const
   {
-    GPCL_ASSERT_CONST(nanos_ < 1'000'000'000);
+    GPCL_ASSERT(nanos_ < 1'000'000'000);
 
     return secs_;
   }
 
   inline constexpr u32 subsec_millis() const
   {
-    GPCL_ASSERT_CONST(nanos_ < 1'000'000'000);
+    GPCL_ASSERT(nanos_ < 1'000'000'000);
 
     return nanos_ / 1'000;
   }
 
   inline constexpr u32 subsec_micros() const
   {
-    GPCL_ASSERT_CONST(nanos_ < 1'000'000'000);
+    GPCL_ASSERT(nanos_ < 1'000'000'000);
 
     return nanos_ / 1'000'000;
   }
 
   inline constexpr u32 subsec_nanos() const
   {
-    GPCL_ASSERT_CONST(nanos_ < 1'000'000'000);
+    GPCL_ASSERT(nanos_ < 1'000'000'000);
 
     return nanos_;
   }
 
   inline constexpr u64 as_millis() const
   {
-    GPCL_ASSERT_CONST(nanos_ < 1'000'000'000);
+    GPCL_ASSERT(nanos_ < 1'000'000'000);
     return u64(secs_) * 1000 + nanos_ / 1'000'000;
   }
 
   inline constexpr u64 as_micros() const
   {
-    GPCL_ASSERT_CONST(nanos_ < 1'000'000'000);
+    GPCL_ASSERT(nanos_ < 1'000'000'000);
     return u64(secs_) * 1'000'000 + nanos_ / 1'000;
   }
 
   inline constexpr u64 as_nanos() const
   {
-    GPCL_ASSERT_CONST(nanos_ < 1'000'000'000);
+    GPCL_ASSERT(nanos_ < 1'000'000'000);
     return u64(secs_) * 1'000'000'000 + nanos_;
   }
 

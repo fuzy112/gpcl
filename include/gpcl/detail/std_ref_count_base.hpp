@@ -29,7 +29,7 @@ public:
   // Increment use count.
   void get() noexcept
   {
-    GPCL_ASSERT_CONST(use_count() > 0);
+    GPCL_ASSERT(use_count() > 0);
 
     use_count_.fetch_add(1, std::memory_order_relaxed);
   }
@@ -40,7 +40,7 @@ public:
   // destroyed.
   void put() noexcept
   {
-    GPCL_ASSERT_CONST(use_count() > 0);
+    GPCL_ASSERT(use_count() > 0);
 
     if (use_count_.fetch_sub(1, std::memory_order_acquire) == 1)
     {
@@ -62,7 +62,7 @@ public:
   // Increment weak count.
   void weak_get() noexcept
   {
-    GPCL_ASSERT_CONST(weak_count() > 0);
+    GPCL_ASSERT(weak_count() > 0);
 
     weak_count_.fetch_add(1, std::memory_order_relaxed);
   }
@@ -71,10 +71,10 @@ public:
   // If weak count reaches zero, the control block will be destroyed.
   void weak_put() noexcept
   {
-    GPCL_ASSERT_CONST(weak_count() > 0);
+    GPCL_ASSERT(weak_count() > 0);
     if (weak_count_.fetch_sub(1, std::memory_order_acquire) == 1)
     {
-      GPCL_ASSERT_CONST(use_count() == 0);
+      GPCL_ASSERT(use_count() == 0);
       operate(delete_control_block);
     }
   }
@@ -88,7 +88,7 @@ public:
   // Try increment the use count, fail if use count equals 0.
   [[nodiscard]] bool lock() noexcept
   {
-    GPCL_ASSERT_CONST(weak_count() > 0);
+    GPCL_ASSERT(weak_count() > 0);
     long old_val = use_count();
 
     while (old_val > 0)
@@ -112,7 +112,7 @@ protected:
   // Constructor.
   explicit std_ref_count_base(operation_func_t op_func) : op_func_(op_func)
   {
-    GPCL_ASSERT_CONST(op_func_);
+    GPCL_ASSERT(op_func_);
   }
 
 private:

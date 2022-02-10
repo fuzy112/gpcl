@@ -13,12 +13,12 @@
 
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/detail/error.hpp>
 #include <gpcl/detail/ref_count_base.hpp>
 #include <gpcl/detail/type_traits.hpp>
 #include <gpcl/detail/utility.hpp>
-#include <gpcl/scope_fail.hpp>
-#include <gpcl/unique_ptr.hpp>
 #include <gpcl/typeid.hpp>
+#include <gpcl/unique_ptr.hpp>
 
 #include <memory>
 #include <utility>
@@ -37,8 +37,8 @@ private:
   /// destroy the ref_count itself then deallocate the memory.
   inline void delete_this() noexcept
   {
-    GPCL_ASSERT_CONST(this->use_count() == 0);
-    GPCL_ASSERT_CONST(this->weak_count() == 0);
+    GPCL_ASSERT(this->use_count() == 0);
+    GPCL_ASSERT(this->weak_count() == 0);
     rebind_allocator alloc{*this};
     auto p = static_cast<Derived *>(this);
     p->~Derived();
@@ -95,12 +95,19 @@ public:
     rebind_allocator alloc{allocator};
 
     auto *addr = rebind_allocator_traits::allocate(alloc, 1);
-    scope_fail dealloc_on_failure{
-        [&] { rebind_allocator_traits::deallocate(alloc, addr, 1); }};
 
-    auto r = ::new (addr)
-        Derived(&do_operate, allocator, std::forward<Args>(args)...);
-    return r;
+    GPCL_TRY
+    {
+      auto r = ::new (addr)
+          Derived(&do_operate, allocator, std::forward<Args>(args)...);
+      return r;
+    }
+    GPCL_CATCH(...)
+    {
+      rebind_allocator_traits::deallocate(alloc, addr, 1);
+      GPCL_RETHROW;
+    }
+    GPCL_CATCH_END
   }
 
 private:
@@ -129,7 +136,7 @@ public:
   /// Delete the managed object.
   inline void delete_managed_object() noexcept
   {
-    GPCL_ASSERT_CONST(base_type::use_count() == 0);
+    GPCL_ASSERT(base_type::use_count() == 0);
     if (p_.first())
     {
       p_.second()(p_.first());
@@ -188,16 +195,13 @@ public:
   /// Delete the managed object.
   inline void delete_managed_object() noexcept
   {
-    GPCL_ASSERT_CONST(base_type::use_count() == 0);
+    GPCL_ASSERT(base_type::use_count() == 0);
     p_.reset();
   }
 
   inline std::nullptr_t get_deleter() noexcept { return nullptr; }
 
-  static inline type_info *get_deleter_type_info() noexcept
-  {
-    return nullptr;
-  }
+  static inline type_info *get_deleter_type_info() noexcept { return nullptr; }
 
 public:
   template <typename... Args>

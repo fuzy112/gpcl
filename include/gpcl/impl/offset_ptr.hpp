@@ -79,7 +79,7 @@ template <typename T>
 constexpr typename offset_ptr<T>::difference_type
 offset_ptr<T>::offset_to_diff(offset_ptr::offset_type offset)
 {
-  GPCL_ASSERT_CONST(offset % sizeof(T) == 0);
+  GPCL_ASSERT(offset % sizeof(T) == 0);
   return static_cast<difference_type>(offset) / sizeof(T);
 }
 

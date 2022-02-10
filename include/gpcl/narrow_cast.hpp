@@ -38,7 +38,7 @@ constexpr To narrow_cast(From F) noexcept
                 "Both From and To must be arithmetic type");
 
   To T = static_cast<To>(F);
-  GPCL_ASSERT_CONST(static_cast<From>(T) == F);
+  GPCL_ASSERT(static_cast<From>(T) == F);
 
   return T;
 }

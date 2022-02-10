@@ -64,7 +64,7 @@ public:
   constexpr static_span_base(T *p, std::size_t s) /* noexcept */
       : p_(p)
   {
-    GPCL_ASSERT_CONST(s == extent);
+    GPCL_ASSERT(s == extent);
     (void)s;
   }
 
@@ -204,7 +204,7 @@ public:
 
   [[nodiscard]] inline constexpr span<T> first(size_type count) const
   {
-    GPCL_ASSERT_CONST(count <= size());
+    GPCL_ASSERT(count <= size());
     return span(data(), count);
   }
 
@@ -217,7 +217,7 @@ public:
 
   [[nodiscard]] inline constexpr span<T> last(size_type count) const
   {
-    GPCL_ASSERT_CONST(count <= size());
+    GPCL_ASSERT(count <= size());
     return span(end() - count, end());
   }
 
@@ -231,14 +231,14 @@ public:
   [[nodiscard]] inline constexpr span<T>
   subspan(size_type offset, size_type count = dynamic_extent) const
   {
-    GPCL_ASSERT_CONST(offset <= size());
+    GPCL_ASSERT(offset <= size());
 
     if (count == dynamic_extent)
     {
       return span(begin() + offset, end());
     }
 
-    GPCL_ASSERT_CONST(offset + count <= size());
+    GPCL_ASSERT(offset + count <= size());
     return span(begin() + offset, begin() + offset + count);
   }
 

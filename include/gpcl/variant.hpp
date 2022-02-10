@@ -708,9 +708,9 @@ class variant : public detail::variant_base<Types...>
 
   constexpr void set_index(std::size_t i) noexcept
   {
-    GPCL_ASSERT_CONST(base_type::index_ == -1);
+    GPCL_ASSERT(base_type::index_ == -1);
     base_type::index_ = narrow_cast<detail::variant_index_type<Types...>>(i);
-    GPCL_ASSERT_CONST(base_type::index_ > -1);
+    GPCL_ASSERT(base_type::index_ > -1);
   }
 
 public:
@@ -802,7 +802,7 @@ public:
   /// @{
   constexpr std::size_t index() const noexcept
   {
-    GPCL_ASSERT_CONST(base_type::index_ > -1);
+    GPCL_ASSERT(base_type::index_ > -1);
     if (base_type::index_ == -1)
       return variant_npos;
     return base_type::index_;
@@ -1028,7 +1028,7 @@ struct visit_impl
 
     return (*this)(
         [&](auto &&... values) -> decltype(auto) {
-          GPCL_ASSERT_CONST(!variant1.valueless_by_exception());
+          GPCL_ASSERT(!variant1.valueless_by_exception());
           return apply_visitor(
               [&](auto &&value1) -> decltype(auto) {
                 return std::forward<Visitor>(visitor)(
@@ -1046,7 +1046,7 @@ private:
                                                      Variant &&variant_,
                                                      std::index_sequence<I>)
   {
-    GPCL_ASSERT_CONST(variant_.index() == I);
+    GPCL_ASSERT(variant_.index() == I);
     return std::forward<Callable>(callable)(
         get<I>(std::forward<Variant>(variant_)));
 

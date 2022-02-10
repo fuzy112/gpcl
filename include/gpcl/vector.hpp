@@ -233,7 +233,7 @@ private:
   static void realloc(pointer &data, size_type count, size_type &cap,
                       size_type new_cap, allocator_type &allocator)
   {
-    GPCL_ASSERT_CONST((!data && !count) || (data && cap));
+    GPCL_ASSERT((!data && !count) || (data && cap));
 
     if constexpr (std::is_trivially_copyable_v<value_type>)
     {

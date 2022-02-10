@@ -457,7 +457,7 @@ GPCL_DECL block_header_t* offset_to_block(const void* ptr, size_t size)
 /* Return location of previous block. */
 GPCL_DECL block_header_t* block_prev(const block_header_t* block)
 {
-	GPCL_ASSERT_CONST(block_is_prev_free(block) && "previous block must be free");
+	GPCL_ASSERT(block_is_prev_free(block) && "previous block must be free");
 	return block->prev_phys_block;
 }
 
@@ -466,7 +466,7 @@ GPCL_DECL block_header_t* block_next(const block_header_t* block)
 {
 	block_header_t* next = offset_to_block(block_to_ptr(block),
 		block_size(block) - block_header_overhead);
-	GPCL_ASSERT_CONST(!block_is_last(block));
+	GPCL_ASSERT(!block_is_last(block));
 	return next;
 }
 
@@ -495,13 +495,13 @@ GPCL_DECL void block_mark_as_used(block_header_t* block)
 
 GPCL_DECL size_t align_up(size_t x, size_t align)
 {
-	GPCL_ASSERT_CONST(0 == (align & (align - 1)) && "must align to a power of two");
+	GPCL_ASSERT(0 == (align & (align - 1)) && "must align to a power of two");
 	return (x + (align - 1)) & ~(align - 1);
 }
 
 GPCL_DECL size_t align_down(size_t x, size_t align)
 {
-	GPCL_ASSERT_CONST(0 == (align & (align - 1)) && "must align to a power of two");
+	GPCL_ASSERT(0 == (align & (align - 1)) && "must align to a power of two");
 	return x - (x & (align - 1));
 }
 
@@ -509,7 +509,7 @@ GPCL_DECL void* align_ptr(const void* ptr, size_t align)
 {
 	const tlsfptr_t aligned =
 		(GPCL_DETAIL_TLSF_CAST(tlsfptr_t, ptr) + (align - 1)) & ~(align - 1);
-	GPCL_ASSERT_CONST(0 == (align & (align - 1)) && "must align to a power of two");
+	GPCL_ASSERT(0 == (align & (align - 1)) && "must align to a power of two");
 	return GPCL_DETAIL_TLSF_CAST(void*, aligned);
 }
 
@@ -592,7 +592,7 @@ GPCL_DECL block_header_t* search_suitable_block(tlsf_control_t* control, int* fl
 		*fli = fl;
 		sl_map = control->sl_bitmap[fl];
 	}
-	GPCL_ASSERT_CONST(sl_map && "internal error - second level bitmap is null");
+	GPCL_ASSERT(sl_map && "internal error - second level bitmap is null");
 	sl = tlsf_ffs(sl_map);
 	*sli = sl;
 
@@ -605,8 +605,8 @@ GPCL_DECL void remove_free_block(tlsf_control_t* control, block_header_t* block,
 {
 	block_header_t* prev = block->prev_free;
 	block_header_t* next = block->next_free;
-	GPCL_ASSERT_CONST(prev && "prev_free field can not be null");
-	GPCL_ASSERT_CONST(next && "next_free field can not be null");
+	GPCL_ASSERT(prev && "prev_free field can not be null");
+	GPCL_ASSERT(next && "next_free field can not be null");
 	next->prev_free = prev;
 	prev->next_free = next;
 
@@ -633,13 +633,13 @@ GPCL_DECL void remove_free_block(tlsf_control_t* control, block_header_t* block,
 GPCL_DECL void insert_free_block(tlsf_control_t* control, block_header_t* block, int fl, int sl)
 {
 	block_header_t* current = control->blocks[fl][sl];
-	GPCL_ASSERT_CONST(current && "free list cannot have a null entry");
-	GPCL_ASSERT_CONST(block && "cannot insert a null entry into the free list");
+	GPCL_ASSERT(current && "free list cannot have a null entry");
+	GPCL_ASSERT(block && "cannot insert a null entry into the free list");
 	block->next_free = current;
 	block->prev_free = &control->block_null;
 	current->prev_free = block;
 
-	GPCL_ASSERT_CONST(block_to_ptr(block) == align_ptr(block_to_ptr(block), ALIGN_SIZE)
+	GPCL_ASSERT(block_to_ptr(block) == align_ptr(block_to_ptr(block), ALIGN_SIZE)
 		&& "block not aligned properly");
 	/*
 	** Insert the new block at the head of the list, and mark the first-
@@ -680,12 +680,12 @@ GPCL_DECL block_header_t* block_split(block_header_t* block, size_t size)
 
 	const size_t remain_size = block_size(block) - (size + block_header_overhead);
 
-	GPCL_ASSERT_CONST(block_to_ptr(remaining) == align_ptr(block_to_ptr(remaining), ALIGN_SIZE)
+	GPCL_ASSERT(block_to_ptr(remaining) == align_ptr(block_to_ptr(remaining), ALIGN_SIZE)
 		&& "remaining block not aligned properly");
 
-	GPCL_ASSERT_CONST(block_size(block) == remain_size + size + block_header_overhead);
+	GPCL_ASSERT(block_size(block) == remain_size + size + block_header_overhead);
 	block_set_size(remaining, remain_size);
-	GPCL_ASSERT_CONST(block_size(remaining) >= block_size_min && "block split with invalid size");
+	GPCL_ASSERT(block_size(remaining) >= block_size_min && "block split with invalid size");
 
 	block_set_size(block, size);
 	block_mark_as_free(remaining);
@@ -696,7 +696,7 @@ GPCL_DECL block_header_t* block_split(block_header_t* block, size_t size)
 /* Absorb a free block's storage into an adjacent previous free block. */
 GPCL_DECL block_header_t* block_absorb(block_header_t* prev, block_header_t* block)
 {
-	GPCL_ASSERT_CONST(!block_is_last(prev) && "previous block can't be last");
+	GPCL_ASSERT(!block_is_last(prev) && "previous block can't be last");
 	/* Note: Leaves flags untouched. */
 	prev->size += block_size(block) + block_header_overhead;
 	block_link_next(prev);
@@ -709,8 +709,8 @@ GPCL_DECL block_header_t* block_merge_prev(tlsf_control_t* control, block_header
 	if (block_is_prev_free(block))
 	{
 		block_header_t* prev = block_prev(block);
-		GPCL_ASSERT_CONST(prev && "prev physical block can't be null");
-		GPCL_ASSERT_CONST(block_is_free(prev) && "prev block is not free though marked as such");
+		GPCL_ASSERT(prev && "prev physical block can't be null");
+		GPCL_ASSERT(block_is_free(prev) && "prev block is not free though marked as such");
 		block_remove(control, prev);
 		block = block_absorb(prev, block);
 	}
@@ -722,11 +722,11 @@ GPCL_DECL block_header_t* block_merge_prev(tlsf_control_t* control, block_header
 GPCL_DECL block_header_t* block_merge_next(tlsf_control_t* control, block_header_t* block)
 {
 	block_header_t* next = block_next(block);
-	GPCL_ASSERT_CONST(next && "next physical block can't be null");
+	GPCL_ASSERT(next && "next physical block can't be null");
 
 	if (block_is_free(next))
 	{
-		GPCL_ASSERT_CONST(!block_is_last(block) && "previous block can't be last");
+		GPCL_ASSERT(!block_is_last(block) && "previous block can't be last");
 		block_remove(control, next);
 		block = block_absorb(block, next);
 	}
@@ -737,7 +737,7 @@ GPCL_DECL block_header_t* block_merge_next(tlsf_control_t* control, block_header
 /* Trim any trailing block space off the end of a block, return to pool. */
 GPCL_DECL void block_trim_free(tlsf_control_t* control, block_header_t* block, size_t size)
 {
-	GPCL_ASSERT_CONST(block_is_free(block) && "block must be free");
+	GPCL_ASSERT(block_is_free(block) && "block must be free");
 	if (block_can_split(block, size))
 	{
 		block_header_t* remaining_block = block_split(block, size);
@@ -750,7 +750,7 @@ GPCL_DECL void block_trim_free(tlsf_control_t* control, block_header_t* block, s
 /* Trim any trailing block space off the end of a used block, return to pool. */
 GPCL_DECL void block_trim_used(tlsf_control_t* control, block_header_t* block, size_t size)
 {
-	GPCL_ASSERT_CONST(!block_is_free(block) && "block must be used");
+	GPCL_ASSERT(!block_is_free(block) && "block must be used");
 	if (block_can_split(block, size))
 	{
 		/* If the next block is free, we must coalesce. */
@@ -801,7 +801,7 @@ GPCL_DECL block_header_t* block_locate_free(tlsf_control_t* control, size_t size
 
 	if (block)
 	{
-		GPCL_ASSERT_CONST(block_size(block) >= size);
+		GPCL_ASSERT(block_size(block) >= size);
 		remove_free_block(control, block, fl, sl);
 	}
 
@@ -813,7 +813,7 @@ GPCL_DECL void* block_prepare_used(tlsf_control_t* control, block_header_t* bloc
 	void* p = 0;
 	if (block)
 	{
-		GPCL_ASSERT_CONST(size && "size must be non-zero");
+		GPCL_ASSERT(size && "size must be non-zero");
 		block_trim_free(control, block, size);
 		block_mark_as_used(block);
 		p = block_to_ptr(block);
@@ -850,7 +850,7 @@ typedef struct integrity_t
 	int status;
 } integrity_t;
 
-#define GPCL_DETAIL_TLSF_INSIST(x) { GPCL_ASSERT_CONST(x); if (!(x)) { status--; } }
+#define GPCL_DETAIL_TLSF_INSIST(x) { GPCL_ASSERT(x); if (!(x)) { status--; } }
 
 GPCL_DECL void integrity_walker(void* ptr, size_t size, int used, void* user)
 {
@@ -1063,9 +1063,9 @@ void tlsf_remove_pool(tlsf_t tlsf, pool_t pool)
 
 	int fl = 0, sl = 0;
 
-	GPCL_ASSERT_CONST(block_is_free(block) && "block should be free");
-	GPCL_ASSERT_CONST(!block_is_free(block_next(block)) && "next block should not be free");
-	GPCL_ASSERT_CONST(block_size(block_next(block)) == 0 && "next block size should be zero");
+	GPCL_ASSERT(block_is_free(block) && "block should be free");
+	GPCL_ASSERT(!block_is_free(block_next(block)) && "next block should not be free");
+	GPCL_ASSERT(block_size(block_next(block)) == 0 && "next block size should be zero");
 
 	mapping_insert(block_size(block), &fl, &sl);
 	remove_free_block(control, block, fl, sl);
@@ -1175,7 +1175,7 @@ void* tlsf_memalign(tlsf_t tlsf, size_t align, size_t size)
 	block_header_t* block = block_locate_free(control, aligned_size);
 
 	/* This can't be a static assert. */
-	GPCL_ASSERT_CONST(sizeof(block_header_t) == block_size_min + block_header_overhead);
+	GPCL_ASSERT(sizeof(block_header_t) == block_size_min + block_header_overhead);
 
 	if (block)
 	{
@@ -1199,7 +1199,7 @@ void* tlsf_memalign(tlsf_t tlsf, size_t align, size_t size)
 
 		if (gap)
 		{
-			GPCL_ASSERT_CONST(gap >= gap_minimum && "gap size too small");
+			GPCL_ASSERT(gap >= gap_minimum && "gap size too small");
 			block = block_trim_free_leading(control, block, gap);
 		}
 	}
@@ -1214,7 +1214,7 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 	{
 		tlsf_control_t* control = GPCL_DETAIL_TLSF_CAST(tlsf_control_t*, tlsf);
 		block_header_t* block = block_from_ptr(ptr);
-		GPCL_ASSERT_CONST(!block_is_free(block) && "block already marked as free");
+		GPCL_ASSERT(!block_is_free(block) && "block already marked as free");
 		block_mark_as_free(block);
 		block = block_merge_prev(control, block);
 		block = block_merge_next(control, block);
@@ -1259,7 +1259,7 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 		const size_t combined = cursize + block_size(next) + block_header_overhead;
 		const size_t adjust = adjust_request_size(size, ALIGN_SIZE);
 
-		GPCL_ASSERT_CONST(!block_is_free(block) && "block already marked as free");
+		GPCL_ASSERT(!block_is_free(block) && "block already marked as free");
 
 		/*
 		** If the next block is used, or when combined with the current

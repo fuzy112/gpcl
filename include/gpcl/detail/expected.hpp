@@ -239,22 +239,22 @@ public:
 
   inline constexpr const E &error() const &
   {
-    GPCL_ASSERT_CONST(!*this);
+    GPCL_ASSERT(!*this);
     return this->err_.value();
   }
   inline constexpr E &error() &
   {
-    GPCL_ASSERT_CONST(!*this);
+    GPCL_ASSERT(!*this);
     return this->err_.value();
   }
   inline constexpr E &&error() &&
   {
-    GPCL_ASSERT_CONST(!*this);
+    GPCL_ASSERT(!*this);
     return detail::move(this->err_.value());
   }
   inline constexpr const E &&error() const &&
   {
-    GPCL_ASSERT_CONST(!*this);
+    GPCL_ASSERT(!*this);
     return detail::move(this->err_.value());
   }
 };
@@ -280,7 +280,7 @@ public:
 
   inline constexpr const T *operator->() const
   {
-    GPCL_ASSERT_CONST(this->ok_);
+    GPCL_ASSERT(this->ok_);
     return &this->val_;
   }
 
@@ -298,19 +298,19 @@ public:
 
   inline constexpr const T &operator*() const &
   {
-    GPCL_ASSERT_CONST(this->ok_);
+    GPCL_ASSERT(this->ok_);
     return this->val_;
   }
 
   inline constexpr T &&operator*() &&
   {
-    GPCL_ASSERT_CONST(this->ok_);
+    GPCL_ASSERT(this->ok_);
     return detail::move(this->val_);
   }
 
   inline constexpr const T &&operator*() const &&
   {
-    GPCL_ASSERT_CONST(this->ok_);
+    GPCL_ASSERT(this->ok_);
     return detail::move(this->val_);
   }
 

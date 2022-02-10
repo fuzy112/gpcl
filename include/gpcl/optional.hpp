@@ -435,37 +435,37 @@ public:
 
   constexpr const T *operator->() const
   {
-    GPCL_ASSERT_CONST(this->has_val_);
+    GPCL_ASSERT(this->has_val_);
     return &this->val_;
   }
 
   constexpr T *operator->()
   {
-    GPCL_ASSERT_CONST(this->has_val_);
+    GPCL_ASSERT(this->has_val_);
     return &this->val_;
   }
 
   constexpr const T &operator*() const &
   {
-    GPCL_ASSERT_CONST(this->has_val_);
+    GPCL_ASSERT(this->has_val_);
     return this->val_;
   }
 
   constexpr T &operator*() &
   {
-    GPCL_ASSERT_CONST(this->has_val_);
+    GPCL_ASSERT(this->has_val_);
     return this->val_;
   }
 
   constexpr T &&operator*() &&
   {
-    GPCL_ASSERT_CONST(this->has_val_);
+    GPCL_ASSERT(this->has_val_);
     return detail::move(this->val_);
   }
 
   constexpr const T &&operator*() const &&
   {
-    GPCL_ASSERT_CONST(this->has_val_);
+    GPCL_ASSERT(this->has_val_);
     return detail::move(this->val_);
   }
 

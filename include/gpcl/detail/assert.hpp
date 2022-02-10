@@ -27,22 +27,21 @@
 /// \entity GPCL_ASSERT
 /// General purpose assertion
 #define GPCL_ASSERT(expr)                                                      \
-  do                                                                           \
-  {                                                                            \
-    if (!!(expr))                                                              \
-      break;                                                                   \
-    GPCL_ASSERTION_FAILURE_HANDLER(#expr, __FILE__, __LINE__, __func__);       \
-    std::abort();                                                              \
-  } while (false)
+  (static_cast<bool>(expr) ? (void)0                                           \
+                           : (GPCL_ASSERTION_FAILURE_HANDLER(                  \
+                                 #expr, __FILE__, __LINE__, __func__)))
 
-#define GPCL_ASSERT_CONST assert
+#define GPCL_ASSERT_MSG(expr, msg)                                             \
+  (static_cast<bool>(expr) ? (void)0                                           \
+                           : (GPCL_ASSERTION_FAILURE_HANDLER(                  \
+                                 #expr, __FILE__, __LINE__, __func__)))
 
 /// Assertion used to verify post-conditions
 #define GPCL_VERIFY(...)                                                       \
   do                                                                           \
   {                                                                            \
     auto _ = static_cast<bool>(__VA_ARGS__);                                   \
-    GPCL_ASSERT_CONST(_ &&#__VA_ARGS__);                                       \
+    GPCL_ASSERT(_ &&#__VA_ARGS__);                                             \
     (void)_;                                                                   \
   } while (false)
 

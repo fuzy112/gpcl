@@ -397,7 +397,7 @@ public:
   template <typename U = T>
   std::enable_if_t<!std::is_void_v<U>, element_type> &operator*() const noexcept
   {
-    GPCL_ASSERT_CONST(get());
+    GPCL_ASSERT(get());
     return *get();
   }
 
@@ -409,7 +409,7 @@ public:
    */
   element_type *operator->() const noexcept
   {
-    GPCL_ASSERT_CONST(get());
+    GPCL_ASSERT(get());
     return get();
   }
 

@@ -45,7 +45,7 @@ public:
 
   constexpr reference operator*() const noexcept
   {
-    GPCL_ASSERT_CONST(this->data());
+    GPCL_ASSERT(this->data());
     return static_cast<Ref>(*this->data());
   }
 
