@@ -11,10 +11,10 @@
 #ifndef GPCL_DETAIL_IOVEC_HPP
 #define GPCL_DETAIL_IOVEC_HPP
 
+#include <gpcl/array.hpp>
 #include <gpcl/buffer_sequence.hpp>
 #include <gpcl/default_allocator.hpp>
 #include <gpcl/detail/config.hpp>
-#include <gpcl/vector.hpp>
 
 #include <cstdlib>
 #include <sys/uio.h>
@@ -42,22 +42,22 @@ struct native_buffer_sequence
 {
   explicit native_buffer_sequence(const BufferSequence &bs,
                                   const Allocator &a = Allocator())
-      : iov(a)
+      : iov(std::distance(buffer_sequence_begin(bs), buffer_sequence_end(bs)),
+            a)
   {
-    auto iter = buffer_sequence_begin(bs);
-    const auto end = buffer_sequence_end(bs);
-    iov.reserve(std::distance(iter, end));
-    for (; iter != end; ++iter)
+    auto io = iov.begin();
+    for (auto iter = buffer_sequence_begin(bs), end = buffer_sequence_end(bs);
+         iter != end; ++iter)
     {
-      struct iovec io;
-      io.iov_base = const_cast<void *>(static_cast<void *>(iter->data()));
-      io.iov_len = iter->size();
-      iov.emplace_back(io);
+      io->iov_base =
+          const_cast<void *>(static_cast<const void *>(iter->data()));
+      io->iov_len = iter->size();
+      ++io;
     }
   }
 
-  gpcl::vector<struct ::iovec, typename std::allocator_traits<Allocator>::
-                                   template rebind_alloc<struct ::iovec>>
+  gpcl::array<struct ::iovec, typename std::allocator_traits<Allocator>::
+                                  template rebind_alloc<struct ::iovec>>
       iov;
 };
 
