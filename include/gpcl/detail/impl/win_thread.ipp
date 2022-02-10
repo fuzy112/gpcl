@@ -107,6 +107,13 @@ auto win_thread::this_thread_id() -> win_thread_id
   return win_thread_id{value};
 }
 
+auto win_thread::hardware_concurrency() -> unsigned int
+{
+  SYSTEM_INFO info = {};
+  GetSystemInfo(&info);
+  return info.dwNumberOfProcessors;
+}
+
 } // namespace detail
 } // namespace gpcl
 

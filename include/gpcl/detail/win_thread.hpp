@@ -118,6 +118,8 @@ public:
 
   static GPCL_DECL win_thread_id this_thread_id();
 
+  static GPCL_DECL unsigned int hardware_concurrency();
+
 private:
   class func_base
   {

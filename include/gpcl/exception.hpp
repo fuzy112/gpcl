@@ -148,7 +148,8 @@ template <
             std::is_base_of<exception, typename std::decay<E>::type>,
             is_error_info<typename std::decay<ErrorInfos>::type>...>::value,
         int>::type>
-auto operator<<(E &&e, const std::tuple<ErrorInfos...> &error_infos) noexcept
+auto operator<<(const E &e,
+                const std::tuple<ErrorInfos...> &error_infos) noexcept
 {
   return detail::exception_with_error_info<E, ErrorInfos...>(e, error_infos);
 }

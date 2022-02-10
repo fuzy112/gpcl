@@ -21,7 +21,7 @@ template <typename F>
 class scope_fail
 {
 public:
-  static_assert(std::is_destructible_v<F> || std::is_lvalue_reference_v<F>);
+  static_assert(std::is_destructible_v<F> || std::is_lvalue_reference_v<F>, "");
 
 private:
   F function_;
@@ -71,8 +71,10 @@ public:
   void release() noexcept { active_ = false; }
 };
 
+#if __cplusplus >= 201703
 template <typename F>
 scope_fail(F) -> scope_fail<F>;
+#endif
 
 } // namespace gpcl
 

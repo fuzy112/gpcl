@@ -23,8 +23,6 @@ namespace gpcl {
 class shared_memory_object : noncopyable
 {
 public:
-  class factory;
-
   shared_memory_object(open_only_t, czstring<> name, access_mode access,
                        mode_t mode = default_mode);
 
@@ -49,8 +47,6 @@ public:
 #elif defined GPCL_POSIX
 using shared_memory_object = detail::posix_shared_memory;
 #endif
-
-inline constexpr shared_memory_object::factory make_shared_memory_object = {};
 
 } // namespace gpcl
 

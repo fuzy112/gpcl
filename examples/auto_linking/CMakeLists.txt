@@ -1,5 +1,8 @@
 add_executable(auto_linking main.cpp)
-target_include_directories(auto_linking PRIVATE ${GPCL_SOURCE_DIR})
+target_include_directories(auto_linking PRIVATE ${GPCL_SOURCE_DIR}/include)
 target_compile_definitions(auto_linking PRIVATE GPCL_SEPARATE_COMPILATION=1)
 target_link_directories(auto_linking PRIVATE ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+target_compile_features(auto_linking PRIVATE cxx_std_17)
+
+# ensure this is built after gpcl
 add_dependencies(auto_linking gpcl::gpcl)

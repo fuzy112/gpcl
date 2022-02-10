@@ -95,7 +95,7 @@ public:
   /// \returns A pointer to the allocated storage.
   [[nodiscard]] T *allocate(std::size_t n)
   {
-    if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
+    if (n > (std::numeric_limits<std::size_t>::max)() / sizeof(T))
       GPCL_THROW(std::bad_array_new_length());
 
     return static_cast<T *>(resource()->allocate(n * sizeof(T), alignof(T)));
