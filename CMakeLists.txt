@@ -12,7 +12,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(GPCL CXX)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(GPCL_CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${GPCL_CMAKE_MODULE_PATH}")
 
 include(GNUInstallDirs)
 include(CheckIPOSupported)
@@ -124,7 +125,10 @@ set_target_properties(
   gpcl
   PROPERTIES SOVERSION 600
              VERSION 0.6.0
-             DEFINE_SYMBOL GPCL_SOURCE)
+             DEFINE_SYMBOL GPCL_SOURCE
+             LIBRARY_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/lib"
+             RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin"
+             ARCHIVE_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/lib")
 
 FetchContent_Declare(
   cppreference
@@ -177,12 +181,22 @@ if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
 
-configure_package_config_file(
-  gpcl-config.cmake.in gpcl-config.cmake
-  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gpcl"
-  PATH_VARS CMAKE_INSTALL_LIBDIR)
+configure_file(
+  cmake/set_module_path.cmake.in
+  "${GPCL_BINARY_DIR}/lib/cmake/gpcl/set_module_path.cmake")
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/gpcl-config.cmake"
+export(
+  TARGETS gpcl
+  NAMESPACE gpcl::
+  FILE "${GPCL_BINARY_DIR}/lib/cmake/gpcl/gpcl-targets.cmake")
+
+configure_package_config_file(
+  cmake/gpcl-config.cmake.in
+  "${GPCL_BINARY_DIR}/lib/cmake/gpcl/gpcl-config.cmake"
+  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gpcl"
+  PATH_VARS CMAKE_INSTALL_LIBDIR GPCL_CMAKE_MODULE_PATH)
+
+install(FILES "${GPCL_BINARY_DIR}/lib/cmake/gpcl/gpcl-config.cmake"
               "cmake/FindBFD.cmake" "cmake/FindIberty.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
 

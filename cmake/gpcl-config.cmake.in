@@ -12,8 +12,13 @@
 
 include(CMakeFindDependencyMacro)
 
-set_and_check(GPCL_DIR "@PACKAGE_CMAKE_INSTALL_LIBDIR@/cmake/gpcl")
-list(APPEND CMAKE_MODULE_PATH "${GPCL_DIR}")
+set_and_check(GPCL_CONFIG_DIR "@PACKAGE_CMAKE_INSTALL_LIBDIR@/cmake/gpcl")
+
+if(EXISTS "${GPCL_CONFIG_DIR}/push_module_path.cmake")
+  include("${GPCL_CONFIG_DIR}/push_module_path.cmake")
+else()
+  list(APPEND CMAKE_MODULE_PATH "${GPCL_CONFIG_DIR}")
+endif()
 
 if(@GPCL_BFD@)
 find_dependency(BFD)
@@ -21,12 +26,16 @@ endif()
 if(@GPCL_LLVM@)
 find_dependency(LLVM)
 endif()
+if(@Threads_FOUND@)
 find_dependency(Threads)
+endif()
+if(@Backtrace_FOUND@)
 find_dependency(Backtrace)
+endif()
 if(@GPCL_SQLITE@)
 find_dependency(SQLite3)
 endif()
-include("${GPCL_DIR}/gpcl-targets.cmake")
+include("${GPCL_CONFIG_DIR}/gpcl-targets.cmake")
 
 list(POP_BACK CMAKE_MODULE_PATH)
 
