@@ -262,9 +262,9 @@ std::string bfd_stacktrace_entry_description(const void *address) noexcept
   {
     ss << info.func << "()";
   }
-  else if (info.symbol_address)
+  else if (info.source_line != 0 && !!info.source_file)
   {
-    ss << std::hex << std::showbase << info.symbol_address;
+    ss << "??";
   }
   else
   {

@@ -36,7 +36,7 @@ public:
 
 private:
   // state flags.
-  
+
   enum flags
   {
     none = 0,
@@ -74,7 +74,7 @@ public:
   /// Move constructor.
   ///
   /// @post other.get_wrapped() == nullptr.
-  basic_syncbuf(basic_syncbuf &&other)
+  basic_syncbuf(basic_syncbuf &&other) noexcept
       : streambuf_type(other),
         wrapped_(other.wrapped_),
         flag_(other.flag_),
@@ -89,7 +89,7 @@ public:
   /// Move assignment.
   ///
   /// @post other.get_wrapped() == nullptr.
-  basic_syncbuf &operator=(basic_syncbuf &&other)
+  basic_syncbuf &operator=(basic_syncbuf &&other) noexcept
   {
     emit();
 

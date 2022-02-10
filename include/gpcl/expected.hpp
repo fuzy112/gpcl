@@ -18,9 +18,9 @@
 #include <gpcl/detail/utility.hpp>
 #include <gpcl/expected_fwd.hpp>
 #include <gpcl/in_place.hpp>
+#include <gpcl/invoke.hpp>
 #include <gpcl/optional_fwd.hpp>
 #include <gpcl/unexpected.hpp>
-#include <gpcl/invoke.hpp>
 
 namespace gpcl {
 
@@ -56,12 +56,12 @@ public:
 
   constexpr expected() = default;
   constexpr expected(const expected &rhs) = default;
-  constexpr expected(expected && rhs) = default;
+  constexpr expected(expected &&rhs) = default;
 
   template <
       typename... Args,
       detail::enable_if_t<detail::is_constructible_v<T, Args &&...>, int> = 0>
-  inline constexpr explicit expected(in_place_t, Args && ... args)
+  inline constexpr explicit expected(in_place_t, Args &&...args)
       : base_type(in_place, detail::forward<Args>(args)...)
   {
   }
@@ -71,7 +71,7 @@ public:
                                     T, std::initializer_list<U> &, Args &&...>,
                                 int> = 0>
   inline constexpr expected(in_place_t, std::initializer_list<U> ilist,
-                            Args && ... args)
+                            Args &&...args)
       : base_type(in_place, ilist, detail::forward<Args>(args)...)
   {
   }
@@ -121,7 +121,7 @@ public:
                     detail::expected_convert_constructible<T, E, U, G>>,
                 int>
                 Dummy1 = 0>
-  inline constexpr expected(expected<U, G> && rhs);
+  inline constexpr expected(expected<U, G> &&rhs);
 
   template <
       typename U, typename G,
@@ -132,7 +132,7 @@ public:
               detail::expected_convert_constructible<T, E, U, G>>,
           int>
           Dummy2 = 0>
-  inline explicit constexpr expected(expected<U, G> && rhs);
+  inline explicit constexpr expected(expected<U, G> &&rhs);
 
   template <typename U, typename G,
             detail::enable_if_t<
@@ -140,7 +140,7 @@ public:
                                       std::is_void<T>, std::is_void<U>>,
                 int>
                 Dummy3 = 0>
-  inline constexpr expected(expected<U, G> && rhs);
+  inline constexpr expected(expected<U, G> &&rhs);
 
   template <
       typename U, typename G,
@@ -149,7 +149,7 @@ public:
                                 std::is_void<T>, std::is_void<U>>,
           int>
           Dummy4 = 0>
-  inline explicit constexpr expected(expected<U, G> && rhs);
+  inline explicit constexpr expected(expected<U, G> &&rhs);
 
   template <
       class U = T,
@@ -162,7 +162,7 @@ public:
               detail::negate<std::is_same<std::decay_t<U>, unexpected<E>>>>,
           int>
           Dummy1 = 0>
-  inline constexpr expected(U && v) : base_type(in_place, detail::forward<U>(v))
+  inline constexpr expected(U &&v) : base_type(in_place, detail::forward<U>(v))
   {
   }
 
@@ -178,7 +178,7 @@ public:
               detail::negate<std::is_same<std::decay_t<U>, unexpected<E>>>>,
           int>
           Dummy2 = 0>
-  inline explicit constexpr expected(U && v)
+  inline explicit constexpr expected(U &&v)
       : base_type(in_place, detail::forward<U>(v))
   {
   }
@@ -211,7 +211,7 @@ public:
                                                 std::is_constructible<E, G &&>>,
                           int>
           Dummy1 = 0>
-  inline constexpr expected(unexpected<G> && e) : base_type(unexpect, e)
+  inline constexpr expected(unexpected<G> &&e) : base_type(unexpect, e)
   {
   }
 
@@ -222,15 +222,14 @@ public:
                                 std::is_constructible<E, G &&>>,
           int>
           Dummy2 = 0>
-  inline explicit constexpr expected(unexpected<G> && e)
-      : base_type(unexpect, e)
+  inline explicit constexpr expected(unexpected<G> &&e) : base_type(unexpect, e)
   {
   }
 
-  template <typename... Args,
-            detail::enable_if_t<detail::is_constructible_v<E, Args...>, int> =
-                0>
-  inline constexpr explicit expected(unexpect_t, Args && ... args)
+  template <
+      typename... Args,
+      detail::enable_if_t<detail::is_constructible_v<E, Args...>, int> = 0>
+  inline constexpr explicit expected(unexpect_t, Args &&...args)
       : base_type(unexpect, detail::forward<Args>(args)...)
   {
   }
@@ -239,8 +238,8 @@ public:
             detail::enable_if_t<detail::is_constructible_v<
                                     E, std::initializer_list<U> &, Args...>,
                                 int> = 0>
-  inline constexpr explicit expected(unexpect_t, std::initializer_list<U> & il,
-                                     Args && ... args)
+  inline constexpr explicit expected(unexpect_t, std::initializer_list<U> &il,
+                                     Args &&...args)
       : base_type(unexpect, il, detail::forward<Args>(args)...)
   {
   }
@@ -330,7 +329,7 @@ public:
   /// @}
 
   /// @name Modifiers
-  void swap(expected<T, E> & other) noexcept(
+  void swap(expected<T, E> &other) noexcept(
       std::is_nothrow_copy_assignable<expected<T, E>>::value)
   {
     auto tmp = detail::move(other);
@@ -360,7 +359,7 @@ public:
   /// Returns x if bool(*this) is true, otherwise returns
   /// unexpected(error())
   template <typename U>
-  inline rebind<U> and_(rebind<U> && x) const &
+  inline rebind<U> and_(rebind<U> &&x) const &
   {
     if (*this)
     {
@@ -390,7 +389,7 @@ public:
   /// Returns x if bool(*this) is true, otherwise returns
   /// unexpected(error())
   template <typename U>
-  inline rebind<U> and_(rebind<U> && x) &&
+  inline rebind<U> and_(rebind<U> &&x) &&
   {
     if (*this)
     {
@@ -408,7 +407,7 @@ public:
             typename U =
                 std::invoke_result_t<F, std::add_lvalue_reference_t<const T>>,
             detail::enable_if_t<!detail::is_void_v<U>, int> Dummy1 = 0>
-  inline rebind<U> map(F && f) const &
+  inline rebind<U> map(F &&f) const &
   {
     if (*this)
     {
@@ -426,7 +425,7 @@ public:
             typename U =
                 std::invoke_result_t<F, std::add_lvalue_reference_t<const T>>,
             detail::enable_if_t<detail::is_void_v<U>, int> Dummy2 = 0>
-  inline rebind<U> map(F && f) const &
+  inline rebind<U> map(F &&f) const &
   {
     if (*this)
     {
@@ -441,11 +440,11 @@ public:
 
   /// Maps an expected<T, E> to expected<U, E> by applying a function to the
   /// contained value, leaving the error untouched.
-  template <typename F,
-            typename U =
-                std::invoke_result_t<F, std::add_rvalue_reference_t<T>>,
-            detail::enable_if_t<!detail::is_void_v<U>, int> Dummy1 = 0>
-  inline rebind<U> map(F && f) &&
+  template <
+      typename F,
+      typename U = std::invoke_result_t<F, std::add_rvalue_reference_t<T>>,
+      detail::enable_if_t<!detail::is_void_v<U>, int> Dummy1 = 0>
+  inline rebind<U> map(F &&f) &&
   {
     if (*this)
     {
@@ -460,11 +459,11 @@ public:
 
   /// Maps an expected<T, E> to expected<U, E> by applying a function to the
   /// contained value, leaving the error untouched.
-  template <typename F,
-            typename U =
-                std::invoke_result_t<F, std::add_rvalue_reference_t<T>>,
-            detail::enable_if_t<detail::is_void_v<U>, int> Dummy2 = 0>
-  inline rebind<U> map(F && f) &&
+  template <
+      typename F,
+      typename U = std::invoke_result_t<F, std::add_rvalue_reference_t<T>>,
+      detail::enable_if_t<detail::is_void_v<U>, int> Dummy2 = 0>
+  inline rebind<U> map(F &&f) &&
   {
     if (*this)
     {
@@ -481,13 +480,13 @@ public:
   /// unexpected(error()).
   template <
       typename F,
-      typename Result =
-          std::invoke_result_t<F, std::add_lvalue_reference_t<const T>>,
+      typename Result = typename gpcl::invoke_result<
+          F, std::add_lvalue_reference_t<const T>>::type,
       detail::enable_if_t<detail::is_same_v<typename Result::error_type, E>
                           // && detail::is_expected_v<std::decay_t<Result>>
                           ,
                           int> = 0>
-  inline Result and_then(F && f) const &
+  inline Result and_then(F &&f) const &
   {
     if (*this)
     {
@@ -503,12 +502,13 @@ public:
   /// unexpected(error()).
   template <
       typename F,
-      typename Result = std::invoke_result_t<F, std::add_rvalue_reference_t<T>>,
+      typename Result =
+          typename gpcl::invoke_result<F, std::add_rvalue_reference_t<T>>::type,
       detail::enable_if_t<detail::is_same_v<typename Result::error_type, E>
                           // && detail::is_expected_v<std::decay_t<Result>>
                           ,
                           int> = 0>
-  inline Result and_then(F && f) &&
+  inline Result and_then(F &&f) &&
   {
     if (*this)
     {
@@ -522,9 +522,9 @@ public:
 
   /// Calls f if bool(*this) is true, otherwise returns unexpected(error()).
   template <typename F, typename V = T,
-            typename Result = std::invoke_result_t<F>,
+            typename Result = typename invoke_result<F>::type,
             detail::enable_if_t<detail::is_void_v<V>, int> = 0>
-  inline Result and_then(F && f) const
+  inline Result and_then(F &&f) const
   {
     if (*this)
     {
@@ -553,7 +553,7 @@ public:
   /// Returns x if bool(*this) is false, otherwise returns
   /// expected(**this).
   template <typename G>
-  inline rebind_error<G> or_(rebind_error<G> && x) const &
+  inline rebind_error<G> or_(rebind_error<G> &&x) const &
   {
     if (*this)
     {
@@ -582,7 +582,7 @@ public:
 
   /// Returns x if bool(*this) is false, otherwise returns expected(*this).
   template <typename G>
-  inline rebind_error<G> or_(rebind_error<G> && x) &&
+  inline rebind_error<G> or_(rebind_error<G> &&x) &&
   {
     if (*this)
     {
@@ -596,10 +596,9 @@ public:
 
   /// Maps an expected<T, E> to expected<T, G> by applying a function to the
   /// error, leaving the value untouched.
-  template <typename F,
-            typename G =
-                std::invoke_result_t<F, std::add_lvalue_reference_t<const E>>>
-  inline rebind_error<G> map_error(F && f) const &
+  template <typename F, typename G = std::invoke_result_t<
+                            F, std::add_lvalue_reference_t<const E>>>
+  inline rebind_error<G> map_error(F &&f) const &
   {
     if (*this)
     {
@@ -607,16 +606,16 @@ public:
     }
     else
     {
-      return unexpected<E>(gpcl::invoke(detail::forward<F>(f), (*this).error()));
+      return unexpected<E>(
+          gpcl::invoke(detail::forward<F>(f), (*this).error()));
     }
   }
 
   /// Maps an expected<T, E> to expected<T, G> by applying a function to the
   /// error, leaving the value untouched
-  template <typename F,
-            typename G =
-                std::invoke_result_t<F, std::add_rvalue_reference_t<E>>>
-  inline rebind_error<G> map_error(F && f) &&
+  template <typename F, typename G = std::invoke_result_t<
+                            F, std::add_rvalue_reference_t<E>>>
+  inline rebind_error<G> map_error(F &&f) &&
   {
     if (*this)
     {
@@ -639,7 +638,7 @@ public:
                                 std::is_same<typename Result::value_type, T>>,
           int>
           Dummy1 = 0>
-  inline Result or_else(F && f) const &
+  inline Result or_else(F &&f) const &
   {
     if (*this)
     {
@@ -660,7 +659,7 @@ public:
                                 detail::negate<std::is_void<T>>>,
           int>
           Dummy1 = 0>
-  inline Result or_else(F && f) &&
+  inline Result or_else(F &&f) &&
   {
     if (*this)
     {
@@ -682,7 +681,7 @@ public:
                                 std::is_void<T>>,
           int>
           Dummy2 = 0>
-  inline Result or_else(F && f) const &
+  inline Result or_else(F &&f) const &
   {
     if (*this)
     {
@@ -703,7 +702,7 @@ public:
                                 std::is_void<T>>,
           int>
           Dummy2 = 0>
-  inline Result or_else(F && f) &&
+  inline Result or_else(F &&f) &&
   {
     if (*this)
     {
@@ -732,17 +731,17 @@ public:
   template <typename U, typename F,
             typename R =
                 std::invoke_result_t<F, std::add_lvalue_reference_t<const T>>>
-  inline U map_or(U default_, F && f) const &
+  inline U map_or(U default_, F &&f) const &
   {
     return map(detail::forward<F>(f)).value_or(default_);
   }
 
   /// Applies a function to the contained value if bool(*this) is true,
   /// otherwise returns default_.
-  template <typename U, typename F,
-            typename R =
-                std::invoke_result_t<F, std::add_rvalue_reference_t<T>>>
-  inline U map_or(U default_, F && f) &&
+  template <
+      typename U, typename F,
+      typename R = std::invoke_result_t<F, std::add_rvalue_reference_t<T>>>
+  inline U map_or(U default_, F &&f) &&
   {
     return detail::move(*this).map(detail::forward<F>(f)).value_or(default_);
   }
@@ -755,7 +754,7 @@ public:
             typename R2 =
                 std::invoke_result_t<F, std::add_lvalue_reference_t<const T>>,
             detail::enable_if_t<detail::is_same_v<R1, R2>, int> = 0>
-  inline R1 map_or_else(D && d, F && f) const &
+  inline R1 map_or_else(D &&d, F &&f) const &
   {
     if (*this)
     {
@@ -774,7 +773,7 @@ public:
       typename R1 = std::invoke_result_t<D, std::add_rvalue_reference_t<E>>,
       typename R2 = std::invoke_result_t<F, std::add_rvalue_reference_t<T>>,
       detail::enable_if_t<detail::is_same_v<R1, R2>, int> = 0>
-  inline R1 map_or_else(D && d, F && f) &&
+  inline R1 map_or_else(D &&d, F &&f) &&
   {
     if (*this)
     {

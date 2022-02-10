@@ -11,13 +11,13 @@
 #ifndef GPCL_DETAIL_POSIX_THREAD_HPP
 #define GPCL_DETAIL_POSIX_THREAD_HPP
 
+#include <gpcl/bind_front.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/utility.hpp>
+#include <gpcl/function.hpp>
 #include <gpcl/thread_attributes.hpp>
 #include <gpcl/unique_ptr.hpp>
 #include <gpcl/zstring.hpp>
-#include <gpcl/bind_front.hpp>
-#include <gpcl/function.hpp>
 
 #include <iostream>
 #include <type_traits>
@@ -145,9 +145,10 @@ private:
   GPCL_DECL void start_thread(thread_attributes const &attr,
                               unique_ptr<function<void()>> fn);
 
-  template <typename F, decltype(std::declval<F>()(), int{}) = 0>
+  template <typename F>
   void start_thread(thread_attributes const &attr, F &&f)
   {
+    static_assert(is_invocable<F&&>::value, "");
     auto fn = gpcl::make_unique<function<void()>>(detail::forward<F>(f));
     start_thread(attr, std::move(fn));
   }

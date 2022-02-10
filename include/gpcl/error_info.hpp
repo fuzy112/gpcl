@@ -61,12 +61,19 @@ public:
 
 public:
   error_info(const error_info &) = default;
-  error_info(error_info &&) noexcept(
-      std::is_nothrow_copy_constructible<T>::value) = default;
+  error_info(error_info &&other) noexcept(
+      std::is_nothrow_copy_constructible<T>::value)
+      : value_(std::move(other.value_))
+  {
+  }
 
   error_info &operator=(const error_info &) = default;
-  error_info &operator=(error_info &&) noexcept(
-      std::is_nothrow_copy_assignable<T>::value) = default;
+  error_info &operator=(error_info &&other) noexcept(
+      std::is_nothrow_copy_assignable<T>::value)
+  {
+    value_ = std::move(other.value_);
+    return *this;
+  }
 
   void swap(error_info &other) noexcept(std::is_nothrow_swappable<T>::value)
   {

@@ -1,10 +1,7 @@
+#include <gpcl/debugstream.hpp>
 #include <gpcl/function.hpp>
 #include <gpcl/stacktrace.hpp>
 #include <gpcl/thread.hpp>
-#include <iostream>
-#include <functional>
-#include <thread>
-#include <future>
 
 // Stacktrace is implemented using PDB files on Windows, so the PDB files must
 // be available at the search path. The simplest way to ensure this is to put
@@ -19,9 +16,8 @@
 int main()
 {
 #if defined GPCL_STACKTRACE // stacktrace is supported
-
-  std::async(std::launch::async, gpcl::function<void()>(std::function<void()>([] {
-    std::cerr << gpcl::stacktrace::current() << std::endl;
-  }))).get();
+  gpcl::thread(gpcl::function<void(int)>([](int) {
+    gpcl::cdebug() << gpcl::stacktrace::current() << std::endl;
+  }), 0).join();
 #endif
 }

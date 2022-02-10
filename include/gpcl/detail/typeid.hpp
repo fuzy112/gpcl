@@ -32,6 +32,7 @@ struct type_info : noncopyable
   template <typename T>
   friend struct typeid_impl;
 
+  virtual ~type_info() = default;
 
   const char *name() const noexcept { return "unknown"; }
 

@@ -781,7 +781,11 @@ public:
     /// @name Assignment operators
     /// @{
 
-    value &operator=(value &&) noexcept = default;
+    value &operator=(value &&other) noexcept
+    {
+      data_ = std::move(other.data_);
+      return *this;
+    }
 
     value &operator=(const value &other)
     {
@@ -1669,8 +1673,7 @@ public:
     /// @tparam E an event type.
     template <typename E>
     auto operator()(E &&e)
-        -> std::void_t<decltype(this->handle_event(
-            std::declval<E>()))>
+        -> std::void_t<decltype(this->handle_event(std::declval<E>()))>
     {
       handle_event(std::forward<E>(e));
     }

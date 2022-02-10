@@ -16,6 +16,7 @@
 #include <gpcl/anonymous_shared_memory.hpp>
 #include <gpcl/any.hpp>
 #include <gpcl/any_cast.hpp>
+#include <gpcl/apply.hpp>
 #include <gpcl/assert.hpp>
 #include <gpcl/bad_any_cast.hpp>
 #include <gpcl/bad_expected_access.hpp>
@@ -112,6 +113,7 @@
 #include <gpcl/span.hpp>
 #include <gpcl/spanbuf.hpp>
 #include <gpcl/spanstream.hpp>
+#include <gpcl/sqlite.hpp>
 #include <gpcl/stacktrace.hpp>
 #include <gpcl/strerror.hpp>
 #include <gpcl/swap.hpp>

@@ -78,7 +78,15 @@ public:
     this->set_rdbuf(rdbuf());
   }
 
-  basic_osyncstream &operator=(basic_osyncstream &&) noexcept = default;
+  basic_osyncstream &operator=(basic_osyncstream &&other) noexcept
+  {
+    static_cast<detail::osyncstream_base<CharType, Traits, Allocator> &>(
+        *this) = std::move(other);
+    GPCL_ASSERT(other.get_wrapped() == nullptr);
+    static_cast<std::basic_ostream<CharType, Traits> &>(*this) =
+        std::move(other);
+    return *this;
+  }
 
   syncbuf_type *rdbuf() const noexcept { return &this->buf_; }
 

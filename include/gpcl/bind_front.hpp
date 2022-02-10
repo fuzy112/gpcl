@@ -11,39 +11,45 @@
 #ifndef GPCL_BIND_FRONT_HPP
 #define GPCL_BIND_FRONT_HPP
 
+#include <gpcl/apply.hpp>
 #include <gpcl/detail/config.hpp>
-#include <gpcl/noncopyable.hpp>
 #include <gpcl/invoke.hpp>
 
-#include <functional>
 #include <tuple>
 
 namespace gpcl {
 
-#if __cpp_init_captures >= 201803
+namespace detail {
+template <typename Fn, typename... Xs>
+struct bind_expr
+{
+  Fn fn_;
+  std::tuple<Xs...> xs_;
+
+  template <typename... Ys>
+  typename invoke_result<const Fn, Xs..., Ys &&...>::type
+  operator()(Ys &&...ys) const
+  {
+    return gpcl::apply(fn_, std::tuple_cat(xs_, std::forward_as_tuple(ys...)));
+  }
+
+  template <typename... Ys>
+  typename invoke_result<Fn, Xs..., Ys &&...>::type operator()(Ys &&...ys)
+  {
+    return gpcl::apply(fn_, std::tuple_cat(xs_, std::forward_as_tuple(ys...)));
+  }
+};
+} // namespace detail
 
 template <typename Fn, typename... Ts>
-auto bind_front(Fn &&fn, Ts &&...xs)
+auto bind_front(Fn &&fn, Ts &&...ts)
 {
-  return [fn = static_cast<Fn &&>(fn), ... xs = static_cast<Ts &&>(xs)](
-             auto &&...ys) mutable -> decltype(auto) {
-    return gpcl::invoke(fn, xs..., static_cast<decltype(ys) &&>(ys)...);
+  return detail::bind_expr<typename std::decay<Fn>::type,
+                           typename std::decay<Ts>::type...>{
+      std::forward<Fn>(fn),
+      std::make_tuple(std::forward<Ts>(ts)...),
   };
 }
-
-#elif defined(__cpp_lib_apply)
-
-template <typename Fn, typename... Ts>
-auto bind_front(Fn &&fn, Ts &&...xs)
-{
-  return [fn = static_cast<Fn &&>(fn),
-          xs = std::make_tuple(std::forward<Ts>(xs)...)](
-             auto &&...ys) mutable -> decltype(auto) {
-    return std::apply(fn, std::tuple_cat(xs, std::forward_as_tuple(ys...)));
-  };
-}
-
-#endif
 
 } // namespace gpcl
 

@@ -56,19 +56,19 @@ template <
         std::is_base_of<typename get_class<typename std::decay<F>::type>::type,
                         typename std::decay<T>::type>::value,
         int>::type = 0>
-T &&unwrap_ref(T &&x) noexcept
+constexpr T &&unwrap_ref(T &&x) noexcept
 {
   return std::forward<T>(x);
 }
 
 template <typename F, typename T>
-T &unwrap_ref(std::reference_wrapper<T> x) noexcept
+constexpr T &unwrap_ref(std::reference_wrapper<T> x) noexcept
 {
   return x.get();
 }
 
 template <typename F, typename T>
-T &unwrap_ref(T *x) noexcept
+constexpr T &unwrap_ref(T *x) noexcept
 {
   return *x;
 }
@@ -78,7 +78,7 @@ template <typename F, typename T1, typename... Ts,
           typename std::enable_if<std::is_member_function_pointer<
                                       typename std::decay<F>::type>::value,
                                   int>::type = 0>
-auto invoke_impl(F f, T1 &&t1, Ts &&...ts)
+constexpr auto invoke_impl(F f, T1 &&t1, Ts &&...ts)
     -> decltype((detail::unwrap_ref<F>(std::forward<T1>(t1)).*
                  f)(std::forward<Ts>(ts)...))
 {
@@ -91,7 +91,7 @@ template <typename F, typename T1,
           typename std::enable_if<std::is_member_object_pointer<
                                       typename std::decay<F>::type>::value,
                                   int>::type = 0>
-auto invoke_impl(F f, T1 &&t1)
+constexpr auto invoke_impl(F f, T1 &&t1)
     -> decltype(detail::unwrap_ref<F>(std::forward<T1>(t1)).*f)
 {
   return detail::unwrap_ref<F>(std::forward<T1>(t1)).*f;
@@ -99,7 +99,7 @@ auto invoke_impl(F f, T1 &&t1)
 
 // invoke function object
 template <typename F, typename... Ts>
-auto invoke_impl(F &&f, Ts &&...ts)
+constexpr auto invoke_impl(F &&f, Ts &&...ts)
     -> decltype(std::forward<F>(f)(std::forward<Ts>(ts)...))
 {
   return std::forward<F>(f)(std::forward<Ts>(ts)...);
@@ -145,7 +145,7 @@ struct invoke_result : detail::invoke_result_impl<F, meta::list<Ts...>>
 };
 
 template <typename F, typename... Ts>
-typename invoke_result<F, Ts...>::type invoke(F &&f, Ts &&...ts)
+constexpr typename invoke_result<F, Ts...>::type invoke(F &&f, Ts &&...ts)
 {
   return detail::invoke_impl(std::forward<F>(f), std::forward<Ts>(ts)...);
 }
