@@ -8,23 +8,28 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_EXT_SQLITE_HPP
-#define GPCL_EXT_SQLITE_HPP
+#ifndef GPCL_SQLITE_HPP
+#define GPCL_SQLITE_HPP
 
+#include <gpcl/detail/config.hpp>
 #include <gpcl/detail/utility.hpp>
-#include <gpcl/ext/detail/config.hpp>
 #include <gpcl/tag_invoke.hpp>
 #include <gpcl/zstring.hpp>
 
 #include <system_error>
 
-#ifdef GPCL_EXT_ENABLE_SQLITE
+#ifdef GPCL_SQLITE
 #  include <sqlite3.h>
+
+#  ifdef _MSC_VER
+#    pragma comment(lib, "sqlite3")
+#  endif
+
 #endif
 
-namespace gpcl::ext::sqlite {
+namespace gpcl::sqlite {
 
-#if defined GPCL_EXT_ENABLE_SQLITE || defined GPCL_DOXYGEN
+#ifdef GPCL_SQLITE
 
 class database;
 class query;
@@ -34,11 +39,11 @@ class step_result;
 
 GPCL_DECL auto sqlite_error_category() -> std::error_category const &;
 
-/// 數據庫連接
+/// Database connection.
 class database final
 {
 public:
-  /// 創建數據庫連接
+  /// Creates a database connection.
   GPCL_DECL explicit database(czstring<> dbname = ":memory:");
 
   database(database &&other) noexcept
@@ -46,18 +51,14 @@ public:
   {
   }
 
-  /// 銷毀數據庫連接
+  /// Destroys a database connection.
   GPCL_DECL ~database() noexcept;
 
-  /// 運行 SQL 語句
+  /// Executes an SQL statement.
   GPCL_DECL auto execute(czstring<> sql) -> void;
 
   using native_handle_type = sqlite3 *;
-  auto native_handle() -> native_handle_type
-  {
-    GPCL_ASSERT(db_);
-    return db_;
-  }
+  auto native_handle() -> native_handle_type { return db_; }
 
 private:
   sqlite3 *db_;
@@ -73,7 +74,7 @@ struct bind_fn
                              int> = 0>
   void operator()(const bind_proxy &proxy, int col, T &&value) const
   {
-    return gpcl::cpo::tag_invoke(*this, proxy, col, static_cast<T &&>(value));
+    return gpcl::tag_invoke(*this, proxy, col, static_cast<T &&>(value));
   }
 };
 
@@ -89,13 +90,13 @@ GPCL_DECL auto tag_invoke(bind_fn, const bind_proxy &proxy, int col,
 inline auto tag_invoke(bind_fn, const bind_proxy &proxy, int col,
                        unsigned long long number) -> void
 {
-  tag_invoke(bind_fn, proxy, col, static_cast<sqlite3_int64>(number));
+  tag_invoke(bind_fn{}, proxy, col, static_cast<sqlite3_int64>(number));
 }
 
 inline auto tag_invoke(bind_fn, const bind_proxy &proxy, int col,
                        unsigned int number) -> void
 {
-  tag_invoke(bind_fn, proxy, col, static_cast<sqlite3_int64>(number));
+  tag_invoke(bind_fn{}, proxy, col, static_cast<sqlite3_int64>(number));
 }
 
 GPCL_DECL void bind_static_string(const bind_proxy &proxy, int col,
@@ -129,7 +130,7 @@ struct get_fn
                              int> = 0>
   void operator()(const step_result &result, int column, T &value) const
   {
-    return gpcl::cpo::tag_invoke(*this, column, value);
+    return gpcl::tag_invoke(*this, column, value);
   }
 };
 
@@ -296,8 +297,9 @@ public:
   /// \post The transaction shall be inactive.
   GPCL_DECL void rollback() noexcept;
 };
+
 #endif
 
-} // namespace gpcl::ext::sqlite
+} // namespace gpcl::sqlite
 
-#endif // GPCL_EXT_SQLITE_HPP
+#endif // GPCL_SQLITE_HPP

@@ -46,6 +46,7 @@ find_package(LLVM NO_MODULE)
 find_package(Doxygen)
 find_package(BFD)
 find_package(Backtrace)
+find_package(SQLite3)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -86,6 +87,12 @@ if(Backtrace_FOUND)
   target_include_directories(gpcl PUBLIC "${Backtrace_INCLUDE_DIRS}")
   target_compile_definitions(gpcl
                              PUBLIC GPCL_BACKTRACE_HEADER="${Backtrace_HEADER}")
+endif()
+
+if(SQLite3_FOUND)
+  target_link_libraries(gpcl PUBLIC SQLite::SQLite3)
+  target_compile_definitions(gpcl PUBLIC GPCL_SQLITE=1)
+  set(GPCL_SQLITE TRUE CACHE BOOL "")
 endif()
 
 if(UNIX AND NOT APPLE)

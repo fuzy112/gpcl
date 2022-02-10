@@ -16,14 +16,15 @@
 
 #include <gpcl/detail/impl/assertion_failure.ipp>
 #include <gpcl/detail/impl/debug_allocator.ipp>
-#include <gpcl/detail/impl/throw_system_error.ipp>
 #include <gpcl/detail/impl/get_mutex_for_address.ipp>
 #include <gpcl/detail/impl/strerror.ipp>
+#include <gpcl/detail/impl/throw_system_error.ipp>
 #include <gpcl/detail/impl/tlsf.ipp>
 #include <gpcl/detail/impl/unreachable.ipp>
 #include <gpcl/impl/exception.ipp>
 #include <gpcl/impl/getopt.ipp>
 #include <gpcl/impl/json_error.ipp>
+#include <gpcl/impl/sqlite.ipp>
 #include <gpcl/pmr/impl/default_resource.ipp>
 #include <gpcl/pmr/impl/monotonic_buffer_resource.ipp>
 #include <gpcl/pmr/impl/new_delete_resource.ipp>

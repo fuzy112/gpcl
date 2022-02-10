@@ -8,21 +8,21 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_EXT_IMPL_SQLITE_IPP
-#define GPCL_EXT_IMPL_SQLITE_IPP
+#ifndef GPCL_IMPL_SQLITE_IPP
+#define GPCL_IMPL_SQLITE_IPP
 
 #include <gpcl/assert.hpp>
 #include <gpcl/detail/throw_system_error.hpp>
-#include <gpcl/ext/sqlite.hpp>
+#include <gpcl/exception.hpp>
+#include <gpcl/sqlite.hpp>
 
 #include <cassert>
 #include <cstring>
 
 namespace gpcl {
-namespace ext {
 namespace sqlite {
 
-#ifdef GPCL_EXT_ENABLE_SQLITE
+#ifdef GPCL_SQLITE
 class sqlite_error_category_impl : public std::error_category
 {
 public:
@@ -41,9 +41,9 @@ auto sqlite_error_category() -> const std::error_category &
   return i;
 }
 
-[[noreturn]] auto throw_system_error(int err, const char *msg) -> void
+[[noreturn]] auto throw_sqlite_error(int err, const char *msg) -> void
 {
-  throw std::system_error(err, sqlite_error_category(), msg);
+  GPCL_THROW(std::system_error(err, sqlite_error_category(), msg));
 }
 
 database::database(const char *name)
@@ -51,7 +51,7 @@ database::database(const char *name)
   int err = ::sqlite3_open_v2(
       name, &db_, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, nullptr);
   if (err != 0)
-    throw_system_error(err, __func__);
+    throw_sqlite_error(err, __func__);
 }
 
 database::~database() noexcept
@@ -59,15 +59,19 @@ database::~database() noexcept
   GPCL_VERIFY_0(sqlite3_close(db_));
 }
 
-auto database::execute(const char *sql)
-    -> void{GPCL_TRY{statement stmt(*this, sql);
-stmt.step();
-}
-GPCL_CATCH(std::system_error &err)
+void database::execute(const char *sql)
 {
-  throw std::system_error(err.code(), __func__);
-}
-GPCL_CATCH_END
+  (void)0;
+  GPCL_TRY
+  {
+    sqlite::statement stmt(*this, sql);
+    stmt.step();
+  }
+  GPCL_CATCH(const std::system_error &err) 
+  { 
+    GPCL_THROW_EXCEPTION(err); 
+  }
+  GPCL_CATCH_END
 }
 
 statement::statement(database &db, czstring<> sql)
@@ -75,7 +79,7 @@ statement::statement(database &db, czstring<> sql)
   int err = sqlite3_prepare_v2(db.native_handle(), sql, std::strlen(sql),
                                &stmt_, nullptr);
   if (err != 0)
-    throw_system_error(err, __func__);
+    throw_sqlite_error(err, __func__);
 }
 
 statement::~statement()
@@ -92,7 +96,7 @@ auto statement::step() -> step_result
   if (err == SQLITE_ROW)
     return step_result{stmt_, 1};
 
-  throw_system_error(err, __func__);
+  throw_sqlite_error(err, __func__);
 }
 
 auto statement::reset() -> void
@@ -100,7 +104,7 @@ auto statement::reset() -> void
   int err = sqlite3_reset(stmt_);
 
   if (err != 0)
-    throw_system_error(err, __FUNCTION__);
+    throw_sqlite_error(err, __FUNCTION__);
 }
 
 namespace detail {
@@ -109,7 +113,7 @@ auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, int number) -> void
   int err = sqlite3_bind_int(proxy.statement_handle(), col, number);
 
   if (err != 0)
-    throw_system_error(err, __func__);
+    throw_sqlite_error(err, __func__);
 }
 
 auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, sqlite3_int64 number)
@@ -118,7 +122,7 @@ auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, sqlite3_int64 number)
   int err = sqlite3_bind_int64(proxy.statement_handle(), col, number);
 
   if (err != 0)
-    throw_system_error(err, __func__);
+    throw_sqlite_error(err, __func__);
 }
 
 auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, double number)
@@ -127,7 +131,7 @@ auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, double number)
   int err = sqlite3_bind_double(proxy.statement_handle(), col, number);
 
   if (err != 0)
-    throw_system_error(err, __func__);
+    throw_sqlite_error(err, __func__);
 }
 
 auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, const char *text)
@@ -137,7 +141,7 @@ auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, const char *text)
                               std::strlen(text), SQLITE_TRANSIENT);
 
   if (err != 0)
-    throw_system_error(err, __func__);
+    throw_sqlite_error(err, __func__);
 }
 
 void bind_static_string(const bind_proxy &proxy, int col, const char *str)
@@ -146,7 +150,7 @@ void bind_static_string(const bind_proxy &proxy, int col, const char *str)
                               std::strlen(str), SQLITE_STATIC);
 
   if (err != 0)
-    throw_system_error(err, __func__);
+    throw_sqlite_error(err, __func__);
 }
 
 auto tag_invoke(get_fn, const step_result &result, int col, int &number) -> void
@@ -216,9 +220,7 @@ transaction::~transaction() noexcept
 }
 
 #endif
-
-} // namespace gpcl
-} // namespace ext
+} // namespace sqlite
 } // namespace gpcl
 
-#endif // GPCL_EXT_IMPL_SQLITE_IPP
+#endif // GPCL_IMPL_SQLITE_IPP
