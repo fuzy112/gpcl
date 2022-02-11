@@ -87,7 +87,7 @@ class posix_thread
 public:
   using native_handle_type = pthread_t;
 
-  GPCL_DECL posix_thread() noexcept = default;
+  posix_thread() noexcept = default;
 
   template <typename F, typename... Args>
   posix_thread(thread_attributes const &attr, F &&f, Args... args)
