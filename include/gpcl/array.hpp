@@ -31,15 +31,26 @@ namespace gpcl {
 template <typename T, typename Allocator = default_allocator<T>>
 class array
 {
+public:
+  using size_type = std::size_t;
+  using value_type = T;
+  using reference = T &;
+  using const_reference = const T &;
+  using difference_type = std::ptrdiff_t;
+  using pointer = T *;
+  using const_pointer = const T *;
+  using iterator = T *;
+  using const_iterator = const T *;
+
+public:
   detail::compressed_pair<Allocator, propagate_const<T *>> p_ = {};
   std::size_t size_ = 0;
   std::size_t capacity_ = 0;
 
 public:
-  explicit array(const type_identity_t<Allocator> &a = Allocator()) noexcept
-      : p_(a)
-  {
-  }
+  array() noexcept(noexcept(Allocator())) : array(Allocator()) {}
+
+  explicit array(const type_identity_t<Allocator> &a) noexcept : p_(a) {}
 
   explicit array(std::size_t n,
                  const type_identity_t<Allocator> &a = Allocator())
@@ -76,6 +87,65 @@ public:
   {
   }
 
+  array(array &&other) noexcept
+      : p_(std::move(other.p_)),
+        size_(other.size_),
+        capacity_(other.capacity_)
+  {
+    other.p_.second() = nullptr;
+    other.size_ = 0;
+    other.capacity_ = 0;
+  }
+
+  array(array &&other, const type_identity_t<Allocator> &a)
+      : array(std::move(other), a,
+              typename std::allocator_traits<Allocator>::is_always_equal{})
+  {
+  }
+
+  array(array &&other, const type_identity_t<Allocator> &,
+        std::true_type /*is_always_equal*/) noexcept
+      : array(std::move(other))
+  {
+  }
+
+  array(array &&other, const type_identity_t<Allocator> &a,
+        std::false_type /*is_always_equal*/)
+      : p_(a),
+        capacity_(other.size())
+  {
+    if (a == other.get_allocator())
+    {
+      using gpcl::swap;
+      p_.second() = std::move(other.p_.second());
+      size_ = other.size_;
+      capacity_ = other.capacity_;
+
+      other.p_.second() = nullptr;
+      other.size_ = 0;
+      other.capacity_ = 0;
+      return;
+    }
+
+    T *const s = p_.second() =
+        std::allocator_traits<Allocator>::allocate(p_.first(), capacity_);
+    GPCL_TRY
+    {
+      while (size_ != capacity_)
+      {
+        std::allocator_traits<Allocator>::construct(p_.first(), &s[size_],
+                                                    std::move(other[size_]));
+        ++size_;
+      }
+    }
+    GPCL_CATCH(...)
+    {
+      release();
+      GPCL_RETHROW;
+    }
+    GPCL_CATCH_END
+  }
+
   template <typename FwdIt>
   array(FwdIt first, FwdIt last, const type_identity_t<Allocator> &a,
         std::forward_iterator_tag =
@@ -110,10 +180,10 @@ public:
 
   ~array() { release(); }
 
-  void clear() noexcept { destroy_backward(0); }
+  void clear() noexcept { keep_first_n(0); }
 
 private:
-  void destroy_backward(size_t num_to_keep) noexcept
+  void keep_first_n(size_t num_to_keep) noexcept
   {
     GPCL_ASSERT(size_ >= num_to_keep);
     while (size_ > num_to_keep)
@@ -141,6 +211,21 @@ public:
     return *this;
   }
 
+  array &operator=(array &&other) noexcept(
+      std::allocator_traits<
+          Allocator>::propagate_on_container_move_assignment::value ||
+      std::allocator_traits<Allocator>::is_always_equal::value)
+  {
+    assign(std::move(other));
+    return *this;
+  }
+
+  array &operator=(std::initializer_list<T> il)
+  {
+    assign(il.begin(), il.end());
+    return *this;
+  }
+
   template <
       typename A = Allocator,
       typename std::enable_if<!std::allocator_traits<A>::
@@ -148,7 +233,7 @@ public:
                               int>::type = 0>
   void assign(const array &other)
   {
-    assign(other.begin(), other.end());
+    assign(other.begin(), other.end(), get_allocator());
   }
 
   template <
@@ -161,38 +246,68 @@ public:
     assign(other.begin(), other.end(), other.get_allocator());
   }
 
+  template <typename A = Allocator,
+            typename std::enable_if<
+                !std::allocator_traits<
+                    A>::propagate_on_container_move_assignment::value &&
+                    std::allocator_traits<A>::is_always_equal::value,
+                int>::type = 0>
+  void assign(array &&other) noexcept
+  {
+    using gpcl::swap;
+    swap(p_, other.p_);
+    swap(size_, other.size_);
+    swap(capacity_, other.capacity_);
+  }
+
+  template <typename A = Allocator,
+            typename std::enable_if<
+                !std::allocator_traits<
+                    A>::propagate_on_container_move_assignment::value &&
+                    !std::allocator_traits<A>::is_always_equal::value,
+                int>::type = 0>
+  void assign(array &&other)
+  {
+    if (get_allocator() == other.get_allocator())
+    {
+      using gpcl::swap;
+      swap(p_, other.p_);
+      swap(size_, other.size_);
+      swap(capacity_, other.capacity_);
+      return;
+    }
+
+    array(std::move(other), get_allocator()).swap(*this);
+  }
+
+  template <
+      typename A = Allocator,
+      typename std::enable_if<std::allocator_traits<A>::
+                                  propagate_on_container_move_assignment::value,
+                              int>::type = 0>
+  void assign(array &&other) noexcept
+  {
+    using gpcl::swap;
+    swap(p_, other.p_);
+    swap(size_, other.size_);
+    swap(capacity_, other.capacity_);
+  }
+
 private:
   template <
-      typename A = Allocator,
+      typename FwdIt, typename A = Allocator,
       typename std::enable_if<!std::allocator_traits<A>::is_always_equal::value,
                               int>::type = 0>
-  void prepare_assign(const Allocator &alloc) noexcept
+  void assign(FwdIt first, FwdIt last, const Allocator &alloc)
   {
-    if (alloc != get_allocator())
-    {
-      release();
-    }
+    array(first, last, alloc).swap(*this);
   }
 
   template <
-      typename A = Allocator,
+      typename FwdIt, typename A = Allocator,
       typename std::enable_if<std::allocator_traits<A>::is_always_equal::value,
                               int>::type = 0>
-  void prepare_assign(const Allocator &) noexcept
-  {
-  }
-
-  template <typename FwdIt>
-  void assign(FwdIt first, FwdIt last, const Allocator &alloc)
-  {
-    prepare_assign(alloc);
-    p_.first() = alloc;
-
-    assign(first, last);
-  }
-
-  template <typename FwdIt>
-  void assign(FwdIt first, FwdIt last)
+  void assign(FwdIt first, FwdIt last, const Allocator &)
   {
     auto diff = std::distance(first, last);
     GPCL_ASSERT(diff >= 0);
@@ -204,7 +319,7 @@ private:
       return;
     }
 
-    destroy_backward(count);
+    keep_first_n(count);
 
     for (std::size_t i = 0; i != count; ++i)
     {
@@ -259,6 +374,9 @@ private:
   }
 
 public:
+  // void resize(size_type n) { array() }
+
+public:
   Allocator get_allocator() const noexcept { return p_.first(); }
 
   T *data() noexcept { return p_.second(); }
@@ -266,6 +384,11 @@ public:
   const T *data() const noexcept { return p_.second(); }
 
   std::size_t size() const noexcept { return size_; }
+
+  bool empty() const noexcept
+  {
+    return size_ == 0;
+  }
 
   std::size_t capacity() const noexcept { return capacity_; }
 
