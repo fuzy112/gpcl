@@ -122,7 +122,7 @@ class posix_recursive_mutex : public posix_mutex_base
       -> posix_mutex_attr &&
   {
     attr.type(posix_mutex_type::recursive);
-#if defined(GPCL_DEBUG)
+#if defined(GPCL_DEBUG) && !defined(__CYGWIN__)
     attr.robust(posix_mutex_robust::robust);
 #endif
     return detail::move(attr);
