@@ -8,8 +8,8 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_CZSTRING_HPP
-#define GPCL_CZSTRING_HPP
+#ifndef GPCL_ZSTRING_HPP
+#define GPCL_ZSTRING_HPP
 
 #include <gpcl/detail/config.hpp>
 
@@ -70,4 +70,4 @@ using u32zstring = basic_zstring<char32_t, Extent>;
 
 } // namespace gpcl
 
-#endif
+#endif // GPCL_ZSTRING_HPP
