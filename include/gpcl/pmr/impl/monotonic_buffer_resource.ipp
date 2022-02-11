@@ -37,6 +37,13 @@ monotonic_buffer_resource::monotonic_buffer_resource(std::size_t initial_buffer,
   request_from_upstream();
 }
 
+// Delegated constructors of classes with virtual destructor with exportable
+// virtual functions may not be inline.
+monotonic_buffer_resource::monotonic_buffer_resource(memory_resource *upstream)
+    : monotonic_buffer_resource(1024, upstream)
+{
+}
+
 monotonic_buffer_resource::~monotonic_buffer_resource()
 {
   release();

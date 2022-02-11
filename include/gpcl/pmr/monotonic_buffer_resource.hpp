@@ -29,11 +29,8 @@ public:
       std::size_t initial_buffer,
       memory_resource *upstream = get_default_resource());
 
-  explicit monotonic_buffer_resource(
-      memory_resource *upstream = get_default_resource())
-      : monotonic_buffer_resource(1024, upstream)
-  {
-  }
+  GPCL_DECL explicit monotonic_buffer_resource(
+      memory_resource *upstream = get_default_resource());
 
   GPCL_DECL ~monotonic_buffer_resource() override;
 

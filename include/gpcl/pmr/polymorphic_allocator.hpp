@@ -142,7 +142,7 @@ template <typename T1, typename T2>
 bool operator==(const polymorphic_allocator<T1> &lhs,
                 const polymorphic_allocator<T2> &rhs) noexcept
 {
-  return *lhs.resource() == *rhs.resource();
+  return lhs.resource()->is_equal(*rhs.resource());
 }
 
 /// Compares two polymorphic allocators.
