@@ -11,6 +11,7 @@
 #ifndef GPCL_DETAIL_POSIX_STACKTRACE_HPP
 #define GPCL_DETAIL_POSIX_STACKTRACE_HPP
 
+#include <gpcl/array.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/unique_ptr.hpp>
@@ -21,7 +22,6 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
-#include <vector>
 
 #include GPCL_BACKTRACE_HEADER
 
@@ -160,7 +160,7 @@ class basic_posix_stacktrace
       std::is_same<typename std::allocator_traits<Allocator>::value_type,
                    posix_stacktrace_entry>::value);
 
-  std::vector<posix_stacktrace_entry, Allocator> data_;
+  array<posix_stacktrace_entry, Allocator> data_;
 
 public:
   using value_type = posix_stacktrace_entry;
@@ -171,8 +171,7 @@ public:
   using size_type = std::size_t;
   using difference_type = std::ptrdiff_t;
 
-  using const_iterator =
-      typename std::vector<posix_stacktrace_entry, Allocator>::const_iterator;
+  using const_iterator = posix_stacktrace_entry const *;
   using iterator = const_iterator;
   using reverse_iterator = std::reverse_iterator<iterator>;
   using reverse_const_iterator = std::reverse_iterator<const_iterator>;
@@ -333,35 +332,41 @@ void swap(basic_posix_stacktrace<Allocator> &x,
 constexpr std::size_t posix_stacktrace_impl_start_buffer_size = 100;
 
 template <typename Allocator>
-void posix_stacktrace_impl(
-    size_t skip, size_t max_depth,
-    std::vector<posix_stacktrace_entry, Allocator> &container)
+void posix_stacktrace_impl(size_t skip, size_t max_depth,
+                           array<posix_stacktrace_entry, Allocator> &container)
 {
   GPCL_TRY
   {
-    std::vector<void *, typename std::allocator_traits<
-                            Allocator>::template rebind_alloc<void *>>
-        buffer(container.get_allocator());
-    buffer.resize(posix_stacktrace_impl_start_buffer_size);
+    using buffer_type =
+        array<void *, typename std::allocator_traits<
+                          Allocator>::template rebind_alloc<void *>>;
+    buffer_type buffer(container.get_allocator());
+    buffer = buffer_type(posix_stacktrace_impl_start_buffer_size,
+                         container.get_allocator());
 
     std::size_t nframes;
 
     do
     {
       if (buffer.size() * 2 > max_depth)
-        buffer.resize(max_depth);
+        buffer = buffer_type(max_depth, container.get_allocator());
       else
-        buffer.resize(buffer.size() * 2);
+        buffer = buffer_type(buffer.size() * 2, container.get_allocator());
       nframes = backtrace(buffer.data(), buffer.size());
     } while (nframes == buffer.size() && nframes < max_depth);
 
-    for (std::size_t i = 0; i < nframes; ++i)
+    if (nframes < skip)
     {
-      if (i >= skip)
-      {
-        container.emplace_back();
-        container.back().address = buffer[i];
-      }
+      container.clear();
+      return;
+    }
+
+    container = array<posix_stacktrace_entry, Allocator>(
+        nframes - skip, container.get_allocator());
+
+    for (std::size_t i = skip; i < nframes; ++i)
+    {
+      container[i - skip].address = buffer[i];
     }
   }
   GPCL_CATCH(...) {}
