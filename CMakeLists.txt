@@ -26,7 +26,6 @@ option(GPCL_BUILD_TESTING "enable testing support" ON)
 option(GPCL_BUILD_DOC "enable document generation" ON)
 option(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE
        "link to external cppreference documentation" TRUE)
-option(GPCL_ENABLE_PCH "Enable precompiled headers" OFF)
 option(GPCL_ENABLE_LLVM "Link to LLVM if found" TRUE)
 option(GPCL_LINK_TO_LLVM_SO "Link to libLLVM.so rather than LLVMSymbolize"
        FALSE)
@@ -107,10 +106,6 @@ endif()
 if(MINGW)
   target_compile_options(gpcl INTERFACE "-Wa,-mbig-obj")
   target_link_libraries(gpcl PUBLIC)
-endif()
-
-if(GPCL_ENABLE_PCH)
-  target_precompile_headers(gpcl INTERFACE $<BUILD_INTERFACE:<gpcl.hpp>>)
 endif()
 
 target_compile_features(gpcl PUBLIC cxx_std_17)

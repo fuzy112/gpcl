@@ -48,6 +48,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(tests ${TESTS_SRCS} include_src.cpp)
 target_link_libraries(tests PRIVATE gpcl::gpcl ${TEST_FIXTURES})
+target_precompile_headers(tests PRIVATE <gpcl.hpp>)
+
 
 include(doctest.cmake)
 
