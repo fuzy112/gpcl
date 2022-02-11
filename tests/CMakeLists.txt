@@ -50,7 +50,7 @@ target_link_libraries(tests PRIVATE gpcl::gpcl ${TEST_FIXTURES})
 
 include(doctest.cmake)
 
-doctest_discover_tests(tests WORKING_DIRECTORY "${GPCL_BINARY_DIR}")
+doctest_discover_tests(tests WORKING_DIRECTORY "${GPCL_BINARY_DIR}/bin")
 
 add_executable(meta-test meta_test.cpp)
 target_link_libraries(meta-test PRIVATE gpcl::gpcl)

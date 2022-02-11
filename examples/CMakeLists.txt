@@ -3,7 +3,7 @@ function(add_example_executable target)
   target_link_libraries(${target} PRIVATE gpcl::gpcl)
 
   if(BUILD_TESTING)
-    add_test(NAME "example/${target}" COMMAND ${target} WORKING_DIRECTORY "${GPCL_BINARY_DIR}")
+    add_test(NAME "example/${target}" COMMAND ${target} WORKING_DIRECTORY "${GPCL_BINARY_DIR}/bin")
   endif()
 endfunction()
 
