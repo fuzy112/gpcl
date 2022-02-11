@@ -102,6 +102,7 @@ public:
   constexpr void
   swap(propagate_const &other) noexcept(std::is_nothrow_swappable_v<T>)
   {
+    using gpcl::swap;
     swap(t_, other.t_);
   }
 

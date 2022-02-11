@@ -1,5 +1,6 @@
 set(TESTS_SRCS
     any_test.cpp
+    array_test.cpp
     bind_front_test.cpp
     buffers_test.cpp
     condition_variable_test.cpp
