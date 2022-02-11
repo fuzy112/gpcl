@@ -31,8 +31,11 @@ win_dbg_helper::win_dbg_helper()
 {
   auto lk = lock();
 
-  SymInitialize(process(), NULL, TRUE);
-  SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
+  if (!SymInitialize(process(), NULL, TRUE))
+  {
+    throw_system_error(__func__);
+  }
+  SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
 }
 
 win_dbg_helper::~win_dbg_helper()
@@ -62,11 +65,11 @@ std::string win_stacktrace_entry::description() const
   DWORD64 displacement = 0;
 
   BOOL status;
-  {
-    auto lock = g_win_dbg_helper.lock();
-    status = SymFromAddr(g_win_dbg_helper.process(), (std::intptr_t)addr_,
-                         &displacement, symbol);
-  }
+
+  auto lock = g_win_dbg_helper.lock();
+  status = SymFromAddr(g_win_dbg_helper.process(), (std::intptr_t)addr_,
+                       &displacement, symbol);
+
   if (status)
     return std::string(symbol->Name, symbol->NameLen);
   return "";
