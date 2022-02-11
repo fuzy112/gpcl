@@ -16,7 +16,17 @@
 #include <gpcl/optional.hpp>
 
 #include <dlfcn.h>
+
+GPCL_GCC_SUPPRESS_WARNING_PUSH
+GPCL_GCC_SUPPRESS_WARNING("-Wunused-parameter")
+
+GPCL_CLANG_SUPPRESS_WARNING_PUSH
+GPCL_CLANG_SUPPRESS_WARNING("-Wunused-parameter")
+
 #include <llvm/DebugInfo/Symbolize/Symbolize.h>
+
+GPCL_CLANG_SUPPRESS_WARNING_POP
+GPCL_GCC_SUPPRESS_WARNING_POP
 
 #include <unordered_map>
 
@@ -61,7 +71,7 @@ optional<llvm_line_info> llvm_symbolize_code(const void *volatile address)
 
   std::uint64_t offset = 0;
   llvm::object::SectionRef section;
-  
+
   for (auto sect : obj->sections())
   {
     if (!sect.isText())

@@ -54,6 +54,32 @@ auto tag_invoke(format_error_info_fn<Tag, T>, const T &v)
 
 } // namespace error_info_detail
 
+class error_info_ref
+{
+  const error_info_base *p_ = nullptr;
+
+public:
+  error_info_ref() noexcept = default;
+
+  explicit error_info_ref(const error_info_base &e) noexcept : p_(&e) {}
+  explicit error_info_ref(const error_info_base &&) = delete;
+
+  bool next() noexcept { return (p_ = p_->next_); }
+
+  bool is_valid() const noexcept { return p_ != nullptr; }
+
+  const type_info &type() const noexcept { return p_->type(); }
+
+  std::ostream &format_to(std::ostream &os) const { return p_->format_to(os); }
+
+  bool operator==(error_info_ref const &other) const noexcept
+  {
+    return p_ == other.p_;
+  }
+
+  const error_info_base *get() const noexcept { return p_; }
+};
+
 } // namespace gpcl::detail
 
 #endif // GPCL_DETAIL_ERROR_INFO_IMPL_HPP

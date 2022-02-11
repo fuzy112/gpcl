@@ -16,7 +16,7 @@
 #include <gpcl/exception.hpp>
 #include <gpcl/make_iomanip.hpp>
 
-#ifdef GPCL_NO_EXCEPTIONS
+#ifdef GPCL_CONFIG_NO_EXCEPTIONS
 #  include <gpcl/stacktrace.hpp>
 #endif
 
@@ -57,7 +57,7 @@ wrapped_exception<typename std::decay<E>::type> enable_error_info(E &&e)
 template <typename E>
 [[noreturn]] void throw_exception(E &&e)
 {
-#if defined GPCL_NO_EXCEPTIONS
+#if defined GPCL_CONFIG_NO_EXCEPTIONS
   cdebug()
       << "Trying to throw an exception, but exception support is disabled.\n"
       << enable_error_info(e) << "\nTracing back:\n"

@@ -11,7 +11,6 @@
 #ifndef GPCL_DETAIL_THROW_SYSTEM_ERROR_HPP
 #define GPCL_DETAIL_THROW_SYSTEM_ERROR_HPP
 
-
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
 
@@ -28,10 +27,20 @@ template <typename E>
 #  define GPCL_NORETURN_UNLESS_CLANG [[noreturn]]
 #endif
 
-extern template GPCL_NORETURN_UNLESS_CLANG GPCL_EXPORT_DECL void
+#if defined(GPCL_SOURCE) && defined(GPCL_DYN_LINK)
+#  define GPCL_DECL_EXPORT_ONLY GPCL_SYMBOL_EXPORT
+#else
+#  define GPCL_DECL_EXPORT_ONLY
+#endif
+
+extern template GPCL_NORETURN_UNLESS_CLANG GPCL_DECL_EXPORT_ONLY void
 throw_exception(detail::system_error &&e);
-extern template GPCL_NORETURN_UNLESS_CLANG GPCL_EXPORT_DECL void
+
+extern template GPCL_NORETURN_UNLESS_CLANG GPCL_DECL_EXPORT_ONLY void
 throw_exception(detail::system_error &e);
+
+extern template GPCL_NORETURN_UNLESS_CLANG GPCL_DECL_EXPORT_ONLY void
+throw_exception(const detail::system_error &e);
 
 namespace detail {
 
@@ -69,6 +78,5 @@ template <typename Errc, typename std::enable_if<!std::is_integral<Errc>::value,
 
 } // namespace detail
 } // namespace gpcl
-
 
 #endif // GPCL_DETAIL_THROW_SYSTEM_ERROR_HPP

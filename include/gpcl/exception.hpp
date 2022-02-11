@@ -11,11 +11,13 @@
 #ifndef GPCL_EXCEPTION_HPP
 #define GPCL_EXCEPTION_HPP
 
+#include <gpcl/content_iterator.hpp>
 #include <gpcl/debugstream.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error_info.hpp>
 #include <gpcl/excfwd.hpp>
 #include <gpcl/generic_pointer_cast.hpp>
+#include <gpcl/iterator_range.hpp>
 #include <gpcl/make_iomanip.hpp>
 
 namespace gpcl {
@@ -60,7 +62,28 @@ protected:
     return e->next_;
   }
 
-  void update_error_infos() { list_ = nullptr; }
+  using error_info_iterator = content_iterator<detail::error_info_ref>;
+
+  error_info_iterator error_info_begin() const noexcept
+  {
+    if (!list_)
+      return error_info_end();
+    detail::error_info_ref e(*list_);
+    return error_info_iterator(e);
+  }
+
+  error_info_iterator error_info_end() const noexcept
+  {
+    detail::error_info_ref e;
+    return error_info_iterator(e);
+  }
+
+  iterator_range<error_info_iterator> error_infos() const noexcept
+  {
+    return {error_info_begin(), error_info_end()};
+  }
+
+  void update_error_infos() noexcept { list_ = nullptr; }
 };
 
 namespace detail {
@@ -71,10 +94,8 @@ class exception_with_error_info : public Base
   std::tuple<ErrorInfos...> error_infos_;
 
 protected:
-  void update_error_infos()
+  void update_error_infos() noexcept
   {
-    // Base::update_error_infos();
-
     const error_info_base **pp = &this->list_;
     while (*pp)
       pp = &this->next(*pp);
@@ -84,15 +105,24 @@ protected:
 public:
   exception_with_error_info(const Base &base,
                             const std::tuple<ErrorInfos...> &error_infos)
-      : Base(base),
+      : exception(base),
+        Base(base),
         error_infos_(error_infos)
   {
     update_error_infos();
   }
 
   exception_with_error_info(const exception_with_error_info &other)
-      : Base(static_cast<const Base &>(other)),
+      : exception(std::move(other)),
+        Base(static_cast<const Base &>(other)),
         error_infos_(other.error_infos_)
+  {
+    update_error_infos();
+  }
+
+  exception_with_error_info(exception_with_error_info &&other) noexcept
+      : Base(static_cast<Base &&>(other)),
+        error_infos_(std::move(other.error_infos_))
   {
     update_error_infos();
   }
@@ -104,6 +134,15 @@ public:
     update_error_infos();
     return *this;
   }
+
+  exception_with_error_info &
+  operator=(exception_with_error_info &&other) noexcept
+  {
+    static_cast<Base &>(*this) = static_cast<Base &&>(other);
+    error_infos_ = std::move(other.error_infos_);
+    update_error_infos();
+    return *this;
+  }
 };
 
 } // namespace detail
@@ -112,11 +151,11 @@ template <typename ErrorInfo>
 typename ErrorInfo::value_type const *
 get_error_info(exception const &exc) noexcept
 {
-  for (const detail::error_info_base *p = exc.list_; p != nullptr;
-       p = exc.next(p))
+  for (auto e : exc.error_infos())
   {
-    if (p->type() == typeid_<ErrorInfo *>())
-      return std::addressof(static_pointer_cast<const ErrorInfo>(p)->value());
+    if (e.type() == typeid_<ErrorInfo *>())
+      return std::addressof(
+          static_pointer_cast<const ErrorInfo>(e.get())->value());
   }
   return nullptr;
 }
@@ -180,10 +219,8 @@ auto diagnostic_information(const E &e)
     if (!ge)
       return;
 
-    for (const detail::error_info_base *p = ge->list_; p != nullptr;
-         p = ge->next(p))
+    for (auto ei : ge->error_infos())
     {
-      auto &ei = *p;
       s << "  ";
       ei.format_to(s) << "\n";
     }

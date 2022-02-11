@@ -130,7 +130,7 @@ struct get_fn
                              int> = 0>
   void operator()(const step_result &result, int column, T &value) const
   {
-    return gpcl::tag_invoke(*this, column, value);
+    return gpcl::tag_invoke(*this, result, column, value);
   }
 };
 

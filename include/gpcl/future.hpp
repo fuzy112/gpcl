@@ -211,7 +211,7 @@ future<std::invoke_result_t<F>> async(F &&f)
     GPCL_TRY { promise_.set_value(f()); }
     GPCL_CATCH(system_error const &exc)
     {
-#if !defined(GPCL_NO_EXCEPTIONS)
+#if !defined(GPCL_CONFIG_NO_EXCEPTIONS)
       promise_.set_error(exc.code());
 #endif
     }

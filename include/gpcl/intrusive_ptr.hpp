@@ -313,7 +313,7 @@ intrusive_ptr<T> static_pointer_cast(const intrusive_ptr<Y> &p) noexcept
   return intrusive_ptr<T>(static_pointer_cast<T>(p.get()), true);
 }
 
-#if !defined GPCL_NO_RTTI
+#if !defined GPCL_CONFIG_NO_RTTI
 template <typename T, typename U>
 intrusive_ptr<T> dynamic_pointer_cast(const intrusive_ptr<U> &p) noexcept
 {

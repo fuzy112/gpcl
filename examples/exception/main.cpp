@@ -49,10 +49,12 @@ public:
 FILE *openFile(const char *name)
 {
   FILE *p = std::fopen(name, "r");
+  my_error e;
+  auto e1 = e << cerrno_errinfo(errno);
+  auto e2 = std::move(e1) << filename_errinfo(name);
+  auto e3 = std::move(e2) << stacktrace_errinfo(gpcl::stacktrace::current());
   if (!p)
-    GPCL_THROW_EXCEPTION(my_error()
-                         << cerrno_errinfo(errno) << filename_errinfo(name)
-                         << stacktrace_errinfo(gpcl::stacktrace::current()));
+    GPCL_THROW_EXCEPTION(e3);
   return p;
 }
 #ifdef _MSC_VER

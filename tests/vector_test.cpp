@@ -181,7 +181,7 @@ TEST_CASE("[vector]"
   {
     CHECK(v.at(1) == 2);
     CHECK(v.at(2) == 3);
-#if !defined GPCL_NO_EXCEPTIONS
+#if !defined GPCL_CONFIG_NO_EXCEPTIONS
     CHECK_THROWS_AS(v.at(v.size() + 1), std::out_of_range);
 #endif
   }
@@ -254,7 +254,7 @@ TEST_CASE("[vector]"
     CHECK(*iv.insert(iv.cbegin() + 2, i) == -1);
     CHECK(iv[2] == -1);
 
-#if !GPCL_NO_EXCEPTIONS
+#if !defined(GPCL_CONFIG_NO_EXCEPTIONS)
     ThrowWhenCopy t(34);
     CHECK(tv.size() == 3);
     CHECK_THROWS(tv.insert(tv.cend(), t));

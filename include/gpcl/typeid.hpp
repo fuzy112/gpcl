@@ -14,7 +14,7 @@
 
 #include <gpcl/detail/config.hpp>
 
-#if defined(GPCL_NO_RTTI)
+#if defined(GPCL_CONFIG_NO_RTTI)
 #  include <gpcl/detail/typeid.hpp>
 #else
 #  include <typeinfo>
@@ -24,7 +24,7 @@
 
 namespace gpcl {
 
-#if defined(GPCL_NO_RTTI)
+#if defined(GPCL_CONFIG_NO_RTTI)
 using type_info = detail::type_info;
 
 template <typename T>

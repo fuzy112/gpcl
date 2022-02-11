@@ -17,6 +17,10 @@ namespace gpcl::detail {
 
 template <typename StrType>
 void strerror_impl(StrType &str, int errnum);
+
+template <typename T>
+void strerror_impl(const T &, int) = delete;
+
 } // namespace gpcl::detail
 
 #include <gpcl/detail/impl/strerror.hpp>

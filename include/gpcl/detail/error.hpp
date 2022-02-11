@@ -16,7 +16,7 @@
 
 #include <iosfwd>
 
-#if !(defined GPCL_NO_EXCEPTIONS)
+#if !(defined GPCL_CONFIG_NO_EXCEPTIONS)
 #  define GPCL_TRY                                                             \
     {                                                                          \
       try

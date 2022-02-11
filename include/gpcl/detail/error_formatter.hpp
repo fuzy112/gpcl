@@ -28,7 +28,7 @@ template <typename E, typename = void>
 class error_formatter
 {
 public:
-#if !defined(GPCL_NO_RTTI)
+#if !defined(GPCL_CONFIG_NO_RTTI)
   template <typename OutIt>
   static OutIt format(OutIt out, const E &)
   {
@@ -81,7 +81,7 @@ public:
   template <typename OutIt>
   static OutIt format(OutIt out, const std::exception_ptr &eptr)
   {
-#ifndef GPCL_NO_EXCEPTIONS
+#ifndef GPCL_CONFIG_NO_EXCEPTIONS
     GPCL_TRY
     {
       if (eptr)
@@ -113,4 +113,4 @@ OutIt format_error_to(OutIt out, const E &e)
 } // namespace detail
 } // namespace gpcl
 
-#endif
+#endif // GPCL_DETAIL_ERROR_FORMATTER_HPP

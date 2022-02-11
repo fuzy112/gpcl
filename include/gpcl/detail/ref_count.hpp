@@ -154,7 +154,7 @@ public:
 public:
   explicit inline ref_count_ptr(ref_count_base::operation_func_t op_func,
                                 Allocator a, Ptr p, Deleter d)
-#if defined GPCL_NO_EXCEPTIONS
+#if defined GPCL_CONFIG_NO_EXCEPTIONS
       : base_type(op_func, a),
         p_(p, std::move(d))
   {

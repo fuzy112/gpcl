@@ -217,7 +217,7 @@ weak_ptr<T> static_pointer_cast(const weak_ptr<U> &p) noexcept
   return p.generic_pointer_cast_helper(static_cast<T *>(p.get_unchecked()));
 }
 
-#if !defined GPCL_NO_RTTI
+#if !defined GPCL_CONFIG_NO_RTTI
 template <typename T, typename U>
 weak_ptr<T> dynamic_pointer_cast(const weak_ptr<U> &p) noexcept;
 #endif

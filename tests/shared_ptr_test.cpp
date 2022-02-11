@@ -224,7 +224,7 @@ TEST_CASE("weak_ptr")
     }
   }
 
-#if !defined GPCL_NO_RTTI
+#if !defined GPCL_CONFIG_NO_RTTI
   SUBCASE("dynamic_pointer_cast")
   {
     class A

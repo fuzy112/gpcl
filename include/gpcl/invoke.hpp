@@ -125,9 +125,8 @@ struct invoke_result_impl
 
 template <typename F, typename... Ts>
 struct invoke_result_impl<F, meta::list<Ts...>,
-                          decltype(detail::invoke_impl(std::declval<F>(),
-                                                       std::declval<Ts>()...),
-                                   void())>
+                          decltype((void)detail::invoke_impl(
+                              std::declval<F>(), std::declval<Ts>()...))>
 {
   using type =
       decltype(detail::invoke_impl(std::declval<F>(), std::declval<Ts>()...));

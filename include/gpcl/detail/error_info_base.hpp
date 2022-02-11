@@ -19,6 +19,7 @@
 namespace gpcl::detail {
 
 class error_info_base;
+class error_info_ref;
 
 template <typename E1, typename... Es>
 void link_error_info_helper(const error_info_base **pp, E1 &e1,
@@ -27,6 +28,7 @@ void link_error_info_helper(const error_info_base **pp, E1 &e1,
 class error_info_base
 {
   friend ::gpcl::exception;
+  friend error_info_ref;
 
   template <typename E1, typename... Es>
   friend void link_error_info_helper(const error_info_base **pp, E1 &e1,

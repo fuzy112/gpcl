@@ -17,6 +17,7 @@
 #include <gpcl/any.hpp>
 #include <gpcl/any_cast.hpp>
 #include <gpcl/apply.hpp>
+#include <gpcl/array.hpp>
 #include <gpcl/assert.hpp>
 #include <gpcl/bad_any_cast.hpp>
 #include <gpcl/bad_expected_access.hpp>
@@ -38,6 +39,7 @@
 #include <gpcl/clone_ptr.hpp>
 #include <gpcl/condition_variable.hpp>
 #include <gpcl/const_buffer.hpp>
+#include <gpcl/content_iterator.hpp>
 #include <gpcl/creation_tag.hpp>
 #include <gpcl/debugstream.hpp>
 #include <gpcl/decay_copy.hpp>
@@ -67,6 +69,7 @@
 #include <gpcl/is_basic_lockable.hpp>
 #include <gpcl/is_lockable.hpp>
 #include <gpcl/ispanstream.hpp>
+#include <gpcl/iterator_range.hpp>
 #include <gpcl/json.hpp>
 #include <gpcl/json_at.hpp>
 #include <gpcl/json_cast.hpp>

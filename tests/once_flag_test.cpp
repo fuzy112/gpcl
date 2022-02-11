@@ -61,7 +61,7 @@ TEST_CASE("once_flag recursive")
   REQUIRE(var2 == 1);
 }
 
-#  if !defined(GPCL_NO_EXCEPTIONS)
+#  if !defined(GPCL_CONFIG_NO_EXCEPTIONS)
 TEST_CASE("once_flag exception")
 {
   once_flag once;

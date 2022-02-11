@@ -18,10 +18,6 @@ Target variant_to(const variant<Types...> &v)
 
 int main()
 {
-  int x = 42;
-
-  // std::wcout << lexical_cast<std::wstring>(x) << std::endl;
-
   std::cout << lexical_cast<double>("0.5") << std::endl;
 
   variant_type v = "42";
@@ -29,7 +25,7 @@ int main()
   std::cout << variant_to<float>(v) << std::endl;
   std::cout << variant_to<std::string>(v) << std::endl;
 
-#if !defined GPCL_NO_EXCEPTIONS
+#if !defined GPCL_CONFIG_NO_EXCEPTIONS
   // This will crash without exception support.
   GPCL_TRY 
   { 

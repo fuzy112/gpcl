@@ -21,7 +21,7 @@ Deleter *get_deleter(const shared_ptr<T> &p) noexcept
 {
   if (p.use_count() == 0)
     return nullptr;
-#if !defined GPCL_NO_RTTI
+#if !defined GPCL_CONFIG_NO_RTTI
   auto* ty = static_cast<const type_info *>(
       p.s_->operate(detail::get_deleter_type_info));
   if (!ty)

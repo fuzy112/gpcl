@@ -138,7 +138,7 @@ struct any_manager
     case any_manage_op::get_pointer:
       return get_pointer(source, local_storage);
 
-#ifndef GPCL_NO_RTTI
+#ifndef GPCL_CONFIG_NO_RTTI
     case any_manage_op::get_type_info:
       return const_cast<type_info *>(get_type_info(source));
 #endif
