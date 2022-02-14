@@ -15,6 +15,8 @@
 #include <gpcl/debugstream.hpp>
 #include <gpcl/detail/assertion_failure.hpp>
 
+#include <cstdlib>
+
 namespace gpcl::detail {
 
 void assertion_failure(const char *expr, const char *file,
@@ -24,7 +26,7 @@ void assertion_failure(const char *expr, const char *file,
 
   if (assertion_failed)
   {
-    abort();
+    std::abort();
   }
   assertion_failed = true;
 
@@ -41,6 +43,7 @@ void assertion_failure(const char *expr, const char *file,
            << basic_stacktrace<std::allocator<stacktrace_entry>>::current(2)
 #endif
            << std::endl;
+  std::abort();
 }
 
 } // namespace gpcl::detail
