@@ -8,11 +8,12 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_RC_ITEM_HPP
-#define GPCL_RC_ITEM_HPP
+#ifndef GPCL_RC_SPEC_HPP
+#define GPCL_RC_SPEC_HPP
 
 #include <gpcl/span.hpp>
 #include <gpcl/variant.hpp>
+#include <gpcl/array.hpp>
 
 #include <string>
 
@@ -52,12 +53,12 @@ public:
 class dir
 {
   std::string name_;
-  std::vector<node> nodes_;
+  gpcl::array<node> nodes_;
 
 public:
   dir() = default;
 
-  explicit dir(std::string name, std::vector<node> nodes)
+  explicit dir(std::string name, gpcl::array<node> nodes)
       : name_(std::move(name)),
         nodes_(std::move(nodes))
   {
@@ -115,4 +116,4 @@ public:
 } // namespace rc
 } // namespace gpcl
 
-#endif // GPCL_RC_ITEM_HPP
+#endif // GPCL_RC_SPEC_HPP

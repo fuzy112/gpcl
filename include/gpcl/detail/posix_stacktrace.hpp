@@ -341,17 +341,16 @@ void posix_stacktrace_impl(size_t skip, size_t max_depth,
         array<void *, typename std::allocator_traits<
                           Allocator>::template rebind_alloc<void *>>;
     buffer_type buffer(container.get_allocator());
-    buffer = buffer_type(posix_stacktrace_impl_start_buffer_size,
-                         container.get_allocator());
+    buffer.resize(posix_stacktrace_impl_start_buffer_size);
 
     std::size_t nframes;
 
     do
     {
       if (buffer.size() * 2 > max_depth)
-        buffer = buffer_type(max_depth, container.get_allocator());
+        buffer.resize(max_depth);
       else
-        buffer = buffer_type(buffer.size() * 2, container.get_allocator());
+        buffer.resize(buffer.size() * 2);
       nframes = backtrace(buffer.data(), buffer.size());
     } while (nframes == buffer.size() && nframes < max_depth);
 
@@ -361,8 +360,7 @@ void posix_stacktrace_impl(size_t skip, size_t max_depth,
       return;
     }
 
-    container = array<posix_stacktrace_entry, Allocator>(
-        nframes - skip, container.get_allocator());
+    container.resize(nframes - skip);
 
     for (std::size_t i = skip; i < nframes; ++i)
     {

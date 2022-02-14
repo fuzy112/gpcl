@@ -11,6 +11,7 @@
 #ifndef GPCL_SPAN_HPP
 #define GPCL_SPAN_HPP
 
+#include <gpcl/array.hpp>
 #include <gpcl/assert.hpp>
 #include <gpcl/default_allocator.hpp>
 #include <gpcl/detail/config.hpp>
@@ -18,7 +19,6 @@
 #include <gpcl/detail/utility.hpp>
 
 #include <array>
-#include <vector>
 
 #if __cplusplus >= 201703
 #  include <string_view>
@@ -298,13 +298,6 @@ public:
   }
 
   // extensions
-
-  template <typename Allocator = std::allocator<value_type>>
-  [[nodiscard]] std::vector<value_type, Allocator>
-  to_vector(Allocator alloc = Allocator()) const
-  {
-    return std::vector<value_type, Allocator>(begin(), end(), alloc);
-  }
 
 #if __cplusplus >= 201703L
   template <typename U = value_type,

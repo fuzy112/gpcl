@@ -25,6 +25,10 @@
 #include <exception>
 #include <initializer_list>
 
+#ifndef GPCL_CONFIG_NO_IOSTEAMS
+#  include <ostream>
+#endif
+
 namespace gpcl {
 
 /// A vector-like container with strong exception guarantee.
@@ -182,6 +186,9 @@ public:
 
   void clear() noexcept { keep_first_n(0); }
 
+  // @todo optimize 
+  void shrink_to_fit() { array(*this, get_allocator()).swap(*this); }
+
 private:
   void keep_first_n(size_t num_to_keep) noexcept
   {
@@ -293,7 +300,7 @@ public:
     swap(capacity_, other.capacity_);
   }
 
-private:
+public:
   template <
       typename FwdIt, typename A = Allocator,
       typename std::enable_if<!std::allocator_traits<A>::is_always_equal::value,
@@ -326,6 +333,17 @@ private:
       (*this)[i] = *first++;
     }
   }
+
+  template <typename FwdIt>
+  void assign(FwdIt first, FwdIt last)
+  {
+    assign(first, last, get_allocator());
+  }
+
+  // void assign(size_type n, const T &x)
+  // {
+
+  // }
 
 public:
   void swap(array &other) noexcept(
@@ -374,7 +392,133 @@ private:
   }
 
 public:
-  // void resize(size_type n) { array() }
+  void reserve(size_type n)
+  {
+    if (n <= capacity_)
+      return;
+
+    auto backup_data = std::move(p_.second());
+    auto backup_size = size_;
+    auto backup_capacity = capacity_;
+
+    capacity_ = n;
+    size_ = 0;
+
+    T *const s = p_.second() =
+        std::allocator_traits<Allocator>::allocate(p_.first(), capacity_);
+    GPCL_TRY
+    {
+      while (backup_size != size_)
+      {
+        std::allocator_traits<Allocator>::construct(
+            p_.first(), &s[size_], std::move_if_noexcept(backup_data[size_]));
+        ++size_;
+      }
+
+      while (backup_size > 0)
+      {
+        std::allocator_traits<Allocator>::destroy(
+            p_.first(), &backup_data[backup_size - 1]);
+        --backup_size;
+      }
+      std::allocator_traits<Allocator>::deallocate(p_.first(), backup_data,
+                                                   backup_capacity);
+    }
+    GPCL_CATCH(...)
+    {
+      release();
+      p_.second() = std::move(backup_data);
+      size_ = backup_size;
+      capacity_ = backup_capacity;
+      GPCL_RETHROW;
+    }
+    GPCL_CATCH_END
+
+    GPCL_ASSERT(capacity() >= n);
+  }
+
+  void grow(size_type n)
+  {
+    if (capacity_ == 0 && n != 0)
+    {
+      reserve(n);
+    }
+
+    else if (capacity_ < n)
+    {
+      auto new_capacity = (n + capacity_ - 1) / capacity_ * capacity_;
+
+      reserve(new_capacity);
+    }
+
+    GPCL_ASSERT(capacity_ >= n);
+  }
+
+  void resize(size_type n)
+  {
+    reserve(n);
+
+    if (n <= size_)
+    {
+      keep_first_n(n);
+      return;
+    }
+
+    else
+    {
+      auto orig_size = size_;
+      GPCL_TRY
+      {
+        while (size_ < n)
+        {
+          std::allocator_traits<Allocator>::construct(p_.first(),
+                                                      &p_.second()[size_]);
+          ++size_;
+        }
+      }
+      GPCL_CATCH(...)
+      {
+        keep_first_n(orig_size);
+        GPCL_RETHROW;
+      }
+      GPCL_CATCH_END
+
+      return;
+    }
+  }
+
+  void resize(size_type n, const T &x)
+  {
+    reserve(n);
+
+    if (n <= size_)
+    {
+      keep_first_n(n);
+      return;
+    }
+
+    else
+    {
+      auto orig_size = size_;
+      GPCL_TRY
+      {
+        while (size_ < n)
+        {
+          std::allocator_traits<Allocator>::construct(p_.first(),
+                                                      &p_.second()[size_], x);
+          ++size_;
+        }
+      }
+      GPCL_CATCH(...)
+      {
+        keep_first_n(orig_size);
+        GPCL_RETHROW;
+      }
+      GPCL_CATCH_END
+
+      return;
+    }
+  }
 
 public:
   Allocator get_allocator() const noexcept { return p_.first(); }
@@ -385,10 +529,7 @@ public:
 
   std::size_t size() const noexcept { return size_; }
 
-  bool empty() const noexcept
-  {
-    return size_ == 0;
-  }
+  bool empty() const noexcept { return size_ == 0; }
 
   std::size_t capacity() const noexcept { return capacity_; }
 
@@ -429,6 +570,59 @@ public:
   const T *end() const noexcept { return data() + size(); }
 
   const T *cend() const noexcept { return data() + size(); }
+
+  T &front() noexcept
+  {
+    GPCL_ASSERT(!empty());
+    return *begin();
+  }
+
+  const T &front() const noexcept
+  {
+    GPCL_ASSERT(!empty());
+    return *begin();
+  }
+
+  T &back() noexcept
+  {
+    GPCL_ASSERT(!empty());
+    return *std::prev(end());
+  }
+
+  const T &back() const noexcept
+  {
+    GPCL_ASSERT(!empty());
+    return *std::prev(end());
+  }
+
+  template <typename... Args>
+  reference emplace_back(Args &&...args)
+  {
+    grow(size() + 1);
+
+    std::allocator_traits<Allocator>::construct(p_.first(), &data()[size_],
+                                                std::forward<Args>(args)...);
+    ++size_;
+    return back();
+  }
+
+  void push_back(const T &x)
+  {
+    static_assert(std::is_copy_constructible<T>::value, "");
+    emplace_back(x);
+  }
+
+  void push_back(T &&x)
+  {
+    static_assert(std::is_move_constructible<T>::value, "");
+    emplace_back(std::move(x));
+  }
+
+  void pop_back() noexcept
+  {
+    std::allocator_traits<Allocator>::construct(p_.first(), &data()[size_]);
+    --size_;
+  }
 };
 
 template <typename T, typename Allocator>
@@ -458,6 +652,33 @@ bool operator<(const array<T, Allocator> &x,
 {
   return std::lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());
 }
+
+#ifndef GPCL_CONFIG_NO_IOSTREAMS
+template <typename CharT, typename Traits, typename T, typename Allocator>
+std::basic_ostream<CharT, Traits> &
+operator<<(std::basic_ostream<CharT, Traits> &os,
+           const array<T, Allocator> &arr)
+{
+  typename std::basic_ostream<CharT, Traits>::sentry valid(os);
+  if (!valid)
+    return os;
+
+  os << CharT('[');
+  bool need_comma = false;
+  for (const auto &x : arr)
+  {
+    if (need_comma)
+      os << CharT(',') << CharT(' ');
+    else
+      need_comma = true;
+
+    os << x;
+  }
+
+  os << CharT(']');
+  return os;
+}
+#endif
 
 } // namespace gpcl
 

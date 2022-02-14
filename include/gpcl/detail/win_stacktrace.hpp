@@ -11,6 +11,7 @@
 #ifndef GPCL_DETAIL_WIN_STACKTRACE_HPP
 #define GPCL_DETAIL_WIN_STACKTRACE_HPP
 
+#include <gpcl/array.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
 
@@ -18,7 +19,6 @@
 #include <cstring>
 #include <iomanip>
 #include <type_traits>
-#include <vector>
 
 #if defined(GPCL_NO_STACKTRACE)
 #  error "This header should not be included."
@@ -135,7 +135,7 @@ class basic_win_stacktrace
       std::is_same<typename std::allocator_traits<Allocator>::value_type,
                    win_stacktrace_entry>::value);
 
-  std::vector<win_stacktrace_entry, Allocator> data_;
+  gpcl::array<win_stacktrace_entry, Allocator> data_;
 
 public:
   using value_type = win_stacktrace_entry;
@@ -147,7 +147,7 @@ public:
   using difference_type = std::ptrdiff_t;
 
   using const_iterator =
-      typename std::vector<win_stacktrace_entry, Allocator>::const_iterator;
+      typename gpcl::array<win_stacktrace_entry, Allocator>::const_iterator;
   using iterator = const_iterator;
   using reverse_iterator = std::reverse_iterator<iterator>;
   using reverse_const_iterator = std::reverse_iterator<const_iterator>;

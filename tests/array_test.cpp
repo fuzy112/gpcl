@@ -150,4 +150,24 @@ TEST_CASE("array")
     // CHECK(arr1.capacity() == 0);
     // CHECK(arr1.data() == nullptr);
   }
+
+  SUBCASE("resize, push_back, pop_back")
+  {
+    gpcl::pmr::monotonic_buffer_resource resource1, resource2;
+    gpcl::pmr::polymorphic_allocator<int> alloc1(&resource1);
+    gpcl::pmr::polymorphic_allocator<int> alloc2(&resource2);
+    gpcl::array<int, gpcl::pmr::polymorphic_allocator<int>> arr1(10, alloc1);
+
+    CHECK(arr1.back() == 0);
+    CHECK(arr1.size() == 10);
+    CHECK(arr1.capacity() == 10);
+    arr1.push_back(1);
+    CHECK(arr1.size() == 11);
+    CHECK(arr1.capacity() == 20);
+    CHECK(arr1.back() == 1);
+    arr1.pop_back();
+    CHECK(arr1.back() == 0);
+    CHECK(arr1.size() == 10);
+    CHECK(arr1.capacity() == 20);
+  }
 }
