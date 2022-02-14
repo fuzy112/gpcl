@@ -30,6 +30,7 @@ option(GPCL_ENABLE_LLVM "Link to LLVM if found" TRUE)
 option(GPCL_LINK_TO_LLVM_SO "Link to libLLVM.so rather than LLVMSymbolize"
        FALSE)
 option(GPCL_ENABLE_BFD "Link to BFD if found" TRUE)
+option(GPCL_ENABLE_PCH "Enable precompiled headers" TRUE)
 option(BUILD_SHARED_LIBS "Create shared libraies" TRUE)
 
 check_ipo_supported(RESULT ipo_supported)

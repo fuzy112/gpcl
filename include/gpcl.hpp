@@ -79,6 +79,7 @@
 #include <gpcl/json_size.hpp>
 #include <gpcl/json_tag.hpp>
 #include <gpcl/lexical_cast.hpp>
+#include <gpcl/list.hpp>
 #include <gpcl/lock.hpp>
 #include <gpcl/lock_file.hpp>
 #include <gpcl/make_any.hpp>

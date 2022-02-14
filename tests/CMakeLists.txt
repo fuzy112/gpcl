@@ -12,6 +12,7 @@ set(TESTS_SRCS
     future_test.cpp
     invoke_test.cpp
     lexical_cast_test.cpp
+    list_test.cpp
     lock_file_test.cpp
     monotonic_buffer_resource_test.cpp
     mutex_test.cpp
@@ -49,7 +50,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(doctest_main STATIC main.cpp)
 add_executable(tests ${TESTS_SRCS})
 target_link_libraries(tests PRIVATE doctest_main gpcl::gpcl ${TEST_FIXTURES})
-target_precompile_headers(tests PRIVATE "pch.hpp")
+if(GPCL_ENABLE_PCH)
+  target_precompile_headers(tests PRIVATE "pch.hpp")
+endif()
 set_target_properties(tests
   PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin")
 
