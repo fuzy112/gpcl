@@ -16,7 +16,7 @@
 
 namespace gpcl {
 
-template <typename T, typename Allocator = std::allocator<T>>
+template <typename T, typename Allocator = default_allocator<T>>
 using vector = array<T, Allocator>;
 
 } // namespace gpcl
