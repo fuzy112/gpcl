@@ -124,7 +124,8 @@
         "cfenv": "cpp",
         "__functional_base_03": "cpp",
         "filesystem": "cpp",
-        "unordered_set": "cpp"
+        "unordered_set": "cpp",
+        "__functional_03": "cpp"
     },
     "svn.ignoreMissingSvnWarning": true,
     "C/C++ Include Guard.Comment Style": "Line",

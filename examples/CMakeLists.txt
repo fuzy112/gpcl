@@ -1,9 +1,9 @@
 function(add_example_executable target)
   add_executable(${target} ${ARGN})
   target_link_libraries(${target} PRIVATE gpcl::gpcl)
-
+  set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY  "${GPCL_BINARY_DIR}/bin")
   if(BUILD_TESTING)
-    add_test(NAME "example/${target}" COMMAND ${target} WORKING_DIRECTORY "${GPCL_BINARY_DIR}/bin")
+    add_test(NAME "example/${target}" COMMAND ${target})
   endif()
 endfunction()
 

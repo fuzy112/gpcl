@@ -42,18 +42,19 @@ foreach(name ${TEST_FIXTURES})
                                PUBLIC "-D$<UPPER_CASE:${name}>_STATIC_DEFINE")
   endif()
   target_link_libraries("${name}" PUBLIC gpcl::gpcl)
+  set_target_properties("${name}" PROPERTIES "${GPCL_BINARY_DIR}/bin")
 endforeach()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(tests ${TESTS_SRCS} include_src.cpp)
 target_link_libraries(tests PRIVATE gpcl::gpcl ${TEST_FIXTURES})
-target_precompile_headers(tests PRIVATE <gpcl.hpp>)
-
+set_target_properties(tests
+  PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin")
 
 include(doctest.cmake)
 
-doctest_discover_tests(tests WORKING_DIRECTORY "${GPCL_BINARY_DIR}/bin")
+doctest_discover_tests(tests)
 
 add_executable(meta-test meta_test.cpp)
 target_link_libraries(meta-test PRIVATE gpcl::gpcl)

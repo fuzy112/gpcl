@@ -116,6 +116,8 @@ if("${library_type}" STREQUAL "SHARED_LIBRARY")
   target_compile_definitions(gpcl PUBLIC GPCL_DYN_LINK=1)
 endif()
 
+file(MAKE_DIRECTORY "${GPCL_BINARY_DIR}/bin")
+
 set_target_properties(
   gpcl
   PROPERTIES SOVERSION 600
