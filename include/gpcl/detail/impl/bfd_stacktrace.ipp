@@ -168,7 +168,8 @@ inline bfd_cache *cached_bfd_from_address(const void *address,
       }
       abfd = unique_bfd(abfd_);
 
-      bfd_check_format(abfd_, bfd_object);
+      if (!bfd_check_format(abfd_, bfd_object))
+        return nullptr;
       auto needed_storage = bfd_get_symtab_upper_bound(abfd_);
       if (needed_storage > 0)
       {
