@@ -40,12 +40,19 @@ void call_once(detail::posix_once_flag &flag, Callable &&callable,
 #if defined(__GLIBC__)
       exc = std::current_exception();
       std::longjmp(jb, 1);
+#elif defined(__CYGWIN__)
+      int s = pthread_mutex_unlock(&flag.data_.mutex);
+      if (s != 0)
+      {
+        GPCL_UNREACHABLE("pthread_mutex_unlock");
+      }
+      GPCL_RETHROW;
 #else
       goto cleanup;
       pthread_cleanup_push(NULL, NULL);
     cleanup:
       pthread_cleanup_pop(1);
-      throw;
+      GPCL_RETHROW;
 #endif
     }
     GPCL_CATCH_END
