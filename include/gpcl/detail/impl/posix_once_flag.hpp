@@ -37,16 +37,9 @@ void call_once(detail::posix_once_flag &flag, Callable &&callable,
     GPCL_TRY { callable(std::forward<Args>(args)...); }
     GPCL_CATCH(...)
     {
-#if defined(__GLIBC__)
+#if defined(__GLIBC__) || defined(__CYGWIN__)
       exc = std::current_exception();
       std::longjmp(jb, 1);
-#elif defined(__CYGWIN__)
-      int s = pthread_mutex_unlock(&flag.data_.mutex);
-      if (s != 0)
-      {
-        GPCL_UNREACHABLE("pthread_mutex_unlock");
-      }
-      GPCL_RETHROW;
 #else
       goto cleanup;
       pthread_cleanup_push(NULL, NULL);
@@ -59,9 +52,18 @@ void call_once(detail::posix_once_flag &flag, Callable &&callable,
   };
   ::gpcl::detail::posix_once_functor = &func;
 
-#if defined(__GLIBC__)
+#if defined(__GLIBC__) || defined(__CYGWIN__)
   if (setjmp(jb) > 0)
   {
+
+#  if defined(__CYGWIN__)
+    int s = pthread_mutex_unlock(&flag.data_.mutex);
+    if (s != 0)
+    {
+      GPCL_UNREACHABLE("pthread_mutex_unlock");
+    }
+#  endif
+
     std::rethrow_exception(exc);
   }
 #endif
