@@ -38,7 +38,7 @@
                                                                                \
     else if (false)                                                            \
     {                                                                          \
-      [&](x)
+      [&](__VA_ARGS__)
 #  define GPCL_RETHROW std::terminate()
 #  define GPCL_CATCH_END                                                       \
                                                                                \
