@@ -82,8 +82,6 @@ protected:
   {
     return {error_info_begin(), error_info_end()};
   }
-
-  void update_error_infos() noexcept { list_ = nullptr; }
 };
 
 namespace detail {
@@ -105,7 +103,7 @@ protected:
 public:
   exception_with_error_info(const Base &base,
                             const std::tuple<ErrorInfos...> &error_infos)
-      : exception(base),
+      : exception(),
         Base(base),
         error_infos_(error_infos)
   {
@@ -113,7 +111,7 @@ public:
   }
 
   exception_with_error_info(const exception_with_error_info &other)
-      : exception(std::move(other)),
+      : exception(),
         Base(static_cast<const Base &>(other)),
         error_infos_(other.error_infos_)
   {
@@ -121,7 +119,8 @@ public:
   }
 
   exception_with_error_info(exception_with_error_info &&other) noexcept
-      : Base(static_cast<Base &&>(other)),
+      : exception(),
+        Base(static_cast<Base &&>(other)),
         error_infos_(std::move(other.error_infos_))
   {
     update_error_infos();
@@ -129,6 +128,7 @@ public:
 
   exception_with_error_info &operator=(const exception_with_error_info &other)
   {
+    exception::list_ = nullptr;
     static_cast<Base &>(*this) = static_cast<const Base &>(other);
     error_infos_ = other.error_infos_;
     update_error_infos();
