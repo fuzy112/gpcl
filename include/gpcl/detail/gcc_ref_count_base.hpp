@@ -25,7 +25,7 @@ public:
   typedef long count_t;
 
   typedef void *(*operation_func_t)(gcc_ref_count_base *self,
-                                    ref_count_operation_t) noexcept;
+                                    ref_count_operation) noexcept;
 
   // Increment use count.
   void get() noexcept
@@ -44,11 +44,11 @@ public:
 
     if (__atomic_sub_fetch(&use_count_, 1, __ATOMIC_ACQ_REL) == 0)
     {
-      operate(destroy_managed_object);
+      operate(ref_count_operation::destroy_managed_object);
 
       if (__atomic_sub_fetch(&weak_count_, 1, __ATOMIC_RELAXED) == 0)
       {
-        operate(delete_control_block);
+        operate(ref_count_operation::delete_control_block);
       }
     }
   }
@@ -76,7 +76,7 @@ public:
     if (__atomic_sub_fetch(&weak_count_, 1, __ATOMIC_ACQ_REL) == 0)
     {
       GPCL_ASSERT(use_count() == 0);
-      operate(delete_control_block);
+      operate(ref_count_operation::delete_control_block);
     }
   }
 
@@ -106,7 +106,7 @@ public:
   }
 
   // Invoke an operation.
-  void *operate(ref_count_operation_t op) noexcept
+  void *operate(ref_count_operation op) noexcept
   {
     return op_func_(this, op);
   }

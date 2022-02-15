@@ -26,7 +26,7 @@ public:
   typedef volatile unsigned long count_t;
 
   typedef void *(*operation_func_t)(msvc_ref_count_base *self,
-                                    ref_count_operation_t) noexcept;
+                                    ref_count_operation) noexcept;
 
   void get() noexcept
   {
@@ -41,11 +41,11 @@ public:
     GPCL_ASSERT(prev_use_count > 0);
     if (prev_use_count == 1)
     {
-      operate(destroy_managed_object);
+      operate(ref_count_operation::destroy_managed_object);
 
       if (InterlockedDecrement(&weak_count_) == 0)
       {
-        operate(delete_control_block);
+        operate(ref_count_operation::delete_control_block);
       }
     }
   }
@@ -67,7 +67,7 @@ public:
     if (InterlockedDecrement(&weak_count_) == 0)
     {
       GPCL_ASSERT(use_count() == 0);
-      operate(delete_control_block);
+      operate(ref_count_operation::delete_control_block);
     }
   }
 
@@ -91,7 +91,7 @@ public:
     return false;
   }
 
-  void *operate(ref_count_operation_t op) noexcept
+  void *operate(ref_count_operation op) noexcept
   {
     return op_func_(this, op);
   }

@@ -48,23 +48,23 @@ private:
 protected:
   /// operation function.
   static void *do_operate(ref_count_base *self,
-                          ref_count_operation_t op) noexcept
+                          ref_count_operation op) noexcept
   {
     auto s = static_cast<Derived *>(self);
     switch (op)
     {
-    case delete_control_block:
+    case ref_count_operation::delete_control_block:
       s->delete_this();
       break;
 
-    case destroy_managed_object:
+    case ref_count_operation::destroy_managed_object:
       s->delete_managed_object();
       break;
 
-    case ref_count_operation_t::get_deleter:
+    case ref_count_operation::get_deleter:
       return s->get_deleter();
 
-    case ref_count_operation_t::get_deleter_type_info:
+    case ref_count_operation::get_deleter_type_info:
       return s->get_deleter_type_info();
 
     default:

@@ -8,6 +8,8 @@ using gpcl::allocate_shared;
 using gpcl::make_shared;
 using gpcl::shared_ptr;
 
+GPCL_MSVC_SUPPRESS_WARNING(26800)
+
 TEST_CASE("shared_ptr constructors")
 {
   auto not_default_construtible = []() {};
@@ -49,13 +51,13 @@ TEST_CASE("shared_ptr constructors")
     // REQUIRE(p6 == p7);
 
     shared_ptr<int> p8(new int, [](auto *p) { delete p; });
-    auto p9 = p8;
+    shared_ptr p9 = p8;
     REQUIRE(p9.get() == p8.get());
     REQUIRE(p9.use_count() == 2);
 
     shared_ptr<int> p10(
         new int, [](auto *p) { delete p; }, gpcl::default_allocator<char>());
-    auto p11 = p10;
+    shared_ptr p11 = p10;
     REQUIRE(p11.get() == p10.get());
     REQUIRE(p11.use_count() == 2);
   }

@@ -23,9 +23,8 @@ struct takes_init_and_variadic
   std::vector<int> v;
   std::tuple<int, int> t;
   template <class... Args>
-  takes_init_and_variadic(std::initializer_list<int> l, Args &&... args)
-      : v(l),
-        t(std::forward<Args>(args)...)
+  takes_init_and_variadic(std::initializer_list<int> l, Args &&...args)
+      : v(l), t(std::forward<Args>(args)...)
   {
   }
 };
@@ -263,7 +262,7 @@ TEST_CASE("expected emplace")
 struct move_detector
 {
   move_detector() = default;
-  move_detector(move_detector &&rhs) { rhs.been_moved = true; }
+  move_detector(move_detector &&rhs) noexcept { rhs.been_moved = true; }
   bool been_moved = false;
 };
 
@@ -321,12 +320,12 @@ gpcl::expected<void, int> test_try(Func &&func)
 //   return {};
 // }
 // #endif
-// 
+//
 // TEST_CASE("expected extension")
 // {
 //   CHECK(test_try(return_success));
 //   CHECK(!test_try(return_failure));
-// 
+//
 // #ifdef __GNUC__
 //   CHECK(test_try_return(return_success));
 //   CHECK(!test_try_return(return_failure));

@@ -1529,7 +1529,7 @@ public:
       while (first != last)
       {
         CharType ch = *first++;
-        bool consumed;
+        bool consumed(false);
 
         do
         {
@@ -1598,7 +1598,7 @@ public:
 
     void handle_event(typename parser::start_array_event e)
     {
-      array_context ctx;
+      array_context ctx{};
       ctx.array.reserve(e.size_hint);
       stack_.push_back(std::move(ctx));
     }
@@ -1688,7 +1688,7 @@ public:
   static value parse(InputIt first, InputIt last,
                      Allocator1 const &alloc = Allocator1())
   {
-    parser p;
+    parser p{};
     value_builder<Allocator1> builder(alloc);
 
     p.put(first, last, builder);

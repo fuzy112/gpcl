@@ -5,11 +5,13 @@
 #include <gpcl/pmr/polymorphic_allocator.hpp>
 #include "doctest.h"
 
+GPCL_MSVC_SUPPRESS_WARNING(26800)
+
 TEST_CASE("dynarray")
 {
   {
     gpcl::dynarray<int> arr(100);
-    auto arr2 = arr;
+    gpcl::dynarray arr2 = arr;
     CHECK(arr2 == arr);
     gpcl::dynarray arr3 = {1, 2, 3, 4};
     arr2 = arr;

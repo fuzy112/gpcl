@@ -4,6 +4,8 @@
 
 #include <random>
 
+GPCL_MSVC_SUPPRESS_WARNING(26800)
+
 TEST_CASE("list")
 {
   gpcl::list<int> il;
@@ -29,15 +31,15 @@ TEST_CASE("list")
   CHECK(il2.size() == 1);
   CHECK(il2.back() == 3);
 
-  auto il3 = std::move(il2);
+  gpcl::list il3 = std::move(il2);
   CHECK(il2.size() == 0);
   CHECK(il3.size() == 1);
   CHECK(il3.back() == 3);
 
-  auto il4 = il3;
+  gpcl::list il4 = il3;
   CHECK(il4 == il3);
 
-  auto il5 = std::move(il3);
+  gpcl::list il5 = std::move(il3);
   CHECK(il5 == il4);
   il2 = std::move(il5);
   CHECK(il2 == il4);
@@ -46,8 +48,8 @@ TEST_CASE("list")
 
   gpcl::list<int> il6{1, 2, 3};
   gpcl::list<int> il7{4, 5, 6};
-  auto il8 = il6;
-  auto il9 = il7;
+  gpcl::list il8 = il6;
+  gpcl::list il9 = il7;
   il6.swap(il7);
   CHECK(il9 == il6);
   CHECK(il7 == il8);

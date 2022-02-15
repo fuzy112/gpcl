@@ -24,7 +24,7 @@ class std_ref_count_base
 {
 public:
   typedef void *(*operation_func_t)(std_ref_count_base *self,
-                                    ref_count_operation_t) noexcept;
+                                    ref_count_operation) noexcept;
 
   // Increment use count.
   void get() noexcept
@@ -42,13 +42,13 @@ public:
   {
     GPCL_ASSERT(use_count() > 0);
 
-    if (use_count_.fetch_sub(1, std::memory_order_acquire) == 1)
+    if (use_count_.fetch_sub(1, std::memory_order_acquire) == 1) 
     {
-      operate(destroy_managed_object);
+      operate(ref_count_operation::destroy_managed_object);
 
-      if (weak_count_.fetch_sub(1, std::memory_order_acquire) == 1)
+      if (weak_count_.fetch_sub(1, std::memory_order_acquire) == 1) 
       {
-        operate(delete_control_block);
+        operate(ref_count_operation::delete_control_block);
       }
     }
   }
@@ -72,10 +72,10 @@ public:
   void weak_put() noexcept
   {
     GPCL_ASSERT(weak_count() > 0);
-    if (weak_count_.fetch_sub(1, std::memory_order_acquire) == 1)
+    if (weak_count_.fetch_sub(1, std::memory_order_acquire) == 1) 
     {
       GPCL_ASSERT(use_count() == 0);
-      operate(delete_control_block);
+      operate(ref_count_operation::delete_control_block);
     }
   }
 
@@ -91,8 +91,7 @@ public:
     GPCL_ASSERT(weak_count() > 0);
     long old_val = use_count();
 
-    while (old_val > 0)
-    {
+    while (old_val > 0) {
       if (use_count_.compare_exchange_weak(old_val, old_val + 1,
                                            std::memory_order_release,
                                            std::memory_order_relaxed))
@@ -103,10 +102,7 @@ public:
   }
 
   // Invoke an operation.
-  void *operate(ref_count_operation_t op) noexcept
-  {
-    return op_func_(this, op);
-  }
+  void *operate(ref_count_operation op) noexcept { return op_func_(this, op); }
 
 protected:
   // Constructor.

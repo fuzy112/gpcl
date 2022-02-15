@@ -24,7 +24,7 @@ namespace gpcl::detail {
 class win_process : noncopyable
 {
   PROCESS_INFORMATION process_information_;
-  DWORD exit_code_;
+  DWORD exit_code_ = DWORD(-1);
 
 public:
   using native_handle_type = LPPROCESS_INFORMATION;
@@ -46,19 +46,16 @@ public:
 
     if (!CreateProcessA(nullptr, const_cast<char *>(cmdline), nullptr, nullptr,
                         FALSE, 0, nullptr, nullptr, &startup_info,
-                        &process_information_))
-    {
+                        &process_information_)) {
       throw_system_error("CreateProcessA");
     }
   }
 
   ~win_process()
   {
-    if (joinable())
-    {
+    if (joinable()) {
       terminate();
-      if (!try_join_for(chrono::seconds(2)))
-      {
+      if (!try_join_for(chrono::seconds(2))) {
         kill();
         join();
       }
@@ -90,11 +87,9 @@ public:
   bool try_join_for_impl(DWORD ms)
   {
     GPCL_ASSERT(joinable());
-    switch (WaitForSingleObject(process_information_.hProcess, ms))
-    {
+    switch (WaitForSingleObject(process_information_.hProcess, ms)) {
     case WAIT_OBJECT_0:
-      if (!GetExitCodeProcess(process_information_.hProcess, &exit_code_))
-      {
+      if (!GetExitCodeProcess(process_information_.hProcess, &exit_code_)) {
         throw_system_error("GetExitCodeProcess");
       }
 

@@ -46,7 +46,7 @@ class basic_any
   template <typename T>
   using any_manager = detail::any_manager<T, LocalSize, LocalAlign>;
 
-  any_data_t data_;
+  any_data_t data_{};
   any_manage_func_t manage_ = nullptr;
 
 public:

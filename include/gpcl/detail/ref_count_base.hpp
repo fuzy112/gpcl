@@ -13,6 +13,7 @@
 
 #include <gpcl/detail/config.hpp>
 
+#undef __cpp_lib_atomic_is_always_lock_free
 
 #if defined __cpp_lib_atomic_is_always_lock_free
 #  include <gpcl/detail/std_ref_count_base.hpp>
@@ -34,7 +35,7 @@ class ref_count_base
 {
 public:
   typedef void *(*operation_func_t)(ref_count_base *self,
-                                   shared_block_operation_t) noexcept;
+                                    ref_count_operation) noexcept;
 
   /// Increment use count.
   void get() noexcept;
@@ -62,7 +63,7 @@ public:
   bool lock() noexcept;
 
   /// Invoke an operation.
-  void operate(shared_block_operation_t op) noexcept;
+  void operate(ref_count_operation op) noexcept;
 
 protected:
   /// Constructor.

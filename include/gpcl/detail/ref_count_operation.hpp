@@ -15,13 +15,15 @@
 
 namespace gpcl {
 namespace detail {
-enum ref_count_operation_t
+
+enum class ref_count_operation
 {
   delete_control_block = 1,
   destroy_managed_object = 2,
   get_deleter = 3,
   get_deleter_type_info = 4,
 };
+
 }
 } // namespace gpcl
 
