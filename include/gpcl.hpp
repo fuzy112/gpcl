@@ -17,7 +17,6 @@
 #include <gpcl/any.hpp>
 #include <gpcl/any_cast.hpp>
 #include <gpcl/apply.hpp>
-#include <gpcl/array.hpp>
 #include <gpcl/assert.hpp>
 #include <gpcl/bad_any_cast.hpp>
 #include <gpcl/bad_expected_access.hpp>
@@ -44,6 +43,7 @@
 #include <gpcl/debugstream.hpp>
 #include <gpcl/decay_copy.hpp>
 #include <gpcl/default_allocator.hpp>
+#include <gpcl/dynarray.hpp>
 #include <gpcl/enable_shared_from.hpp>
 #include <gpcl/enable_shared_from_this.hpp>
 #include <gpcl/error.hpp>

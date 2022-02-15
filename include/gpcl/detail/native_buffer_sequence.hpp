@@ -11,10 +11,10 @@
 #ifndef GPCL_DETAIL_IOVEC_HPP
 #define GPCL_DETAIL_IOVEC_HPP
 
-#include <gpcl/array.hpp>
 #include <gpcl/buffer_sequence.hpp>
 #include <gpcl/default_allocator.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/dynarray.hpp>
 
 #include <cstdlib>
 #include <sys/uio.h>
@@ -56,8 +56,8 @@ struct native_buffer_sequence
     }
   }
 
-  gpcl::array<struct ::iovec, typename std::allocator_traits<Allocator>::
-                                  template rebind_alloc<struct ::iovec>>
+  gpcl::dynarray<struct ::iovec, typename std::allocator_traits<Allocator>::
+                                     template rebind_alloc<struct ::iovec>>
       iov;
 };
 

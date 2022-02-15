@@ -1,5 +1,5 @@
 //
-// array.hpp
+// dynarray.hpp
 // ~~~~~~~~~
 //
 // Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
@@ -8,8 +8,8 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#ifndef GPCL_ARRAY_HPP
-#define GPCL_ARRAY_HPP
+#ifndef GPCL_DYNARRAY_HPP
+#define GPCL_DYNARRAY_HPP
 
 #include <gpcl/assert.hpp>
 #include <gpcl/default_allocator.hpp>
@@ -33,7 +33,7 @@ namespace gpcl {
 
 /// A vector-like container with strong exception guarantee.
 template <typename T, typename Allocator = default_allocator<T>>
-class array
+class dynarray
 {
 public:
   using size_type = std::size_t;
@@ -52,21 +52,19 @@ public:
   std::size_t capacity_ = 0;
 
 public:
-  array() noexcept(noexcept(Allocator())) : array(Allocator()) {}
+  dynarray() noexcept(noexcept(Allocator())) : dynarray(Allocator()) {}
 
-  explicit array(const type_identity_t<Allocator> &a) noexcept : p_(a) {}
+  explicit dynarray(const type_identity_t<Allocator> &a) noexcept : p_(a) {}
 
-  explicit array(std::size_t n,
-                 const type_identity_t<Allocator> &a = Allocator())
-      : p_(a),
-        capacity_(n)
+  explicit dynarray(std::size_t n,
+                    const type_identity_t<Allocator> &a = Allocator())
+      : p_(a), capacity_(n)
   {
     T *const s = p_.second() =
         std::allocator_traits<Allocator>::allocate(p_.first(), capacity_);
     GPCL_TRY
     {
-      while (size_ != capacity_)
-      {
+      while (size_ != capacity_) {
         std::allocator_traits<Allocator>::construct(p_.first(), &s[size_]);
         ++size_;
       }
@@ -79,47 +77,43 @@ public:
     GPCL_CATCH_END
   }
 
-  array(const array &other)
-      : array(other,
-              std::allocator_traits<Allocator>::
-                  select_on_container_copy_construction(other.get_allocator()))
+  dynarray(const dynarray &other)
+      : dynarray(other, std::allocator_traits<Allocator>::
+                            select_on_container_copy_construction(
+                                other.get_allocator()))
   {
   }
 
-  array(const array &other, const type_identity_t<Allocator> &a)
-      : array(other.begin(), other.end(), a)
+  dynarray(const dynarray &other, const type_identity_t<Allocator> &a)
+      : dynarray(other.begin(), other.end(), a)
   {
   }
 
-  array(array &&other) noexcept
-      : p_(std::move(other.p_)),
-        size_(other.size_),
-        capacity_(other.capacity_)
+  dynarray(dynarray &&other) noexcept
+      : p_(std::move(other.p_)), size_(other.size_), capacity_(other.capacity_)
   {
     other.p_.second() = nullptr;
     other.size_ = 0;
     other.capacity_ = 0;
   }
 
-  array(array &&other, const type_identity_t<Allocator> &a)
-      : array(std::move(other), a,
-              typename std::allocator_traits<Allocator>::is_always_equal{})
+  dynarray(dynarray &&other, const type_identity_t<Allocator> &a)
+      : dynarray(std::move(other), a,
+                 typename std::allocator_traits<Allocator>::is_always_equal{})
   {
   }
 
-  array(array &&other, const type_identity_t<Allocator> &,
-        std::true_type /*is_always_equal*/) noexcept
-      : array(std::move(other))
+  dynarray(dynarray &&other, const type_identity_t<Allocator> &,
+           std::true_type /*is_always_equal*/) noexcept
+      : dynarray(std::move(other))
   {
   }
 
-  array(array &&other, const type_identity_t<Allocator> &a,
-        std::false_type /*is_always_equal*/)
-      : p_(a),
-        capacity_(other.size())
+  dynarray(dynarray &&other, const type_identity_t<Allocator> &a,
+           std::false_type /*is_always_equal*/)
+      : p_(a), capacity_(other.size())
   {
-    if (a == other.get_allocator())
-    {
+    if (a == other.get_allocator()) {
       using gpcl::swap;
       p_.second() = std::move(other.p_.second());
       size_ = other.size_;
@@ -135,8 +129,7 @@ public:
         std::allocator_traits<Allocator>::allocate(p_.first(), capacity_);
     GPCL_TRY
     {
-      while (size_ != capacity_)
-      {
+      while (size_ != capacity_) {
         std::allocator_traits<Allocator>::construct(p_.first(), &s[size_],
                                                     std::move(other[size_]));
         ++size_;
@@ -151,18 +144,16 @@ public:
   }
 
   template <typename FwdIt>
-  array(FwdIt first, FwdIt last, const type_identity_t<Allocator> &a,
-        std::forward_iterator_tag =
-            typename std::iterator_traits<FwdIt>::iterator_category())
-      : p_(a),
-        capacity_(std::distance(first, last))
+  dynarray(FwdIt first, FwdIt last, const type_identity_t<Allocator> &a,
+           std::forward_iterator_tag =
+               typename std::iterator_traits<FwdIt>::iterator_category())
+      : p_(a), capacity_(std::distance(first, last))
   {
     T *const s = p_.second() =
         std::allocator_traits<Allocator>::allocate(p_.first(), capacity_);
     GPCL_TRY
     {
-      while (capacity_ != size_)
-      {
+      while (capacity_ != size_) {
         std::allocator_traits<Allocator>::construct(p_.first(), &s[size_],
                                                     *first++);
         ++size_;
@@ -176,25 +167,24 @@ public:
     GPCL_CATCH_END
   }
 
-  array(std::initializer_list<T> init,
-        const type_identity_t<Allocator> &alloc = Allocator())
-      : array(init.begin(), init.end(), alloc)
+  dynarray(std::initializer_list<T> init,
+           const type_identity_t<Allocator> &alloc = Allocator())
+      : dynarray(init.begin(), init.end(), alloc)
   {
   }
 
-  ~array() { release(); }
+  ~dynarray() { release(); }
 
   void clear() noexcept { keep_first_n(0); }
 
-  // @todo optimize 
-  void shrink_to_fit() { array(*this, get_allocator()).swap(*this); }
+  // @todo optimize
+  void shrink_to_fit() { dynarray(*this, get_allocator()).swap(*this); }
 
 private:
   void keep_first_n(size_t num_to_keep) noexcept
   {
     GPCL_ASSERT(size_ >= num_to_keep);
-    while (size_ > num_to_keep)
-    {
+    while (size_ > num_to_keep) {
       std::allocator_traits<Allocator>::destroy(p_.first(),
                                                 &p_.second()[size_ - 1]);
       --size_;
@@ -212,13 +202,13 @@ private:
   }
 
 public:
-  array &operator=(const array &other)
+  dynarray &operator=(const dynarray &other)
   {
     assign(other);
     return *this;
   }
 
-  array &operator=(array &&other) noexcept(
+  dynarray &operator=(dynarray &&other) noexcept(
       std::allocator_traits<
           Allocator>::propagate_on_container_move_assignment::value ||
       std::allocator_traits<Allocator>::is_always_equal::value)
@@ -227,7 +217,7 @@ public:
     return *this;
   }
 
-  array &operator=(std::initializer_list<T> il)
+  dynarray &operator=(std::initializer_list<T> il)
   {
     assign(il.begin(), il.end());
     return *this;
@@ -238,7 +228,7 @@ public:
       typename std::enable_if<!std::allocator_traits<A>::
                                   propagate_on_container_copy_assignment::value,
                               int>::type = 0>
-  void assign(const array &other)
+  void assign(const dynarray &other)
   {
     assign(other.begin(), other.end(), get_allocator());
   }
@@ -248,7 +238,7 @@ public:
       typename std::enable_if<std::allocator_traits<A>::
                                   propagate_on_container_copy_assignment::value,
                               int>::type = 0>
-  void assign(const array &other)
+  void assign(const dynarray &other)
   {
     assign(other.begin(), other.end(), other.get_allocator());
   }
@@ -259,7 +249,7 @@ public:
                     A>::propagate_on_container_move_assignment::value &&
                     std::allocator_traits<A>::is_always_equal::value,
                 int>::type = 0>
-  void assign(array &&other) noexcept
+  void assign(dynarray &&other) noexcept
   {
     using gpcl::swap;
     swap(p_, other.p_);
@@ -273,10 +263,9 @@ public:
                     A>::propagate_on_container_move_assignment::value &&
                     !std::allocator_traits<A>::is_always_equal::value,
                 int>::type = 0>
-  void assign(array &&other)
+  void assign(dynarray &&other)
   {
-    if (get_allocator() == other.get_allocator())
-    {
+    if (get_allocator() == other.get_allocator()) {
       using gpcl::swap;
       swap(p_, other.p_);
       swap(size_, other.size_);
@@ -284,7 +273,7 @@ public:
       return;
     }
 
-    array(std::move(other), get_allocator()).swap(*this);
+    dynarray(std::move(other), get_allocator()).swap(*this);
   }
 
   template <
@@ -292,7 +281,7 @@ public:
       typename std::enable_if<std::allocator_traits<A>::
                                   propagate_on_container_move_assignment::value,
                               int>::type = 0>
-  void assign(array &&other) noexcept
+  void assign(dynarray &&other) noexcept
   {
     using gpcl::swap;
     swap(p_, other.p_);
@@ -307,7 +296,7 @@ public:
                               int>::type = 0>
   void assign(FwdIt first, FwdIt last, const Allocator &alloc)
   {
-    array(first, last, alloc).swap(*this);
+    dynarray(first, last, alloc).swap(*this);
   }
 
   template <
@@ -320,16 +309,14 @@ public:
     GPCL_ASSERT(diff >= 0);
     std::size_t count = diff;
 
-    if (count > size() || !std::is_nothrow_copy_assignable<T>::value)
-    {
-      array(first, last, get_allocator()).swap(*this);
+    if (count > size() || !std::is_nothrow_copy_assignable<T>::value) {
+      dynarray(first, last, get_allocator()).swap(*this);
       return;
     }
 
     keep_first_n(count);
 
-    for (std::size_t i = 0; i != count; ++i)
-    {
+    for (std::size_t i = 0; i != count; ++i) {
       (*this)[i] = *first++;
     }
   }
@@ -346,7 +333,7 @@ public:
   // }
 
 public:
-  void swap(array &other) noexcept(
+  void swap(dynarray &other) noexcept(
       std::allocator_traits<Allocator>::propagate_on_container_swap::value ||
       std::allocator_traits<Allocator>::is_always_equal::value)
   {
@@ -358,7 +345,7 @@ private:
             typename std::enable_if<
                 std::allocator_traits<A>::propagate_on_container_swap::value,
                 int>::type = 0>
-  void do_swap(array &other) noexcept
+  void do_swap(dynarray &other) noexcept
   {
     using gpcl::swap;
     swap(p_, other.p_);
@@ -371,7 +358,7 @@ private:
                 !std::allocator_traits<A>::propagate_on_container_swap::value &&
                     std::allocator_traits<A>::is_always_equal::value,
                 int>::type = 0>
-  void do_swap(array &other) noexcept
+  void do_swap(dynarray &other) noexcept
   {
     using gpcl::swap;
     swap(p_.second(), other.p_.second());
@@ -384,7 +371,7 @@ private:
                 !std::allocator_traits<A>::propagate_on_container_swap::value &&
                     !std::allocator_traits<A>::is_always_equal::value,
                 int>::type = 0>
-  void do_swap(array &other)
+  void do_swap(dynarray &other)
   {
     auto tmp = *this;
     *this = std::move(other);
@@ -408,15 +395,13 @@ public:
         std::allocator_traits<Allocator>::allocate(p_.first(), capacity_);
     GPCL_TRY
     {
-      while (backup_size != size_)
-      {
+      while (backup_size != size_) {
         std::allocator_traits<Allocator>::construct(
             p_.first(), &s[size_], std::move_if_noexcept(backup_data[size_]));
         ++size_;
       }
 
-      while (backup_size > 0)
-      {
+      while (backup_size > 0) {
         std::allocator_traits<Allocator>::destroy(
             p_.first(), &backup_data[backup_size - 1]);
         --backup_size;
@@ -439,13 +424,11 @@ public:
 
   void grow(size_type n)
   {
-    if (capacity_ == 0 && n != 0)
-    {
+    if (capacity_ == 0 && n != 0) {
       reserve(n);
     }
 
-    else if (capacity_ < n)
-    {
+    else if (capacity_ < n) {
       auto new_capacity = (n + capacity_ - 1) / capacity_ * capacity_;
 
       reserve(new_capacity);
@@ -458,19 +441,16 @@ public:
   {
     reserve(n);
 
-    if (n <= size_)
-    {
+    if (n <= size_) {
       keep_first_n(n);
       return;
     }
 
-    else
-    {
+    else {
       auto orig_size = size_;
       GPCL_TRY
       {
-        while (size_ < n)
-        {
+        while (size_ < n) {
           std::allocator_traits<Allocator>::construct(p_.first(),
                                                       &p_.second()[size_]);
           ++size_;
@@ -491,19 +471,16 @@ public:
   {
     reserve(n);
 
-    if (n <= size_)
-    {
+    if (n <= size_) {
       keep_first_n(n);
       return;
     }
 
-    else
-    {
+    else {
       auto orig_size = size_;
       GPCL_TRY
       {
-        while (size_ < n)
-        {
+        while (size_ < n) {
           std::allocator_traits<Allocator>::construct(p_.first(),
                                                       &p_.second()[size_], x);
           ++size_;
@@ -596,7 +573,7 @@ public:
   }
 
   template <typename... Args>
-  reference emplace_back(Args &&...args)
+  reference emplace_back(Args &&... args)
   {
     grow(size() + 1);
 
@@ -626,29 +603,29 @@ public:
 };
 
 template <typename T, typename Allocator>
-void swap(array<T, Allocator> &x,
-          array<T, Allocator> &y) noexcept(noexcept(x.swap(y)))
+void swap(dynarray<T, Allocator> &x,
+          dynarray<T, Allocator> &y) noexcept(noexcept(x.swap(y)))
 {
   x.swap(y);
 }
 
 template <typename T, typename Allocator>
-bool operator==(const array<T, Allocator> &x,
-                const array<T, Allocator> &y) noexcept
+bool operator==(const dynarray<T, Allocator> &x,
+                const dynarray<T, Allocator> &y) noexcept
 {
   return std::equal(x.begin(), x.end(), y.begin(), y.end());
 }
 
 template <typename T, typename Allocator>
-bool operator!=(const array<T, Allocator> &x,
-                const array<T, Allocator> &y) noexcept
+bool operator!=(const dynarray<T, Allocator> &x,
+                const dynarray<T, Allocator> &y) noexcept
 {
   return !(x == y);
 }
 
 template <typename T, typename Allocator>
-bool operator<(const array<T, Allocator> &x,
-               const array<T, Allocator> &y) noexcept
+bool operator<(const dynarray<T, Allocator> &x,
+               const dynarray<T, Allocator> &y) noexcept
 {
   return std::lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());
 }
@@ -657,7 +634,7 @@ bool operator<(const array<T, Allocator> &x,
 template <typename CharT, typename Traits, typename T, typename Allocator>
 std::basic_ostream<CharT, Traits> &
 operator<<(std::basic_ostream<CharT, Traits> &os,
-           const array<T, Allocator> &arr)
+           const dynarray<T, Allocator> &arr)
 {
   typename std::basic_ostream<CharT, Traits>::sentry valid(os);
   if (!valid)
@@ -665,8 +642,7 @@ operator<<(std::basic_ostream<CharT, Traits> &os,
 
   os << CharT('[');
   bool need_comma = false;
-  for (const auto &x : arr)
-  {
+  for (const auto &x : arr) {
     if (need_comma)
       os << CharT(',') << CharT(' ');
     else
@@ -682,4 +658,4 @@ operator<<(std::basic_ostream<CharT, Traits> &os,
 
 } // namespace gpcl
 
-#endif // GPCL_ARRAY_HPP
+#endif // GPCL_DYNARRAY_HPP

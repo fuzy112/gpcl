@@ -11,8 +11,8 @@
 #ifndef GPCL_DETAIL_POSIX_STACKTRACE_HPP
 #define GPCL_DETAIL_POSIX_STACKTRACE_HPP
 
-#include <gpcl/array.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/dynarray.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/unique_ptr.hpp>
 
@@ -160,7 +160,7 @@ class basic_posix_stacktrace
       std::is_same<typename std::allocator_traits<Allocator>::value_type,
                    posix_stacktrace_entry>::value);
 
-  array<posix_stacktrace_entry, Allocator> data_;
+  dynarray<posix_stacktrace_entry, Allocator> data_;
 
 public:
   using value_type = posix_stacktrace_entry;
@@ -332,14 +332,15 @@ void swap(basic_posix_stacktrace<Allocator> &x,
 constexpr std::size_t posix_stacktrace_impl_start_buffer_size = 100;
 
 template <typename Allocator>
-void posix_stacktrace_impl(size_t skip, size_t max_depth,
-                           array<posix_stacktrace_entry, Allocator> &container)
+void posix_stacktrace_impl(
+    size_t skip, size_t max_depth,
+    dynarray<posix_stacktrace_entry, Allocator> &container)
 {
   GPCL_TRY
   {
     using buffer_type =
-        array<void *, typename std::allocator_traits<
-                          Allocator>::template rebind_alloc<void *>>;
+        dynarray<void *, typename std::allocator_traits<
+                             Allocator>::template rebind_alloc<void *>>;
     buffer_type buffer(container.get_allocator());
     buffer.resize(posix_stacktrace_impl_start_buffer_size);
 

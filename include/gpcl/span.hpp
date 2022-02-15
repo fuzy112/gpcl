@@ -11,12 +11,12 @@
 #ifndef GPCL_SPAN_HPP
 #define GPCL_SPAN_HPP
 
-#include <gpcl/array.hpp>
 #include <gpcl/assert.hpp>
 #include <gpcl/default_allocator.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/type_traits.hpp>
 #include <gpcl/detail/utility.hpp>
+#include <gpcl/dynarray.hpp>
 
 #include <array>
 

@@ -20,12 +20,12 @@ namespace gpcl::detail {
 template <typename Allocator>
 DECLSPEC_NOINLINE void win_stacktrace_impl(
     std::size_t skip, std::size_t max_depth,
-    gpcl::array<win_stacktrace_entry, Allocator> &container) noexcept
+    gpcl::dynarray<win_stacktrace_entry, Allocator> &container) noexcept
 {
   GPCL_TRY
   {
-    gpcl::array<PVOID, typename std::allocator_traits<
-                           Allocator>::template rebind_alloc<PVOID>>
+    gpcl::dynarray<PVOID, typename std::allocator_traits<
+                              Allocator>::template rebind_alloc<PVOID>>
         buffer(container.get_allocator());
 
     if (max_depth == std::size_t(-1))

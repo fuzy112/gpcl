@@ -11,9 +11,9 @@
 #ifndef GPCL_RC_SPEC_HPP
 #define GPCL_RC_SPEC_HPP
 
+#include <gpcl/dynarray.hpp>
 #include <gpcl/span.hpp>
 #include <gpcl/variant.hpp>
-#include <gpcl/array.hpp>
 
 #include <string>
 
@@ -53,14 +53,13 @@ public:
 class dir
 {
   std::string name_;
-  gpcl::array<node> nodes_;
+  gpcl::dynarray<node> nodes_;
 
 public:
   dir() = default;
 
-  explicit dir(std::string name, gpcl::array<node> nodes)
-      : name_(std::move(name)),
-        nodes_(std::move(nodes))
+  explicit dir(std::string name, gpcl::dynarray<node> nodes)
+      : name_(std::move(name)), nodes_(std::move(nodes))
   {
   }
 

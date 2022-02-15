@@ -11,13 +11,13 @@
 #ifndef GPCL_VECTOR_HPP
 #define GPCL_VECTOR_HPP
 
-#include <gpcl/array.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/dynarray.hpp>
 
 namespace gpcl {
 
 template <typename T, typename Allocator = default_allocator<T>>
-using vector = array<T, Allocator>;
+using vector = dynarray<T, Allocator>;
 
 } // namespace gpcl
 
