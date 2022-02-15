@@ -47,19 +47,26 @@ endforeach()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(doctest_main STATIC main.cpp)
+add_library(doctest_main OBJECT main.cpp)
 add_executable(tests ${TESTS_SRCS})
 target_link_libraries(tests PRIVATE doctest_main gpcl::gpcl ${TEST_FIXTURES})
 if(GPCL_ENABLE_PCH)
-  target_precompile_headers(tests PRIVATE "pch.hpp")
+  target_precompile_headers(tests
+    PRIVATE <gpcl.hpp> "doctest.h")
 endif()
 set_target_properties(tests
   PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin")
 
 include(doctest.cmake)
 
-doctest_discover_tests(tests)
+if(NOT CMAKE_CROSSCOMPILE)
+  doctest_discover_tests(tests)
+else()
+  add_test(NAME tests COMMAND tests)
+endif()
 
 add_executable(meta-test meta_test.cpp)
 target_link_libraries(meta-test PRIVATE gpcl::gpcl)
 add_test(NAME meta-test COMMAND meta-test)
+set_target_properties(meta-test
+  PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin")

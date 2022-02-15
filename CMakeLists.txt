@@ -33,6 +33,9 @@ option(GPCL_ENABLE_BFD "Link to BFD if found" TRUE)
 option(GPCL_ENABLE_PCH "Enable precompiled headers" TRUE)
 option(BUILD_SHARED_LIBS "Create shared libraies" TRUE)
 
+option(GPCL_ENABLE_EXCEPTIONS "Enable exception support" TRUE)
+option(GPCL_ENABLE_RTTI "Enable RTTI support" TRUE)
+
 check_ipo_supported(RESULT ipo_supported)
 if(ipo_supported AND GPCL_ENABLE_LTO)
   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
@@ -109,6 +112,16 @@ if(MINGW)
   target_link_libraries(gpcl PUBLIC)
 endif()
 
+if(NOT GPCL_ENABLE_EXCEPTIONS)
+  target_compile_definitions(gpcl PUBLIC GPCL_CONFIG_NO_EXCEPTIONS=1)
+endif()
+
+if(NOT GPCL_ENABLE_RTTI)
+  target_compile_definitions(gpcl PUBLIC GPCL_CONFIG_NO_RTTI=1)
+endif()
+
+mark_as_advanced(GPCL_BFD GPCL_LLVM GPCL_SQLITE)
+
 target_compile_features(gpcl PUBLIC cxx_std_17)
 
 get_target_property(library_type gpcl TYPE)
@@ -116,8 +129,6 @@ get_target_property(library_type gpcl TYPE)
 if("${library_type}" STREQUAL "SHARED_LIBRARY")
   target_compile_definitions(gpcl PUBLIC GPCL_DYN_LINK=1)
 endif()
-
-file(MAKE_DIRECTORY "${GPCL_BINARY_DIR}/bin")
 
 set_target_properties(
   gpcl

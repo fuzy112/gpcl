@@ -26,30 +26,22 @@
 #  define GPCL_THROW(...) throw __VA_ARGS__
 
 #else
-#  define GPCL_TRY                                                             \
-    {                                                                          \
-      if (true)                                                                \
-                                                                               \
-      {
+#  define GPCL_TRY if (true)
 
-#  define GPCL_CATCH(...)                                                        \
-    ;                                                                          \
-    }                                                                          \
-                                                                               \
-    else if (false)                                                            \
+#  define GPCL_CATCH(...)                                                      \
+    else                                                                       \
     {                                                                          \
-      [&](__VA_ARGS__)
-#  define GPCL_RETHROW std::terminate()
+      (void)[&](__VA_ARGS__)
+#  define GPCL_RETHROW (void)0
 #  define GPCL_CATCH_END                                                       \
-                                                                               \
     ;                                                                          \
-    }                                                                          \
+    std::abort();                                                              \
     }
 
-#  define GPCL_THROW(...)                                                        \
+#  define GPCL_THROW(...)                                                      \
     do                                                                         \
     {                                                                          \
-      (void)sizeof((__VA_ARGS__));                                                       \
+      (void)sizeof((__VA_ARGS__));                                             \
       ::std::abort();                                                          \
     } while (false)
 #endif
@@ -168,6 +160,5 @@ using error_condition = std::error_condition;
 } // namespace gpcl
 
 #endif
-
 
 #endif

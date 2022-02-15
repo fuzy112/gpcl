@@ -13,8 +13,6 @@
 
 #include <gpcl/detail/config.hpp>
 
-#undef __cpp_lib_atomic_is_always_lock_free
-
 #if defined __cpp_lib_atomic_is_always_lock_free
 #  include <gpcl/detail/std_ref_count_base.hpp>
 #elif defined _MSC_VER
