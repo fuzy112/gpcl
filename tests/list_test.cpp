@@ -60,8 +60,6 @@ TEST_CASE("list")
   std::mt19937 gen(rd());
   for (int i = 0; i < 100; ++i)
     il10.push_back(gen());
-  std::cout << il10 << '\n';
   il10.sort();
-  std::cout << il10 << '\n';
   CHECK(std::is_sorted(il10.begin(), il10.end()));
 }
