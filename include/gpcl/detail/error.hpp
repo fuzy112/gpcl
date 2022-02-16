@@ -42,7 +42,7 @@
     do                                                                         \
     {                                                                          \
       (void)sizeof((__VA_ARGS__));                                             \
-      [line = __LINE__] { ::std::abort(); }();                                 \
+      ::std::terminate();                                                      \
     } while (false)
 #endif
 
