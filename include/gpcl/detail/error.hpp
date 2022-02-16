@@ -29,14 +29,11 @@
 #  define GPCL_TRY if (true)
 
 #  define GPCL_CATCH(...)                                                      \
-    else                                                                       \
-    {                                                                          \
-      (void)[&](__VA_ARGS__)
-#  define GPCL_RETHROW (void)0
-#  define GPCL_CATCH_END                                                       \
     ;                                                                          \
-    std::abort();                                                              \
-    }
+    if (false)                                                                 \
+    (void)[&](__VA_ARGS__)
+#  define GPCL_RETHROW (void)0
+#  define GPCL_CATCH_END ;
 
 #  define GPCL_THROW(...)                                                      \
     do                                                                         \

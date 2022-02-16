@@ -128,26 +128,11 @@
       }
     },
     {
-      "name": "msvc-dynamic-debug",
-      "displayName": "MSVC Dynamic Debug",
+      "name": "msvc-dynamic",
+      "displayName": "MSVC Dynamic",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "generator": "Ninja",
+      "generator": "Ninja Multi-Config",
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-        "BUILD_SHARED_LIBS": "ON",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_FLAGS": "/W4 /EHsc",
-        "GPCL_BUILD_DOC": "OFF",
-        "GPCL_ENABLE_PCH": "ON"
-      }
-    },
-    {
-      "name": "msvc-dynamic-release",
-      "displayName": "MSVC Dynamic Release",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "generator": "Ninja",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
         "BUILD_SHARED_LIBS": "ON",
         "CMAKE_CXX_FLAGS": "/W4 /EHsc",
@@ -157,32 +142,33 @@
       }
     },
     {
-      "name": "msvc-static-debug",
-      "displayName": "MSVC Static Debug",
+      "name": "msvc-static",
+      "displayName": "MSVC Static",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "generator": "Ninja",
+      "generator": "Ninja Multi-Config",
       "cacheVariables": {
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
         "BUILD_SHARED_LIBS": "OFF",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_FLAGS": "/W4 /EHsc /fsanitize=address /DGPCL_NO_STACKTRACE=1",
+        "CMAKE_CXX_FLAGS": "/W4 /EHsc",
         "GPCL_BUILD_DOC": "OFF",
-        "GPCL_ENABLE_PCH": "ON"
+        "GPCL_ENABLE_PCH": "ON",
+        "CMAKE_CONFIGURATION_TYPES": "Debug;Release;RelWithDebInfo"
       }
     },
     {
-      "name": "msvc-static-release",
-      "displayName": "MSVC Static Release",
+      "name": "msvc-static-no-rtti",
+      "displayName": "MSVC Static No RTTI",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "generator": "Ninja",
+      "generator": "Ninja Multi-Config",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
         "BUILD_SHARED_LIBS": "OFF",
-        "CMAKE_CXX_FLAGS": "/W4 /EHsc /fsanitize=address",
+        "CMAKE_CXX_FLAGS": "/W4 /EHsc",
         "GPCL_BUILD_DOC": "OFF",
-        "GPCL_ENABLE_PCH": "ON"
-
+        "GPCL_ENABLE_PCH": "ON",
+        "CMAKE_CONFIGURATION_TYPES": "Debug;Release;RelWithDebInfo",
+        "GPCL_ENABLE_RTTI": false,
+        "GPCL_ENABLE_EXCEPTIONS":  false
       }
     }
   ]

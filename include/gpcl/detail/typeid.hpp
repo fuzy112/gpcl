@@ -11,7 +11,6 @@
 #ifndef GPCL_DETAIL_TYPEID_HPP
 #define GPCL_DETAIL_TYPEID_HPP
 
-
 #include <gpcl/detail/config.hpp>
 #include <gpcl/noncopyable.hpp>
 
@@ -56,9 +55,10 @@ struct type_info : noncopyable
     return std::hash<const type_info *>()(this);
   }
 
-private:
-  constexpr explicit type_info(type_info_init) noexcept {}
+protected:
+  constexpr explicit type_info() noexcept {}
 };
+
 
 template <typename T>
 struct typeid_impl
@@ -67,9 +67,8 @@ struct typeid_impl
 };
 
 template <typename T>
-type_info typeid_impl<T>::typeid_{type_info_init::init};
+type_info typeid_impl<T>::typeid_;
 
 } // namespace gpcl::detail
-
 
 #endif // GPCL_DETAIL_TYPEID_HPP

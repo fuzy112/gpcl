@@ -362,11 +362,13 @@ public:
     return since_epoch_.checked_sub(earlier.since_epoch_);
   }
 
+  GPCL_MSVC_SUPPRESS_WARNING_WITH_PUSH(4702)
   inline constexpr duration
   saturating_duration_since(const system_time &earlier) const
   {
     return since_epoch_.saturating_sub(earlier.since_epoch_);
   }
+  GPCL_MSVC_SUPPRESS_WARNING_POP
 
   inline system_time checked_add(const duration &dur) const
   {

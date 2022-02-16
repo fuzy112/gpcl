@@ -215,11 +215,22 @@ auto diagnostic_information(const E &e)
   return make_iomanip([&](std::ostream &s) {
     s << "Exception [" << exception_name(e) << "]\n";
 
-    gpcl::exception const *ge = dyn_cast<gpcl::exception>(&e);
-    if (!ge)
-      return;
+    const exception *exc = nullptr;
 
-    for (auto ei : ge->error_infos())
+    if constexpr (std::is_base_of<gpcl::exception, E>())
+    {
+      exc = &e;
+    }
+    else
+    {
+#ifndef GPCL_CONFIG_NO_RTTI
+      exc = dynamic_pointer_cast<const exception>(exc);
+#endif
+    }
+
+    if (!exc)
+      return;
+    for (auto ei : exc->error_infos())
     {
       s << "  ";
       ei.format_to(s) << "\n";

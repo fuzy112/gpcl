@@ -26,9 +26,8 @@
 
 #include <Windows.h>
 
-#if defined _MSC_VER && defined GPCL_SEPARATE_COMPILATION &&                   \
-    !defined GPCL_SOURCE && !defined GPCL_DISABLE_AUTO_LINKING &&              \
-    !defined(GPCL_NO_STACKTRACE)
+#if defined _MSC_VER && !defined GPCL_SOURCE &&                                \
+    !defined GPCL_DISABLE_AUTO_LINKING && !defined(GPCL_NO_STACKTRACE)
 #  pragma comment(lib, "dbghelp")
 #endif
 

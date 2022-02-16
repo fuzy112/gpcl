@@ -46,12 +46,14 @@ auto win_condition_variable::wait(unique_lock<win_mutex> &lock) -> void
     throw_system_error("SleepConditionVariableCS");
 }
 
+GPCL_MSVC_SUPPRESS_WARNING_WITH_PUSH(4702)
 bool win_condition_variable::wait_until(unique_lock<win_mutex> &lock,
                                         const system_time &timeout_time)
 {
   auto rel_time = timeout_time.elapsed();
   return wait_for(lock, rel_time);
 }
+GPCL_MSVC_SUPPRESS_WARNING_POP
 
 bool win_condition_variable::wait_for(unique_lock<win_mutex> &lock,
                                       const duration &rel_time)
