@@ -48,6 +48,7 @@ endforeach()
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(doctest_main OBJECT main.cpp)
+target_link_libraries(doctest_main PUBLIC gpcl::gpcl)
 add_executable(tests ${TESTS_SRCS})
 target_link_libraries(tests PRIVATE doctest_main gpcl::gpcl ${TEST_FIXTURES})
 if(GPCL_ENABLE_PCH)
@@ -59,7 +60,7 @@ set_target_properties(tests
 
 include(doctest.cmake)
 
-if(NOT CMAKE_CROSSCOMPILE)
+if(NOT CMAKE_CROSSCOMPILING)
   doctest_discover_tests(tests)
 else()
   add_test(NAME tests COMMAND tests)

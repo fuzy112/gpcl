@@ -29,10 +29,10 @@ void strerror_impl(StrType &str, int errnum)
   strerror_s(&str[0], str.size(), errnum);
   str.resize(strlen(str.c_str()));
 
-#elif _POSIX_C_SOURCE >= 200809L
+#elif _POSIX_C_SOURCE >= 200809L && !defined(__EMSCRIPTEN__)
   str = strerror_l(errnum, uselocale((locale_t)0));
 
-#elif (_POSIX_C_SOURCE >= 200112L) && !  _GNU_SOURCE
+#elif (_POSIX_C_SOURCE >= 200112L) && !defined(_GNU_SOURCE)
   str.resize(128);
   int err = strerror_r(errnum, &str[0], str.size());
   if (err > 0)
@@ -41,7 +41,7 @@ void strerror_impl(StrType &str, int errnum)
     throw_system_error(__func__);
   str.resize(strlen(str.c_str()));
 
-#elif defined(_GNU_SOURCE)
+#elif defined(_GNU_SOURCE) && !defined(__EMSCRIPTEN__)
   str.resize(128);
   char *pstr = strerror_r(errnum, &str[0], str.size());
   if (str.c_str() != pstr)

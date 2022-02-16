@@ -19,7 +19,7 @@ TEST_CASE("basic_any")
   a = true;
   REQUIRE(gpcl::any_cast<bool>(a));
 
-#if __cpp_exceptions
+#if !defined GPCL_CONFIG_NO_EXCEPTIONS
   // bad cast
   a = 1;
   REQUIRE_THROWS(gpcl::any_cast<float>(a));

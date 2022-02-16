@@ -16,7 +16,7 @@
 namespace gpcl {
 namespace detail {
 
-#if defined(GPCL_LINUX) || defined(__FreeBSD__ )
+#if defined(GPCL_LINUX) || defined(__FreeBSD__ ) || defined(__EMSCRIPTEN__)
 template <typename ConstBufferSequence>
 expected<std::size_t, error_code>
 posix_file::write_some_at(offset_type off, const ConstBufferSequence &bs)
@@ -31,7 +31,7 @@ posix_file::write_some_at(offset_type off, const ConstBufferSequence &bs)
 }
 #endif
 
-#if defined(GPCL_LINUX) || defined(__FreeBSD__ )
+#if defined(GPCL_LINUX) || defined(__FreeBSD__ ) || defined(__EMSCRIPTEN__)
 template <typename MutableBufferSequence>
 expected<size_t, error_code>
 posix_file::read_some_at(offset_type off, const MutableBufferSequence &bs)

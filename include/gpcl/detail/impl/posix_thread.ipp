@@ -46,9 +46,12 @@ struct posix_thread_attributes : noncopyable
     if ((err = pthread_attr_init(&attr_)) != 0)
       throw_system_error(err, "pthread_attr_init");
 
+#ifndef __EMSCRIPTEN__
     if ((err = pthread_attr_setstacksize(&attr_, attr.stack_size())) != 0)
       throw_system_error(err, "pthread_attr_setstacksize");
+#endif
 
+#ifndef __EMSCRIPTEN__
     if (param.sched_priority != 0)
     {
       err = pthread_attr_setinheritsched(&attr_, PTHREAD_EXPLICIT_SCHED);
@@ -82,6 +85,7 @@ struct posix_thread_attributes : noncopyable
       if (err != 0)
         throw_system_error(err, "pthread_attr_setschedparam");
     }
+#endif
   }
 
   ~posix_thread_attributes() noexcept

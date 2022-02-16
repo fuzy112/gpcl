@@ -42,7 +42,7 @@
     do                                                                         \
     {                                                                          \
       (void)sizeof((__VA_ARGS__));                                             \
-      ::std::abort();                                                          \
+      [line = __LINE__] { ::std::abort(); }();                                 \
     } while (false)
 #endif
 
@@ -161,4 +161,4 @@ using error_condition = std::error_condition;
 
 #endif
 
-#endif
+#endif // GPCL_DETAIL_ERROR_HPP

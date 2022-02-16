@@ -23,7 +23,9 @@
 #include <string>
 #include <type_traits>
 
+#ifndef __EMSCRIPTEN__
 #include GPCL_BACKTRACE_HEADER
+#endif
 
 #if defined(GPCL_LLVM)
 #  include <gpcl/detail/llvm_stacktrace.hpp>
@@ -105,7 +107,7 @@ struct posix_stacktrace_entry
     return llvm_stacktrace_entry_description(address);
 #elif defined(GPCL_BFD)
     return bfd_stacktrace_entry_description(address);
-#else
+#elif !defined(__EMSCRIPTEN__)
     unique_ptr<char *, std::decay_t<decltype(::free)>> strs(
         ::backtrace_symbols(&address, 1), &::free);
     if (!strs)
@@ -113,6 +115,8 @@ struct posix_stacktrace_entry
     if (!*strs)
       return "";
     return cppfilt(*strs);
+#else
+    return "<unknown>";
 #endif
   }
 
@@ -352,7 +356,11 @@ void posix_stacktrace_impl(
         buffer.resize(max_depth);
       else
         buffer.resize(buffer.size() * 2);
+#ifndef __EMSCRIPTEN__
       nframes = backtrace(buffer.data(), buffer.size());
+#else
+      nframes = 0;
+#endif
     } while (nframes == buffer.size() && nframes < max_depth);
 
     if (nframes < skip)

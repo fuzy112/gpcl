@@ -130,6 +130,11 @@ if("${library_type}" STREQUAL "SHARED_LIBRARY")
   target_compile_definitions(gpcl PUBLIC GPCL_DYN_LINK=1)
 endif()
 
+if(EMSCRIPTEN)
+  target_compile_options(gpcl PUBLIC "-pthread")
+  target_link_options(gpcl PUBLIC "-pthread")
+endif()
+
 set_target_properties(
   gpcl
   PROPERTIES SOVERSION 600
