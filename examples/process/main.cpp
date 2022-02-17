@@ -28,7 +28,7 @@ int main(int argc, char **argv)
   {
     gpcl::cdebug() << e.what() << std::endl;
   }
-  GPCL_CATCH(std::exception const &e)
+  GPCL_AND_CATCH(std::exception const &e)
   {
     gpcl::cdebug() << e.what() << std::endl;
   }

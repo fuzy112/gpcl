@@ -3,7 +3,6 @@
 
 #include "doctest.h"
 
-
 using gpcl::lexical_cast;
 using gpcl::variant;
 using gpcl::visit;
@@ -31,5 +30,7 @@ TEST_CASE("lexical_cast")
   CHECK(variant_to<float>(v) == 42);
   CHECK(variant_to<std::string>(v) == "42");
 
+#ifndef GPCL_CONFIG_NO_EXCEPTIONS
   CHECK_THROWS(variant_to<char>(v));
+#endif
 }

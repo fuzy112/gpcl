@@ -21,6 +21,7 @@
     {                                                                          \
       try
 #  define GPCL_CATCH(...) catch (__VA_ARGS__)
+#  define GPCL_AND_CATCH(...) GPCL_CATCH(__VA_ARGS__)
 #  define GPCL_RETHROW throw
 #  define GPCL_CATCH_END }
 #  define GPCL_THROW(...) throw __VA_ARGS__
@@ -29,9 +30,11 @@
 #  define GPCL_TRY if (true)
 
 #  define GPCL_CATCH(...)                                                      \
-    ;                                                                          \
-    if (false)                                                                 \
+    if constexpr (false)                                                       \
     (void)[&](__VA_ARGS__)
+#  define GPCL_AND_CATCH(...)                                                  \
+    ;                                                                          \
+    GPCL_CATCH(__VA_ARGS__)
 #  define GPCL_RETHROW (void)0
 #  define GPCL_CATCH_END ;
 
