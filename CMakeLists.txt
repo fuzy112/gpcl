@@ -24,6 +24,7 @@ include(CMakePackageConfigHelpers)
 option(GPCL_ENABLE_LTO "Enable link time optimisation" OFF)
 option(GPCL_BUILD_TESTING "enable testing support" ON)
 option(GPCL_BUILD_DOC "enable document generation" ON)
+option(GPCL_FETCH_CPPREFERENCE "Download cppreference archive automatically" OFF)
 option(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE
        "link to external cppreference documentation" TRUE)
 option(GPCL_ENABLE_LLVM "Link to LLVM if found" TRUE)
@@ -77,13 +78,13 @@ if(LLVM_FOUND AND "${GPCL_ENABLE_LLVM}")
   target_compile_definitions(gpcl PUBLIC GPCL_LLVM=1)
   set(GPCL_LLVM
       TRUE
-      CACHE BOOL "")
+      CACHE BOOL "" FORCE)
 elseif(BFD_FOUND AND "${GPCL_ENABLE_BFD}")
   target_link_libraries(gpcl PUBLIC BFD::BFD)
   target_compile_definitions(gpcl PUBLIC GPCL_BFD=1)
   set(GPCL_BFD
       TRUE
-      CACHE BOOL "")
+      CACHE BOOL "" FORCE)
 endif()
 
 if(Backtrace_FOUND)
@@ -96,7 +97,7 @@ endif()
 if(SQLite3_FOUND)
   target_link_libraries(gpcl PUBLIC SQLite::SQLite3)
   target_compile_definitions(gpcl PUBLIC GPCL_SQLITE=1)
-  set(GPCL_SQLITE TRUE CACHE BOOL "")
+  set(GPCL_SQLITE TRUE CACHE BOOL "" FORCE)
 endif()
 
 if(UNIX AND NOT APPLE)
@@ -144,27 +145,41 @@ set_target_properties(
              RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin"
              ARCHIVE_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/lib")
 
+set(GPCL_CPPREFERENCE_DIR "" CACHE PATH "Path to cppreference directory")
+
 FetchContent_Declare(
   cppreference
   URL https://upload.cppreference.com/mwiki/images/1/16/html_book_20190607.tar.xz
   URL_HASH
     SHA256=8f97b2baa749c748a2e022d785f1a2e95aa851a3075987dfcf38baf65e0e486d)
 
+
 if(Doxygen_FOUND AND GPCL_BUILD_DOC)
-  FetchContent_MakeAvailable(cppreference)
-  if(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE)
-    list(
-      APPEND
-      DOXYGEN_TAGFILES
-      "${cppreference_SOURCE_DIR}/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/"
-    )
-  else()
-    list(
-      APPEND
-      DOXYGEN_TAGFILES
-      "${cppreference_SOURCE_DIR}/cppreference-doxygen-local.tag.xml=${cppreference_SOURCE_DIR}/reference/en/"
-    )
+
+  if(GPCL_FETCH_CPPREFERENCE)
+    FetchContent_MakeAvailable(cppreference)
+
+    if(NOT GPCL_CPPREFERENCE_DIR)
+      set(GPCL_CPPREFERENCE_DIR "${cppreference_SOURCE_DIR}" CACHE PATH "Path to cppreference directory" FORCE)
+    endif()
   endif()
+
+  if(GPCL_CPPREFERENCE_DIR)
+    if(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE)
+      list(
+        APPEND
+        DOXYGEN_TAGFILES
+        "${GPCL_CPPREFERENCE_DIR}/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/"
+      )
+    else()
+      list(
+        APPEND
+        DOXYGEN_TAGFILES
+        "${GPCL_CPPREFERENCE_DIR}/cppreference-doxygen-local.tag.xml=${GPCL_CPPREFERENCE_DIR}/reference/en/"
+      )
+    endif()
+  endif()
+
   set(DOXYGEN_PREDEFINED GPCL_DOXYGEN)
 
   set(DOXYGEN_JAVADOC_AUTOBRIEF YES)
