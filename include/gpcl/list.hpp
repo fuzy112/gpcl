@@ -24,7 +24,7 @@
 
 #include <initializer_list>
 #ifndef GPCL_CONFIG_NO_IOSTEAMS
-# include <iostream>
+#  include <iostream>
 #endif
 
 namespace gpcl {
@@ -64,7 +64,7 @@ struct list_node : noncopyable
       : prev_(prev),
         next_(next),
 #ifdef GPCL_DEBUG
-	empty_(false),
+        empty_(false),
 #endif
         val_(std::forward<Args>(args)...)
   {
@@ -87,7 +87,7 @@ struct list_node : noncopyable
     GPCL_ASSERT(!empty_);
     empty_ = true;
 #endif
-    
+
     val_.~T();
     dummy_ = '\0';
   }
@@ -146,7 +146,8 @@ private:
   list_node_type *node_{};
 
 public:
-  /// Creates an empty iterator for which the only valid operation is to assign to it or destruct it.
+  /// Creates an empty iterator for which the only valid operation is to assign
+  /// to it or destruct it.
   constexpr list_iterator() = default;
 
   /// Creates an iterator to @a node.
@@ -223,7 +224,10 @@ template <typename T, typename Allocator>
 class list
 {
 public:
-  static_assert(std::is_same<T, typename std::allocator_traits<Allocator>::value_type>::value, "");
+  static_assert(
+      std::is_same<
+          T, typename std::allocator_traits<Allocator>::value_type>::value,
+      "");
 
   using allocator_type = Allocator;
 
@@ -249,10 +253,11 @@ private:
 public:
   /// Creates an empty list.
   ///
-  /// @remarks This function participates in the overload resolution only if Allocator is *DefaultDestructible*.
-  template <typename std::enable_if<std::is_default_constructible<Allocator>::value, int>::type = 0>
-  constexpr list() noexcept(noexcept(Allocator()))
-      : list(Allocator())
+  /// @remarks This function participates in the overload resolution only if
+  /// Allocator is *DefaultDestructible*.
+  template <typename std::enable_if<
+                std::is_default_constructible<Allocator>::value, int>::type = 0>
+  constexpr list() noexcept(noexcept(Allocator())) : list(Allocator())
   {
   }
 
@@ -261,17 +266,21 @@ public:
   {
   }
 
+  /// Creates a list and fills in @c count copies of @c value.
   list(size_type count, const T &value, const Allocator &a = Allocator())
       : list(a)
   {
     resize(count, value);
   }
 
+  /// Creates a list and fills in @c count default constructed elements.
   explicit list(size_type count, const Allocator &a = Allocator()) : list(a)
   {
     resize(count);
   }
 
+  /// Initializes a list using an iterator range.
+  /// @tparam InputIt a model of @c Cpp17LegacyInputIterator.
   template <typename InputIt,
             typename std::enable_if<
                 std::is_convertible<
@@ -285,17 +294,20 @@ public:
     insert(end(), first, last);
   }
 
+  /// Initializes a list using an initializer_list.
   constexpr list(std::initializer_list<T> il,
                  const type_identity_t<Allocator> &a = Allocator())
       : list(il.begin(), il.end(), a)
   {
   }
 
+  /// Move constructor.
   list(list &&other) noexcept : list(other.get_allocator())
   {
     splice(end(), std::move(other));
   }
 
+  /// Move a list, but uses specified allocator.
   list(list &&other, const type_identity_t<Allocator> &a) : list(a)
   {
     if (a != other.get_allocator())
@@ -311,6 +323,7 @@ public:
     }
   }
 
+  /// Copy constructor.
   list(const list &other)
       : list(other,
              std::allocator_traits<allocator_type>::
@@ -318,13 +331,16 @@ public:
   {
   }
 
+  /// Copies a list, but uses specified allocator.
   list(const list &other, const type_identity_t<Allocator> &a) : list(a)
   {
     insert(end(), other.begin(), other.end());
   }
 
+  /// Destructor.
   ~list() { clear(); }
 
+  /// Copy assignment.
   list &operator=(const list &other)
   {
     if (std::allocator_traits<
@@ -373,6 +389,7 @@ public:
     return *this;
   }
 
+  /// Move assignment.
   list &operator=(list &&other) noexcept(
       std::allocator_traits<Allocator>::is_always_equal::value)
   {
@@ -427,31 +444,47 @@ public:
     return *this;
   }
 
+  /// Returns the allocator.
   allocator_type get_allocator() const noexcept { return p_.first(); }
 
+  /// Returns an iterator to the first element.
   iterator begin() noexcept { return iterator(p_.second().next_); }
+
+  /// Returns a const_iterator to the first element.
   const_iterator begin() const noexcept
   {
     return const_iterator(p_.second().next_);
   }
+
+  /// Returns a const_iterator to the first element.
   const_iterator cbegin() const noexcept { return begin(); }
 
+  /// Returns an iterator to the one past the last element.
   iterator end() noexcept { return iterator(&p_.second()); }
+
+  /// Returns a const_iterator to the one past the last element.
   const_iterator end() const noexcept { return const_iterator(&p_.second()); }
+
+  /// Returns a const_iterator to the one past the last element.
   const_iterator cend() const noexcept { return end(); }
 
+  /// Returns reference to the first element.
   reference front() noexcept { return *begin(); }
+
+  /// Returns reference to the first elment.
   const_reference front() const noexcept { return *begin(); }
 
+  /// Returns reference to the last element.
   reference back() noexcept { return *std::prev(end()); }
+
+  /// Returns reference to the last element.
   const_reference back() const noexcept { return *std::prev(end()); }
 
+  /// Determines if the list is empty.
   bool empty() const noexcept { return begin() == end(); }
 
-  size_type size() const noexcept
-  {
-    return size_;
-  }
+  /// Returns the number of elements in the list.
+  size_type size() const noexcept { return size_; }
 
 private:
   node_allocator &get_alloc() noexcept { return p_.first(); }
@@ -483,30 +516,55 @@ private:
   }
 
 public:
+  /// @{
+
+  /// Inserts an element to the beginning of the list.
+  ///
+  /// @param args arguments to forward to the constructor of the element
+  /// @returns a reference to the inserted element.
   template <typename... Args>
   reference emplace_front(Args &&...args)
   {
     return *emplace(begin(), std::forward<Args>(args)...);
   }
 
+  /// Inserts an element to the beginning of the list.
   void push_front(const T &value) { emplace_front(value); }
 
+  /// Inserts an element to the beginning of the list.
   void push_front(T &&value) { emplace_front(value); }
 
+  /// @}
+
+  /// Removes the first element of the list.
   void pop_front() noexcept { erase(begin()); }
 
+  /// @{
+
+  /// Appends an element to the end of the list.
+  ///
+  /// @param args arguments to forward to the constructor of the element
+  /// @returns a reference to the appended element.
   template <typename... Args>
   reference emplace_back(Args &&...args)
   {
     return *emplace(end(), std::forward<Args>(args)...);
   }
 
+  /// Appends an element to the end of the list.
   void push_back(const T &value) { emplace_back(value); }
 
+  /// Appends an element to the end of the list.
   void push_back(T &&value) { emplace_back(value); }
 
+  /// @}
+
+  /// Removes the last element of the list.
   void pop_back() noexcept { erase(std::prev(end())); }
 
+  /// @{
+
+  /// Inserts an element before @c pos.
   template <typename... Args>
   iterator emplace(const_iterator pos, Args &&...args)
   {
@@ -518,16 +576,19 @@ public:
     return iterator(node);
   }
 
+  /// Inserts an element before @c pos.
   iterator insert(const_iterator pos, const T &value)
   {
     return emplace(pos, value);
   }
 
+  /// Inserts an element before @c pos.
   iterator insert(const_iterator pos, T &&value)
   {
     return emplace(pos, std::move(value));
   }
 
+  /// Inserts @c count copies of @c value before @c pos.
   iterator insert(const_iterator pos, size_type count, const T &value)
   {
     size_type n = 0;
@@ -552,6 +613,7 @@ public:
     GPCL_CATCH_END
   }
 
+  /// Inserts elements before @c pos.
   template <typename InputIt,
             typename std::enable_if<
                 std::is_convertible<
@@ -583,11 +645,17 @@ public:
     GPCL_CATCH_END
   }
 
+  /// Inserts elements before @c pos.
   iterator insert(const_iterator pos, std::initializer_list<T> il)
   {
     return insert(pos, il.begin(), il.end());
   }
 
+  /// @}
+
+  /// @{
+
+  /// Resizes the list to contain @c count elements.
   void resize(size_type count)
   {
     if (count > size_)
@@ -604,6 +672,7 @@ public:
     GPCL_ASSERT(count == size_);
   }
 
+  /// Resizes the list to contain @c count elements.
   void resize(size_type count, const T &value)
   {
     if (count > size_)
@@ -618,6 +687,9 @@ public:
     GPCL_ASSERT(count == size_);
   }
 
+  /// @}
+
+  /// Removes the element at @c pos.
   iterator erase(const_iterator pos) noexcept
   {
     auto node = const_cast<node_type *>(pos.get_node());
@@ -630,6 +702,7 @@ public:
     return iterator(next);
   }
 
+  /// Removes the elements in the range.
   iterator erase(const_iterator first, const_iterator last) noexcept
   {
     auto node = const_cast<node_type *>(first.get_node());
@@ -648,9 +721,10 @@ public:
     return iterator(next);
   }
 
+  /// Removes all elements of the list.
   void clear() noexcept { erase(begin(), end()); }
 
-  /// @todo implement swap.
+  /// Swaps the elements with another list.
   void swap(list &other) noexcept(
       std::allocator_traits<Allocator>::is_always_equal::value)
   {
@@ -669,16 +743,21 @@ public:
     }
   }
 
+  /// @{
+
+  /// Transfers all elements from @c other to this.
   void splice(const_iterator pos, list &&other) noexcept
   {
     splice(pos, std::move(other), other.begin(), other.end());
   }
 
+  /// Transfers the element pointed to by @c it from @c other to this.
   void splice(const_iterator pos, list &&other, const_iterator it) noexcept
   {
     splice(pos, std::move(other), it, std::next(it));
   }
 
+  /// Transfers the elements in the range [first, last) from @c other to this.
   void splice(const_iterator pos, list &&other, const_iterator first,
               const_iterator last) noexcept
   {
@@ -708,6 +787,9 @@ public:
     pos_node->prev_ = node_last;
   }
 
+  /// @}
+
+  /// Sorts the elements of the list in ascending order.
   void sort()
   {
     auto i = cbegin();
@@ -765,7 +847,7 @@ bool operator<(const list<T, Allocator> &x,
 
 #ifndef GPCL_CONFIG_NO_IOSTEAMS
 template <typename CharT, typename Traits, typename T, typename Allocator>
-std::basic_ostream<CharT, Traits>&
+std::basic_ostream<CharT, Traits> &
 operator<<(std::basic_ostream<CharT, Traits> &os, const list<T, Allocator> &rhs)
 {
   typename std::basic_ostream<CharT, Traits>::sentry valid(os);
