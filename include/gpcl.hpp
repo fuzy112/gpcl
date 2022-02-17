@@ -41,7 +41,6 @@
 #include <gpcl/content_iterator.hpp>
 #include <gpcl/creation_tag.hpp>
 #include <gpcl/debugstream.hpp>
-#include <gpcl/decay_copy.hpp>
 #include <gpcl/default_allocator.hpp>
 #include <gpcl/dynarray.hpp>
 #include <gpcl/enable_shared_from.hpp>

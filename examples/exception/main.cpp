@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS .
+
 #include <gpcl.hpp>
 
 #include <cerrno>
@@ -54,7 +56,9 @@ FILE *openFile(const char *name)
   auto e2 = std::move(e1) << filename_errinfo(name);
   auto e3 = std::move(e2) << stacktrace_errinfo(gpcl::stacktrace::current());
   if (!p)
-    GPCL_THROW_EXCEPTION(e3);
+    GPCL_THROW_EXCEPTION(my_error()
+                         << cerrno_errinfo(errno) << filename_errinfo(name)
+                         << stacktrace_errinfo(gpcl::stacktrace::current()));
   return p;
 }
 #ifdef _MSC_VER

@@ -184,6 +184,8 @@ protected:
 
   using int_type = typename Traits::int_type;
 
+  GPCL_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wconstant-conversion")
+
   /// Appends a character to the internal buffer.
   int_type overflow(int_type ch = Traits::eof()) override
   {
@@ -199,6 +201,8 @@ protected:
     GPCL_CATCH_END
     return 0;
   }
+
+  GPCL_CLANG_SUPPRESS_WARNING_POP
 
   std::streamsize xsputn(const CharType *s,
                          std::streamsize count) noexcept override
