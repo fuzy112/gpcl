@@ -32,12 +32,19 @@ namespace gpcl {
 template <typename T, typename Allocator = default_allocator<T>>
 class list;
 
+/// Node of a list.
 template <typename T>
 struct list_node : noncopyable
 {
+  using value_type = T;
+
   propagate_const<list_node *> prev_ = this;
 
   propagate_const<list_node *> next_ = this;
+
+#ifdef GPCL_DEBUG
+  bool empty_ = true;
+#endif
 
   union
   {
@@ -45,24 +52,47 @@ struct list_node : noncopyable
     T val_;
   };
 
+  /// Constructs an empty node for use as an past-the-end element.
   constexpr list_node() noexcept : dummy_() {}
 
+  /// Creates an node and initializes its value.
+  /// @param prev pointer to the previous node.
+  /// @param next pointer to the next node.
+  /// @param args arguments passed to the constructor of value type.
   template <typename... Args>
   explicit list_node(list_node *prev, list_node *next, Args &&...args)
       : prev_(prev),
         next_(next),
+#ifdef GPCL_DEBUG
+	empty_(false),
+#endif
         val_(std::forward<Args>(args)...)
   {
   }
 
-  ~list_node() noexcept {}
+  /// Destroys an empty node.
+  ///
+  /// It is undefined behaviour to destroy a node with valid value.
+  ~list_node() noexcept
+  {
+#ifdef GPCL_DEBUG
+    GPCL_ASSERT(empty_);
+#endif
+  }
 
+  /// Destroy the contained value in the node.
   void destroy() noexcept
   {
+#ifdef GPCL_DEBUG
+    GPCL_ASSERT(!empty_);
+    empty_ = true;
+#endif
+    
     val_.~T();
     dummy_ = '\0';
   }
 
+  /// Swaps the logical location of two nodes.
   void swap(list_node &other) noexcept
   {
     if (this == &other)
@@ -86,12 +116,14 @@ struct list_node : noncopyable
   }
 };
 
+/// Swaps the logical location of two nodes.
 template <typename T>
 void swap(list_node<T> &x, list_node<T> &y) noexcept
 {
   x.swap(y);
 }
 
+/// Iterator into a list.
 template <typename T, typename E>
 class list_iterator
 {
@@ -114,12 +146,18 @@ private:
   list_node_type *node_{};
 
 public:
+  /// Creates an empty iterator for which the only valid operation is to assign to it or destruct it.
   constexpr list_iterator() = default;
 
+  /// Creates an iterator to @a node.
   constexpr explicit list_iterator(list_node_type *node) noexcept : node_(node)
   {
   }
 
+  /// Copy constructor.
+  constexpr list_iterator(const list_iterator &) = default;
+
+  /// Converting constructor.
   template <typename U,
             typename std::enable_if<std::is_convertible<U *, E *>::value,
                                     int>::type = 0>
@@ -128,18 +166,23 @@ public:
   {
   }
 
+  /// Access the node.
   list_node_type *get_node() const noexcept { return node_; }
 
+  /// Returns reference to the value.
   reference operator*() const noexcept { return node_->val_; }
 
+  /// Returns pointer to the value.
   pointer operator->() const noexcept { return std::addressof(node_->val_); }
 
+  /// Increments the iterator.
   list_iterator &operator++() noexcept
   {
     node_ = node_->next_;
     return *this;
   }
 
+  /// Increments the iterator.
   list_iterator operator++(int) noexcept
   {
     auto r = *this;
@@ -147,12 +190,14 @@ public:
     return r;
   }
 
+  /// Decrements the iterator.
   list_iterator &operator--() noexcept
   {
     node_ = node_->prev_;
     return *this;
   }
 
+  /// Decrements the iterator.
   list_iterator &operator--(int) noexcept
   {
     auto r = *this;
@@ -173,10 +218,13 @@ public:
   }
 };
 
+/// Linked list.
 template <typename T, typename Allocator>
 class list
 {
 public:
+  static_assert(std::is_same<T, typename std::allocator_traits<Allocator>::value_type>::value, "");
+
   using allocator_type = Allocator;
 
   using size_type = std::size_t;
@@ -199,8 +247,16 @@ private:
   size_type size_ = 0;
 
 public:
-  constexpr list() = default;
+  /// Creates an empty list.
+  ///
+  /// @remarks This function participates in the overload resolution only if Allocator is *DefaultDestructible*.
+  template <typename std::enable_if<std::is_default_constructible<Allocator>::value, int>::type = 0>
+  constexpr list() noexcept(noexcept(Allocator()))
+      : list(Allocator())
+  {
+  }
 
+  /// Creates an empty list.
   constexpr explicit list(const type_identity_t<Allocator> &a) noexcept : p_(a)
   {
   }

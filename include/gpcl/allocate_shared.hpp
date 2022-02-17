@@ -37,8 +37,7 @@ class shared_ptr;
  * @return shared_ptr of an instance of type T.
  *
  * @exception std::bad_alloc if failed to allocate memory.
- * @exception any-exception thrown by the constructor.
- *
+ * 
  * If any exception is thrown, the function has no effect.
  *
  * @relates gpcl::shared_ptr

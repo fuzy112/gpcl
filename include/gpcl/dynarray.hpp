@@ -223,6 +223,7 @@ public:
     return *this;
   }
 
+private:
   template <
       typename A = Allocator,
       typename std::enable_if<!std::allocator_traits<A>::
