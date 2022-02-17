@@ -42,6 +42,7 @@
 #include <gpcl/creation_tag.hpp>
 #include <gpcl/debugstream.hpp>
 #include <gpcl/default_allocator.hpp>
+#include <gpcl/dump_build_info.hpp>
 #include <gpcl/dynarray.hpp>
 #include <gpcl/enable_shared_from.hpp>
 #include <gpcl/enable_shared_from_this.hpp>

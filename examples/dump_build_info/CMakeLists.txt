@@ -1,0 +1,1 @@
+add_example_executable(dump_build_info main.cpp)

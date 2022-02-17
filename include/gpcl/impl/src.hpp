@@ -20,6 +20,7 @@
 #include <gpcl/detail/impl/throw_system_error.ipp>
 #include <gpcl/detail/impl/tlsf.ipp>
 #include <gpcl/detail/impl/unreachable.ipp>
+#include <gpcl/impl/dump_build_info.ipp>
 #include <gpcl/impl/exception.ipp>
 #include <gpcl/impl/getopt.ipp>
 #include <gpcl/impl/json_error.ipp>

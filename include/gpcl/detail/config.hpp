@@ -296,4 +296,7 @@
 #  define GPCL_BACKTRACE_HEADER <execinfo.h>
 #endif
 
+#define GPCL_TO_STR_IMPL(x) #x
+#define GPCL_TO_STR(x) GPCL_TO_STR_IMPL(x)
+
 #endif // GPCL_DETAIL_CONFIG_HPP
