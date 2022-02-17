@@ -13,9 +13,9 @@
 
 #include <gpcl/detail/config.hpp>
 
-#include <streambuf>
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include <streambuf>
 
 #include <debugapi.h>
 
@@ -32,6 +32,13 @@ class basic_win_debug_streambuf<char, Traits>
 
 public:
   basic_win_debug_streambuf() = default;
+
+  ~basic_win_debug_streambuf()
+  {
+    GPCL_TRY { sync(); }
+    GPCL_CATCH(...) {}
+    GPCL_CATCH_END
+  }
 
 protected:
   int sync() override final
