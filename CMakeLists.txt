@@ -47,7 +47,7 @@ if(NOT DEFINED BUILD_TESTING)
 endif()
 
 find_package(Threads)
-find_package(LLVM 9 CONFIG)
+find_package(LLVM CONFIG)
 find_package(Doxygen)
 find_package(BFD)
 find_package(Backtrace)
