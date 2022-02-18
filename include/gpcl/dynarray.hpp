@@ -31,6 +31,9 @@
 
 namespace gpcl {
 
+/// @addtogroup containers Containers
+/// @{
+
 /// A vector-like container with strong exception guarantee.
 template <typename T, typename Allocator = default_allocator<T>>
 class dynarray
@@ -603,6 +606,7 @@ public:
   }
 };
 
+
 template <typename T, typename Allocator>
 void swap(dynarray<T, Allocator> &x,
           dynarray<T, Allocator> &y) noexcept(noexcept(x.swap(y)))
@@ -631,7 +635,7 @@ bool operator<(const dynarray<T, Allocator> &x,
   return std::lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());
 }
 
-#ifndef GPCL_CONFIG_NO_IOSTREAMS
+#if !defined(GPCL_CONFIG_NO_IOSTREAMS) || defined(GPCL_DOXYGEN)
 template <typename CharT, typename Traits, typename T, typename Allocator>
 std::basic_ostream<CharT, Traits> &
 operator<<(std::basic_ostream<CharT, Traits> &os,
@@ -656,6 +660,8 @@ operator<<(std::basic_ostream<CharT, Traits> &os,
   return os;
 }
 #endif
+
+/// @}
 
 } // namespace gpcl
 

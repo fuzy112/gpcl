@@ -124,6 +124,7 @@ void swap(list_node<T> &x, list_node<T> &y) noexcept
 }
 
 /// Iterator into a list.
+/// @relates gpcl::list
 template <typename T, typename E>
 class list_iterator
 {
@@ -219,6 +220,9 @@ public:
   }
 };
 
+/// @addtogroup containers Containers
+/// @{
+
 /// Linked list.
 template <typename T, typename Allocator>
 class list
@@ -251,6 +255,10 @@ private:
   size_type size_ = 0;
 
 public:
+
+  /// @name Constructors
+  /// @{
+
   /// Creates an empty list.
   ///
   /// @remarks This function participates in the overload resolution only if
@@ -336,6 +344,8 @@ public:
   {
     insert(end(), other.begin(), other.end());
   }
+
+  /// @}
 
   /// Destructor.
   ~list() { clear(); }
@@ -845,7 +855,7 @@ bool operator<(const list<T, Allocator> &x,
   return std::lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());
 }
 
-#ifndef GPCL_CONFIG_NO_IOSTEAMS
+#if !defined(GPCL_CONFIG_NO_IOSTEAMS) || defined(GPCL_DOYXGEN)
 template <typename CharT, typename Traits, typename T, typename Allocator>
 std::basic_ostream<CharT, Traits> &
 operator<<(std::basic_ostream<CharT, Traits> &os, const list<T, Allocator> &rhs)
@@ -867,6 +877,8 @@ operator<<(std::basic_ostream<CharT, Traits> &os, const list<T, Allocator> &rhs)
   return os;
 }
 #endif
+
+/// @}
 
 } // namespace gpcl
 
