@@ -61,6 +61,10 @@ void dump_build_info(std::ostream &os)
   os << "GPCL_POSIX\n";
 #endif
 
+#ifdef GPCL_LINUX
+  os << "GPCL_LINUX\n";
+#endif
+
 #ifdef GPCL_DISABLE_AUTO_LINKING
   os << "GPCL_DISABLE_AUTO_LINKING\n";
 #endif
