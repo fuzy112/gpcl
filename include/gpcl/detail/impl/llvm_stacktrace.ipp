@@ -115,10 +115,7 @@ std::string llvm_stacktrace_entry_description(const void *address)
     ss << address;
     return ss.str();
   }
-  if (line_info->FunctionName == line_info->BadString)
-    ss << address;
-  else
-    ss << line_info->FunctionName;
+  ss << line_info->FunctionName;
   if (line_info->Line != 0)
     ss << " at " << line_info->FileName << '(' << line_info->Line << ')';
   else

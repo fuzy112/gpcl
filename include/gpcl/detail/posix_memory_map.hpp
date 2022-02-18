@@ -42,7 +42,7 @@ memory_map(const MemoryMappable &mappable, access_mode mode, offset_t offset,
   if (!size)
     size = mappable.size();
 
-#if defined(GPCL_LINUX)
+#if defined(GPCL_LINUX) && defined(MAP_SHARED_VALIDATE)
   options.flags |= MAP_SHARED_VALIDATE;
 #else
   options.flags |= MAP_SHARED;
