@@ -76,6 +76,10 @@ template <typename Errc, typename std::enable_if<!std::is_integral<Errc>::value,
   throw_exception(system_error(make_error_code(errc), what));
 }
 
+#define GPCL_THROW_SYSTEM_ERROR_IF(...)                                        \
+  if ((__VA_ARGS__))                                                           \
+  ::gpcl::detail::errors::throw_system_error(GPCL_TO_STR(__VA_ARGS__))
+
 } // namespace detail
 } // namespace gpcl
 

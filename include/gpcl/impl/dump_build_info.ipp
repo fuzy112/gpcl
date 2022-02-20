@@ -93,6 +93,22 @@ void dump_build_info(std::ostream &os)
   os << "GPCL_DOXYGEN\n";
 #endif
 
+#ifdef GPCL_VERSION
+  os << "GPCL_VERSION=" << GPCL_TO_STR(GPCL_VERSION) << '\n';
+  os << "GPCL_VERSION_STRING=" << GPCL_TO_STR(GPCL_VERSION_STRING) << '\n';
+  os << "GPCL_VERSION_MAJOR=" << GPCL_VERSION_MAJOR << '\n';
+  os << "GPCL_VERSION_MINOR=" << GPCL_VERSION_MINOR << '\n';
+  os << "GPCL_VERSION_PATCH=" << GPCL_VERSION_PATCH << '\n';
+#endif
+
+#ifdef GPCL_GIT_HASH
+  os << "GPCL_GIT_HASH=" << GPCL_TO_STR(GPCL_GIT_HASH) << '\n';
+#endif
+
+#ifdef GPCL_GIT_DESCRIPTION
+  os << "GPCL_GIT_DESCRIPTION=" << GPCL_TO_STR(GPCL_GIT_DESCRIPTION) << '\n';
+#endif
+
   os << std::flush;
 }
 

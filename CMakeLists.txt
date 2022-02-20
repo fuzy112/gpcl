@@ -10,7 +10,14 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-project(GPCL CXX)
+project(GPCL 
+        VERSION 0.7.0
+        DESCRIPTION "General purpose C++ libraries"
+        HOMEPAGE_URL "https://github.com/Chingyat/gpcl"
+        LANGUAGES CXX)
+
+math(EXPR GPCL_VERSION_NUMBER 
+  "${GPCL_VERSION_MAJOR} * 10000 + ${GPCL_VERSION_MINOR} * 100 + ${GPCL_VERSION_PATCH}")
 
 set(GPCL_CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${GPCL_CMAKE_MODULE_PATH}")
@@ -52,6 +59,7 @@ find_package(Doxygen)
 find_package(BFD)
 find_package(Backtrace)
 find_package(SQLite3)
+find_package(Git)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -100,6 +108,31 @@ if(SQLite3_FOUND)
   set(GPCL_SQLITE TRUE CACHE BOOL "" FORCE)
 endif()
 
+if(GIT_FOUND)
+  execute_process(
+    COMMAND 
+      "${GIT_EXECUTABLE}"
+      rev-parse
+      "--verify"
+      HEAD
+    OUTPUT_VARIABLE GPCL_GIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(GPCL_GIT_HASH)
+    target_compile_definitions(gpcl PRIVATE GPCL_GIT_HASH=\"${GPCL_GIT_HASH}\")
+  endif()
+
+  execute_process(
+    COMMAND
+      "${GIT_EXECUTABLE}"
+      describe
+    OUTPUT_VARIABLE GPCL_GIT_DESCRIPTION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET)
+  if(GPCL_GIT_DESCRIPTION)
+    target_compile_definitions(gpcl PRIVATE GPCL_GIT_DESCRIPTION=\"${GPCL_GIT_DESCRIPTION}\")
+  endif()
+endif()
+
 if(UNIX AND NOT APPLE)
   target_link_libraries(gpcl PUBLIC rt)
 endif()
@@ -138,8 +171,8 @@ endif()
 
 set_target_properties(
   gpcl
-  PROPERTIES SOVERSION 600
-             VERSION 0.6.0
+  PROPERTIES SOVERSION "${GPCL_VERSION_NUMBER}"
+             VERSION ${GPCL_VERSION}
              DEFINE_SYMBOL GPCL_SOURCE
              LIBRARY_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/lib"
              RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin"
@@ -225,6 +258,10 @@ configure_package_config_file(
   INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gpcl"
   PATH_VARS CMAKE_INSTALL_LIBDIR GPCL_CMAKE_MODULE_PATH)
 
+write_basic_package_version_file(
+  "${GPCL_BINARY_DIR}/lib/cmake/gpcl/gpcl-config-version.cmake"
+  COMPATIBILITY SameMinorVersion)
+
 install(FILES "${GPCL_BINARY_DIR}/lib/cmake/gpcl/gpcl-config.cmake"
               "cmake/FindBFD.cmake" "cmake/FindIberty.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gpcl)
@@ -241,6 +278,7 @@ install(
 install(FILES "LICENSE_1_0.txt" "README.md"
         DESTINATION ${CMAKE_INSTALL_DATADIR}/gpcl)
 
+set(CPACK_PACKAGE_NAME gpcl)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE_1_0.txt")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 include(CPack)
