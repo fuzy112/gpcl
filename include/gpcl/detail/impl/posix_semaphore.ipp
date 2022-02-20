@@ -22,8 +22,7 @@ namespace detail {
 
 posix_semaphore::posix_semaphore(unsigned int init_value)
 {
-  if (-1 == ::sem_init(&sem_, false, init_value))
-    throw_system_error("sem_init");
+  GPCL_THROW_LAST_ERROR_IF(sem_init(&sem_, false, init_value) < 0);
 }
 
 posix_semaphore::~posix_semaphore()
@@ -34,8 +33,8 @@ posix_semaphore::~posix_semaphore()
 unsigned int posix_semaphore::get_value()
 {
   int sval;
-  if (-1 == ::sem_getvalue(&sem_, &sval))
-    throw_system_error("sem_getvalue");
+
+  GPCL_THROW_LAST_ERROR_IF(sem_getvalue(&sem_, &sval) < 0);
 
   if (sval < 0)
     return 0;
@@ -44,14 +43,12 @@ unsigned int posix_semaphore::get_value()
 
 void posix_semaphore::post()
 {
-  if (-1 == ::sem_post(&sem_))
-    throw_system_error("sem_post");
+  GPCL_THROW_LAST_ERROR_IF(sem_post(&sem_) < 0);
 }
 
 void posix_semaphore::wait()
 {
-  if (-1 == ::sem_wait(&sem_))
-    throw_system_error("sem_wait");
+  GPCL_THROW_LAST_ERROR_IF(sem_wait(&sem_) < 0);
 }
 
 bool posix_semaphore::try_wait()

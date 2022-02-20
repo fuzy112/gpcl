@@ -12,8 +12,8 @@
 #define GPCL_DETAIL_IMPL_PID_FILE_IPP
 
 #include <gpcl/detail/posix_pid_file.hpp>
-#include <gpcl/error.hpp>
 #include <gpcl/time.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 
 #include <climits>
 #include <libgen.h>
@@ -33,13 +33,10 @@ posix_pid_file::posix_pid_file(std::string path)
   lockstr.l_whence = SEEK_SET;
   lockstr.l_start = 0;
   lockstr.l_len = 0;
-  if (fcntl(f_.native_handle(), F_SETLK, &lockstr) == -1)
-  {
-    GPCL_THROW(system_error({errno, system_category()}, __func__));
-  }
+  GPCL_THROW_LAST_ERROR_IF(fcntl(f_.native_handle(), F_SETLK, &lockstr) < 0);
 
   // clear file content.
-  f_.truncate(0).value();
+  GPCL_THROW_LAST_ERROR_IF(ftruncate(f_.native_handle(), 0) < 0);
 
   // write pid to the file
   std::string buf = std::to_string(getpid()) + '\n';

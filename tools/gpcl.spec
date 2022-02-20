@@ -9,7 +9,7 @@
 #
 
 Name:           gpcl
-Version:        0.7.0
+Version:        0.8.0
 Release:        0
 Summary:        General Purpose C++ Libraries
 License:        BSL-1.0
