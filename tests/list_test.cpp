@@ -2,6 +2,7 @@
 
 #include "doctest.h"
 
+#include <algorithm>
 #include <random>
 
 GPCL_MSVC_SUPPRESS_WARNING(26800)
