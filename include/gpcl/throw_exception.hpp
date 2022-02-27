@@ -15,6 +15,7 @@
 
 #include <gpcl/exception.hpp>
 #include <gpcl/make_iomanip.hpp>
+#include <gpcl/source_location.hpp>
 
 #ifdef GPCL_CONFIG_NO_EXCEPTIONS
 #  include <gpcl/stacktrace.hpp>
@@ -69,52 +70,24 @@ template <typename E>
 // Common error infos
 
 namespace detail {
-using source_file_errinfo =
-    error_info<struct source_file_errinfo_, const char *>;
-using source_line_errinfo = error_info<struct source_line_errinfo_, unsigned>;
-using func_name_errinfo = error_info<struct func_name_errinfo_, const char *>;
+using source_location_errinfo =
+    error_info<struct source_location_errinfo_, source_location>;
 
-inline decltype(auto) tag_invoke(source_file_errinfo::format_fn,
-                                 const char *source_file)
+inline auto tag_invoke(source_location_errinfo::format_fn,
+                       source_location location)
 {
-  return make_iomanip(
-      [=](auto &s) { s << "[source file] = " << std::quoted(source_file); });
+  return make_iomanip([location](auto &stream) {
+    stream << "[source_location_errinfo] = {" << location << "}";
+  });
 }
 
-inline decltype(auto) tag_invoke(source_line_errinfo::format_fn, unsigned line)
-{
-  return make_iomanip([=](auto &s) { s << "[source line] = " << line; });
-}
-
-inline decltype(auto) tag_invoke(func_name_errinfo::format_fn,
-                                 const char *func_name)
-{
-  return make_iomanip([=](auto &s) { s << "[function name] = " << func_name; });
-}
 } // namespace detail
 
-using function_name_error_info = detail::func_name_errinfo;
-#if defined(__GNUC__)
-#  define GPCL_FUNCTION_NAME_ERROR_INFO_CURRENT()                              \
-    ::gpcl::function_name_error_info(__PRETTY_FUNCTION__)
-#else
-#  define GPCL_FUNCTION_NAME_ERROR_INFO_CURRENT()                              \
-    ::gpcl::function_name_error_info(__func__)
-#endif
-
-using source_file_error_info = detail::source_file_errinfo;
-#define GPCL_SOURCE_FILE_ERROR_INFO_CURRENT()                                  \
-  ::gpcl::source_file_error_info(__FILE__)
-
-using source_line_error_info = detail::source_line_errinfo;
-#define GPCL_SOURCE_LINE_ERROR_INFO_CURRENT()                                  \
-  ::gpcl::source_line_error_info(__LINE__)
-
+using source_location_errinfo = detail::source_location_errinfo;
 #define GPCL_THROW_EXCEPTION(exc)                                              \
-  ::gpcl::throw_exception(::gpcl::enable_error_info(exc)                       \
-                          << GPCL_FUNCTION_NAME_ERROR_INFO_CURRENT()           \
-                          << GPCL_SOURCE_FILE_ERROR_INFO_CURRENT()             \
-                          << GPCL_SOURCE_LINE_ERROR_INFO_CURRENT())
+  ::gpcl::throw_exception(                                                     \
+      ::gpcl::enable_error_info(exc)                                           \
+      << ::gpcl::source_location_errinfo(GPCL_SOURCE_LOCATION_CURRENT_LINE()))
 
 } // namespace gpcl
 
