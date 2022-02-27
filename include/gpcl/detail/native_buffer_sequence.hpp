@@ -115,7 +115,7 @@ struct native_buffer_sequence<const_buffer, Allocator>
 {
   explicit native_buffer_sequence(const_buffer b) noexcept
   {
-    iov[0].iov_base = const_cast<unsigned char *>(b.data());
+    iov[0].iov_base = const_cast<void *>(b.data());
     iov[0].iov_len = b.size();
   }
 

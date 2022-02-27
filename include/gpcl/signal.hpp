@@ -20,7 +20,7 @@
 
 namespace gpcl {
 
-std::string_view signal_name(int signum)
+inline std::string_view signal_name(int signum)
 {
   GPCL_ASSERT(signum > 0);
 
