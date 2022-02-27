@@ -1,28 +1,38 @@
 #include <gpcl/debugstream.hpp>
 //#include <gpcl/impl/win_main.hpp>
+#include <gpcl/process.hpp>
+#include <gpcl/signal.hpp>
 #include <gpcl/stacktrace.hpp>
-
-#if defined(GPCL_WINDOWS)
-#  include <gpcl/detail/win_process.hpp>
-#endif
 
 int main(int argc, char **argv)
 {
   (void)argc;
   (void)argv;
 
-#if defined(GPCL_WINDOWS)
   GPCL_TRY
   {
-    gpcl::detail::win_process proc(
-        gpcl::detail::win_process::command_line_tag{}, "notepad.exe");
+#ifdef GPCL_WINDOWS
+    gpcl::dynarray<std::string> args{"notepad.exe"};
+#else
+    gpcl::dynarray<std::string> args{"ls"};
+#endif
+    gpcl::process proc(args);
+
     if (!proc.try_join_for(gpcl::chrono::seconds(5)))
     {
       proc.kill();
       proc.join();
     }
-    
-    gpcl::cdebug() << "Exit code: " << proc.exit_code() << std::endl;
+
+    if (proc.exited())
+    {
+      gpcl::cdebug() << "Exit code: " << proc.exit_code() << std::endl;
+    }
+    else if (proc.killed())
+    {
+      gpcl::cdebug() << "Killed by signal: " << gpcl::signal_name(proc.signal())
+                     << std::endl;
+    }
   }
   GPCL_CATCH(gpcl::system_error const &e)
   {
@@ -33,5 +43,4 @@ int main(int argc, char **argv)
     gpcl::cdebug() << e.what() << std::endl;
   }
   GPCL_CATCH_END
-#endif
 }

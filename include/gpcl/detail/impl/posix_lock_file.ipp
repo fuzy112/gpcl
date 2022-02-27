@@ -14,6 +14,8 @@
 #include <gpcl/detail/posix_lock_file.hpp>
 #include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/unique_lock.hpp>
+#include <gpcl/buffer.hpp>
+
 #include <fcntl.h>
 #include <unistd.h>
 

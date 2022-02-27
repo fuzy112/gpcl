@@ -11,35 +11,25 @@
 #ifndef GPCL_BUFFER_HPP
 #define GPCL_BUFFER_HPP
 
-#include <gpcl/buffer_sequence.hpp>
-#include <gpcl/tag_invoke.hpp>
+#include <gpcl/const_buffer.hpp>
+#include <gpcl/detail/config.hpp>
+#include <gpcl/detail/type_traits.hpp>
+#include <gpcl/mutable_buffer.hpp>
 
 namespace gpcl {
 
 namespace detail {
 
-struct buffer_fn
-{
-  template <typename... Args>
-  auto operator()(Args &&...args) const
-      -> std::enable_if_t<is_const_buffer_sequence<tag_invoke_result_t<
-                              buffer_fn, Args &&...>>::value,
-                          tag_invoke_result_t<buffer_fn, Args &&...>>
-  {
-    return gpcl::tag_invoke(*this, static_cast<Args &&>(args)...);
-  }
-};
-
 // Create a buffer from raw memory.
 inline const_buffer buffer(const void *data, std::size_t size) noexcept
 {
-  return const_buffer(reinterpret_cast<const unsigned char *>(data), size);
+  return const_buffer(data, size);
 }
 
 // Create a buffer from raw memory.
 inline mutable_buffer buffer(void *data, std::size_t size) noexcept
 {
-  return mutable_buffer(reinterpret_cast<unsigned char *>(data), size);
+  return mutable_buffer(data, size);
 }
 
 // Make a buffer from a contiguous container.
@@ -63,19 +53,18 @@ buffer(const T &obj,
   return buffer(obj.data(), obj.size() * sizeof(*obj.data()));
 }
 
-template <typename... Args>
-auto tag_invoke(buffer_fn, Args &&...args)
-    -> std::enable_if_t<is_const_buffer_sequence<decltype(buffer(
-                            static_cast<Args &&>(args)...))>::value,
-                        decltype(buffer(static_cast<Args &&>(args)...))>
+struct buffer_fn
 {
-  return buffer(static_cast<Args &&>(args)...);
-}
+  template <typename... Args>
+  auto operator()(Args &&... args) const
+  {
+    return buffer(static_cast<Args &&>(args)...);
+  }
+};
 
 } // namespace detail
 
 using buffer_fn = detail::buffer_fn;
-
 
 /// Factory for mutable_buffer and constant_buffer.
 /** Create a new mutable_buffer or constant_buffer.

@@ -12,6 +12,7 @@
 #define GPCL_PMR_MONOTONIC_BUFFER_RESOURCE_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/mutable_buffer.hpp>
 #include <gpcl/pmr/default_resource.hpp>
 #include <gpcl/pmr/memory_resource.hpp>
 

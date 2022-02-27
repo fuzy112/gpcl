@@ -77,6 +77,21 @@ using span_base =
     std::conditional_t<E == std::size_t(-1), detail::dynamic_span_base<T>,
                        detail::static_span_base<T, E>>;
 
+template <typename T, typename U>
+struct is_span_convertible : std::false_type
+{
+};
+
+template <typename T>
+struct is_span_convertible<const T, T> : std::true_type
+{
+};
+
+template <typename T>
+struct is_span_convertible<T, T> : std::true_type
+{
+};
+
 } // namespace detail
 
 /// A contiguous container view.
@@ -109,11 +124,12 @@ public:
   }
 
   template <
-      typename It, typename End,
-      std::enable_if_t<detail::negate_v<std::is_convertible<End, std::size_t>>,
-                       int>
-          Dummy = 0> // requires ContiguousIterator<It>
-  inline constexpr span(It first, End last)
+      typename It,
+      std::enable_if_t<
+          detail::is_span_convertible<
+              T, std::remove_reference_t<decltype(*std::declval<It>())>>::value,
+          int> = 0>
+  inline constexpr span(It first, It last)
       : base_type(std::addressof(*first),
                   std::addressof(*last) - std::addressof(*first))
   {
@@ -126,27 +142,37 @@ public:
   }
 
   template <typename U, std::size_t N,
-            std::enable_if_t<N == E || E == dynamic_extent, int> = 0>
+            std::enable_if_t<detail::is_span_convertible<T, U>::value &&
+                                 (N == E || E == dynamic_extent),
+                             int> = 0>
   inline constexpr span(std::array<U, N> &arr) noexcept
       : base_type(arr.data(), N)
   {
   }
 
   template <typename U, std::size_t N,
-            std::enable_if_t<N == E || E == dynamic_extent, int> = 0>
+            std::enable_if_t<detail::is_span_convertible<T, const U>::value &&
+                                 (N == E || E == dynamic_extent),
+                             int> = 0>
   inline constexpr span(const std::array<U, N> &arr) noexcept
       : base_type(arr.data(), N)
   {
   }
 
-  template <typename R>
+  template <typename R,
+            std::enable_if_t<detail::is_span_convertible<
+                                 T, std::remove_reference_t<decltype(
+                                        *std::declval<R>().data())>>::value,
+                             int> = 0>
   inline constexpr span(R &&r) : base_type(r.data(), r.size())
   {
   }
 
   template <typename U, std::size_t N,
-            std::enable_if_t<
-                N == E || E == dynamic_extent || E == dynamic_extent, int> = 0>
+            std::enable_if_t<detail::is_span_convertible<T, U>::value &&
+                                 (N == E || E == dynamic_extent ||
+                                  E == dynamic_extent),
+                             int> = 0>
   inline constexpr span(const span<U, N> &s) noexcept
       : base_type(s.data(), s.size())
   {

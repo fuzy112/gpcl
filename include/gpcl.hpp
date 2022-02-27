@@ -104,6 +104,7 @@
 #include <gpcl/pid_file.hpp>
 #include <gpcl/pool.hpp>
 #include <gpcl/pool_allocator.hpp>
+#include <gpcl/process.hpp>
 #include <gpcl/propagate_const.hpp>
 #include <gpcl/scope_exit.hpp>
 #include <gpcl/scope_fail.hpp>
@@ -113,7 +114,9 @@
 #include <gpcl/semaphore.hpp>
 #include <gpcl/shared_memory_object.hpp>
 #include <gpcl/shared_ptr.hpp>
+#include <gpcl/signal.hpp>
 #include <gpcl/simple_segregated_storage.hpp>
+#include <gpcl/source_location.hpp>
 #include <gpcl/span.hpp>
 #include <gpcl/spanbuf.hpp>
 #include <gpcl/spanstream.hpp>

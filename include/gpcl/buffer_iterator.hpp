@@ -18,7 +18,7 @@
 #include <type_traits>
 
 namespace gpcl {
-template <typename BufferSequence>
+template <typename BufferSequence, typename Byte = char>
 struct buffers_iterator
 {
   typedef std::forward_iterator_tag iterator_category;
@@ -38,7 +38,7 @@ struct buffers_iterator
 
   decltype(auto) operator*() const { return *operator->(); }
 
-  auto operator->() const { return curr_buf->begin() + byte_pos; }
+  auto operator->() const { return (Byte *)curr_buf->data() + byte_pos; }
 
   /// @bug this does not work when a buffer is empty.
   buffers_iterator &operator++()
@@ -84,22 +84,22 @@ buffers_iterator<BufferSequence> buffers_end(BufferSequence &&bs) noexcept
 
 inline auto buffers_begin(const_buffer b) noexcept
 {
-  return b.begin();
+  return b.data();
 }
 
 inline auto buffers_end(const_buffer b) noexcept
 {
-  return b.end();
+  return (const char *)b.data() + b.size();
 }
 
 inline auto buffers_begin(mutable_buffer b) noexcept
 {
-  return b.begin();
+  return b.data();
 }
 
 inline auto buffers_end(mutable_buffer b) noexcept
 {
-  return b.end();
+  return (char *)b.data() + b.size();
 }
 
 } // namespace gpcl

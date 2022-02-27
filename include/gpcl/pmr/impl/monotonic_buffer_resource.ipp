@@ -13,6 +13,7 @@
 
 #include <gpcl/pmr/default_resource.hpp>
 #include <gpcl/pmr/monotonic_buffer_resource.hpp>
+#include <gpcl/buffer.hpp>
 
 namespace gpcl {
 namespace pmr {
@@ -20,7 +21,7 @@ namespace pmr {
 monotonic_buffer_resource::monotonic_buffer_resource(void *user_provided_buffer,
                                                      std::size_t size,
                                                      memory_resource *upstream)
-    : buffer_(gpcl::buffer(user_provided_buffer, size)),
+    : buffer_(gpcl::mutable_buffer((char *)user_provided_buffer, size)),
       upstream_(upstream)
 {
   GPCL_ASSERT(user_provided_buffer);

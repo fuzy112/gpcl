@@ -11,9 +11,11 @@
 #ifndef GPCL_PMR_MEMORY_RESOURCE_HPP
 #define GPCL_PMR_MEMORY_RESOURCE_HPP
 
-#include <gpcl/buffer.hpp>
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
+
 #include <cstddef> // for max_align_t
+#include <cstdint>
 #include <cstring>
 
 namespace gpcl {

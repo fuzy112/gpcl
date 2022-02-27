@@ -17,6 +17,11 @@
 #include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/narrow_cast.hpp>
 #include <gpcl/noncopyable.hpp>
+#include <gpcl/span.hpp>
+
+#include <iomanip>
+#include <sstream>
+#include <string_view>
 
 #include <processthreadsapi.h>
 
@@ -29,33 +34,75 @@ class win_process : noncopyable
 public:
   using native_handle_type = LPPROCESS_INFORMATION;
 
-  struct command_line_tag
-  {
+  inline static constexpr STARTUPINFOA default_startup_info{
+      sizeof(default_startup_info),
   };
 
-  win_process()
+  // clang-format off
+  struct options
+  {
+    /* [in, optional]      */ LPCSTR                lpApplicationName{};
+    /* [in, out, optional] */ LPSTR                 lpCommandLine{};
+    /* [in, optional]      */ LPSECURITY_ATTRIBUTES lpProcessAttributes{};
+    /* [in, optional]      */ LPSECURITY_ATTRIBUTES lpThreadAttributes{};
+    /* [in]                */ BOOL                  bInheritHandles{};
+    /* [in]                */ DWORD                 dwCreationFlags{};
+    /* [in, optional]      */ LPVOID                lpEnvironment{};
+    /* [in, optional]      */ LPCSTR                lpCurrentDirectory{};
+    /* [in]                */ LPSTARTUPINFOA        lpStartupInfo{&default_startup_info};
+  };
+  // clang-format on
+
+  constexpr win_process() noexcept
   {
     process_information_.hProcess = INVALID_HANDLE_VALUE;
     process_information_.hThread = INVALID_HANDLE_VALUE;
   }
 
-  explicit win_process(command_line_tag, const char *cmdline)
-  {
-    STARTUPINFOA startup_info{};
-    startup_info.cb = sizeof(startup_info);
+  explicit win_process(const options &opt) : win_process() { start(opt); }
 
-    if (!CreateProcessA(nullptr, const_cast<char *>(cmdline), nullptr, nullptr,
-                        FALSE, 0, nullptr, nullptr, &startup_info,
-                        &process_information_)) {
-      throw_system_error("CreateProcessA");
-    }
+  explicit win_process(span<std::string_view const> args,
+                       options opt = options{})
+      : win_process()
+  {
+    start(args, opt);
+  }
+
+  void start(span<std::string_view const> args, options opt = options{})
+  {
+    std::ostringstream ss;
+    for (auto arg : args)
+      ss << std::quoted(arg) << ' ';
+    auto str = ss.str();
+
+    opt.lpCommandLine = str.c_str();
+    start(opt);
+  }
+
+  void start(const options &opt)
+  {
+    GPCL_ASSERT(!joinable());
+    GPCL_THROW_LAST_ERROR_IF(
+        !CreateProcessA(opt.lpApplicationName,   // application name
+                        opt.lpCommandLine,       // command line
+                        opt.lpProcessAttributes, // process attributes
+                        opt.lpThreadAttributes,  // thread attributes
+                        opt.bInheritHandles,     // inherit handles
+                        opt.dwCreationFlags,     // creation flags
+                        opt.lpEnvironment,       // environment
+                        opt.lpCurrentDirectory,  // current directory
+                        opt.lpStartupInfo,       // startup info
+                        &process_information_    // process information
+                        ));
   }
 
   ~win_process()
   {
-    if (joinable()) {
+    if (joinable())
+    {
       terminate();
-      if (!try_join_for(chrono::seconds(2))) {
+      if (!try_join_for(chrono::seconds(2)))
+      {
         kill();
         join();
       }
@@ -87,9 +134,11 @@ public:
   bool try_join_for_impl(DWORD ms)
   {
     GPCL_ASSERT(joinable());
-    switch (WaitForSingleObject(process_information_.hProcess, ms)) {
+    switch (WaitForSingleObject(process_information_.hProcess, ms))
+    {
     case WAIT_OBJECT_0:
-      if (!GetExitCodeProcess(process_information_.hProcess, &exit_code_)) {
+      if (!GetExitCodeProcess(process_information_.hProcess, &exit_code_))
+      {
         throw_system_error("GetExitCodeProcess");
       }
 
@@ -111,6 +160,12 @@ public:
   }
 
   void kill() { ::TerminateProcess(process_information_.hProcess, 255); }
+
+  bool killed() const noexcept { return false; }
+
+  int signal() const noexcept { return 0; }
+
+  bool exited() const noexcept { return !joinable(); }
 
   UINT exit_code() const
   {

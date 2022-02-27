@@ -177,3 +177,11 @@ TEST_CASE("dynarray")
     CHECK(arr1.capacity() == 20);
   }
 }
+
+#include <gpcl/span.hpp>
+
+TEST_CASE("dynarray to span")
+{
+  gpcl::dynarray<int> arr{1, 2, 3};
+  gpcl::span<int> span(arr);
+}
