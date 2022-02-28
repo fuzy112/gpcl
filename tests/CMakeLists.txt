@@ -26,7 +26,6 @@ set(TESTS_SRCS
     thread_test.cpp
     time_test.cpp
     unique_ptr_test.cpp
-    unique_resource_test.cpp
     vector_test.cpp)
 
 set(TEST_FIXTURES syncbuf)

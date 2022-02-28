@@ -15,8 +15,8 @@
 #include <gpcl/creation_tag.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
-#include <gpcl/unique_resource.hpp>
 #include <gpcl/zstring.hpp>
+#include <gpcl/detail/unique_handle.hpp>
 
 #include <fcntl.h>
 #include <limits.h>
@@ -31,8 +31,6 @@ class posix_shared_memory;
 class posix_shared_memory
 {
 public:
-  struct factory;
-
   posix_shared_memory() noexcept = default;
 
   template <typename CreationTag>
@@ -111,40 +109,14 @@ private:
     GPCL_ASSERT(::strlen(name) < NAME_MAX);
     GPCL_ASSERT(name[0] == '/');
 
-    fd_ = make_unique_resource_checked<int, fd_deleter>(
-        ::shm_open(name, oflag, mode), -1, fd_deleter{});
+    fd_ = shm_open(name, oflag, mode);
     if (!fd_)
       error = {errno, system_category()};
     else
       error = {};
   }
 
-  struct fd_deleter
-  {
-    void operator()(int fd) const { GPCL_VERIFY_0(::close(fd)); }
-  };
-
-  unique_resource<int, fd_deleter> fd_;
-};
-
-struct posix_shared_memory::factory
-{
-  template <typename CreationTag>
-  posix_shared_memory operator()(CreationTag t, czstring<> name,
-                                 access_mode access, mode_t mode,
-                                 error_code &error) const
-  {
-    posix_shared_memory memory;
-    memory.open(t, name, access, mode, error);
-    return memory;
-  }
-
-  template <typename CreationTag>
-  posix_shared_memory operator()(CreationTag t, czstring<> name,
-                                 access_mode access, error_code &error) const
-  {
-    return make_posix_shared_memory(t, name, access, S_IRUSR | S_IWUSR, error);
-  }
+  unique_fd fd_;
 };
 
 } // namespace gpcl::detail
