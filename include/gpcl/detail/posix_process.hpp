@@ -14,6 +14,7 @@
 #include <gpcl/clock.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/throw_system_error.hpp>
+#include <gpcl/detail/unique_handle.hpp>
 #include <gpcl/dynarray.hpp>
 #include <gpcl/span.hpp>
 
@@ -207,25 +208,26 @@ private:
 
   class process_waiter
   {
-    int pidfd_{-1};
+    unique_fd pidfd_;
 
   public:
-    explicit process_waiter(int pid)
+    explicit process_waiter(int pid) : pidfd_(pidfd_open(pid, 0))
     {
-      GPCL_THROW_LAST_ERROR_IF((pidfd_ = pidfd_open(pid, 0)) < 0);
+      GPCL_THROW_LAST_ERROR_IF(!pidfd_);
     }
-
-    ~process_waiter() { close(pidfd_); }
 
     void wait_for(const timespec &ts)
     {
       fd_set set;
       FD_ZERO(&set);
-      FD_SET(pidfd_, &set);
-      int nfds = pidfd_ + 1;
+      FD_SET(pidfd_.get(), &set);
+      int nfds = pidfd_.get() + 1;
 
+      sigset_t mask;
+      GPCL_THROW_LAST_ERROR_IF(sigemptyset(&mask) < 0);
+      GPCL_THROW_LAST_ERROR_IF(sigaddset(&mask, SIGCHLD) < 0);
       GPCL_THROW_LAST_ERROR_IF(
-          pselect(nfds, &set, nullptr, nullptr, &ts, nullptr) < 0);
+          pselect(nfds, &set, nullptr, nullptr, &ts, &mask) < 0);
     }
   };
 };
