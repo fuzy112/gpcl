@@ -75,10 +75,10 @@ void *monotonic_buffer_resource::alloc_from_buffer(std::size_t bytes,
       reinterpret_cast<std::uintptr_t>(buffer_.data()) % alignment;
   off = (alignment - off) % alignment;
 
-  if (off > buffer_.size_bytes())
+  if (off > buffer_.size())
     return nullptr;
   buffer_ += off;
-  if (buffer_.size_bytes() < bytes)
+  if (buffer_.size() < bytes)
     return nullptr;
   auto *ret = buffer_.data();
   buffer_ += bytes;
