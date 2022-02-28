@@ -109,7 +109,7 @@ private:
     GPCL_ASSERT(::strlen(name) < NAME_MAX);
     GPCL_ASSERT(name[0] == '/');
 
-    fd_ = shm_open(name, oflag, mode);
+    fd_.reset(shm_open(name, oflag, mode));
     if (!fd_)
       error = {errno, system_category()};
     else

@@ -35,7 +35,7 @@ public:
   
   static constexpr native_handle_type invalid_value{ HandleTraits::invalid_value };
 
-  unique_handle(native_handle_type h = invalid_value) noexcept
+  explicit unique_handle(native_handle_type h = invalid_value) noexcept
     : h_{h}
   {
   }
