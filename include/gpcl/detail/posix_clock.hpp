@@ -11,6 +11,7 @@
 #ifndef GPCL_DETAIL_POSIX_CLOCK_HPP
 #define GPCL_DETAIL_POSIX_CLOCK_HPP
 
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/chrono.hpp>
 #include <gpcl/detail/config.hpp>
 
@@ -64,6 +65,64 @@ struct realtime_clock
 
   static const ::clockid_t clock_id{CLOCK_MONOTONIC};
 };
+
+inline constexpr bool timespec_valid(const struct timespec *t)
+{
+  return !!t && t->tv_nsec >= 0 && t->tv_nsec < 1'000'000'000;
+}
+
+inline constexpr bool timespec_eq(const struct timespec *a,
+                                  const struct timespec *b)
+{
+  return a->tv_sec == b->tv_sec && a->tv_nsec == b->tv_nsec;
+}
+
+inline constexpr bool timespec_gt(const struct timespec *a,
+                                  const struct timespec *b)
+{
+  if (a->tv_sec > b->tv_sec)
+    return true;
+  if (a->tv_sec == b->tv_sec)
+    return a->tv_nsec > b->tv_nsec;
+  return false;
+}
+
+inline constexpr bool timespec_is_zero(const struct timespec *t)
+{
+  return t->tv_sec == 0 && t->tv_nsec == 0;
+}
+
+inline constexpr void timespec_add(struct timespec *a, const struct timespec *b)
+{
+  GPCL_ASSERT(a != b);
+  GPCL_ASSERT(timespec_valid(a));
+  GPCL_ASSERT(timespec_valid(b));
+
+  a->tv_sec += b->tv_sec;
+  a->tv_nsec += b->tv_nsec;
+
+  if (a->tv_nsec >= 1'000'000'000)
+  {
+    a->tv_sec += 1;
+    a->tv_nsec -= 1'000'000'000;
+  }
+}
+
+inline constexpr void timespec_sub(struct timespec *a, const struct timespec *b)
+{
+  GPCL_ASSERT(a != b);
+  GPCL_ASSERT(timespec_valid(a));
+  GPCL_ASSERT(timespec_valid(b));
+
+  a->tv_nsec -= b->tv_nsec;
+  a->tv_sec -= b->tv_sec;
+
+  if (a->tv_nsec < 0)
+  {
+    a->tv_nsec += 1'000'000'000;
+    a->tv_sec -= 1;
+  }
+}
 
 } // namespace detail
 } // namespace gpcl
