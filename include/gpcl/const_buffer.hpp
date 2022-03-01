@@ -13,6 +13,8 @@
 
 #include <gpcl/detail/config.hpp>
 
+#include <cstdlib>
+
 namespace gpcl {
 
 /// Constant buffer.
