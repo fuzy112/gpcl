@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(
   GPCL
-  VERSION 0.8.0
+  VERSION 0.9.0
   DESCRIPTION "General purpose C++ libraries"
   HOMEPAGE_URL "https://github.com/Chingyat/gpcl"
   LANGUAGES CXX)
