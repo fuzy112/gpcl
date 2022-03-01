@@ -11,10 +11,10 @@
 #ifndef GPCL_DETAIL_IMPL_POSIX_LOCK_FILE_IPP
 #define GPCL_DETAIL_IMPL_POSIX_LOCK_FILE_IPP
 
+#include <gpcl/buffer.hpp>
 #include <gpcl/detail/posix_lock_file.hpp>
 #include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/unique_lock.hpp>
-#include <gpcl/buffer.hpp>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -27,16 +27,13 @@ void posix_lock_file::lock()
   unique_lock<mutex_type> lk{mtx_};
 
   GPCL_ASSERT(!owns_lock());
-  file_
-      .open(open_or_create, filename_.c_str(),
-            posix_file::access_mode::readwrite)
-      .value();
+
+  GPCL_THROW_LAST_ERROR_IF(
+      !(fd_ = unique_fd(
+            open(filename_.c_str(), O_CREAT | O_CLOEXEC | O_RDWR, 0644))));
 
   // Lock the whole file.
-  if (::lockf(file_.native_handle(), F_LOCK, 0) == -1)
-  {
-    throw_system_error(__func__);
-  }
+  GPCL_THROW_LAST_ERROR_IF(lockf(fd_.get(), F_LOCK, 0) < 0);
 
   write_pid();
 
@@ -48,19 +45,15 @@ bool posix_lock_file::try_lock()
   unique_lock<mutex_type> lk{mtx_};
 
   GPCL_ASSERT(!owns_lock());
-  file_
-      .open(open_or_create, filename_.c_str(),
-            posix_file::access_mode::readwrite)
-      .value();
+  GPCL_THROW_LAST_ERROR_IF(
+      !(fd_ = unique_fd(
+            open(filename_.c_str(), O_CREAT | O_CLOEXEC | O_RDWR, 0644))));
 
   // try locking the file.
-  if (lockf(file_.native_handle(), F_TLOCK, 0) == -1)
+  if (lockf(fd_.get(), F_TLOCK, 0) < 0)
   {
-    int err = errno;
-    if (err == EACCES || err == EAGAIN)
-    {
+    if (errno == EACCES || errno == EAGAIN)
       return false;
-    }
 
     throw_system_error(__func__);
   }
@@ -74,11 +67,12 @@ bool posix_lock_file::try_lock()
 void posix_lock_file::write_pid()
 {
   // truncate the file size to zero.
-  file_.truncate(0).value();
+  GPCL_THROW_LAST_ERROR_IF(ftruncate(fd_.get(), 0) < 0);
 
   // write PID.
   auto pid_str = std::to_string(getpid());
-  file_.write_some(gpcl::buffer(pid_str)).value();
+  GPCL_THROW_LAST_ERROR_IF(write(fd_.get(), pid_str.data(), pid_str.size()) <
+                           0);
 }
 
 void posix_lock_file::unlock()
@@ -92,16 +86,13 @@ void posix_lock_file::unlock()
   // posix_file::unlink(filename_.c_str()).value();
 
   // truncate the file.
-  file_.truncate(0).value();
+  GPCL_THROW_LAST_ERROR_IF(ftruncate(fd_.get(), 0) < 0);
 
   // unlock the file.
-  if (lockf(file_.native_handle(), F_ULOCK, 0) == -1)
-  {
-    throw_system_error(__func__);
-  }
+  GPCL_THROW_LAST_ERROR_IF(lockf(fd_.get(), F_ULOCK, 0) < 0);
 
-  // close the file descriptor.
-  file_.close().value();
+  // close the file
+  fd_.reset();
 
   owns_lock_ = false;
 }

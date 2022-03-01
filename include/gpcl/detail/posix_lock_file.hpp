@@ -14,8 +14,8 @@
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
-#include <gpcl/detail/posix_file.hpp>
 #include <gpcl/detail/posix_mutex.hpp>
+#include <gpcl/detail/unique_handle.hpp>
 #include <gpcl/noncopyable.hpp>
 
 namespace gpcl {
@@ -52,7 +52,7 @@ private:
   mutex_type mtx_;
 
   std::string filename_;
-  posix_file file_;
+  unique_fd fd_;
   bool owns_lock_{false};
 };
 } // namespace detail
