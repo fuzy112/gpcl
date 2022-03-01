@@ -173,7 +173,7 @@ public:
     return TRUE;
   }
 
-  void join() { try_join_for_impl(INFINITE); }
+  void join() { GPCL_VERIFY(try_join_for_impl(INFINITE)); }
 
   [[nodiscard]] bool try_join() { return try_join_for_impl(0); }
 

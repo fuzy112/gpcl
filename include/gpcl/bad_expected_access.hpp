@@ -24,6 +24,11 @@ class bad_expected_access<void> : virtual public std::exception
 {
 public:
   explicit bad_expected_access() = default;
+
+  const char* what() const noexcept override
+  {
+    return "bad expected access";
+  }
 };
 
 /// Exception thrown when trying to access the value from an expected that

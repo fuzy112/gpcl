@@ -8,20 +8,14 @@
 
 int main(int argc, char **argv)
 {
-  (void)argc;
-  (void)argv;
-
   gpcl::dynarray<gpcl::thread> threads;
 
-  for (int i = 0; i < 1; ++i)
-    threads.emplace_back([i] {
+  for (int i = 0; i < 100; ++i)
+    threads.emplace_back([=] {
       GPCL_TRY
       {
-#ifdef GPCL_WINDOWS
-        gpcl::dynarray<std::string> args{"notepad.exe"};
-#else
-        gpcl::dynarray<std::string> args{"echo", std::to_string(i)};
-#endif
+        gpcl::dynarray<char const *> args(std::next(argv),
+                                          std::next(argv, argc));
         gpcl::process proc(args);
 
         if (!proc.try_join_for(gpcl::chrono::seconds(0)))
@@ -41,8 +35,7 @@ int main(int argc, char **argv)
                          << gpcl::signal_name(proc.signal()) << std::endl;
         }
       }
-      GPCL_CATCH(gpcl::exception const &e) { gpcl::cdebug() << e << std::endl; }
-      GPCL_AND_CATCH(std::exception const &e)
+      GPCL_CATCH(std::exception const &e)
       {
         gpcl::cdebug() << e.what() << std::endl;
       }

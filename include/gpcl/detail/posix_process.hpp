@@ -52,6 +52,8 @@ struct posix_process_options
   span<std::pair<int, int>> fds{};
 
   const char *working_directory{};
+
+  bool close_files{false};
 };
 
 class posix_process
@@ -161,6 +163,28 @@ public:
           GPCL_THROW_LAST_ERROR_IF(dup2(oldfd, newfd) < 0);
         }
 
+        if (opt.working_directory)
+        {
+          GPCL_THROW_LAST_ERROR_IF(chdir(opt.working_directory));
+        }
+
+        if (opt.close_files)
+        {
+          int max_fd = sysconf(_SC_OPEN_MAX);
+          if (max_fd == -1)
+            max_fd = 8192;
+
+          for (int fd = 0; fd < max_fd; ++fd)
+          {
+            for (auto &[_, newfd] : opt.fds)
+              if (fd == newfd)
+                goto next;
+
+            GPCL_THROW_LAST_ERROR_IF(::close(fd) < 0 && errno != EBADF);
+          next:;
+          }
+        }
+
         GPCL_THROW_LAST_ERROR_IF(execvp(opt.file, opt.argv) < 0);
       }
     GPCL_CATCH(...) { raise(SIGABRT); }
@@ -208,15 +232,9 @@ public:
     return try_join_for_impl(ts);
   }
 
-  void terminate()
-  {
-    send_signal(SIGTERM);
-  }
+  void terminate() { send_signal(SIGTERM); }
 
-  void kill()
-  {
-    send_signal(SIGKILL);
-  }
+  void kill() { send_signal(SIGKILL); }
 
   void send_signal(int sig)
   {

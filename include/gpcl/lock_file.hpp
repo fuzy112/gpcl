@@ -43,4 +43,4 @@ typedef detail::posix_lock_file lock_file;
 #endif
 } // namespace gpcl
 
-#endif
+#endif // GPCL_LOCK_FILE_HPP

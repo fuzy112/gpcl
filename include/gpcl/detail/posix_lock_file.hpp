@@ -58,4 +58,4 @@ private:
 } // namespace detail
 } // namespace gpcl
 
-#endif
+#endif // GPCL_DETAIL_POSIX_LOCK_FILE_HPP

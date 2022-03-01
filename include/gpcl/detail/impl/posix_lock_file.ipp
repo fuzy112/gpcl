@@ -89,7 +89,7 @@ void posix_lock_file::unlock()
 
   // Remove the file.
   // At the moment other processes can acquire the lock.
-  posix_file::unlink(filename_.c_str()).value();
+  // posix_file::unlink(filename_.c_str()).value();
 
   // truncate the file.
   file_.truncate(0).value();
