@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "akiramiyakoda.cppincludeguard",
+        "matepek.vscode-catch2-test-adapter",
+        "xaver.clang-format",
+        "twxs.cmake",
+        "cheshirekow.cmake-format",
+        "EditorConfig.EditorConfig"
+    ]
+}
