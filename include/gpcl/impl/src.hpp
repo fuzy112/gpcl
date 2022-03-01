@@ -49,7 +49,6 @@
 #endif
 
 #ifdef GPCL_WINDOWS
-#include <gpcl/detail/impl/unique_handle.ipp>
 #include <gpcl/detail/impl/win_clock.ipp>
 #include <gpcl/detail/impl/win_condition_variable.ipp>
 #include <gpcl/detail/impl/win_file.ipp>

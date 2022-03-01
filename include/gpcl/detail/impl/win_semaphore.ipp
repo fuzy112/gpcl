@@ -19,15 +19,12 @@
 
 #include <limits>
 
-
 namespace gpcl {
 namespace detail {
 
 win_semaphore::win_semaphore(value_type init_value)
-    : sem_(make_unique_resource_checked(
-          CreateSemaphoreA(nullptr, narrow_cast<LONG>(init_value),
-                           narrow_cast<LONG>((max)()), nullptr),
-          null_handle_deleter::invalid(), null_handle_deleter()))
+    : sem_(CreateSemaphoreA(nullptr, narrow_cast<LONG>(init_value),
+                            narrow_cast<LONG>((max)()), nullptr))
 {
   if (!sem_)
     throw_system_error("CreateSemaphoreA");
@@ -74,6 +71,5 @@ void win_semaphore::post()
 
 } // namespace detail
 } // namespace gpcl
-
 
 #endif // GPCL_DETAIL_IMPL_WIN_SEMAPHORE_IPP

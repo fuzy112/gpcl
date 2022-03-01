@@ -81,9 +81,7 @@ auto win_mutex::try_lock() -> bool
 }
 
 win_timed_mutex::win_timed_mutex()
-    : mtx_(make_unique_resource_checked(CreateMutex(nullptr, false, nullptr),
-                                        null_handle_deleter::invalid(),
-                                        null_handle_deleter()))
+    : mtx_(CreateMutex(nullptr, false, nullptr))
 {
   if (!mtx_)
     throw_system_error("CreateMutex");

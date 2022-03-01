@@ -1,5 +1,6 @@
 #include <gpcl/debugstream.hpp>
 //#include <gpcl/impl/win_main.hpp>
+#include <gpcl/exception.hpp>
 #include <gpcl/process.hpp>
 #include <gpcl/signal.hpp>
 #include <gpcl/stacktrace.hpp>
@@ -12,7 +13,7 @@ int main(int argc, char **argv)
 
   gpcl::dynarray<gpcl::thread> threads;
 
-  for (int i = 0; i < 10; ++i)
+  for (int i = 0; i < 1; ++i)
     threads.emplace_back([i] {
       GPCL_TRY
       {
@@ -40,14 +41,12 @@ int main(int argc, char **argv)
                          << gpcl::signal_name(proc.signal()) << std::endl;
         }
       }
-      GPCL_CATCH(gpcl::system_error const &e)
-      {
-        gpcl::cdebug() << e.what() << std::endl;
-      }
+      GPCL_CATCH(gpcl::exception const &e) { gpcl::cdebug() << e << std::endl; }
       GPCL_AND_CATCH(std::exception const &e)
       {
         gpcl::cdebug() << e.what() << std::endl;
       }
+      GPCL_AND_CATCH(...) { gpcl::cdebug() << "UNknown exception\n"; }
       GPCL_CATCH_END
     });
 

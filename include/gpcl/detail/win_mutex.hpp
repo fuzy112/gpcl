@@ -68,7 +68,7 @@ public:
 
 class win_timed_mutex : noncopyable
 {
-  null_handle mtx_;
+  nullable_handle mtx_;
 
 public:
   using native_handle_type = ::HANDLE;

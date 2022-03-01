@@ -13,6 +13,7 @@
 
 #include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/detail/win_stacktrace.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 
 #if defined(GPCL_NO_STACKTRACE)
 #  error "This header should no be included."

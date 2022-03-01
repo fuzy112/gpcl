@@ -17,7 +17,7 @@
 #include <gpcl/detail/win_thread.hpp>
 #include <gpcl/unique_ptr.hpp>
 
-#include <process.h>
+#include <Windows.h>
 
 namespace gpcl {
 namespace detail {
@@ -70,25 +70,21 @@ auto win_thread::detach() -> void
 
 auto win_thread::start_thread_impl(func_base *fn) -> void
 {
-  thread_ = make_unique_resource_checked(
-      (::HANDLE)::_beginthreadex(nullptr, 0, win_thread_proc, fn, 0, nullptr),
-      detail::null_handle_deleter::invalid(), detail::null_handle_deleter());
+  thread_.reset(
+      (::HANDLE)::_beginthreadex(nullptr, 0, win_thread_proc, fn, 0, nullptr));
 
   if (!thread_)
   {
     DWORD err = ::GetLastError();
     delete fn;
-    throw_system_error(err, "CreateThread");
+    throw_system_error(err, "_beginthreadex");
   }
 }
 
 auto win_thread::get_id() const -> win_thread_id
 {
   auto value = ::GetThreadId(native_handle());
-  if (!value)
-  {
-    throw_system_error("win_thread::id");
-  }
+  GPCL_THROW_LAST_ERROR_IF(!value);
   return win_thread_id{value};
 }
 
@@ -100,10 +96,7 @@ void win_thread::yield()
 auto win_thread::this_thread_id() -> win_thread_id
 {
   auto value = ::GetCurrentThreadId();
-  if (!value)
-  {
-    throw_system_error("win_thread::id");
-  }
+  GPCL_THROW_LAST_ERROR_IF(!value);
   return win_thread_id{value};
 }
 

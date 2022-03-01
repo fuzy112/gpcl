@@ -47,7 +47,7 @@ public:
   auto native_handle() -> native_handle_type { return sem_.get(); }
 
 private:
-  null_handle sem_;
+  nullable_handle sem_;
 };
 } // namespace detail
 } // namespace gpcl

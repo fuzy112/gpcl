@@ -14,9 +14,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
 
-#ifdef GPCL_CONFIG_POSIX_SIGNALS
-#  include <signal.h>
-#endif
+#include <signal.h>
 
 namespace gpcl {
 
@@ -27,28 +25,42 @@ inline std::string_view signal_name(int signum)
 #define GPCL_MATCH_SIGNAL(Signal)                                              \
   if (signum == Signal)                                                        \
   return #Signal
+
+#ifdef GPCL_CONFIG_POSIX_SIGNALS
   GPCL_MATCH_SIGNAL(SIGHUP);
+#endif
   GPCL_MATCH_SIGNAL(SIGINT);
+#ifdef GPCL_CONFIG_POSIX_SIGNALS
   GPCL_MATCH_SIGNAL(SIGQUIT);
+#endif
   GPCL_MATCH_SIGNAL(SIGILL);
+#ifdef GPCL_CONFIG_POSIX_SIGNALS
   GPCL_MATCH_SIGNAL(SIGTRAP);
+#endif
   GPCL_MATCH_SIGNAL(SIGABRT);
+#ifdef GPCL_CONFIG_POSIX_SIGNALS
   GPCL_MATCH_SIGNAL(SIGIOT);
   GPCL_MATCH_SIGNAL(SIGBUS);
+#endif
 #ifdef SIGEMT
   GPCL_MATCH_SIGNAL(SIGEMT);
 #endif
   GPCL_MATCH_SIGNAL(SIGFPE);
+#ifdef GPCL_CONFIG_POSIX_SIGNALS
   GPCL_MATCH_SIGNAL(SIGKILL);
   GPCL_MATCH_SIGNAL(SIGUSR1);
+#endif
   GPCL_MATCH_SIGNAL(SIGSEGV);
+#ifdef GPCL_CONFIG_POSIX_SIGNALS
   GPCL_MATCH_SIGNAL(SIGUSR2);
   GPCL_MATCH_SIGNAL(SIGPIPE);
   GPCL_MATCH_SIGNAL(SIGALRM);
+#endif
   GPCL_MATCH_SIGNAL(SIGTERM);
 #ifdef SIGSTKFLT
   GPCL_MATCH_SIGNAL(SIGSTKFLT);
 #endif
+#ifdef GPCL_CONFIG_POSIX_SIGNALS
   GPCL_MATCH_SIGNAL(SIGCHLD);
 #ifdef SIGCLD
   GPCL_MATCH_SIGNAL(SIGCLD);
@@ -76,6 +88,8 @@ inline std::string_view signal_name(int signum)
   GPCL_MATCH_SIGNAL(SIGLOST);
 #endif
   GPCL_MATCH_SIGNAL(SIGSYS);
+#endif // GPCL_CONFIG_POSIX_SIGNALS
+
 #undef GPCL_MATCH_SIGNAL
 
   GPCL_THROW(system_error{EINTR, generic_category()});

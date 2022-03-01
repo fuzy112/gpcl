@@ -150,7 +150,7 @@ private:
     this->start_thread_impl(fn.release());
   }
 
-  null_handle thread_;
+  nullable_handle thread_;
 
   friend GPCL_DECL win_thread_proc_type win_thread_proc;
 };

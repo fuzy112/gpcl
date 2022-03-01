@@ -11,13 +11,15 @@
 #ifndef GPCL_DETAIL_UNIQUE_HANDLE_HPP
 #define GPCL_DETAIL_UNIQUE_HANDLE_HPP
 
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/swap.hpp>
 
+
 #ifdef GPCL_WINDOWS
-#include <winnt.h>
+#  include <Windows.h>
 #else
-#include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include <cstdio>
@@ -32,30 +34,27 @@ class unique_handle
 public:
   using traits_type = HandleTraits;
   using native_handle_type = typename HandleTraits::native_handle_type;
-  
-  static constexpr native_handle_type invalid_value{ HandleTraits::invalid_value };
 
-  explicit unique_handle(native_handle_type h = invalid_value) noexcept
-    : h_{h}
+  static constexpr native_handle_type invalid_value{
+      HandleTraits::invalid_value};
+
+  explicit unique_handle(native_handle_type h = invalid_value) noexcept : h_{h}
   {
   }
 
-  unique_handle(const unique_handle&) = delete;
-  unique_handle& operator=(const unique_handle&) = delete;
+  unique_handle(const unique_handle &) = delete;
+  unique_handle &operator=(const unique_handle &) = delete;
 
-  unique_handle(unique_handle&& other) noexcept
-      : unique_handle(other.release())
-  {}
-  unique_handle& operator=(unique_handle&& other) noexcept
+  unique_handle(unique_handle &&other) noexcept : unique_handle(other.release())
+  {
+  }
+  unique_handle &operator=(unique_handle &&other) noexcept
   {
     reset(other.release());
     return *this;
   }
 
-  ~unique_handle()
-  {
-    reset();
-  }
+  ~unique_handle() { reset(); }
 
   void reset(native_handle_type h = invalid_value) noexcept
   {
@@ -71,28 +70,19 @@ public:
     return ret;
   }
 
-  void swap(unique_handle& other) noexcept
+  void swap(unique_handle &other) noexcept
   {
     using gpcl::swap;
     swap(h_, other.h_);
   }
 
-  explicit operator bool() const noexcept
-  {
-    return get() != invalid_value;
-  }
+  explicit operator bool() const noexcept { return get() != invalid_value; }
 
-  native_handle_type get() const noexcept
-  {
-    return h_;
-  }
+  native_handle_type get() const noexcept { return h_; }
 
-  friend void swap(unique_handle& x, unique_handle& y) noexcept
-  {
-    x.swap(y);
-  }
+  friend void swap(unique_handle &x, unique_handle &y) noexcept { x.swap(y); }
 
-  friend bool operator<(const unique_handle& x, const unique_handle& y) noexcept
+  friend bool operator<(const unique_handle &x, const unique_handle &y) noexcept
   {
     return x.get() < y.get();
   }
@@ -120,7 +110,7 @@ struct valid_traits
 {
   using native_handle_type = HANDLE;
 
-  static constexpr native_handle_type invalid_value{INVALID_HANDLE_VALUE};
+  static inline native_handle_type invalid_value{INVALID_HANDLE_VALUE};
 
   static void close(native_handle_type h) noexcept
   {
@@ -151,7 +141,7 @@ using unique_fd = unique_handle<fd_traits>;
 
 struct file_traits
 {
-  using native_handle_type = std::FILE*;
+  using native_handle_type = std::FILE *;
 
   static constexpr native_handle_type invalid_value{nullptr};
 
