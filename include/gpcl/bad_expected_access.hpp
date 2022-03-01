@@ -39,7 +39,7 @@ class bad_expected_access : public bad_expected_access<void>
 public:
   inline explicit bad_expected_access(E e) : val(detail::move(e))
   {
-    what_ = "bad_exception_access: ";
+    what_ = "bad_excepted_access: ";
     detail::format_error_to(std::back_inserter(what_), val);
   }
 
