@@ -11,8 +11,9 @@
 #ifndef GPCL_SIGNAL_HPP
 #define GPCL_SIGNAL_HPP
 
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/error.hpp>
+#include <gpcl/error.hpp>
 
 #include <signal.h>
 
@@ -92,7 +93,7 @@ inline std::string_view signal_name(int signum)
 
 #undef GPCL_MATCH_SIGNAL
 
-  GPCL_THROW(system_error{EINTR, generic_category()});
+  GPCL_THROW(system_error(make_error_code(errc::invalid_argument)));
 }
 } // namespace gpcl
 

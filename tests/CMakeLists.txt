@@ -41,7 +41,9 @@ foreach(name ${TEST_FIXTURES})
                                PUBLIC "-D$<UPPER_CASE:${name}>_STATIC_DEFINE")
   endif()
   target_link_libraries("${name}" PUBLIC gpcl::gpcl)
-  set_target_properties("${name}" PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin")
+  set_target_properties(
+    "${name}" PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin"
+                         EXPORT_COMPILE_COMMANDS OFF)
 endforeach()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -51,11 +53,11 @@ target_link_libraries(doctest_main PUBLIC gpcl::gpcl)
 add_executable(tests ${TESTS_SRCS})
 target_link_libraries(tests PRIVATE doctest_main gpcl::gpcl ${TEST_FIXTURES})
 if(GPCL_ENABLE_PCH)
-  target_precompile_headers(tests
-    PRIVATE <gpcl.hpp> "doctest.h")
+  target_precompile_headers(tests PRIVATE <gpcl.hpp> "doctest.h")
 endif()
-set_target_properties(tests
-  PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin")
+set_target_properties(
+  tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin"
+                   EXPORT_COMPILE_COMMANDS OFF)
 
 include(doctest.cmake)
 
@@ -68,5 +70,5 @@ endif()
 add_executable(meta-test meta_test.cpp)
 target_link_libraries(meta-test PRIVATE gpcl::gpcl)
 add_test(NAME meta-test COMMAND meta-test)
-set_target_properties(meta-test
-  PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin")
+set_target_properties(meta-test PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+                                           "${GPCL_BINARY_DIR}/bin")

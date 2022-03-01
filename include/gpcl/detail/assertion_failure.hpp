@@ -17,8 +17,10 @@
 
 namespace gpcl::detail {
 
-GPCL_DECL void assertion_failure(const char *expr, const char *file,
-                                 std::uint_least32_t line, const char *func);
+GPCL_DECL GPCL_NORETURN void assertion_failure(const char *expr,
+                                               const char *file,
+                                               std::uint_least32_t line,
+                                               const char *func);
 
 } // namespace gpcl::detail
 

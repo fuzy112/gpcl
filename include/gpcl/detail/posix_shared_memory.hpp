@@ -14,12 +14,15 @@
 #include <gpcl/access_mode.hpp>
 #include <gpcl/creation_tag.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
+#include <gpcl/detail/unique_handle.hpp>
 #include <gpcl/error.hpp>
 #include <gpcl/zstring.hpp>
-#include <gpcl/detail/unique_handle.hpp>
 
 #include <fcntl.h>
 #include <limits.h>
+#include <string.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>

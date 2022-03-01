@@ -1,9 +1,18 @@
 function(add_example_executable target)
   add_executable(${target} ${ARGN})
   target_link_libraries(${target} PRIVATE gpcl::gpcl)
-  set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY  "${GPCL_BINARY_DIR}/bin")
+  set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+                                             "${GPCL_BINARY_DIR}/bin")
   if(BUILD_TESTING)
     add_test(NAME "example/${target}" COMMAND ${target})
+  endif()
+
+  if(GPCL_ENABLE_CLANG_TIDY)
+    add_custom_command(
+      TARGET ${target}
+      PRE_BUILD
+      COMMAND "${CLANG_TIDY_EXECUTABLE}" -p "${CMAKE_BINARY_DIR}" ${ARGN}
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
   endif()
 endfunction()
 

@@ -49,6 +49,10 @@ option(BUILD_SHARED_LIBS "Create shared libraies" TRUE)
 option(GPCL_ENABLE_EXCEPTIONS "Enable exception support" TRUE)
 option(GPCL_ENABLE_RTTI "Enable RTTI support" TRUE)
 
+option(GPCL_ENABLE_CLANG_TIDY "Enable clang-tidy" FALSE)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
 check_ipo_supported(RESULT ipo_supported)
 if(ipo_supported AND GPCL_ENABLE_LTO)
   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
@@ -285,3 +289,13 @@ set(CPACK_PACKAGE_NAME gpcl)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE_1_0.txt")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 include(CPack)
+
+if(GPCL_ENABLE_CLANG_TIDY)
+  find_package(ClangTidy REQUIRED)
+  add_custom_target(
+    clang-tidy ALL
+    COMMAND
+      ${CLANG_TIDY_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/include/gpcl/*.hpp"
+      "-p" "${CMAKE_BINARY_DIR}"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+endif()

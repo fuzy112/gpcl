@@ -12,6 +12,7 @@
 #define GPCL_DETAIL_POSIX_MEMORY_MAP_HPP
 
 #include <gpcl/access_mode.hpp>
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/throw_system_error.hpp>
 

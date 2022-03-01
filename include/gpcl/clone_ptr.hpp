@@ -42,7 +42,7 @@ struct is_cloneable<
 /// Deleter Deleter must be *FunctionObject* or lvalue reference to a
 /// *FunctionObject* or lvalue reference to function, callable with an argument
 /// of type `unique_ptr<T, Deleter>::pointer`.
-template <typename T, typename Deleter = std::default_delete<T>>
+template <typename T, typename Deleter = default_delete<T>>
 class clone_ptr
 {
 public:

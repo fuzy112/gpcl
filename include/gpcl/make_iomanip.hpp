@@ -15,6 +15,7 @@
 
 #include <iosfwd>
 #include <type_traits>
+#include <utility>
 
 namespace gpcl {
 
@@ -36,9 +37,7 @@ struct iomanip
 
 } // namespace detail
 
-template <typename Fn, decltype(std::declval<typename std::decay<Fn>::type>()(
-                                    std::declval<std::ostream &>()),
-                                0) = 0>
+template <typename Fn>
 constexpr auto make_iomanip(Fn &&fn)
 {
   return detail::iomanip<std::decay_t<Fn>>{std::forward<Fn>(fn)};

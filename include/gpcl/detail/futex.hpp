@@ -16,6 +16,7 @@
 #include <gpcl/inttypes.hpp>
 
 #include <climits>
+#include <errno.h>
 #include <linux/futex.h>
 #include <sys/time.h>
 
@@ -147,6 +148,5 @@ inline bool futex_wait_until(i32 *uaddr, i32 old,
 
 } // namespace detail
 } // namespace gpcl
-
 
 #endif // GPCL_DETAIL_FUTEX_HPP

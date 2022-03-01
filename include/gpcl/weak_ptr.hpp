@@ -13,6 +13,8 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/ref_count_base.hpp>
+#include <gpcl/detail/utility.hpp>
+#include <gpcl/swap.hpp>
 
 namespace gpcl {
 

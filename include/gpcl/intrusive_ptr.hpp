@@ -15,6 +15,7 @@
 #include <gpcl/generic_pointer_cast.hpp>
 #include <gpcl/swap.hpp>
 
+#include <functional>
 #include <type_traits>
 
 namespace gpcl {

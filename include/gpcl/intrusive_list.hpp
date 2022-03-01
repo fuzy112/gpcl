@@ -11,9 +11,12 @@
 #ifndef GPCL_INTRUSIVE_LIST_HPP
 #define GPCL_INTRUSIVE_LIST_HPP
 
+#include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/type_traits.hpp>
 #include <gpcl/swap.hpp>
+
+#include <iterator>
 
 namespace gpcl {
 
