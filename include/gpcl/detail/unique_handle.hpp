@@ -35,7 +35,7 @@ public:
   using traits_type = HandleTraits;
   using native_handle_type = typename HandleTraits::native_handle_type;
 
-  static constexpr native_handle_type invalid_value{
+  static inline const native_handle_type invalid_value{
       HandleTraits::invalid_value};
 
   explicit unique_handle(native_handle_type h = invalid_value) noexcept : h_{h}

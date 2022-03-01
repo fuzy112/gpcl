@@ -27,39 +27,39 @@
 
 namespace gpcl::detail {
 
-GPCL_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wmissing-field-initializers")
+inline static STARTUPINFOA default_startup_info{
+    sizeof(default_startup_info),
+};
+
+// clang-format off
+struct win_process_options
+{
+  /* [in, optional]      */ LPCSTR                lpApplicationName{};
+  /* [in, out, optional] */ LPSTR                 lpCommandLine{};
+  /* [in, optional]      */ LPSECURITY_ATTRIBUTES lpProcessAttributes{};
+  /* [in, optional]      */ LPSECURITY_ATTRIBUTES lpThreadAttributes{};
+  /* [in]                */ BOOL                  bInheritHandles{};
+  /* [in]                */ DWORD                 dwCreationFlags{};
+  /* [in, optional]      */ LPVOID                lpEnvironment{};
+  /* [in, optional]      */ LPCSTR                lpCurrentDirectory{};
+  /* [in]                */ LPSTARTUPINFOA        lpStartupInfo{reinterpret_cast<LPSTARTUPINFOA>(&default_startup_info)};
+};
+// clang-format on
 
 class win_process : noncopyable
 {
-  PROCESS_INFORMATION process_information_{
-      INVALID_HANDLE_VALUE,
-      INVALID_HANDLE_VALUE,
-  };
+  valid_handle process_;
+  valid_handle thread_;
+
+  DWORD pid_{};
+  DWORD tid_{};
+
   DWORD exit_code_ = DWORD(-1);
 
 public:
   using native_handle_type = LPPROCESS_INFORMATION;
 
-  inline static STARTUPINFOA default_startup_info{
-      sizeof(STARTUPINFOA),
-  };
-
-  // clang-format off
-  struct options
-  {
-    /* [in, optional]      */ LPCSTR                lpApplicationName{nullptr};
-    /* [in, out, optional] */ LPSTR                 lpCommandLine{};
-    /* [in, optional]      */ LPSECURITY_ATTRIBUTES lpProcessAttributes{};
-    /* [in, optional]      */ LPSECURITY_ATTRIBUTES lpThreadAttributes{};
-    /* [in]                */ BOOL                  bInheritHandles{};
-    /* [in]                */ DWORD                 dwCreationFlags{};
-    /* [in, optional]      */ LPVOID                lpEnvironment{};
-    /* [in, optional]      */ LPCSTR                lpCurrentDirectory{};
-    /* [in]                */ LPSTARTUPINFOA        lpStartupInfo{const_cast<LPSTARTUPINFOA>(&default_startup_info)};
- 
-    options() = default;
-  };
-  // clang-format on
+  using options = win_process_options;
 
   win_process() noexcept = default;
 
@@ -112,6 +112,8 @@ public:
   void start(const options &opt)
   {
     GPCL_ASSERT(!joinable());
+
+    PROCESS_INFORMATION info{};
     GPCL_THROW_LAST_ERROR_IF(
         !CreateProcessA(opt.lpApplicationName,   // application name
                         opt.lpCommandLine,       // command line
@@ -122,8 +124,13 @@ public:
                         opt.lpEnvironment,       // environment
                         opt.lpCurrentDirectory,  // current directory
                         opt.lpStartupInfo,       // startup info
-                        &process_information_    // process information
+                        &info                    // process information
                         ));
+    process_.reset(info.hProcess);
+    thread_.reset(info.hThread);
+
+    pid_ = info.dwProcessId;
+    tid_ = info.dwThreadId;
   }
 
   ~win_process()
@@ -143,27 +150,22 @@ public:
   /// Determines if the thread can be joined.
   /// </summary>
   /// <returns></returns>
-  bool joinable() const
-  {
-    return process_information_.hProcess != INVALID_HANDLE_VALUE &&
-           process_information_.hThread != INVALID_HANDLE_VALUE;
-  }
+  bool joinable() const { return !!process_ && !!thread_; }
 
   /// <summary>
   /// Notify the process to terminate.
   /// </summary>
   void terminate()
   {
-    GPCL_THROW_LAST_ERROR_IF(!EnumWindows(
-        &enum_window_proc, (LPARAM)&process_information_.dwProcessId));
-    PostThreadMessageA(process_information_.dwThreadId, WM_QUIT, 0, 0);
+    GPCL_THROW_LAST_ERROR_IF(!EnumWindows(&enum_window_proc, (LPARAM)&pid_));
+    PostThreadMessageA(tid_, WM_QUIT, 0, 0);
   }
 
   static BOOL CALLBACK enum_window_proc(HWND hwnd, LPARAM lParam)
   {
     DWORD pid{};
     auto tid = GetWindowThreadProcessId(hwnd, &pid);
-    if (pid == *(DWORD const*)lParam)
+    if (pid == *(DWORD const *)lParam)
     {
       GPCL_THROW_LAST_ERROR_IF(!PostMessageA(hwnd, WM_CLOSE, 1, 1));
       GPCL_THROW_LAST_ERROR_IF(!PostThreadMessageA(tid, WM_QUIT, 0, 0));
@@ -181,18 +183,20 @@ public:
   bool try_join_for_impl(DWORD ms)
   {
     GPCL_ASSERT(joinable());
-    switch (WaitForSingleObject(process_information_.hProcess, ms))
+    switch (WaitForSingleObject(process_.get(), ms))
     {
     case WAIT_OBJECT_0:
-      if (!GetExitCodeProcess(process_information_.hProcess, &exit_code_))
+      if (!GetExitCodeProcess(process_.get(), &exit_code_))
       {
         throw_system_error("GetExitCodeProcess");
       }
 
-      CloseHandle(process_information_.hProcess);
-      CloseHandle(process_information_.hThread);
-      process_information_.hProcess = INVALID_HANDLE_VALUE;
-      process_information_.hThread = INVALID_HANDLE_VALUE;
+      process_.reset();
+      thread_.reset();
+
+      pid_ = 0;
+      tid_ = 0;
+
       return TRUE;
 
     case WAIT_TIMEOUT:
@@ -206,7 +210,10 @@ public:
     }
   }
 
-  void kill() { ::TerminateProcess(process_information_.hProcess, 255); }
+  void kill()
+  {
+    GPCL_THROW_LAST_ERROR_IF(!::TerminateProcess(process_.get(), 255));
+  }
 
   bool killed() const noexcept { return false; }
 

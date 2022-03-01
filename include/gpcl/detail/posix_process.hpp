@@ -30,41 +30,65 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#ifdef __NR_pidfd_open
+#  define GPCL_DETAIL_USE_PIDFD
+#endif
+
 namespace gpcl {
 namespace detail {
 
-#ifdef __NR_pidfd_open
+#ifdef GPCL_DETAIL_USE_PIDFD
 inline int pidfd_open(pid_t pid, unsigned int flags)
 {
   return syscall(__NR_pidfd_open, pid, flags);
 }
 #endif
 
+struct posix_process_options
+{
+  const char *file{};
+  char *const *argv{};
+
+  span<std::pair<int, int>> fds{};
+
+  const char *working_directory{};
+};
+
 class posix_process
 {
 public:
   using native_handle_type = int;
 
+  using options = posix_process_options;
+
   constexpr explicit posix_process() noexcept = default;
 
-  posix_process(const char *file, char *const argv[]) : posix_process()
+  posix_process(const char *file, char *const argv[],
+                const options &opt = options{})
+      : posix_process()
   {
-    start(file, argv);
+    start(file, argv, opt);
   }
 
-  explicit posix_process(span<const char *const> args) : posix_process()
+  explicit posix_process(span<const char *const> args,
+                         const options &opt = options{})
+      : posix_process()
   {
-    start(args);
+    start(args, opt);
   }
 
-  explicit posix_process(span<const std::string> args) : posix_process()
+  explicit posix_process(span<const std::string> args,
+                         const options &opt = options{})
+      : posix_process()
   {
-    start(args);
+    start(args, opt);
   }
 
-  explicit posix_process(span<const std::string_view> args) : posix_process()
+  explicit posix_process(span<const std::string_view> args,
+                         const options &opt = options{})
+      : posix_process()
   {
-    start(args);
+    start(args, opt);
   }
 
   ~posix_process()
@@ -80,27 +104,27 @@ public:
     }
   }
 
-  void start(span<const char *const> args)
+  void start(span<const char *const> args, const options &opt = options{})
   {
     dynarray<char *> argv;
     for (auto &arg : args)
       argv.push_back(const_cast<char *>(arg));
     argv.push_back(nullptr);
 
-    start(argv[0], argv.data());
+    start(argv[0], argv.data(), opt);
   }
 
-  void start(span<std::string const> args)
+  void start(span<std::string const> args, const options &opt = options{})
   {
     dynarray<char *> argv;
     for (auto &arg : args)
       argv.push_back(const_cast<char *>(arg.c_str()));
     argv.push_back(nullptr);
 
-    start(argv[0], argv.data());
+    start(argv[0], argv.data(), opt);
   }
 
-  void start(span<const std::string_view> args)
+  void start(span<const std::string_view> args, const options &opt = options{})
   {
     dynarray<std::string> owned_args;
     for (auto arg : args)
@@ -111,17 +135,34 @@ public:
       argv.push_back(&arg[0]);
     argv.push_back(nullptr);
 
-    start(argv[0], argv.data());
+    start(argv[0], argv.data(), opt);
   }
 
-  void start(const char *file, char *const argv[])
+  void start(const char *file, char *const argv[], options opt = options{})
+  {
+    opt.file = file;
+    opt.argv = argv;
+    start(opt);
+  }
+
+  void start(const options &opt)
   {
     GPCL_ASSERT(pid_ < 0);
 
     GPCL_THROW_LAST_ERROR_IF((pid_ = fork()) < 0);
 
     if (pid_ == 0)
-      GPCL_TRY { GPCL_THROW_LAST_ERROR_IF(execvp(file, argv) < 0); }
+      GPCL_TRY
+      {
+        for (auto &[oldfd, newfd] : opt.fds)
+        {
+          // here fd will leak if error occurs, but it doesn't
+          // matter because the process is about to exit.
+          GPCL_THROW_LAST_ERROR_IF(dup2(oldfd, newfd) < 0);
+        }
+
+        GPCL_THROW_LAST_ERROR_IF(execvp(opt.file, opt.argv) < 0);
+      }
     GPCL_CATCH(...) { raise(SIGABRT); }
     GPCL_CATCH_END
 
@@ -210,7 +251,7 @@ private:
   int pid_{not_a_process};
   int wstatus_{};
 
-#ifdef __NR_pidfd_open
+#ifdef GPCL_DETAIL_USE_PIDFD
   class process_waiter
   {
     unique_fd pidfd_;
@@ -250,10 +291,7 @@ private:
       GPCL_THROW_LAST_ERROR_IF(sigprocmask(SIG_BLOCK, &mask, &old_mask) < 0);
     }
 
-    ~process_waiter()
-    {
-      sigprocmask(SIG_SETMASK, &old_mask, nullptr);
-    }
+    ~process_waiter() { sigprocmask(SIG_SETMASK, &old_mask, nullptr); }
 
     void wait_for(const timespec &ts)
     {
@@ -270,7 +308,8 @@ private:
 
       do
       {
-        GPCL_THROW_LAST_ERROR_IF(sigtimedwait(&mask, NULL, &remain) < 0 && errno != EAGAIN);
+        GPCL_THROW_LAST_ERROR_IF(sigtimedwait(&mask, NULL, &remain) < 0 &&
+                                 errno != EAGAIN);
 
         siginfo_t info{};
         GPCL_THROW_LAST_ERROR_IF(

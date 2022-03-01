@@ -1,6 +1,6 @@
 #
 # CMakeLists.txt
-# ~~~~~~~~~~~~~~
+# ~~~
 #
 # Copyright (c) 2020-2022 Zhengyi Fu (tsingyat at outlook dot com)
 #
@@ -10,14 +10,18 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-project(GPCL 
-        VERSION 0.8.0
-        DESCRIPTION "General purpose C++ libraries"
-        HOMEPAGE_URL "https://github.com/Chingyat/gpcl"
-        LANGUAGES CXX)
+project(
+  GPCL
+  VERSION 0.8.0
+  DESCRIPTION "General purpose C++ libraries"
+  HOMEPAGE_URL "https://github.com/Chingyat/gpcl"
+  LANGUAGES CXX)
 
-math(EXPR GPCL_VERSION_NUMBER 
-  "${GPCL_VERSION_MAJOR} * 10000 + ${GPCL_VERSION_MINOR} * 100 + ${GPCL_VERSION_PATCH}")
+math(
+  EXPR
+  GPCL_VERSION_NUMBER
+  "${GPCL_VERSION_MAJOR} * 10000 + ${GPCL_VERSION_MINOR} * 100 + ${GPCL_VERSION_PATCH}"
+)
 
 set(GPCL_CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${GPCL_CMAKE_MODULE_PATH}")
@@ -31,7 +35,8 @@ include(CMakePackageConfigHelpers)
 option(GPCL_ENABLE_LTO "Enable link time optimisation" OFF)
 option(GPCL_BUILD_TESTING "enable testing support" ON)
 option(GPCL_BUILD_DOC "enable document generation" ON)
-option(GPCL_FETCH_CPPREFERENCE "Download cppreference archive automatically" OFF)
+option(GPCL_FETCH_CPPREFERENCE "Download cppreference archive automatically"
+       OFF)
 option(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE
        "link to external cppreference documentation" TRUE)
 option(GPCL_ENABLE_LLVM "Link to LLVM if found" TRUE)
@@ -105,16 +110,14 @@ endif()
 if(SQLite3_FOUND)
   target_link_libraries(gpcl PUBLIC SQLite::SQLite3)
   target_compile_definitions(gpcl PUBLIC GPCL_SQLITE=1)
-  set(GPCL_SQLITE TRUE CACHE BOOL "" FORCE)
+  set(GPCL_SQLITE
+      TRUE
+      CACHE BOOL "" FORCE)
 endif()
 
 if(GIT_FOUND)
   execute_process(
-    COMMAND 
-      "${GIT_EXECUTABLE}"
-      rev-parse
-      "--verify"
-      HEAD
+    COMMAND "${GIT_EXECUTABLE}" rev-parse "--verify" HEAD
     OUTPUT_VARIABLE GPCL_GIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(GPCL_GIT_HASH)
@@ -122,14 +125,12 @@ if(GIT_FOUND)
   endif()
 
   execute_process(
-    COMMAND
-      "${GIT_EXECUTABLE}"
-      describe
+    COMMAND "${GIT_EXECUTABLE}" describe
     OUTPUT_VARIABLE GPCL_GIT_DESCRIPTION
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET)
+    OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
   if(GPCL_GIT_DESCRIPTION)
-    target_compile_definitions(gpcl PRIVATE GPCL_GIT_DESCRIPTION=\"${GPCL_GIT_DESCRIPTION}\")
+    target_compile_definitions(
+      gpcl PRIVATE GPCL_GIT_DESCRIPTION=\"${GPCL_GIT_DESCRIPTION}\")
   endif()
 endif()
 
@@ -178,7 +179,9 @@ set_target_properties(
              RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin"
              ARCHIVE_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/lib")
 
-set(GPCL_CPPREFERENCE_DIR "" CACHE PATH "Path to cppreference directory")
+set(GPCL_CPPREFERENCE_DIR
+    ""
+    CACHE PATH "Path to cppreference directory")
 
 FetchContent_Declare(
   cppreference
@@ -186,14 +189,15 @@ FetchContent_Declare(
   URL_HASH
     SHA256=8f97b2baa749c748a2e022d785f1a2e95aa851a3075987dfcf38baf65e0e486d)
 
-
 if(Doxygen_FOUND AND GPCL_BUILD_DOC)
 
   if(GPCL_FETCH_CPPREFERENCE)
     FetchContent_MakeAvailable(cppreference)
 
     if(NOT GPCL_CPPREFERENCE_DIR)
-      set(GPCL_CPPREFERENCE_DIR "${cppreference_SOURCE_DIR}" CACHE PATH "Path to cppreference directory" FORCE)
+      set(GPCL_CPPREFERENCE_DIR
+          "${cppreference_SOURCE_DIR}"
+          CACHE PATH "Path to cppreference directory" FORCE)
     endif()
   endif()
 
@@ -243,9 +247,8 @@ if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
 
-configure_file(
-  cmake/set_module_path.cmake.in
-  "${GPCL_BINARY_DIR}/lib/cmake/gpcl/set_module_path.cmake")
+configure_file(cmake/set_module_path.cmake.in
+               "${GPCL_BINARY_DIR}/lib/cmake/gpcl/set_module_path.cmake")
 
 export(
   TARGETS gpcl
