@@ -178,7 +178,7 @@ public:
     pid_ = terminated_process;
   }
 
-  bool try_join()
+  [[nodiscard]] bool try_join()
   {
     GPCL_ASSERT(joinable());
     int result{};
@@ -192,7 +192,7 @@ public:
     return false;
   }
 
-  bool try_join_for_impl(const timespec &ts)
+  [[nodiscard]] bool try_join_for_impl(const timespec &ts)
   {
     process_waiter waiter(pid_);
 
@@ -200,7 +200,7 @@ public:
     return try_join();
   }
 
-  bool try_join_for(chrono::milliseconds timeout)
+  [[nodiscard]] bool try_join_for(chrono::milliseconds timeout)
   {
     timespec ts;
     ts.tv_sec = timeout.count() / 1000;
@@ -243,6 +243,8 @@ public:
     GPCL_ASSERT(exited());
     return WEXITSTATUS(wstatus_);
   }
+
+  int native_handle() const noexcept { return pid_; }
 
 private:
   static constexpr int not_a_process = -1;

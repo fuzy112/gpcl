@@ -175,12 +175,14 @@ public:
 
   void join() { try_join_for_impl(INFINITE); }
 
-  bool try_join_for(chrono::milliseconds ms)
+  [[nodiscard]] bool try_join() { return try_join_for_impl(0); }
+
+  [[nodiscard]] bool try_join_for(chrono::milliseconds ms)
   {
     return try_join_for_impl(narrow_cast<DWORD>(ms.count()));
   }
 
-  bool try_join_for_impl(DWORD ms)
+  [[nodiscard]] bool try_join_for_impl(DWORD ms)
   {
     GPCL_ASSERT(joinable());
     switch (WaitForSingleObject(process_.get(), ms))
