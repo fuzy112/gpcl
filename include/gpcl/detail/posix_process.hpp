@@ -23,6 +23,7 @@
 
 #include <signal.h>
 #include <sys/select.h>
+#include <sys/signalfd.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -32,10 +33,12 @@
 namespace gpcl {
 namespace detail {
 
+#ifdef __NR_pidfd_open
 inline int pidfd_open(pid_t pid, unsigned int flags)
 {
   return syscall(__NR_pidfd_open, pid, flags);
 }
+#endif
 
 class posix_process
 {
@@ -151,6 +154,7 @@ public:
   bool try_join_for_impl(const timespec &ts)
   {
     process_waiter waiter(pid_);
+
     waiter.wait_for(ts);
     return try_join();
   }
@@ -206,6 +210,7 @@ private:
   int pid_{not_a_process};
   int wstatus_{};
 
+#ifdef __NR_pidfd_open
   class process_waiter
   {
     unique_fd pidfd_;
@@ -230,6 +235,59 @@ private:
           pselect(nfds, &set, nullptr, nullptr, &ts, &mask) < 0);
     }
   };
+#else
+  class process_waiter
+  {
+    int pid_{-1};
+    sigset_t mask;
+    sigset_t old_mask;
+
+  public:
+    explicit process_waiter(int pid) : pid_{pid}
+    {
+      GPCL_THROW_LAST_ERROR_IF(sigemptyset(&mask) < 0);
+      GPCL_THROW_LAST_ERROR_IF(sigaddset(&mask, SIGCHLD) < 0);
+      GPCL_THROW_LAST_ERROR_IF(sigprocmask(SIG_BLOCK, &mask, &old_mask) < 0);
+    }
+
+    ~process_waiter()
+    {
+      sigprocmask(SIG_SETMASK, &old_mask, nullptr);
+    }
+
+    void wait_for(const timespec &ts)
+    {
+      /// calculate deadline
+      timespec deadline;
+      GPCL_THROW_LAST_ERROR_IF(clock_gettime(CLOCK_MONOTONIC, &deadline) < 0);
+      deadline.tv_nsec += ts.tv_nsec;
+      deadline.tv_sec += ts.tv_sec;
+      deadline.tv_sec += deadline.tv_nsec / 1'000'000'000;
+      deadline.tv_nsec %= 1'000'000'000;
+
+      timespec remain = ts;
+      const timespec zero = {};
+
+      do
+      {
+        GPCL_THROW_LAST_ERROR_IF(sigtimedwait(&mask, NULL, &remain) < 0 && errno != EAGAIN);
+
+        siginfo_t info{};
+        GPCL_THROW_LAST_ERROR_IF(
+            waitid(P_PID, pid_, &info, WEXITED | WNOWAIT | WNOHANG) < 0);
+        if (pid_ == info.si_pid)
+          break;
+
+        timespec now;
+        GPCL_THROW_LAST_ERROR_IF(clock_gettime(CLOCK_MONOTONIC, &now) < 0);
+
+        remain = deadline;
+        timespec_sub(&remain, &now);
+      } while (timespec_gt(&remain, &zero));
+    }
+  };
+
+#endif
 };
 
 } // namespace detail
