@@ -210,14 +210,18 @@ public:
 
   void terminate()
   {
-    GPCL_ASSERT(joinable());
-    GPCL_THROW_LAST_ERROR_IF(::kill(pid_, SIGTERM) < 0);
+    send_signal(SIGTERM);
   }
 
   void kill()
   {
+    send_signal(SIGKILL);
+  }
+
+  void send_signal(int sig)
+  {
     GPCL_ASSERT(joinable());
-    GPCL_THROW_LAST_ERROR_IF(::kill(pid_, SIGKILL) < 0);
+    GPCL_THROW_LAST_ERROR_IF(::kill(pid_, sig) < 0);
   }
 
   bool killed() const noexcept
