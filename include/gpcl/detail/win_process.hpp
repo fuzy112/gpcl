@@ -133,6 +133,22 @@ public:
     tid_ = info.dwThreadId;
   }
 
+  win_process(win_process &&other) noexcept
+      : process_(std::move(other.process_)),
+        thread_(std::move(other).thread_),
+        pid_(other.pid_),
+        tid_(other.tid_)
+  {
+    other.pid_ = 0;
+    other.tid_ = 0;
+  }
+
+  win_process &operator=(win_process &&other) noexcept
+  {
+    swap(other);
+    return *this;
+  }
+
   ~win_process()
   {
     if (joinable())
@@ -145,6 +161,18 @@ public:
       }
     }
   }
+
+  void swap(win_process &other) noexcept
+  {
+    using gpcl::swap;
+
+    swap(process_, other.process_);
+    swap(thread_, other.thread_);
+    swap(pid_, other.pid_);
+    swap(tid_, other.tid_);
+  }
+
+  friend void swap(win_process &x, win_process &y) noexcept { x.swap(y); }
 
   /// <summary>
   /// Determines if the thread can be joined.

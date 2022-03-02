@@ -27,8 +27,20 @@ void win_lock_file::lock()
   {
     valid_handle hd(FindFirstChangeNotificationA(filename_.c_str(), FALSE,
                                                  FILE_NOTIFY_CHANGE_FILE_NAME));
-    GPCL_THROW_LAST_ERROR_IF(!hd);
-    GPCL_THROW_LAST_ERROR_IF(WaitForSingleObject(hd, INFINITE) == WAIT_FAILED);
+    GPCL_TRY
+    {
+      GPCL_THROW_LAST_ERROR_IF(!hd);
+      GPCL_THROW_LAST_ERROR_IF(WaitForSingleObject(hd.get(), INFINITE) ==
+                               WAIT_FAILED);
+    }
+    GPCL_CATCH(system_error & e)
+    {
+      if (e.code() != error_code(ERROR_DIRECTORY, system_category()) &&
+          e.code() != error_code(ERROR_FILE_NOT_FOUND, system_category()) &&
+          e.code() != error_code(ERROR_ACCESS_DENIED, system_category()))
+        GPCL_RETHROW;
+    }
+    GPCL_CATCH_END
   }
 }
 
@@ -45,14 +57,15 @@ bool win_lock_file::try_lock()
       CREATE_NEW, // fail if already exists
       FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
       nullptr // no template file
-  ));
+      ));
   if (!handle_)
   {
     DWORD last_error = ::GetLastError();
-    if (last_error == ERROR_FILE_EXISTS)
+    if (last_error == ERROR_FILE_EXISTS || last_error == ERROR_ACCESS_DENIED)
       return false;
 
-    throw_last_error(last_error, "CreateFile");
+    throw_last_error(last_error, "CreateFile",
+                     GPCL_SOURCE_LOCATION_CURRENT_LINE());
   }
   return true;
 }

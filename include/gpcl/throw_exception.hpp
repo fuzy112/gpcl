@@ -71,7 +71,7 @@ template <typename E>
 
 namespace detail {
 using source_location_errinfo =
-    error_info<struct source_location_errinfo_, source_location>;
+    gpcl::error_info<struct source_location_errinfo_, source_location>;
 
 inline auto tag_invoke(source_location_errinfo::format_fn,
                        source_location location)

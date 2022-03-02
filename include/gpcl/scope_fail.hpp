@@ -71,7 +71,7 @@ public:
   void release() noexcept { active_ = false; }
 };
 
-#if __cplusplus >= 201703
+#if __cplusplus >= 201703 || _MSVC_LANG >= 201703
 template <typename F>
 scope_fail(F) -> scope_fail<F>;
 #endif

@@ -66,7 +66,8 @@ bool win_condition_variable::wait_for(unique_lock<win_mutex> &lock,
     DWORD dwError = ::GetLastError();
     if (dwError == ERROR_TIMEOUT)
       return true;
-    throw_last_error(dwError, "SleepConditionVariableCS");
+    throw_last_error(dwError, "SleepConditionVariableCS",
+                     GPCL_SOURCE_LOCATION_CURRENT_LINE());
   }
 
   return false;

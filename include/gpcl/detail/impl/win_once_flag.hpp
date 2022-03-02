@@ -11,8 +11,8 @@
 #ifndef GPCL_DETAIL_IMPL_WIN_ONCE_FLAG_HPP
 #define GPCL_DETAIL_IMPL_WIN_ONCE_FLAG_HPP
 
+#include <gpcl/detail/error.hpp>
 #include <gpcl/detail/win_once_flag.hpp>
-#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/scope_exit.hpp>
 
 namespace gpcl {
@@ -35,8 +35,10 @@ void call_once(detail::win_once_flag &flag, Callable &&callable, Args &&...args)
 {
   BOOL status;
   BOOL pending = FALSE;
-  GPCL_THROW_LAST_ERROR_IF(
-      !InitOnceBeginInitialize(&flag.opaque_, 0, &pending, NULL));
+
+  if (!InitOnceBeginInitialize(&flag.opaque_, 0, &pending, NULL))
+    GPCL_THROW(system_error(::GetLastError(), system_category(),
+                            "InitOnceBeginInitialize"));
 
   if (!pending)
     return; // already initialized

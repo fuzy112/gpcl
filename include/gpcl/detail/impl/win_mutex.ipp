@@ -46,7 +46,7 @@ auto win_mutex::lock() -> void
   {
     win_recursive_mutex::unlock();
     throw_system_error(errc::resource_deadlock_would_occur, "win_mutex::lock",
-                       GPCL_SOURCE_LOCATION_CURRENT_LINE);
+                       GPCL_SOURCE_LOCATION_CURRENT_LINE());
   }
 }
 
@@ -75,7 +75,7 @@ auto win_mutex::try_lock() -> bool
       win_recursive_mutex::unlock();
       throw_system_error(errc::resource_deadlock_would_occur,
                          "win_mutex::try_lock",
-                         GPCL_SOURCE_LOCATION_CURRENT_LINE);
+                         GPCL_SOURCE_LOCATION_CURRENT_LINE());
     }
     return true;
   }
@@ -101,7 +101,7 @@ auto win_timed_mutex::lock() -> void
 
   case WAIT_ABANDONED:
     throw_system_error(errc::owner_dead, "win_timed_mutex::lock",
-                       GPCL_SOURCE_LOCATION_CURRENT_LINE);
+                       GPCL_SOURCE_LOCATION_CURRENT_LINE());
 
   default:
     GPCL_UNREACHABLE("unexpected return value");
@@ -129,7 +129,7 @@ auto win_timed_mutex::try_lock() -> bool
 
   case WAIT_ABANDONED:
     throw_system_error(errc::owner_dead, "win_timed_mutex::try_lock",
-                       GPCL_SOURCE_LOCATION_CURRENT_LINE);
+                       GPCL_SOURCE_LOCATION_CURRENT_LINE());
 
   default:
     GPCL_UNREACHABLE("unexpected return value");
@@ -156,7 +156,7 @@ auto win_timed_mutex::try_lock_for(system_clock::duration dur) -> bool
 
   case WAIT_ABANDONED:
     throw_system_error(errc::owner_dead, "win_timed_mutex::try_lock_for",
-                       GPCL_SOURCE_LOCATION_CURRENT_LINE);
+                       GPCL_SOURCE_LOCATION_CURRENT_LINE());
 
   default:
     GPCL_UNREACHABLE("unexpected return value");

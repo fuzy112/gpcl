@@ -92,6 +92,18 @@ public:
     start(args, opt);
   }
 
+  posix_process(posix_process &&other) noexcept
+      : pid_(other.pid_),
+        wstatus_(other.wstatus_)
+  {
+    other.pid_ = not_a_process;
+  }
+
+  posix_process &operator=(posix_process &&other) noexcept
+  {
+    swap(other) return *this;
+  }
+
   ~posix_process()
   {
     if (joinable())
@@ -103,6 +115,18 @@ public:
         join();
       }
     }
+  }
+
+  void swap(posix_process &other) noexcept
+  {
+    using gpcl::swap;
+    swap(pid_, other.pid_);
+    swap(wstatus_, other.wstatus_);
+  }
+
+  friend inline void swap(posix_process &x, posix_process &y) noexcept
+  {
+    x.swap(y);
   }
 
   void start(span<const char *const> args, const options &opt = options{})

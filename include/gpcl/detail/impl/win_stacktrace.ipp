@@ -34,7 +34,7 @@ win_dbg_helper::win_dbg_helper()
 
   GPCL_THROW_LAST_ERROR_IF(!SymInitialize(process(), NULL, TRUE));
   GPCL_THROW_LAST_ERROR_IF(
-      !SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES | SYMOPT_UNDNAME))
+      !SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES | SYMOPT_UNDNAME));
 }
 
 win_dbg_helper::~win_dbg_helper()

@@ -15,7 +15,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
 #include <gpcl/noncopyable.hpp>
-#include <gpcl/unique_handle.hpp>
+#include <gpcl/detail/unique_handle.hpp>
 
 #include <Windows.h>
 
