@@ -23,7 +23,6 @@
 
 #include <signal.h>
 #include <sys/select.h>
-#include <sys/signalfd.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <sys/types.h>
