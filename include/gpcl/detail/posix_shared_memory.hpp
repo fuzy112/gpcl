@@ -57,9 +57,10 @@ public:
 
   std::size_t size() const
   {
-    struct ::stat s;
-    if (-1 == ::fstat(fd_.get(), &s))
-      throw_system_error(__func__);
+    struct ::stat s
+    {
+    };
+    GPCL_THROW_LAST_ERROR_IF(::fstat(fd_.get(), &s) < 0);
     return s.st_size;
   }
 

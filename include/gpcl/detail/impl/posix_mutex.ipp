@@ -16,7 +16,7 @@
 #include <gpcl/debugstream.hpp>
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/posix_clock.hpp>
-#include <gpcl/detail/throw_system_error.hpp>
+#include <gpcl/detail/pthread_error.hpp>
 #include <gpcl/strerror.hpp>
 
 #include <pthread.h>
@@ -26,9 +26,7 @@ namespace detail {
 
 posix_mutex_attr::posix_mutex_attr()
 {
-  int err = ::pthread_mutexattr_init(&attr_);
-  if (err)
-    throw_system_error(err, "pthread_mutexattr_init");
+  GPCL_THROW_IF_PTHREAD_FAILED(pthread_mutexattr_init(&attr_));
 }
 
 posix_mutex_attr::~posix_mutex_attr() noexcept
@@ -110,30 +108,22 @@ void posix_mutex_attr::type(posix_mutex_type t) noexcept
 
 posix_mutex_base::posix_mutex_base(const posix_mutex_attr &attr)
 {
-  int err = ::pthread_mutex_init(&mtx_, attr.get());
-  if (err)
-    throw_system_error(err, "pthread_mutex_init");
+  GPCL_THROW_IF_PTHREAD_FAILED(::pthread_mutex_init(&mtx_, attr.get()));
 }
 
 posix_mutex_base::~posix_mutex_base()
 {
-  int err = pthread_mutex_destroy(&mtx_);
-  if (err)
-    cdebug() << strerror(err);
+  GPCL_VERIFY_0(pthread_mutex_destroy(&mtx_));
 }
 
 void posix_mutex_base::lock()
 {
-  int err = pthread_mutex_lock(&mtx_);
-  if (err)
-    throw_system_error(err, "pthread_mutex_lock");
+  GPCL_THROW_IF_PTHREAD_FAILED( pthread_mutex_lock(&mtx_) );
 }
 
 void posix_mutex_base::unlock()
 {
-  int err = pthread_mutex_unlock(&mtx_);
-  if (err)
-    throw_system_error(err, "pthread_mutex_unlock");
+  GPCL_THROW_IF_PTHREAD_FAILED( pthread_mutex_unlock(&mtx_) );
 }
 
 bool posix_mutex_base::try_lock()
@@ -142,7 +132,7 @@ bool posix_mutex_base::try_lock()
   if (err == EBUSY || err == EAGAIN)
     return false;
   if (err)
-    throw_system_error(err, "pthread_mutex_trylock");
+    GPCL_THROW_ERRNO(err, "Error when try_lock");
   return true;
 }
 
@@ -158,7 +148,7 @@ bool posix_mutex_base::try_lock_until(realtime_clock::time_point tp)
   if (err == ETIMEDOUT)
     return false;
   if (err)
-    throw_system_error(err, "pthread_mutex_timedlock");
+    GPCL_THROW_ERRNO(err, "pthread_mutex_timedlock");
   return false;
 }
 

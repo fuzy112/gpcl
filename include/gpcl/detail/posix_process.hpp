@@ -150,6 +150,8 @@ public:
   {
     GPCL_ASSERT(pid_ < 0);
 
+    GPCL_THROW_LAST_ERROR_IF(access(opt.file, X_OK) < 0);
+
     GPCL_THROW_LAST_ERROR_IF((pid_ = fork()) < 0);
 
     if (pid_ == 0)

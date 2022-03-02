@@ -15,29 +15,20 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
 #include <gpcl/noncopyable.hpp>
+#include <gpcl/unique_handle.hpp>
 
-#include <winnt.h>
+#include <Windows.h>
 
 namespace gpcl {
 namespace detail {
 class win_lock_file : noncopyable
 {
 public:
-  explicit win_lock_file(std::string filename)
-      : filename_(std::move(filename)),
-        handle_(INVALID_HANDLE_VALUE)
+  explicit win_lock_file(std::string filename) : filename_(std::move(filename))
   {
   }
 
-  ~win_lock_file()
-  {
-    if (owns_lock())
-    {
-      unlock();
-    }
-  }
-
-  bool owns_lock() const { return handle_ != INVALID_HANDLE_VALUE; }
+  bool owns_lock() const { return !!handle_; }
 
   GPCL_DECL void lock();
 
@@ -47,7 +38,7 @@ public:
 
 private:
   std::string filename_;
-  ::HANDLE handle_;
+  valid_handle handle_;
 };
 } // namespace detail
 } // namespace gpcl

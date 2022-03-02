@@ -12,7 +12,7 @@
 #define GPCL_DETAIL_IMPL_POSIX_ONCE_FLAG_HPP
 
 #include <gpcl/detail/posix_once_flag.hpp>
-#include <gpcl/detail/throw_system_error.hpp>
+#include <gpcl/detail/pthread_error.hpp>
 #include <gpcl/unique_lock.hpp>
 
 #include <atomic>
@@ -26,7 +26,7 @@ namespace gpcl {
 
 template <typename Callable, typename... Args>
 void call_once(detail::posix_once_flag &flag, Callable &&callable,
-               Args &&...args)
+               Args &&... args)
 {
   using namespace gpcl::detail;
 
@@ -55,7 +55,6 @@ void call_once(detail::posix_once_flag &flag, Callable &&callable,
 #if defined(__GLIBC__) || defined(__CYGWIN__)
   if (setjmp(jb) > 0)
   {
-
 #  if defined(__CYGWIN__)
     int s = pthread_mutex_unlock(&flag.data_.mutex);
     if (s != 0)
@@ -68,14 +67,11 @@ void call_once(detail::posix_once_flag &flag, Callable &&callable,
   }
 #endif
 
-  int err = pthread_once(&flag.data_, []() {
+  GPCL_THROW_IF_PTHREAD_FAILED(pthread_once(&flag.data_, []() {
     auto &functor = *::gpcl::detail::posix_once_functor;
     ::gpcl::detail::posix_once_functor = nullptr;
     functor();
-  });
-
-  if (err != 0)
-    throw_system_error(err, __func__);
+  }));
 }
 
 } // namespace gpcl

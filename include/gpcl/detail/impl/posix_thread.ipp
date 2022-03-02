@@ -11,10 +11,10 @@
 #ifndef GPCL_DETAIL_IMPL_POSIX_THREAD_IPP
 #define GPCL_DETAIL_IMPL_POSIX_THREAD_IPP
 
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/chrono.hpp>
 #include <gpcl/detail/posix_thread.hpp>
-#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/scope_success.hpp>
 
 #include <signal.h>
@@ -44,11 +44,11 @@ struct posix_thread_attributes : noncopyable
     int err;
     const sched_param param{attr.priority()};
     if ((err = pthread_attr_init(&attr_)) != 0)
-      throw_system_error(err, "pthread_attr_init");
+      GPCL_THROW_ERRNO(err, "pthread_attr_init");
 
 #ifndef __EMSCRIPTEN__
     if ((err = pthread_attr_setstacksize(&attr_, attr.stack_size())) != 0)
-      throw_system_error(err, "pthread_attr_setstacksize");
+      GPCL_THROW_ERRNO(err, "pthread_attr_setstacksize");
 #endif
 
 #ifndef __EMSCRIPTEN__
@@ -56,7 +56,7 @@ struct posix_thread_attributes : noncopyable
     {
       err = pthread_attr_setinheritsched(&attr_, PTHREAD_EXPLICIT_SCHED);
       if (err != 0)
-        throw_system_error(err, "pthread_attr_setinheritsched");
+        GPCL_THROW_ERRNO(err, "pthread_attr_setinheritsched");
 
       int schedpolicy = SCHED_OTHER;
       switch (attr.schedule_policy())
@@ -79,11 +79,11 @@ struct posix_thread_attributes : noncopyable
 
       err = pthread_attr_setschedpolicy(&attr_, schedpolicy);
       if (err != 0)
-        throw_system_error(err, "pthread_attr_setschedpolicy");
+        GPCL_THROW_ERRNO(err, "pthread_attr_setschedpolicy");
 
       err = pthread_attr_setschedparam(&attr_, &param);
       if (err != 0)
-        throw_system_error(err, "pthread_attr_setschedparam");
+        GPCL_THROW_ERRNO(err, "pthread_attr_setschedparam");
     }
 #endif
   }
@@ -105,7 +105,7 @@ void posix_thread::start_thread(thread_attributes const &attr,
       pthread_create(&thread_, attr1.get(), posix_thread_function, fn.get());
   if (err)
   {
-    throw_system_error(err, "pthread_create");
+    GPCL_THROW_ERRNO(err, "pthread_create");
   }
 }
 
@@ -142,7 +142,7 @@ void posix_thread::name(czstring<> s)
 #if defined(GPCL_LINUX)
   int err = pthread_setname_np(thread_, s);
   if (err)
-    throw_system_error(err, "pthread_setname_np");
+    GPCL_THROW_ERRNO(err, "pthread_setname_np");
 #endif
 }
 
@@ -151,7 +151,7 @@ void posix_thread::join()
   void *ret;
   int err = pthread_join(thread_, &ret);
   if (err)
-    throw_system_error(err, "pthread_join");
+    GPCL_THROW_ERRNO(err, "pthread_join");
 
   thread_ = pthread_t();
 }
@@ -160,15 +160,13 @@ void posix_thread::detach()
 {
   int err = pthread_detach(thread_);
   if (err)
-    throw_system_error(err, "pthread_detach");
+    GPCL_THROW_ERRNO(err, "pthread_detach");
   thread_ = pthread_t();
 }
 
 auto posix_thread::yield() -> void
 {
-  int err = sched_yield();
-  if (err)
-    throw_system_error("sched_yield");
+  GPCL_THROW_LAST_ERROR_IF(sched_yield() < 0);
 }
 
 #if GPCL_CONFIG_POSIX_THREAD_ID_IS_TID
@@ -178,7 +176,7 @@ posix_thread_id posix_thread::get_id() const
   pthread_id_np_t tid;
   int err = pthread_getthreadid_np(&thread_, &tid);
   if (err)
-    throw_system_error(err, "pthread_getthreadid_np");
+    GPCL_THROW_ERRNO(err, "pthread_getthreadid_np");
   return posix_thread_id{tid};
 }
 
@@ -211,9 +209,8 @@ unsigned int posix_thread::hardware_concurrency()
   int ncpu{};
   size_t len = sizeof(ncpu);
 
-  s = sysctl(mib, 2, &ncpu, &len, nullptr, 0);
-  if (s == -1)
-    throw_system_error(__func__);
+  GPCL_THROW_LAST_ERROR_IF(sysctl(mib, 2, &ncpu, &len, nullptr, 0) < 0);
+
   return ncpu;
 }
 #elif defined(__linux__) || defined(__CYGWIN__)

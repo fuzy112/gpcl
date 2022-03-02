@@ -11,9 +11,9 @@
 #ifndef GPCL_DETAIL_IMPL_WIN_STACKTRACE_IPP
 #define GPCL_DETAIL_IMPL_WIN_STACKTRACE_IPP
 
+#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/detail/win_stacktrace.hpp>
-#include <gpcl/detail/throw_system_error.hpp>
 
 #if defined(GPCL_NO_STACKTRACE)
 #  error "This header should no be included."
@@ -32,11 +32,9 @@ win_dbg_helper::win_dbg_helper()
 {
   auto lk = lock();
 
-  if (!SymInitialize(process(), NULL, TRUE))
-  {
-    throw_system_error(__func__);
-  }
-  SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
+  GPCL_THROW_LAST_ERROR_IF(!SymInitialize(process(), NULL, TRUE));
+  GPCL_THROW_LAST_ERROR_IF(
+      !SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES | SYMOPT_UNDNAME))
 }
 
 win_dbg_helper::~win_dbg_helper()

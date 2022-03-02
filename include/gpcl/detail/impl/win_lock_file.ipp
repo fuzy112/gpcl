@@ -12,6 +12,7 @@
 #define GPCL_DETAIL_IMPL_WIN_LOCK_FILE_IPP
 
 #include <gpcl/detail/throw_system_error.hpp>
+#include <gpcl/detail/unique_handle.hpp>
 #include <gpcl/detail/win_lock_file.hpp>
 #include <gpcl/narrow_cast.hpp>
 
@@ -24,28 +25,10 @@ void win_lock_file::lock()
 {
   while (!try_lock())
   {
-    HANDLE hd = FindFirstChangeNotificationA(filename_.c_str(), FALSE,
-                                             FILE_NOTIFY_CHANGE_FILE_NAME);
-    if (hd == INVALID_HANDLE_VALUE)
-    {
-      throw_system_error("FindFirstChangeNotification");
-    }
-
-    DWORD r = WaitForSingleObject(hd, INFINITE);
-    CloseHandle(hd);
-
-    switch (r)
-    {
-    case WAIT_OBJECT_0:
-      continue;
-
-    case WAIT_FAILED:
-      throw_system_error("WaitForSingleObjcet");
-      break;
-
-    default:
-      GPCL_UNREACHABLE("invalid return value");
-    }
+    valid_handle hd(FindFirstChangeNotificationA(filename_.c_str(), FALSE,
+                                                 FILE_NOTIFY_CHANGE_FILE_NAME));
+    GPCL_THROW_LAST_ERROR_IF(!hd);
+    GPCL_THROW_LAST_ERROR_IF(WaitForSingleObject(hd, INFINITE) == WAIT_FAILED);
   }
 }
 
@@ -53,7 +36,7 @@ bool win_lock_file::try_lock()
 {
   GPCL_ASSERT(!owns_lock());
 
-  handle_ = ::CreateFileA(
+  handle_.reset(::CreateFileA(
       filename_.c_str(),
       GENERIC_READ | GENERIC_WRITE, // both read and write access
       FILE_SHARE_READ, // other process can only open this file for reading
@@ -62,32 +45,22 @@ bool win_lock_file::try_lock()
       CREATE_NEW, // fail if already exists
       FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
       nullptr // no template file
-  );
-
-  if (handle_ == INVALID_HANDLE_VALUE)
+  ));
+  if (!handle_)
   {
-    DWORD error = GetLastError();
-    if (error == ERROR_FILE_EXISTS)
+    DWORD last_error = ::GetLastError();
+    if (last_error == ERROR_FILE_EXISTS)
       return false;
 
-    error_code ec(error, system_category());
-    if (ec != errc::file_exists)
-    {
-      GPCL_THROW(system_error(ec, "CreateFile"));
-    }
+    throw_last_error(last_error, "CreateFile");
   }
-
   return true;
 }
 
 void win_lock_file::unlock()
 {
   GPCL_ASSERT(owns_lock());
-  if (!CloseHandle(handle_))
-  {
-    throw_system_error(__func__);
-  }
-  handle_ = INVALID_HANDLE_VALUE;
+  handle_.reset();
 }
 
 } // namespace detail

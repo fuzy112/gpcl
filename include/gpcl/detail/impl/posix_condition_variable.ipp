@@ -8,10 +8,11 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/detail/posix_clock.hpp>
 #include <gpcl/detail/posix_condition_variable.hpp>
 #include <gpcl/detail/posix_mutex.hpp>
+#include <gpcl/detail/pthread_error.hpp>
+
 #include <type_traits>
 
 #ifdef GPCL_POSIX
@@ -21,15 +22,12 @@ namespace gpcl {
 namespace detail {
 posix_condition_variable::posix_condition_variable()
 {
-  int err = pthread_cond_init(&cond_, nullptr);
-  if (err)
-    throw_system_error(err, "pthread_cond_init");
+  GPCL_THROW_IF_PTHREAD_FAILED(pthread_cond_init(&cond_, nullptr));
 }
 
 posix_condition_variable::~posix_condition_variable()
 {
-  int err = pthread_cond_destroy(&cond_);
-  GPCL_VERIFY(err == 0); // "failed to destroy the condition variable"
+  GPCL_VERIFY_0(pthread_cond_destroy(&cond_));
 }
 
 void posix_condition_variable::wait(gpcl::unique_lock<posix_normal_mutex> &lock)
@@ -38,8 +36,7 @@ void posix_condition_variable::wait(gpcl::unique_lock<posix_normal_mutex> &lock)
   int err = pthread_cond_wait(&cond_, lock.mutex().native_handle());
   if (err == 0 || err == EAGAIN)
     return;
-
-  throw_system_error(err, "pthread_cond_wait");
+  GPCL_THROW_ERRNO(err, "Wait failed");
 }
 
 // returns false: no timeout
@@ -56,7 +53,7 @@ bool posix_condition_variable::wait_until(
     return true;
 
   if (err)
-    throw_system_error(err, "pthread_cond_timedwait");
+    GPCL_THROW_ERRNO(err, "pthread_cond_timedwait");
 
   return false;
 }
@@ -69,16 +66,12 @@ bool posix_condition_variable::wait_for(
 
 void posix_condition_variable::notify_one()
 {
-  int err = pthread_cond_signal(&cond_);
-  if (err)
-    throw_system_error(err, "pthread_cond_signal");
+  GPCL_THROW_IF_PTHREAD_FAILED(pthread_cond_signal(&cond_));
 }
 
 void posix_condition_variable::notify_all()
 {
-  int err = pthread_cond_broadcast(&cond_);
-  if (err)
-    throw_system_error(err, "pthread_cond_broadcast");
+  GPCL_THROW_IF_PTHREAD_FAILED(pthread_cond_broadcast(&cond_));
 }
 
 } // namespace detail

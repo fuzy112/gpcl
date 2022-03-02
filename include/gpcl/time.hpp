@@ -256,10 +256,7 @@ public:
   {
 #if defined GPCL_POSIX
     timespec ts;
-    if (clock_gettime(CLOCK_MONOTONIC, &ts))
-    {
-      detail::throw_system_error("clock_gettime");
-    }
+    GPCL_THROW_LAST_ERROR_IF(clock_gettime(CLOCK_MONOTONIC, &ts) < 0);
 
     return instant{duration::from_timespec(ts)};
 
@@ -341,11 +338,8 @@ public:
   {
 #if defined GPCL_POSIX
     timespec ts;
-    if (clock_gettime(CLOCK_REALTIME, &ts))
-    {
-      detail::throw_system_error("clock_gettime");
-    }
 
+    GPCL_THROW_LAST_ERROR_IF(clock_gettime(CLOCK_REALTIME, &ts) < 0);
     return system_time{duration::from_timespec(ts)};
 
 #elif defined GPCL_WINDOWS

@@ -185,31 +185,22 @@ public:
   [[nodiscard]] bool try_join_for_impl(DWORD ms)
   {
     GPCL_ASSERT(joinable());
-    switch (WaitForSingleObject(process_.get(), ms))
-    {
-    case WAIT_OBJECT_0:
-      if (!GetExitCodeProcess(process_.get(), &exit_code_))
-      {
-        throw_system_error("GetExitCodeProcess");
-      }
+    DWORD wait_result;
+    GPCL_THROW_LAST_ERROR_IF(
+        (wait_result = WaitForSingleObject(process_.get(), ms)) == WAIT_FAILED);
+    if (wait_result == WAIT_TIMEOUT)
+      return false;
+    GPCL_ASSERT(WAIT_OBJECT_0 == wait_result);
 
-      process_.reset();
-      thread_.reset();
+    GPCL_THROW_LAST_ERROR_IF(!GetExitCodeProcess(process_.get(), &exit_code_));
 
-      pid_ = 0;
-      tid_ = 0;
+    process_.reset();
+    thread_.reset();
 
-      return TRUE;
+    pid_ = 0;
+    tid_ = 0;
 
-    case WAIT_TIMEOUT:
-      return FALSE;
-
-    case WAIT_FAILED:
-      throw_system_error("WaitForSingleObject");
-
-    default:
-      GPCL_UNREACHABLE("unexpected return value");
-    }
+    return TRUE;
   }
 
   void kill()

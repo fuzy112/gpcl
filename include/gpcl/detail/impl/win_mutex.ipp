@@ -45,7 +45,8 @@ auto win_mutex::lock() -> void
   if (native_handle()->RecursionCount > 1)
   {
     win_recursive_mutex::unlock();
-    throw_system_error(errc::resource_deadlock_would_occur, "win_mutex::lock");
+    throw_system_error(errc::resource_deadlock_would_occur, "win_mutex::lock",
+                       GPCL_SOURCE_LOCATION_CURRENT_LINE);
   }
 }
 
@@ -73,7 +74,8 @@ auto win_mutex::try_lock() -> bool
     {
       win_recursive_mutex::unlock();
       throw_system_error(errc::resource_deadlock_would_occur,
-                         "win_mutex::try_lock");
+                         "win_mutex::try_lock",
+                         GPCL_SOURCE_LOCATION_CURRENT_LINE);
     }
     return true;
   }
@@ -81,24 +83,25 @@ auto win_mutex::try_lock() -> bool
 }
 
 win_timed_mutex::win_timed_mutex()
-    : mtx_(CreateMutex(nullptr, false, nullptr))
 {
-  if (!mtx_)
-    throw_system_error("CreateMutex");
+  mtx_.reset(::CreateMutex(nullptr, false, nullptr));
+  GPCL_THROW_LAST_ERROR_IF(!mtx_);
 }
 
 auto win_timed_mutex::lock() -> void
 {
-  switch (WaitForSingleObject(mtx_.get(), INFINITE))
+  DWORD wait_result;
+  GPCL_THROW_LAST_ERROR_IF(
+      (wait_result = WaitForSingleObject(mtx_.get(), INFINITE)) == WAIT_FAILED);
+
+  switch (wait_result)
   {
   case WAIT_OBJECT_0:
     return;
 
   case WAIT_ABANDONED:
-    throw_system_error(errc::owner_dead, "win_timed_mutex::lock");
-
-  case WAIT_FAILED:
-    throw_system_error("WaitForSingleObject");
+    throw_system_error(errc::owner_dead, "win_timed_mutex::lock",
+                       GPCL_SOURCE_LOCATION_CURRENT_LINE);
 
   default:
     GPCL_UNREACHABLE("unexpected return value");
@@ -107,13 +110,16 @@ auto win_timed_mutex::lock() -> void
 
 auto gpcl::detail::win_timed_mutex::unlock() -> void
 {
-  if (!::ReleaseMutex(mtx_.get()))
-    throw_system_error("ReleaseMutex");
+  GPCL_THROW_LAST_ERROR_IF(!::ReleaseMutex(mtx_.get()));
 }
 
 auto win_timed_mutex::try_lock() -> bool
 {
-  switch (WaitForSingleObject(mtx_.get(), 0))
+  DWORD wait_result;
+  GPCL_THROW_LAST_ERROR_IF((wait_result = WaitForSingleObject(mtx_.get(), 0)) ==
+                           WAIT_FAILED);
+
+  switch (wait_result)
   {
   case WAIT_OBJECT_0:
     return true;
@@ -122,10 +128,8 @@ auto win_timed_mutex::try_lock() -> bool
     return false;
 
   case WAIT_ABANDONED:
-    throw_system_error(errc::owner_dead, "win_timed_mutex::try_lock");
-
-  case WAIT_FAILED:
-    throw_system_error("WaitForSingleObject");
+    throw_system_error(errc::owner_dead, "win_timed_mutex::try_lock",
+                       GPCL_SOURCE_LOCATION_CURRENT_LINE);
 
   default:
     GPCL_UNREACHABLE("unexpected return value");
@@ -134,10 +138,15 @@ auto win_timed_mutex::try_lock() -> bool
 
 auto win_timed_mutex::try_lock_for(system_clock::duration dur) -> bool
 {
-  switch (WaitForSingleObject(
-      mtx_.get(),
-      narrow_cast<DWORD>(
-          chrono::duration_cast<chrono::milliseconds>(dur).count())))
+  DWORD wait_result;
+  GPCL_THROW_LAST_ERROR_IF(
+      (wait_result = WaitForSingleObject(
+           mtx_.get(),
+           narrow_cast<DWORD>(
+               chrono::duration_cast<chrono::milliseconds>(dur).count()))) ==
+      WAIT_FAILED);
+
+  switch (wait_result)
   {
   case WAIT_OBJECT_0:
     return true;
@@ -146,10 +155,8 @@ auto win_timed_mutex::try_lock_for(system_clock::duration dur) -> bool
     return false;
 
   case WAIT_ABANDONED:
-    throw_system_error(errc::owner_dead, "win_timed_mutex::try_lock_for");
-
-  case WAIT_FAILED:
-    throw_system_error("WaitForSingleObject");
+    throw_system_error(errc::owner_dead, "win_timed_mutex::try_lock_for",
+                       GPCL_SOURCE_LOCATION_CURRENT_LINE);
 
   default:
     GPCL_UNREACHABLE("unexpected return value");

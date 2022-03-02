@@ -26,22 +26,22 @@ win_semaphore::win_semaphore(value_type init_value)
     : sem_(CreateSemaphoreA(nullptr, narrow_cast<LONG>(init_value),
                             narrow_cast<LONG>((max)()), nullptr))
 {
-  if (!sem_)
-    throw_system_error("CreateSemaphoreA");
+  GPCL_THROW_LAST_ERROR_IF(!sem_);
 }
 
 bool win_semaphore::try_wait()
 {
-  switch (WaitForSingleObject(sem_.get(), 0))
+  DWORD wait_result;
+  GPCL_THROW_LAST_ERROR_IF((wait_result = WaitForSingleObject(sem_.get(), 0)) ==
+                           WAIT_FAILED);
+
+  switch (wait_result)
   {
   case WAIT_OBJECT_0:
     return true;
 
   case WAIT_TIMEOUT:
     return false;
-
-  case WAIT_FAILED:
-    throw_system_error("WaitForSingleObject");
 
   default:
     GPCL_UNREACHABLE("unexpected return value");
@@ -50,13 +50,13 @@ bool win_semaphore::try_wait()
 
 void win_semaphore::wait()
 {
-  switch (WaitForSingleObject(sem_.get(), 0))
+  DWORD wait_result;
+  GPCL_THROW_LAST_ERROR_IF(
+      (wait_result = WaitForSingleObject(sem_.get(), INFINITE)) == WAIT_FAILED);
+  switch (wait_result)
   {
   case WAIT_OBJECT_0:
     return;
-
-  case WAIT_FAILED:
-    throw_system_error("WaitForSingleObject");
 
   default:
     GPCL_UNREACHABLE("unexpected return value");
@@ -65,8 +65,7 @@ void win_semaphore::wait()
 
 void win_semaphore::post()
 {
-  if (!ReleaseSemaphore(sem_.get(), 1, nullptr))
-    throw_system_error("ReleaseSemaphore");
+  GPCL_THROW_LAST_ERROR_IF(!ReleaseSemaphore(sem_.get(), 1, nullptr));
 }
 
 } // namespace detail

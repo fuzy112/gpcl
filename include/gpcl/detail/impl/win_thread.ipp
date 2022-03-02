@@ -15,6 +15,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/detail/win_thread.hpp>
+#include <gpcl/detail/scope_fail.hpp>
 #include <gpcl/unique_ptr.hpp>
 
 #include <Windows.h>
@@ -49,18 +50,9 @@ auto win_thread::join() -> void
 {
   GPCL_ASSERT(joinable());
 
-  switch (::WaitForSingleObject(thread_.get(), INFINITE))
-  {
-  case WAIT_OBJECT_0:
-    thread_.reset();
-    return;
+  GPCL_THROW_LAST_ERROR_IF(!WaitForSingleObject(thread_.get(), INFINITE));
 
-  case WAIT_FAILED:
-    throw_system_error("WaitForSingleObject");
-
-  default:
-    GPCL_UNREACHABLE("unexpected return value");
-  }
+  thread_.reset();
 }
 
 auto win_thread::detach() -> void
@@ -70,15 +62,13 @@ auto win_thread::detach() -> void
 
 auto win_thread::start_thread_impl(func_base *fn) -> void
 {
+  scope_fail cleanup{[fn] {
+    delete fn;
+  }};
+
   thread_.reset(
       (::HANDLE)::_beginthreadex(nullptr, 0, win_thread_proc, fn, 0, nullptr));
-
-  if (!thread_)
-  {
-    DWORD err = ::GetLastError();
-    delete fn;
-    throw_system_error(err, "_beginthreadex");
-  }
+  GPCL_THROW_LAST_ERROR_IF(!thread_);
 }
 
 auto win_thread::get_id() const -> win_thread_id

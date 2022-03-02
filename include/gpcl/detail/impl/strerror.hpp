@@ -13,6 +13,7 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/strerror.hpp>
+#include <gpcl/detail/throw_system_error.hpp>
 
 #include <cerrno>
 #include <string.h>
@@ -36,9 +37,9 @@ void strerror_impl(StrType &str, int errnum)
   str.resize(128);
   int err = strerror_r(errnum, &str[0], str.size());
   if (err > 0)
-    throw_system_error(err, __func__);
-  if (err == -1);
-    throw_system_error(__func__);
+    GPCL_THROW_ERRNO(err, "strerror_r");
+  else
+    GPCL_THROW_ERRNO(errno, "strerror_r");
   str.resize(strlen(str.c_str()));
 
 #elif defined(_GNU_SOURCE) && !defined(__EMSCRIPTEN__)
@@ -46,6 +47,7 @@ void strerror_impl(StrType &str, int errnum)
   char *pstr = strerror_r(errnum, &str[0], str.size());
   if (str.c_str() != pstr)
   {
+    GPCL_ASSERT(pstr != nullptr);
     str = pstr;
   }
   else

@@ -55,9 +55,8 @@ bool posix_semaphore::try_wait()
 {
   if (-1 == ::sem_trywait(&sem_))
   {
-    if (errno == EWOULDBLOCK)
-      return false;
-    throw_system_error("sem_trywait");
+    GPCL_THROW_LAST_ERROR_IF(errno != EWOULDBLOCK);
+    return false;
   }
   return true;
 }

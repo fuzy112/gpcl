@@ -30,10 +30,7 @@ posix_message_queue::posix_message_queue(create_only_t, czstring<> name,
   attr.mq_msgsize = msgsize;
 
   this->q_ = mq_open(name, O_RDWR | O_CREAT | O_EXCL, 0666, &attr);
-  if (this->q_ == 0)
-  {
-    throw_system_error(__PRETTY_FUNCTION__);
-  }
+  GPCL_THROW_LAST_ERROR_IF(this->q_ == -1);
 }
 
 posix_message_queue::posix_message_queue(open_or_create_t, czstring<> name,
@@ -45,24 +42,18 @@ posix_message_queue::posix_message_queue(open_or_create_t, czstring<> name,
   attr.mq_msgsize = msgsize;
 
   this->q_ = mq_open(name, O_RDWR | O_CREAT, 0666, &attr);
-  if (this->q_ == 0)
-  {
-    throw_system_error(__PRETTY_FUNCTION__);
-  }
+  GPCL_THROW_LAST_ERROR_IF(this->q_ == -1);
 }
 
 posix_message_queue::posix_message_queue(open_only_t, czstring<> name)
 {
   this->q_ = mq_open(name, O_RDWR);
-  if (this->q_ == 0)
-  {
-    throw_system_error(__PRETTY_FUNCTION__);
-  }
+  GPCL_THROW_LAST_ERROR_IF(this->q_ == -1);
 }
 
 posix_message_queue::~posix_message_queue() noexcept
 {
-  if (q_ != 0)
+  if (q_ > -1)
   {
     GPCL_VERIFY_0(::mq_close(q_));
   }

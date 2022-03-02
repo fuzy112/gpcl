@@ -55,7 +55,7 @@ bool posix_lock_file::try_lock()
     if (errno == EACCES || errno == EAGAIN)
       return false;
 
-    throw_system_error(__func__);
+    GPCL_THROW_ERRNO(errno, "lockf failed");
   }
 
   write_pid();

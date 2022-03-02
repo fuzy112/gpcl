@@ -42,8 +42,8 @@ auto win_condition_variable::notify_all() -> void
 auto win_condition_variable::wait(unique_lock<win_mutex> &lock) -> void
 {
   GPCL_ASSERT(lock.owns_lock());
-  if (!::SleepConditionVariableCS(&cv_, lock.mutex().native_handle(), INFINITE))
-    throw_system_error("SleepConditionVariableCS");
+  GPCL_THROW_LAST_ERROR_IF(!::SleepConditionVariableCS(
+      &cv_, lock.mutex().native_handle(), INFINITE));
 }
 
 GPCL_MSVC_SUPPRESS_WARNING_WITH_PUSH(4702)
@@ -66,7 +66,7 @@ bool win_condition_variable::wait_for(unique_lock<win_mutex> &lock,
     DWORD dwError = ::GetLastError();
     if (dwError == ERROR_TIMEOUT)
       return true;
-    throw_system_error(dwError, "SleepConditionVariableCS");
+    throw_last_error(dwError, "SleepConditionVariableCS");
   }
 
   return false;

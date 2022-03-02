@@ -13,34 +13,17 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
+#include <gpcl/exception.hpp>
+#include <gpcl/source_location.hpp>
+#include <gpcl/throw_exception.hpp>
 
-#include <exception>
+#include <errno.h>
+
+#ifdef GPCL_WINDOWS
+#  include <Windows.h>
+#endif
 
 namespace gpcl {
-
-template <typename E>
-[[noreturn]] void throw_exception(E &&e);
-
-#if defined(__clang__)
-#  define GPCL_NORETURN_UNLESS_CLANG
-#else
-#  define GPCL_NORETURN_UNLESS_CLANG [[noreturn]]
-#endif
-
-#if defined(GPCL_SOURCE) && defined(GPCL_DYN_LINK)
-#  define GPCL_DECL_EXPORT_ONLY GPCL_SYMBOL_EXPORT
-#else
-#  define GPCL_DECL_EXPORT_ONLY
-#endif
-
-extern template GPCL_NORETURN_UNLESS_CLANG GPCL_DECL_EXPORT_ONLY void
-throw_exception(detail::system_error &&e);
-
-extern template GPCL_NORETURN_UNLESS_CLANG GPCL_DECL_EXPORT_ONLY void
-throw_exception(detail::system_error &e);
-
-extern template GPCL_NORETURN_UNLESS_CLANG GPCL_DECL_EXPORT_ONLY void
-throw_exception(const detail::system_error &e);
 
 namespace detail {
 
@@ -54,31 +37,69 @@ public:
 };
 } // namespace errors
 
-#if defined(GPCL_POSIX)
-[[noreturn]] GPCL_DECL void throw_system_error(int err, czstring<> what);
-#elif defined(GPCL_WINDOWS)
-[[noreturn]] GPCL_DECL void throw_system_error(DWORD err, czstring<> what);
+[[noreturn]] inline void throw_system_error(int code,
+                                            error_category const &category,
+                                            const char *what,
+                                            source_location location)
+{
+  GPCL_THROW(::gpcl::enable_error_info(
+                 ::gpcl::detail::system_error(code, category, what))
+             << source_location_errinfo(location));
+}
+
+#define GPCL_THROW_SYSTEM_ERROR(Code, Category, What)                          \
+  ::gpcl::detail::throw_system_error((Code), (Category), (What),               \
+                                     GPCL_SOURCE_LOCATION_CURRENT_LINE())
+
+[[noreturn]] inline void throw_errno(int error, czstring<> what,
+                                     source_location location)
+{
+  throw_system_error(error, generic_category(), what, location);
+}
+
+#define GPCL_THROW_ERRNO(Code, What)                                           \
+  ::gpcl::detail::throw_errno((Code), (What),                                  \
+                              GPCL_SOURCE_LOCATION_CURRENT_LINE())
+
+#ifdef GPCL_WINDOWS
+[[noreturn]] inline void throw_last_error(DWORD error, czstring<> what,
+                                          source_location location)
+{
+  throw_system_error(error, system_category(), what, location);
+}
 #endif
 
-[[noreturn]] inline void throw_system_error(czstring<> what)
+[[noreturn]] inline void throw_last_error(czstring<> what,
+                                          source_location location)
 {
 #if defined(GPCL_WINDOWS)
-  throw_system_error(GetLastError(), what);
+  throw_last_error(::GetLastError(), what, location);
 #elif defined(GPCL_POSIX)
-  throw_system_error(errno, what);
+  throw_errno(errno, what, location);
 #endif
 }
 
-template <typename Errc, typename std::enable_if<!std::is_integral<Errc>::value,
-                                                 int>::type = 0>
-[[noreturn]] inline void throw_system_error(Errc errc, czstring<> what)
+template <typename Errc,
+          typename std::enable_if<std::is_error_code_enum<Errc>::value,
+                                  int>::type = 0>
+[[noreturn]] inline void throw_system_error(Errc errc, czstring<> what,
+                                            source_location location)
 {
-  throw_exception(system_error(make_error_code(errc), what));
+  GPCL_THROW(enable_error_info(system_error(make_error_code(errc), what))
+             << source_location_errinfo(location));
+}
+
+[[noreturn]] inline void throw_system_error(errc e, czstring<> what,
+                                            source_location location)
+{
+  GPCL_THROW(enable_error_info(system_error(make_error_code(e), what))
+             << source_location_errinfo(location));
 }
 
 #define GPCL_THROW_LAST_ERROR_IF(...)                                          \
   if ((__VA_ARGS__))                                                           \
-  ::gpcl::detail::throw_system_error(GPCL_TO_STR(__VA_ARGS__))
+  ::gpcl::detail::throw_last_error(GPCL_TO_STR(__VA_ARGS__),                   \
+                                   GPCL_SOURCE_LOCATION_CURRENT_LINE())
 
 } // namespace detail
 } // namespace gpcl

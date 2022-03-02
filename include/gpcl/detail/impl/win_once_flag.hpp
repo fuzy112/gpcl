@@ -35,9 +35,8 @@ void call_once(detail::win_once_flag &flag, Callable &&callable, Args &&...args)
 {
   BOOL status;
   BOOL pending = FALSE;
-  status = InitOnceBeginInitialize(&flag.opaque_, 0, &pending, NULL);
-  if (!status)
-    detail::throw_system_error("InitOnceBeginInitialize");
+  GPCL_THROW_LAST_ERROR_IF(
+      !InitOnceBeginInitialize(&flag.opaque_, 0, &pending, NULL));
 
   if (!pending)
     return; // already initialized
