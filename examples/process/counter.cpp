@@ -33,10 +33,12 @@ int main()
       ofile << count;
     }
     std::cout << count << std::endl;
+    return 0;
   }
   GPCL_CATCH(std::exception & exc)
   {
     std::cerr << gpcl::diagnostic_information(exc) << std::endl;
+    return 1;
   }
   GPCL_CATCH_END
 }

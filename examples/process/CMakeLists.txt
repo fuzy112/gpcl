@@ -1,2 +1,5 @@
-add_example_executable(process main.cpp)
+add_executable(process main.cpp)
+target_link_libraries(process gpcl::gpcl)
+set_target_properties(process PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${GPCL_BINARY_DIR}/bin")
 add_example_executable(counter counter.cpp)
+add_test(NAME example/process COMMAND process $<TARGET_FILE:counter>)
