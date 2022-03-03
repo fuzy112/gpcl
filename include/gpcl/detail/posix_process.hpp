@@ -17,12 +17,15 @@
 #include <gpcl/detail/unique_handle.hpp>
 #include <gpcl/dynarray.hpp>
 #include <gpcl/span.hpp>
+#include <gpcl/scoped_array.hpp>
 
 #include <string>
 #include <string_view>
 
+#include <fcntl.h>
 #include <signal.h>
 #include <sys/select.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -43,6 +46,12 @@ inline int pidfd_open(pid_t pid, unsigned int flags)
 }
 #endif
 
+
+inline int execveat(int dirfd, const char *pathname, char *const *argv, char *const *envp, int flags)
+{
+  return syscall(__NR_execveat, dirfd, pathname, argv, envp, flags);
+}
+
 struct posix_process_options
 {
   const char *file{};
@@ -53,6 +62,10 @@ struct posix_process_options
   const char *working_directory{};
 
   bool close_files{false};
+
+  bool follow_symlink{true};
+
+  bool inherit_euid{false};
 };
 
 class posix_process
@@ -171,17 +184,73 @@ public:
     start(opt);
   }
 
+  // Returns the directory fd at which file can be accessed.
+  unique_fd search_executable(const char *file, bool follow_symlink,
+                              bool inherit_euid)
+  {
+    GPCL_ASSERT(!!file);
+    int flags = 0;
+    if (!follow_symlink)
+      flags |= AT_SYMLINK_NOFOLLOW;
+    if (inherit_euid)
+      flags |= AT_EACCESS;
+
+    if (strchr(file, '/') != NULL)
+    {
+      GPCL_THROW_LAST_ERROR_IF(faccessat(AT_FDCWD, file, X_OK, flags) < 0);
+      unique_fd currentdir(open(".", O_DIRECTORY | O_PATH | O_CLOEXEC));
+      GPCL_THROW_LAST_ERROR_IF(!currentdir);
+      return currentdir;
+    }
+    const char *path = getenv("PATH");
+    if (!path)
+      GPCL_THROW_ERRNO(ENOENT, "getenv(PATH)");
+
+    size_t buflen = strlen(path) + 1;
+    scoped_array pathbuf(new char[buflen]);
+    strncpy(pathbuf.get(), path, buflen);
+
+    char *iter = pathbuf.get();
+
+    while (iter != nullptr)
+    {
+      char *pos = strchr(iter, ':');
+      if (pos)
+        *pos++ = '\0';
+
+      unique_fd dir(open(iter, O_PATH | O_DIRECTORY | O_CLOEXEC));
+      if (dir)
+      {
+        if (faccessat(dir.get(), file, F_OK, flags) == 0)
+        {
+          GPCL_THROW_LAST_ERROR_IF(faccessat(dir.get(), file, X_OK, flags) < 0);
+          return dir;
+        }
+      }
+
+      iter = pos;
+    }
+
+    GPCL_THROW_ERRNO(ENOENT, file);
+  }
+
   void start(const options &opt)
   {
     GPCL_ASSERT(pid_ < 0);
 
-    GPCL_THROW_LAST_ERROR_IF(access(opt.file, X_OK) < 0);
+    unique_fd dir =
+        search_executable(opt.file, opt.follow_symlink, opt.inherit_euid);
 
     GPCL_THROW_LAST_ERROR_IF((pid_ = fork()) < 0);
 
     if (pid_ == 0)
       GPCL_TRY
       {
+        if (!opt.inherit_euid)
+        {
+          GPCL_THROW_LAST_ERROR_IF(seteuid(getuid()) < 0);
+        }
+
         for (auto &[oldfd, newfd] : opt.fds)
         {
           // here fd will leak if error occurs, but it doesn't
@@ -211,7 +280,9 @@ public:
           }
         }
 
-        GPCL_THROW_LAST_ERROR_IF(execvp(opt.file, opt.argv) < 0);
+        GPCL_THROW_LAST_ERROR_IF(
+            execveat(dir.get(), opt.file, opt.argv, environ,
+                     opt.follow_symlink ? 0 : AT_SYMLINK_NOFOLLOW) < 0);
       }
     GPCL_CATCH(...) { raise(SIGABRT); }
     GPCL_CATCH_END
