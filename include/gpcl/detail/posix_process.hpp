@@ -101,7 +101,8 @@ public:
 
   posix_process &operator=(posix_process &&other) noexcept
   {
-    swap(other) return *this;
+    swap(other);
+    return *this;
   }
 
   ~posix_process()
