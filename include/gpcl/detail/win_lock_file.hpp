@@ -14,8 +14,8 @@
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
-#include <gpcl/noncopyable.hpp>
 #include <gpcl/detail/unique_handle.hpp>
+#include <gpcl/noncopyable.hpp>
 
 #include <Windows.h>
 
@@ -26,6 +26,12 @@ class win_lock_file : noncopyable
 public:
   explicit win_lock_file(std::string filename) : filename_(std::move(filename))
   {
+  }
+
+  ~win_lock_file()
+  {
+    if (owns_lock())
+      unlock();
   }
 
   bool owns_lock() const { return !!handle_; }

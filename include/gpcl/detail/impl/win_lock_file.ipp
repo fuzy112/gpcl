@@ -21,60 +21,92 @@
 namespace gpcl {
 namespace detail {
 
+constexpr auto FILE_LOCK_BYTES = UINT32_MAX;
+
 void win_lock_file::lock()
 {
-  while (!try_lock())
-  {
-    valid_handle hd(FindFirstChangeNotificationA(filename_.c_str(), FALSE,
-                                                 FILE_NOTIFY_CHANGE_FILE_NAME));
-    GPCL_TRY
-    {
-      GPCL_THROW_LAST_ERROR_IF(!hd);
-      GPCL_THROW_LAST_ERROR_IF(WaitForSingleObject(hd.get(), INFINITE) ==
-                               WAIT_FAILED);
-    }
-    GPCL_CATCH(system_error & e)
-    {
-      if (e.code() != error_code(ERROR_DIRECTORY, system_category()) &&
-          e.code() != error_code(ERROR_FILE_NOT_FOUND, system_category()) &&
-          e.code() != error_code(ERROR_ACCESS_DENIED, system_category()))
-        GPCL_RETHROW;
-    }
-    GPCL_CATCH_END
-  }
+  GPCL_ASSERT(!owns_lock());
+
+  valid_handle file(
+      ::CreateFileA(filename_.c_str(),
+                    GENERIC_READ | GENERIC_WRITE, // both read and write access
+                    FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    nullptr, // no security descriptor and child processes
+                             // cannot inherit the handle
+                    OPEN_ALWAYS, FILE_ATTRIBUTE_TEMPORARY,
+                    nullptr // no template file
+                    ));
+  GPCL_THROW_LAST_ERROR_IF(!file);
+
+  OVERLAPPED overlapped = {};
+  GPCL_THROW_LAST_ERROR_IF(!::LockFileEx(file.get(), LOCKFILE_EXCLUSIVE_LOCK, 0,
+                                         FILE_LOCK_BYTES, 0, &overlapped));
+
+  DWORD pid = GetCurrentProcessId();
+  GPCL_THROW_LAST_ERROR_IF(SetFilePointer(file.get(), 0, NULL, FILE_BEGIN) ==
+                           INVALID_SET_FILE_POINTER);
+  GPCL_THROW_LAST_ERROR_IF(!SetEndOfFile(file.get()));
+
+  std::string pid_str = std::to_string(pid);
+
+  GPCL_THROW_LAST_ERROR_IF(
+      !WriteFile(file.get(), pid_str.data(), pid_str.size(), NULL, NULL));
+  handle_ = std::move(file);
 }
 
 bool win_lock_file::try_lock()
 {
   GPCL_ASSERT(!owns_lock());
 
-  handle_.reset(::CreateFileA(
-      filename_.c_str(),
-      GENERIC_READ | GENERIC_WRITE, // both read and write access
-      FILE_SHARE_READ, // other process can only open this file for reading
-      nullptr, // no security descriptor and child processes cannot inherit the
-               // handle
-      CREATE_NEW, // fail if already exists
-      FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
-      nullptr // no template file
-      ));
-  if (!handle_)
-  {
-    DWORD last_error = ::GetLastError();
-    if (last_error == ERROR_FILE_EXISTS || last_error == ERROR_ACCESS_DENIED)
-      return false;
+  valid_handle file(
+      ::CreateFileA(filename_.c_str(),
+                    GENERIC_READ | GENERIC_WRITE, // both read and write access
+                    FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    nullptr, // no security descriptor and child processes
+                             // cannot inherit the handle
+                    OPEN_ALWAYS, FILE_ATTRIBUTE_TEMPORARY,
+                    nullptr // no template file
+                    ));
+  GPCL_THROW_LAST_ERROR_IF(!file);
 
-    throw_last_error(last_error, "CreateFile",
-                     GPCL_SOURCE_LOCATION_CURRENT_LINE());
-  }
+  OVERLAPPED overlapped = {};
+  if (!::LockFileEx(file.get(),
+                    LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, FILE_LOCK_BYTES,
+                    0, &overlapped))
+    return false;
+
+  DWORD pid = GetCurrentProcessId();
+  GPCL_THROW_LAST_ERROR_IF(SetFilePointer(handle_.get(), 0, NULL, FILE_BEGIN) ==
+                           INVALID_SET_FILE_POINTER);
+  GPCL_THROW_LAST_ERROR_IF(!SetEndOfFile(file.get()));
+
+  std::string pid_str = std::to_string(pid);
+
+  GPCL_THROW_LAST_ERROR_IF(
+      !WriteFile(file.get(), pid_str.data(), pid_str.size(), NULL, NULL));
+  handle_ = std::move(file);
+
   return true;
 }
 
-void win_lock_file::unlock()
+void win_lock_file::unlock() GPCL_TRY
 {
   GPCL_ASSERT(owns_lock());
+  GPCL_THROW_LAST_ERROR_IF(SetFilePointer(handle_.get(), 0, NULL, FILE_BEGIN) ==
+                           INVALID_SET_FILE_POINTER);
+  GPCL_THROW_LAST_ERROR_IF(!SetEndOfFile(handle_.get()));
+
+  OVERLAPPED overlapped = {};
+  GPCL_THROW_LAST_ERROR_IF(!UnlockFileEx(handle_.get(), 0, FILE_LOCK_BYTES, 0, &overlapped));
   handle_.reset();
+
+  DeleteFileA(filename_.c_str());
 }
+GPCL_CATCH(...)
+{
+  std::terminate();
+}
+GPCL_CATCH_END
 
 } // namespace detail
 } // namespace gpcl
