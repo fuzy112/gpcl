@@ -37,7 +37,7 @@ public:
 };
 } // namespace errors
 
-[[noreturn]] inline void throw_system_error(int code,
+GPCL_NORETURN inline void throw_system_error(int code,
                                             error_category const &category,
                                             const char *what,
                                             source_location location)
@@ -51,7 +51,7 @@ public:
   ::gpcl::detail::throw_system_error((Code), (Category), (What),               \
                                      GPCL_SOURCE_LOCATION_CURRENT_LINE())
 
-[[noreturn]] inline void throw_errno(int error, czstring<> what,
+GPCL_NORETURN inline void throw_errno(int error, czstring<> what,
                                      source_location location)
 {
   throw_system_error(error, generic_category(), what, location);
@@ -62,14 +62,14 @@ public:
                               GPCL_SOURCE_LOCATION_CURRENT_LINE())
 
 #ifdef GPCL_WINDOWS
-[[noreturn]] inline void throw_last_error(DWORD error, czstring<> what,
+GPCL_NORETURN inline void throw_last_error(DWORD error, czstring<> what,
                                           source_location location)
 {
   throw_system_error(error, system_category(), what, location);
 }
 #endif
 
-[[noreturn]] inline void throw_last_error(czstring<> what,
+GPCL_NORETURN inline void throw_last_error(czstring<> what,
                                           source_location location)
 {
 #if defined(GPCL_WINDOWS)
@@ -82,14 +82,14 @@ public:
 template <typename Errc,
           typename std::enable_if<std::is_error_code_enum<Errc>::value,
                                   int>::type = 0>
-[[noreturn]] inline void throw_system_error(Errc errc, czstring<> what,
+GPCL_NORETURN inline void throw_system_error(Errc errc, czstring<> what,
                                             source_location location)
 {
   GPCL_THROW(enable_error_info(system_error(make_error_code(errc), what))
              << source_location_errinfo(location));
 }
 
-[[noreturn]] inline void throw_system_error(errc e, czstring<> what,
+GPCL_NORETURN inline void throw_system_error(errc e, czstring<> what,
                                             source_location location)
 {
   GPCL_THROW(enable_error_info(system_error(make_error_code(e), what))

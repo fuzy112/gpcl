@@ -12,12 +12,12 @@
 #define GPCL_DETAIL_WIN_DEBUG_STREAMBUF_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/detail/error.hpp>
 
 #include <iostream>
 #include <sstream>
 #include <streambuf>
 
-#include <debugapi.h>
 
 namespace gpcl::detail {
 

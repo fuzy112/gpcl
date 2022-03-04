@@ -299,7 +299,7 @@ public:
     pid_ = terminated_process;
   }
 
-  [[nodiscard]] bool try_join()
+  GPCL_NODISCARD bool try_join()
   {
     GPCL_ASSERT(joinable());
     int result{};
@@ -313,7 +313,7 @@ public:
     return false;
   }
 
-  [[nodiscard]] bool try_join_for_impl(const timespec &ts)
+  GPCL_NODISCARD bool try_join_for_impl(const timespec &ts)
   {
     process_waiter waiter(pid_);
 
@@ -321,7 +321,7 @@ public:
     return try_join();
   }
 
-  [[nodiscard]] bool try_join_for(chrono::milliseconds timeout)
+  GPCL_NODISCARD bool try_join_for(chrono::milliseconds timeout)
   {
     timespec ts;
     ts.tv_sec = timeout.count() / 1000;
@@ -449,6 +449,10 @@ private:
 
 #endif
 };
+
+#ifdef GPCL_DETAIL_USE_PIDFD
+#  undef GPCL_DETAIL_USE_PIDFD
+#endif
 
 } // namespace detail
 } // namespace gpcl

@@ -89,7 +89,7 @@ public:
   /// @param allocator allocator to allocate memory for the created ref_count.
   /// @param args arguments passed to the constructor of Manager.
   template <typename... Args>
-  [[nodiscard]] static Derived *create(const Allocator &allocator,
+  GPCL_NODISCARD static Derived *create(const Allocator &allocator,
                                        Args &&...args)
   {
     rebind_allocator alloc{allocator};

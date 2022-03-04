@@ -86,7 +86,7 @@ public:
   }
 
   // Try increment the use count, fail if use count equals 0.
-  [[nodiscard]] bool lock() noexcept
+  GPCL_NODISCARD bool lock() noexcept
   {
     GPCL_ASSERT(weak_count() > 0);
     long old_val = use_count();

@@ -127,13 +127,13 @@ public:
 
   GPCL_DECL void name(czstring<> s);
 
-  [[nodiscard]] bool joinable() const { return thread_ != 0; }
+  GPCL_NODISCARD bool joinable() const { return thread_ != 0; }
 
   GPCL_DECL void join();
 
   GPCL_DECL void detach();
 
-  [[nodiscard]] native_handle_type native_handle() const { return thread_; }
+  GPCL_NODISCARD native_handle_type native_handle() const { return thread_; }
 
   GPCL_DECL posix_thread_id get_id() const;
 

@@ -56,19 +56,19 @@ public:
   posix_mutex_attr(const posix_mutex_attr &) = delete;
   posix_mutex_attr &operator=(const posix_mutex_attr &) = delete;
 
-  [[nodiscard]] GPCL_DECL posix_mutex_protocol protocol() const noexcept;
+  GPCL_NODISCARD GPCL_DECL posix_mutex_protocol protocol() const noexcept;
   GPCL_DECL void protocol(posix_mutex_protocol p) noexcept;
 
-  [[nodiscard]] GPCL_DECL int priority_ceiling() const noexcept;
+  GPCL_NODISCARD GPCL_DECL int priority_ceiling() const noexcept;
   GPCL_DECL void priority_ceiling(int prioceiling) noexcept;
 
-  [[nodiscard]] GPCL_DECL posix_mutex_robust robust() const noexcept;
+  GPCL_NODISCARD GPCL_DECL posix_mutex_robust robust() const noexcept;
   GPCL_DECL void robust(posix_mutex_robust r) noexcept;
 
-  [[nodiscard]] GPCL_DECL posix_mutex_type type() const noexcept;
+  GPCL_NODISCARD GPCL_DECL posix_mutex_type type() const noexcept;
   GPCL_DECL void type(posix_mutex_type t) noexcept;
 
-  [[nodiscard]] const pthread_mutexattr_t *get() const { return &attr_; }
+  GPCL_NODISCARD const pthread_mutexattr_t *get() const { return &attr_; }
 
 private:
   mutable pthread_mutexattr_t attr_{};

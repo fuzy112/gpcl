@@ -194,6 +194,10 @@
 #  define GPCL_NOEXCEPT noexcept
 #endif // GPCL_NOEXCEPT
 
+#ifndef GPCL_NODISCARD
+#  define GPCL_NODISCARD [[nodiscard]]
+#endif // GPCL_NODISCARD
+
 // =================================================================================================
 // FEATURE DETECTION END
 // =================================================================================================
