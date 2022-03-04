@@ -224,7 +224,7 @@ auto diagnostic_information(const E &e)
     else
     {
 #ifndef GPCL_CONFIG_NO_RTTI
-      exc = dynamic_pointer_cast<const exception>(exc);
+      exc = dynamic_pointer_cast<const exception>(&e);
 #endif
     }
 

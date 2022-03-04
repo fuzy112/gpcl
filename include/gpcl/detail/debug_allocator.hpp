@@ -80,8 +80,11 @@ public:
 
   T *allocate(std::size_t n) const
   {
+    if (n == 0)
+      return nullptr;
     scoped_lock lock(g_debug_alloc_data.mtx);
     void *p = std::malloc(sizeof(T) * n);
+    GPCL_ASSERT(p != nullptr);
     g_debug_alloc_data.alloc_records_map[p] = alloc_record{
         this_thread::get_id(),
         &typeid_<T>(),
@@ -94,14 +97,15 @@ public:
 
   void deallocate(T *p, std::size_t n) const
   {
-    if (n == 0)
+    if (p == 0 && n == 0)
       return;
     scoped_lock lock(g_debug_alloc_data.mtx);
 
     auto iter = g_debug_alloc_data.alloc_records_map.find(p);
     GPCL_ASSERT(iter != g_debug_alloc_data.alloc_records_map.cend());
-    free(p);
-    g_debug_alloc_data.alloc_records_map.erase(iter);
+    std::free(p);
+    if (iter != g_debug_alloc_data.alloc_records_map.cend())
+      g_debug_alloc_data.alloc_records_map.erase(iter);
   }
 };
 

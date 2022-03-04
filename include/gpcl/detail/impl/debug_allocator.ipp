@@ -31,7 +31,8 @@ debug_allocator_data::~debug_allocator_data()
                      << "size: " << record.size << ", "
                      << "count: " << record.count << ", "
                      << "total bytes: " << record.size * record.count << ", "
-                     << "type: " << record.type->name() << '\n';
+                     << "type: " << record.type->name() << ", "
+                     << "thread: " << record.tid << std::endl;
     }
 
     std::_Exit(1);
