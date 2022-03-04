@@ -188,7 +188,8 @@ public:
   unique_fd search_executable(const char *file, bool follow_symlink,
                               bool inherit_euid)
   {
-    GPCL_ASSERT(!!file);
+    if (!file)
+      GPCL_THROW_ERRNO(EINVAL, "file cannot be null");
     int flags = 0;
     if (!follow_symlink)
       flags |= AT_SYMLINK_NOFOLLOW;
@@ -204,7 +205,7 @@ public:
     }
     const char *path = getenv("PATH");
     if (!path)
-      GPCL_THROW_ERRNO(ENOENT, "getenv(PATH)");
+      GPCL_THROW_ERRNO(ENOENT, file);
 
     size_t buflen = strlen(path) + 1;
     scoped_array pathbuf(new char[buflen]);
