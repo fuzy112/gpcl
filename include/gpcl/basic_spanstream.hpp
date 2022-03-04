@@ -102,9 +102,9 @@ using wispanstream = basic_ispanstream<wchar_t>;
 
 template <typename CharType, typename Traits = std::char_traits<CharType>>
 class basic_ospanstream : private detail::spanstream_base<CharType, Traits>,
-                          public std::basic_istream<CharType, Traits>
+                          public std::basic_ostream<CharType, Traits>
 {
-  using stream_type = std::basic_istream<CharType, Traits>;
+  using stream_type = std::basic_ostream<CharType, Traits>;
 
 public:
   /// @name Constructors
