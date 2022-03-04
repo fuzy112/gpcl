@@ -27,8 +27,8 @@ void link_error_info_helper(const error_info_base **pp, E1 &e1,
 
 class error_info_base
 {
-  friend ::gpcl::exception;
-  friend error_info_ref;
+  friend class ::gpcl::exception;
+  friend class error_info_ref;
 
   template <typename E1, typename... Es>
   friend void link_error_info_helper(const error_info_base **pp, E1 &e1,

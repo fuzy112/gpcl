@@ -162,7 +162,7 @@ class basic_posix_stacktrace
 {
   static_assert(
       std::is_same<typename std::allocator_traits<Allocator>::value_type,
-                   posix_stacktrace_entry>::value);
+                   posix_stacktrace_entry>::value, "");
 
   dynarray<posix_stacktrace_entry, Allocator> data_;
 

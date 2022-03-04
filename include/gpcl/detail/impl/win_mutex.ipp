@@ -100,7 +100,7 @@ auto win_timed_mutex::lock() -> void
     return;
 
   case WAIT_ABANDONED:
-    throw_system_error(errc::owner_dead, "win_timed_mutex::lock",
+    throw_system_error(errc::owner_dead, "WaitForSingleObject",
                        GPCL_SOURCE_LOCATION_CURRENT_LINE());
 
   default:

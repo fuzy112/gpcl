@@ -15,6 +15,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/output_iterator_streambuf.hpp>
 #include <gpcl/typeid.hpp>
+#include <gpcl/spanstream.hpp>
 
 #include <exception>
 #include <ostream>
@@ -54,11 +55,10 @@ public:
   static OutIt format(OutIt out, const E &e)
   {
     std::array<char, 128> buf;
-    output_iterator_streambuf<OutIt> sb(out);
-    sb.pubsetbuf(buf.data(), buf.size());
-    std::ostream ostr(&sb);
+    ospanstream ostr(buf);
     ostr << e;
-    return sb.out();
+    auto written_buf = ostr.span();
+    return std::copy(written_buf.begin(), written_buf.end(), out);
   }
 };
 
@@ -77,31 +77,7 @@ public:
 template <>
 class error_formatter<std::exception_ptr>
 {
-public:
-  template <typename OutIt>
-  static OutIt format(OutIt out, const std::exception_ptr &eptr)
-  {
-#ifndef GPCL_CONFIG_NO_EXCEPTIONS
-    GPCL_TRY
-    {
-      if (eptr)
-        std::rethrow_exception(eptr);
-      std::string_view str{"no exception"};
-      return std::copy(str.begin(), str.end(), out);
-    }
-    GPCL_CATCH(const std::exception &e)
-    {
-      std::string_view str = e.what();
-      return std::copy(str.begin(), str.end(), out);
-    }
-    GPCL_CATCH_END
-    GPCL_UNREACHABLE("failed to throw exception");
-#else
-    (void)eptr;
-    std::string_view str = "unknown exception";
-    return std::copy(str.begin(), str.end(), out);
-#endif
-  }
+  // exception_ptr's should be thrown nested.
 };
 
 template <typename OutIt, typename E>

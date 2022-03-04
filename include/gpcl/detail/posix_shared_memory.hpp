@@ -57,9 +57,7 @@ public:
 
   std::size_t size() const
   {
-    struct ::stat s
-    {
-    };
+    struct ::stat s = {};
     GPCL_THROW_LAST_ERROR_IF(::fstat(fd_.get(), &s) < 0);
     return s.st_size;
   }

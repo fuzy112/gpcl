@@ -39,7 +39,7 @@ protected:
 
 public:
   template <typename U = T,
-            std::enable_if_t<detail::is_default_constructible_v<U>, int> = 0>
+            typename std::enable_if<detail::is_default_constructible<U>::value, int>::type = 0>
   inline constexpr expected_destruct_base() : val_(),
                                               ok_(true)
   {
@@ -99,7 +99,7 @@ protected:
 
 public:
   template <typename U = T,
-            std::enable_if_t<detail::is_default_constructible_v<U>, int> = 0>
+            typename std::enable_if<detail::is_default_constructible_v<U>, int>::type = 0>
   inline constexpr expected_destruct_base() : val_(),
                                               ok_(true)
   {
@@ -147,14 +147,14 @@ public:
   {
     if (ok_)
     {
-      GPCL_CXX17_IF_CONSTEXPR(!detail::is_trivially_destructible_v<T>)
+      GPCL_CXX17_IF_CONSTEXPR(!detail::is_trivially_destructible<T>::value)
       {
         val_.T::~T();
       }
     }
     else
     {
-      GPCL_CXX17_IF_CONSTEXPR(!detail::is_trivially_destructible_v<E>)
+      GPCL_CXX17_IF_CONSTEXPR(!detail::is_trivially_destructible<E>::value)
       {
         err_.unexpected<E>::~unexpected();
       }

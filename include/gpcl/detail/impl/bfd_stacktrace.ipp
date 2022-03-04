@@ -257,7 +257,7 @@ inline line_info bfd_get_line_from_address(const void *address)
 std::string bfd_stacktrace_entry_description(const void *address) noexcept
 {
   line_info info = bfd_get_line_from_address(address);
-  std::stringstream ss;
+  std::ostringstream ss;
 
   if (!info.func.empty())
   {

@@ -17,6 +17,7 @@
 #include <gpcl/noncopyable.hpp>
 #include <gpcl/span.hpp>
 #include <gpcl/zstring.hpp>
+#include <gpcl/detail/unique_handle.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -25,6 +26,20 @@
 
 namespace gpcl {
 namespace detail {
+
+struct mqd_traits
+{
+  using native_handle_type = mqd_t;
+
+  static inline const native_handle_type invalid_value{-1};
+
+  static void close(native_handle_type q) noexcept
+  {
+    GPCL_VERIFY_0(mq_close(q));
+  }
+};
+
+using unique_mqd = unique_handle<mqd_traits>;
 
 class posix_message_queue
 {
@@ -39,21 +54,7 @@ public:
                                 std::size_t maxmsg, std::size_t msgsize);
   GPCL_DECL posix_message_queue(open_only_t, czstring<> name);
 
-  inline posix_message_queue() : q_(0) {}
-
-  inline posix_message_queue(posix_message_queue &&other) noexcept
-      : q_(std::exchange(other.q_, mqd_t()))
-  {
-  }
-
-  inline posix_message_queue &operator=(posix_message_queue &&other) noexcept
-  {
-    using gpcl::swap;
-    swap(q_, other.q_);
-    return *this;
-  }
-
-  GPCL_DECL ~posix_message_queue() noexcept;
+  posix_message_queue() noexcept = default;
 
   GPCL_DECL static void unlink(czstring<> name, std::error_code &ec);
 
@@ -88,7 +89,7 @@ public:
   }
 
 private:
-  mqd_t q_;
+  unique_mqd q_;
 };
 
 } // namespace detail

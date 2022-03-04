@@ -17,7 +17,7 @@
 #include <gpcl/detail/win_mutex.hpp>
 #include <gpcl/narrow_cast.hpp>
 
-#include <synchapi.h>
+#include <Windows.h>
 
 namespace gpcl {
 namespace detail {

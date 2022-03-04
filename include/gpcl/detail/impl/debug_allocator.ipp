@@ -23,7 +23,7 @@ debug_allocator_data::~debug_allocator_data()
 {
   if (!alloc_records_map.empty())
   {
-    std::clog << "memory leak detected!\n";
+    cdebug() << "memory leak detected!\n";
 
     for (auto &&[address, record] : alloc_records_map)
     {

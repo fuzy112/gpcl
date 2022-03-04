@@ -87,6 +87,29 @@ inline constexpr bool timespec_gt(const struct timespec *a,
   return false;
 }
 
+inline constexpr int timespec_compare(const struct timespec *a, const struct timespec *b)
+{
+  if (!a)
+  {
+    if (!b)
+      return 0;
+    return -1;
+  }
+
+  if (!b)
+    return 1;
+
+  if (a->tv_sec > b->tv_sec)
+    return 1;
+
+  if (a->tv_sec < b->tv_sec)
+    return -1;
+
+  return (a->tv_nsec > b->tv_nsec) ? 1 :
+                                     (a->tv_nsec == b->tv_nsec) ? 0 :
+                                                                  -1;
+}
+
 inline constexpr bool timespec_is_zero(const struct timespec *t)
 {
   return t->tv_sec == 0 && t->tv_nsec == 0;

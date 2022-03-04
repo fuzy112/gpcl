@@ -23,35 +23,44 @@ namespace gpcl {
 namespace sqlite {
 
 #ifdef GPCL_SQLITE
-class sqlite_error_category_impl : public std::error_category
+class sqlite_error_category_impl : public error_category
 {
 public:
-  [[nodiscard]] const char *name() const noexcept override { return "sqlite"; }
+  GPCL_NODISCARD const char *name() const noexcept override { return "sqlite"; }
 
-  [[nodiscard]] std::string message(int ev) const override
+  GPCL_NODISCARD std::string message(int ev) const override
   {
     return sqlite3_errstr(ev);
   }
 };
 
-auto sqlite_error_category() -> const std::error_category &
+auto sqlite_error_category() -> const error_category &
 {
-
   const static sqlite_error_category_impl i;
   return i;
 }
 
-[[noreturn]] auto throw_sqlite_error(int err, const char *msg) -> void
+GPCL_NORETURN auto throw_sqlite_error(int err, const char *msg) -> void
 {
-  GPCL_THROW(std::system_error(err, sqlite_error_category(), msg));
+  GPCL_THROW(system_error(err, sqlite_error_category(), msg));
 }
+
+void throw_sqlite_error_if_failed(int result, const char *message, source_location location)
+{
+  if (result != SQLITE_OK)
+  {
+    ::gpcl::detail::throw_system_error(result, sqlite_error_category(), message, location);
+  }
+}
+
+#define GPCL_THROW_SQLITE_ERROR_IF_FAILED(...)  \
+  ::gpcl::sqlite::throw_sqlite_error_if_failed((__VA_ARGS__), GPCL_TO_STR(__VA_ARGS__), GPCL_SOURCE_LOCATION_CURRENT_LINE())
+
 
 database::database(const char *name)
 {
-  int err = ::sqlite3_open_v2(
-      name, &db_, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, nullptr);
-  if (err != 0)
-    throw_sqlite_error(err, __func__);
+  GPCL_THROW_SQLITE_ERROR_IF_FAILED( ::sqlite3_open_v2(
+      name, &db_, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, nullptr) );
 }
 
 database::~database() noexcept
@@ -76,10 +85,8 @@ void database::execute(const char *sql)
 
 statement::statement(database &db, czstring<> sql)
 {
-  int err = sqlite3_prepare_v2(db.native_handle(), sql, std::strlen(sql),
-                               &stmt_, nullptr);
-  if (err != 0)
-    throw_sqlite_error(err, __func__);
+  GPCL_THROW_SQLITE_ERROR_IF_FAILED(sqlite3_prepare_v2(db.native_handle(), sql, std::strlen(sql),
+                                                       &stmt_, nullptr));
 }
 
 statement::~statement()
@@ -101,56 +108,39 @@ auto statement::step() -> step_result
 
 auto statement::reset() -> void
 {
-  int err = sqlite3_reset(stmt_);
-
-  if (err != 0)
-    throw_sqlite_error(err, __FUNCTION__);
+  GPCL_THROW_SQLITE_ERROR_IF_FAILED( sqlite3_reset(stmt_) );
 }
 
 namespace detail {
 auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, int number) -> void
 {
-  int err = sqlite3_bind_int(proxy.statement_handle(), col, number);
-
-  if (err != 0)
-    throw_sqlite_error(err, __func__);
+  GPCL_THROW_SQLITE_ERROR_IF_FAILED(sqlite3_bind_int(proxy.statement_handle(), col, number));
 }
 
 auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, sqlite3_int64 number)
     -> void
 {
-  int err = sqlite3_bind_int64(proxy.statement_handle(), col, number);
-
-  if (err != 0)
-    throw_sqlite_error(err, __func__);
+  GPCL_THROW_SQLITE_ERROR_IF_FAILED(sqlite3_bind_int64(proxy.statement_handle(), col, number));
 }
 
 auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, double number)
     -> void
 {
-  int err = sqlite3_bind_double(proxy.statement_handle(), col, number);
-
-  if (err != 0)
-    throw_sqlite_error(err, __func__);
+  GPCL_THROW_SQLITE_ERROR_IF_FAILED(
+        sqlite3_bind_double(proxy.statement_handle(), col, number));
 }
 
 auto tag_invoke(bind_fn, const bind_proxy &proxy, int col, const char *text)
     -> void
 {
-  int err = sqlite3_bind_text(proxy.statement_handle(), col, text,
-                              std::strlen(text), SQLITE_TRANSIENT);
-
-  if (err != 0)
-    throw_sqlite_error(err, __func__);
+  GPCL_THROW_SQLITE_ERROR_IF_FAILED(sqlite3_bind_text(proxy.statement_handle(), col, text,
+                              std::strlen(text), SQLITE_TRANSIENT));
 }
 
 void bind_static_string(const bind_proxy &proxy, int col, const char *str)
 {
-  int err = sqlite3_bind_text(proxy.statement_handle(), col, str,
-                              std::strlen(str), SQLITE_STATIC);
-
-  if (err != 0)
-    throw_sqlite_error(err, __func__);
+  GPCL_THROW_SQLITE_ERROR_IF_FAILED( sqlite3_bind_text(proxy.statement_handle(), col, str,
+                                                       std::strlen(str), SQLITE_STATIC));
 }
 
 auto tag_invoke(get_fn, const step_result &result, int col, int &number) -> void
