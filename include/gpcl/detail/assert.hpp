@@ -15,6 +15,7 @@
 
 #include <gpcl/detail/assertion_failure.hpp>
 #include <gpcl/detail/unreachable.hpp>
+#include <gpcl/source_location.hpp>
 
 #include <cassert>
 #include <cstdlib>
@@ -53,12 +54,12 @@
 
 /// Used to assert that the line cannot be reached
 #define GPCL_UNREACHABLE(msg)                                                  \
-  ::gpcl::detail::unreachable_internal(msg, __FILE__, __LINE__)
+  ::gpcl::detail::unreachable_internal(msg, GPCL_SOURCE_LOCATION_CURRENT_LINE())
 
 /// Indicates that the function is not implemented yet
 #define GPCL_UNIMPLEMENTED() GPCL_UNREACHABLE("unimplemented")
 
-#if defined(_MSC_VER)
+#if GPCL_MSVC
 #  define GPCL_FATAL(errno)                                                    \
     GPCL_UNREACHABLE(system_category().message(errno).c_str())
 #else

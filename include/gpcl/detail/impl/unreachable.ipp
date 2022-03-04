@@ -13,21 +13,21 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/unreachable.hpp>
-#include <iostream>
+#include <gpcl/debugstream.hpp>
+
+#include <cstdlib>
 
 namespace gpcl {
 namespace detail {
 
-void unreachable_internal(czstring<> msg, czstring<> file,
-                          unsigned line) noexcept
+void unreachable_internal(std::string_view message, source_location location) noexcept
 {
-  if (msg)
-    std::clog << msg << "\n";
-  std::clog << "UNREACHABLE executed";
-  if (file)
-    std::clog << " at " << file << ":" << line;
-  std::clog << "!\n" << std::flush;
-  abort();
+  auto &&stream = cdebug();
+  stream << message << "\n";
+  stream << "UNREACHABLE executed";
+  stream << " at " << location.file() << ":" << location.line() << " " << location.function();
+  stream << "!\n" << std::flush;
+  std::abort();
 }
 
 } // namespace detail

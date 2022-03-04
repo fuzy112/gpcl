@@ -12,14 +12,14 @@
 #define GPCL_DETAIL_UNREACHABLE_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/zstring.hpp>
+#include <gpcl/source_location.hpp>
+
+#include <string_view>
 
 namespace gpcl {
 namespace detail {
 
-[[noreturn]] GPCL_DECL void unreachable_internal(czstring<> msg = nullptr,
-                                                 czstring<> file = nullptr,
-                                                 unsigned line = 0) noexcept;
+GPCL_NORETURN GPCL_DECL void unreachable_internal(std::string_view message, source_location location) GPCL_NOEXCEPT;
 
 }
 } // namespace gpcl
