@@ -16,8 +16,8 @@
 #include <gpcl/detail/throw_system_error.hpp>
 #include <gpcl/detail/unique_handle.hpp>
 #include <gpcl/dynarray.hpp>
-#include <gpcl/span.hpp>
 #include <gpcl/scoped_array.hpp>
+#include <gpcl/span.hpp>
 
 #include <string>
 #include <string_view>
@@ -46,8 +46,8 @@ inline int pidfd_open(pid_t pid, unsigned int flags)
 }
 #endif
 
-
-inline int execveat(int dirfd, const char *pathname, char *const *argv, char *const *envp, int flags)
+inline int execveat(int dirfd, const char *pathname, char *const *argv,
+                    char *const *envp, int flags)
 {
   return syscall(__NR_execveat, dirfd, pathname, argv, envp, flags);
 }
@@ -242,11 +242,18 @@ public:
     unique_fd dir =
         search_executable(opt.file, opt.follow_symlink, opt.inherit_euid);
 
+    int pipes[2];
+    GPCL_THROW_LAST_ERROR_IF(pipe2(pipes, O_CLOEXEC | O_DIRECT) < 0);
+    unique_fd rdfd(pipes[0]);
+    unique_fd wrfd(pipes[1]);
+
     GPCL_THROW_LAST_ERROR_IF((pid_ = fork()) < 0);
 
     if (pid_ == 0)
       GPCL_TRY
       {
+        rdfd.reset();
+
         if (!opt.inherit_euid)
         {
           GPCL_THROW_LAST_ERROR_IF(seteuid(getuid()) < 0);
@@ -285,10 +292,41 @@ public:
             execveat(dir.get(), opt.file, opt.argv, environ,
                      opt.follow_symlink ? 0 : AT_SYMLINK_NOFOLLOW) < 0);
       }
-    GPCL_CATCH(...) { raise(SIGABRT); }
+    GPCL_CATCH(system_error & exc)
+    {
+      error buf = {
+          exc.code().value(),
+          &exc.code().category(),
+      };
+      if (write(wrfd.get(), &buf, sizeof(buf)) < 0)
+        abort();
+      _exit(1);
+    }
+    GPCL_AND_CATCH(...)
+    {
+      error buf = {
+          EINVAL,
+          &system_category(),
+      };
+      if (write(wrfd.get(), &buf, sizeof(buf)) < 0)
+        abort();
+      _exit(1);
+    }
     GPCL_CATCH_END
 
     GPCL_ASSERT(pid_ > 0);
+
+    wrfd.reset();
+
+    error buf;
+    ssize_t len = ::read(rdfd.get(), &buf, sizeof(buf));
+    GPCL_THROW_LAST_ERROR_IF(len < 0);
+
+    if (len > 0)
+    {
+      join();
+      GPCL_THROW_SYSTEM_ERROR(buf.code, *buf.category, opt.file);
+    }
   }
 
   bool joinable() const noexcept { return pid_ > 0; }
@@ -372,6 +410,12 @@ private:
 
   int pid_{not_a_process};
   int wstatus_{};
+
+  struct error
+  {
+    int code;
+    const error_category *category;
+  };
 
 #ifdef GPCL_DETAIL_USE_PIDFD
   class process_waiter
