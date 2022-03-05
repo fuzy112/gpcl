@@ -15,7 +15,6 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/swap.hpp>
 
-
 #ifdef GPCL_WINDOWS
 #  include <Windows.h>
 #else
@@ -131,7 +130,8 @@ struct fd_traits
 
   static void close(native_handle_type h) noexcept
   {
-    GPCL_VERIFY(::close(h) == 0);
+    if (h >= 0)
+      GPCL_VERIFY(::close(h) == 0);
   }
 };
 
