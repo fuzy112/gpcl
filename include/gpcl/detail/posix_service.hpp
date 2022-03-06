@@ -188,6 +188,10 @@ public:
 
   void start()
   {
+    uid_t euid = geteuid();
+
+  l_restart:
+    GPCL_THROW_LAST_ERROR_IF(seteuid(euid) < 0);
     pidfilefd_.reset();
     rdfd_.reset();
     wrfd_.reset();
@@ -224,7 +228,7 @@ public:
     if (need_restart_)
     {
       need_restart_ = false;
-      start();
+      goto l_restart;
     }
   }
 

@@ -44,7 +44,7 @@ int main(int argc, const char **argv) GPCL_TRY
     print_usage(std::cerr);
     return 1;
   }
-  my_service svc("/home/vex/test-gpcl.pid");
+  my_service svc("/run/test-gpcl.pid");
 
   if (argv[1] == std::string_view("start"))
     svc.start();
