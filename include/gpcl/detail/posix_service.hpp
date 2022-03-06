@@ -149,20 +149,21 @@ struct pid_traits
 
 using unique_pid = unique_handle<pid_traits>;
 
+class posix_service
 {
   const char *pidfile_{};
-  int pid_{};
+  unique_pid pid_{};
   unique_fd rdfd_;
   unique_fd wrfd_;
 
   unique_ptr<pid_file> pidfilefd_{};
 
-  static inline service *instance_{nullptr};
+  static inline posix_service *instance_{nullptr};
   std::atomic_bool run_{false};
   std::atomic_bool need_restart_{false};
 
 public:
-  service(const char *pidfile = nullptr) : pidfile_(pidfile) {}
+  posix_service(const char *pidfile = nullptr) : pidfile_(pidfile) {}
 
   friend void service_signal_handler(int sig)
   {
@@ -203,17 +204,18 @@ public:
     rdfd_.reset(pipefd[0]);
     wrfd_.reset(pipefd[1]);
 
-    GPCL_THROW_LAST_ERROR_IF((pid_ = ::fork()) < 0);
-    if (pid_ > 0)
+    pid_.reset(::fork());
+    GPCL_THROW_LAST_ERROR_IF(!pid_);
+    if (pid_.get() > 0)
       return parent();
 
     child1();
 
     instance_ = this;
 
-    ::signal(SIGTERM, &service_signal_handler);
-    ::signal(SIGINT, &service_signal_handler);
-    ::signal(SIGHUP, &service_signal_handler);
+    ::signal(SIGTERM, &detail::service_signal_handler);
+    ::signal(SIGINT, &detail::service_signal_handler);
+    ::signal(SIGHUP, &detail::service_signal_handler);
 
     do_start();
     notify_success();
@@ -262,12 +264,13 @@ protected:
   void notify_success() { write_error(error_code()); }
 
 private:
-  void parent() GPCL_TRY
+  GPCL_NORETURN void parent()
   {
     wrfd_.reset();
 
     int wstatus = 0;
-    GPCL_THROW_LAST_ERROR_IF(waitpid(pid_, &wstatus, 0) < 0);
+    GPCL_THROW_LAST_ERROR_IF(waitpid(pid_.get(), &wstatus, 0) < 0);
+    pid_.release();
 
     error_data buf = {};
     ssize_t len = {};
@@ -282,12 +285,6 @@ private:
       GPCL_THROW_SYSTEM_ERROR(buf.code, *buf.category, __func__);
     exit(0);
   }
-  GPCL_CATCH(...)
-  {
-    kill(pid_, SIGTERM);
-    GPCL_RETHROW;
-  }
-  GPCL_CATCH_END
 
   void child1() GPCL_TRY
   {
@@ -303,8 +300,9 @@ private:
 
     GPCL_THROW_LAST_ERROR_IF(::setsid() < 0);
 
-    GPCL_THROW_LAST_ERROR_IF((pid_ = ::fork()) < 0);
-    if (pid_ > 0)
+    pid_.reset(::fork());
+    GPCL_THROW_LAST_ERROR_IF(!pid_);
+    if (pid_.get() > 0)
       return exit(0);
 
     // in child2, wait child1 to exit

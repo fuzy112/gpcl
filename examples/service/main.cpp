@@ -7,17 +7,28 @@
 
 class my_service : public gpcl::service
 {
+  int pipes[2];
+
 public:
   my_service(const char *pidfile)
     : gpcl::service(pidfile)
   {}
 
+  void do_start() override
+  {
+    pipe(pipes);
+  }
+
   void run() override
   {
-    while (!is_stopped())
-    {
-      sleep(1);
-    }
+    char dummy[1];
+    read(pipes[0], dummy, sizeof(dummy));
+  }
+
+  void do_stop() override
+  {
+    char dummy[1] = {};
+    write(pipes[1], dummy, sizeof(dummy));
   }
 };
 
