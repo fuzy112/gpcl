@@ -28,16 +28,15 @@ namespace gpcl {
 namespace detail {
 
 template <typename HandleTraits>
-class unique_handle
+class unique_handle : public HandleTraits
 {
 public:
   using traits_type = HandleTraits;
   using native_handle_type = typename HandleTraits::native_handle_type;
 
-  static inline const native_handle_type invalid_value{
-      HandleTraits::invalid_value};
-
-  explicit unique_handle(native_handle_type h = invalid_value) noexcept : h_{h}
+  explicit unique_handle(
+      native_handle_type h = traits_type::invalid_value) noexcept
+      : h_{h}
   {
   }
 
@@ -55,9 +54,9 @@ public:
 
   ~unique_handle() { reset(); }
 
-  void reset(native_handle_type h = invalid_value) noexcept
+  void reset(native_handle_type h = traits_type::invalid_value) noexcept
   {
-    if (h_ != invalid_value)
+    if (traits_type::is_valid(h_))
       traits_type::close(h_);
     h_ = h;
   }
@@ -65,7 +64,7 @@ public:
   native_handle_type release() noexcept
   {
     native_handle_type ret{h_};
-    h_ = invalid_value;
+    h_ = traits_type::invalid_value;
     return ret;
   }
 
@@ -75,9 +74,13 @@ public:
     swap(h_, other.h_);
   }
 
-  explicit operator bool() const noexcept { return get() != invalid_value; }
+  explicit operator bool() const noexcept { return traits_type::is_valid(h_); }
 
-  native_handle_type get() const noexcept { return h_; }
+  native_handle_type get() const noexcept
+  {
+    GPCL_ASSERT(traits_type::is_valid(h_));
+    return h_;
+  }
 
   friend void swap(unique_handle &x, unique_handle &y) noexcept { x.swap(y); }
 
@@ -87,7 +90,7 @@ public:
   }
 
 private:
-  native_handle_type h_{invalid_value};
+  native_handle_type h_{traits_type::invalid_value};
 };
 
 #ifdef GPCL_WINDOWS
@@ -96,6 +99,8 @@ struct nullable_traits
   using native_handle_type = HANDLE;
 
   static constexpr native_handle_type invalid_value{nullptr};
+
+  static constexpr bool is_valid(native_handle_type h) { return !!h; }
 
   static void close(native_handle_type h) noexcept
   {
@@ -110,6 +115,11 @@ struct valid_traits
   using native_handle_type = HANDLE;
 
   static inline native_handle_type invalid_value{INVALID_HANDLE_VALUE};
+
+  static bool is_valid(native_handle_type h) noexcept
+  {
+    return h != INVALID_HANDLE_VALUE;
+  }
 
   static void close(native_handle_type h) noexcept
   {
@@ -128,10 +138,11 @@ struct fd_traits
 
   static constexpr native_handle_type invalid_value{-1};
 
+  static constexpr bool is_valid(int fd) noexcept { return fd >= 0; }
+
   static void close(native_handle_type h) noexcept
   {
-    if (h >= 0)
-      GPCL_VERIFY(::close(h) == 0);
+    GPCL_VERIFY(::close(h) == 0);
   }
 };
 
@@ -144,6 +155,8 @@ struct file_traits
   using native_handle_type = std::FILE *;
 
   static constexpr native_handle_type invalid_value{nullptr};
+
+  static constexpr bool is_valid(native_handle_type h) noexcept { return !!h; }
 
   static void close(native_handle_type h) noexcept
   {

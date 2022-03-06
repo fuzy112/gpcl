@@ -33,6 +33,11 @@ struct mqd_traits
 
   static inline const native_handle_type invalid_value{-1};
 
+  static bool is_valid(mqd_t q) noexcept
+  {
+    return q >= 0;
+  }
+
   static void close(native_handle_type q) noexcept
   {
     GPCL_VERIFY_0(mq_close(q));

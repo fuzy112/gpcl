@@ -15,6 +15,11 @@ struct dir_traits
 
   static inline constexpr DIR* invalid_value{nullptr};
 
+  static constexpr bool is_valid(native_handle_type h) noexcept
+  {
+    return !!h;
+  }
+
   static void close(DIR *dir) noexcept
   {
     if (dir != nullptr)

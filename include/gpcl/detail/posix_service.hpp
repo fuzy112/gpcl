@@ -125,7 +125,30 @@ struct error_data
 
 extern "C" void service_signal_handler(int sig);
 
-class service
+struct pid_traits
+{
+  using native_handle_type = pid_t;
+
+  static inline constexpr native_handle_type invalid_value{-1};
+
+  static constexpr bool is_valid(pid_t p) noexcept { return p >= 0; }
+
+  static void close(pid_t p)
+  {
+    if (p == 0)
+      return;
+    int wstatus = 0;
+    int r;
+    GPCL_THROW_LAST_ERROR_IF((r = ::waitpid(p, &wstatus, WNOHANG)) < 0);
+    if (r)
+      return;
+    GPCL_THROW_LAST_ERROR_IF(::kill(p, SIGTERM) < 0);
+    GPCL_THROW_LAST_ERROR_IF(::waitpid(p, &wstatus, 0) < 0);
+  }
+};
+
+using unique_pid = unique_handle<pid_traits>;
+
 {
   const char *pidfile_{};
   int pid_{};
