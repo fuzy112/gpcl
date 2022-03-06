@@ -12,8 +12,8 @@
 #define GPCL_DETAIL_IMPL_PID_FILE_IPP
 
 #include <gpcl/detail/posix_pid_file.hpp>
-#include <gpcl/time.hpp>
 #include <gpcl/detail/throw_system_error.hpp>
+#include <gpcl/time.hpp>
 
 #include <climits>
 #include <libgen.h>
@@ -21,31 +21,71 @@
 namespace gpcl {
 namespace detail {
 
-posix_pid_file::posix_pid_file(std::string path)
-    : path_(std::move(path)),
-      f_(open_or_create, path_.c_str(), file::readwrite)
+inline void lock_file_impl(int fd, bool unique, bool wait)
 {
-  GPCL_ASSERT(f_.is_open());
+  GPCL_ASSERT(fd > 0);
 
-  // lock the whole file.
-  struct flock lockstr;
-  lockstr.l_type = F_WRLCK;
+  struct flock lockstr = {};
+  lockstr.l_type = unique ? F_WRLCK : F_RDLCK;
   lockstr.l_whence = SEEK_SET;
   lockstr.l_start = 0;
   lockstr.l_len = 0;
-  GPCL_THROW_LAST_ERROR_IF(fcntl(f_.native_handle(), F_SETLK, &lockstr) < 0);
 
-  // clear file content.
-  GPCL_THROW_LAST_ERROR_IF(ftruncate(f_.native_handle(), 0) < 0);
+  GPCL_THROW_LAST_ERROR_IF(::fcntl(fd, wait ? F_SETLKW : F_SETLK, &lockstr) <
+                           0);
+}
 
-  // write pid to the file
-  std::string buf = std::to_string(getpid()) + '\n';
-  GPCL_VERIFY(buf.length(), f_.write_some(gpcl::buffer(buf)));
+void posix_pid_file::lock_unique()
+{
+  lock_file_impl(f_.get(), true, false);
+}
+
+void posix_pid_file::lock_shared()
+{
+  lock_file_impl(f_.get(), false, false);
+}
+
+void posix_pid_file::lock_shared_wait()
+{
+  lock_file_impl(f_.get(), false, true);
+}
+
+posix_pid_file::posix_pid_file(std::string path, bool update_pid)
+    : path_(std::move(path))
+{
+  f_.reset(open(path_.c_str(), O_CLOEXEC | O_CREAT | O_RDWR, 0644));
+  GPCL_THROW_LAST_ERROR_IF(!f_);
+
+  if (update_pid)
+    write_pid();
 }
 
 posix_pid_file::~posix_pid_file() noexcept
 {
-  f_.unlink(path_.c_str()).value();
+  if (owns_pid_)
+  {
+    GPCL_TRY { lock_unique(); }
+    GPCL_CATCH(...) {}
+    GPCL_CATCH_END
+    unlink(path_.c_str());
+  }
+}
+
+void posix_pid_file::do_write_pid(pid_t pid)
+{
+  char buf[40] = {0};
+  snprintf(buf, sizeof(buf) - 1, "%d", pid);
+  GPCL_THROW_LAST_ERROR_IF(::write(f_.get(), buf, strlen(buf)) < 0);
+}
+
+pid_t posix_pid_file::do_read_pid()
+{
+  char buf[40] = {0};
+  GPCL_THROW_LAST_ERROR_IF(::read(f_.get(), buf, sizeof(buf) - 1) < 0);
+  int pid = atoi(buf);
+  if (pid <= 0)
+    GPCL_THROW_ERRNO(EAGAIN, __func__);
+  return pid;
 }
 
 } // namespace detail
