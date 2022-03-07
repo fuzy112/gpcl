@@ -54,6 +54,9 @@ posix_pid_file::posix_pid_file(std::string path, bool update_pid)
     : path_(std::move(path))
 {
   f_.reset(open(path_.c_str(), O_CLOEXEC | O_CREAT | O_RDWR, 0644));
+  if (!f_) {
+    f_.reset(open(path_.c_str(), O_CLOEXEC | O_RDONLY));
+  }
   GPCL_THROW_LAST_ERROR_IF(!f_);
 
   if (update_pid)

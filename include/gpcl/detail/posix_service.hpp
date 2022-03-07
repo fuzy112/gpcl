@@ -129,12 +129,6 @@ inline void open_null(int fd, int flags)
     tmpfd.release();
 }
 
-struct error_data
-{
-  int code;
-  const error_category *category;
-};
-
 extern "C" void service_signal_handler(int sig);
 
 struct pid_traits
@@ -203,7 +197,6 @@ public:
     uid_t euid = geteuid();
 
   l_restart:
-    GPCL_THROW_LAST_ERROR_IF(seteuid(euid) < 0);
     pidfilefd_.reset();
     rdfd_.reset();
     wrfd_.reset();
@@ -234,8 +227,12 @@ public:
     ::signal(SIGHUP, &detail::service_signal_handler);
 
     do_start();
-    notify_success();
-    run();
+
+    GPCL_TRY { run(); }
+    GPCL_CATCH(...) {}
+    GPCL_CATCH_END
+
+    GPCL_THROW_LAST_ERROR_IF(seteuid(euid) < 0);
 
     if (need_restart_)
     {
@@ -266,7 +263,11 @@ public:
   bool is_stopped() const { return do_is_stopped(); }
 
 protected:
-  virtual void do_start() { run_ = true; }
+  virtual void do_start()
+  {
+    run_ = true;
+    notify_success();
+  }
   virtual void run() {}
   virtual void do_stop() { run_ = false; }
   virtual void do_restart()
@@ -288,17 +289,15 @@ private:
     GPCL_THROW_LAST_ERROR_IF(waitpid(pid_.get(), &wstatus, 0) < 0);
     pid_.release();
 
-    error_data buf = {};
+    int error = {};
     ssize_t len = {};
 
-    GPCL_THROW_LAST_ERROR_IF((len = ::read(rdfd_.get(), &buf, sizeof(buf))) <
-                             0);
-    if (len == 0)
-      GPCL_THROW_ERRNO(EINVAL, __func__);
-    GPCL_ASSERT(len == sizeof(buf));
-    error_code ec(buf.code, system_category());
-    if (ec)
-      GPCL_THROW_SYSTEM_ERROR(buf.code, system_category(), __func__);
+    GPCL_THROW_LAST_ERROR_IF(
+        (len = ::read(rdfd_.get(), &error, sizeof(error))) < 0);
+    if (len != sizeof(error))
+      GPCL_THROW_ERRNO(EINVAL, "parent:read");
+    if (error)
+      GPCL_THROW_ERRNO(error, "start");
     exit(0);
   }
 
@@ -333,7 +332,11 @@ private:
     auto ec = ex.code();
     write_error(ec);
   }
-  GPCL_CATCH(...) { write_error(error_code(ENOMEM, system_category())); }
+  GPCL_AND_CATCH(std::bad_alloc &)
+  {
+    write_error(error_code(ENOMEM, system_category()));
+  }
+  GPCL_AND_CATCH(...) { write_error(make_error_code(errc::invalid_argument)); }
   GPCL_CATCH_END
 
   void child2()
@@ -359,7 +362,7 @@ private:
   {
     GPCL_ASSERT(strcmp(ec.category().name(), "system") == 0 ||
                 strcmp(ec.category().name(), "generic") == 0);
-    error_data buf = {ec.value(), &ec.category()};
+    int buf = ec.value();
     GPCL_THROW_LAST_ERROR_IF(::write(wrfd_.get(), &buf, sizeof(buf)) < 0);
 
     if (ec)

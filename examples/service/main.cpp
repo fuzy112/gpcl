@@ -16,19 +16,21 @@ public:
 
   void do_start() override
   {
-    pipe(pipes);
+    GPCL_THROW_LAST_ERROR_IF(pipe(pipes) < 0);
+
+    notify_success();
   }
 
   void run() override
   {
     char dummy[1];
-    read(pipes[0], dummy, sizeof(dummy));
+    GPCL_THROW_LAST_ERROR_IF(read(pipes[0], dummy, sizeof(dummy)) < 0);
   }
 
   void do_stop() override
   {
     char dummy[1] = {};
-    write(pipes[1], dummy, sizeof(dummy));
+    GPCL_THROW_LAST_ERROR_IF(write(pipes[1], dummy, sizeof(dummy)) < 0);
   }
 };
 
