@@ -104,9 +104,13 @@ inline void reset_signal_handlers()
 #else
   int nsig = 32;
 #endif
+
   for (int sig = 1; sig < nsig; ++sig)
   {
-    GPCL_THROW_LAST_ERROR_IF(SIG_ERR == ::signal(sig, SIG_DFL) &&
+    struct sigaction act = {};
+    GPCL_THROW_LAST_ERROR_IF(sigemptyset(&act.sa_mask) < 0);
+    act.sa_handler = SIG_DFL;
+    GPCL_THROW_LAST_ERROR_IF(sigaction(sig, &act, nullptr) < 0 &&
                              errno != EINVAL);
   }
 }
@@ -224,12 +228,7 @@ public:
 
     instance_ = this;
 
-    GPCL_THROW_LAST_ERROR_IF(
-        ::signal(SIGTERM, &detail::service_signal_handler) == SIG_ERR);
-    GPCL_THROW_LAST_ERROR_IF(
-        ::signal(SIGINT, &detail::service_signal_handler) == SIG_ERR);
-    GPCL_THROW_LAST_ERROR_IF(
-        ::signal(SIGHUP, &detail::service_signal_handler) == SIG_ERR);
+    install_service_signal_handler();
 
     do_start();
 
@@ -286,6 +285,16 @@ protected:
   void notify_success() { write_error(error_code()); }
 
 private:
+  void install_service_signal_handler()
+  {
+    struct sigaction act = {};
+    act.sa_handler = &detail::service_signal_handler;
+    GPCL_THROW_LAST_ERROR_IF(sigemptyset(&act.sa_mask) < 0);
+    GPCL_THROW_LAST_ERROR_IF(sigaction(SIGINT, &act, nullptr) < 0);
+    GPCL_THROW_LAST_ERROR_IF(sigaction(SIGTERM, &act, nullptr) < 0);
+    GPCL_THROW_LAST_ERROR_IF(sigaction(SIGHUP, &act, nullptr) < 0);
+  }
+
   GPCL_NORETURN void parent()
   {
     wrfd_.reset();
