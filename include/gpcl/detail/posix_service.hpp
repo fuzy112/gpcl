@@ -162,7 +162,7 @@ class posix_service
   unique_fd rdfd_;
   unique_fd wrfd_;
 
-  unique_ptr<pid_file> pidfilefd_{};
+  optional<pid_file> pidfilefd_{};
 
   static inline posix_service *instance_{nullptr};
   std::atomic_bool run_{false};
@@ -220,11 +220,16 @@ public:
 
     child1();
 
+    GPCL_THROW_LAST_ERROR_IF(::seteuid(::getuid()) < 0);
+
     instance_ = this;
 
-    ::signal(SIGTERM, &detail::service_signal_handler);
-    ::signal(SIGINT, &detail::service_signal_handler);
-    ::signal(SIGHUP, &detail::service_signal_handler);
+    GPCL_THROW_LAST_ERROR_IF(
+        ::signal(SIGTERM, &detail::service_signal_handler) == SIG_ERR);
+    GPCL_THROW_LAST_ERROR_IF(
+        ::signal(SIGINT, &detail::service_signal_handler) == SIG_ERR);
+    GPCL_THROW_LAST_ERROR_IF(
+        ::signal(SIGHUP, &detail::service_signal_handler) == SIG_ERR);
 
     do_start();
 
@@ -353,9 +358,7 @@ private:
     GPCL_THROW_LAST_ERROR_IF(chdir("/") < 0);
 
     if (pidfile_)
-      pidfilefd_ = gpcl::make_unique<pid_file>(pidfile_);
-
-    GPCL_THROW_LAST_ERROR_IF(::seteuid(::getuid()) < 0);
+      pidfilefd_.emplace(pidfile_);
   }
 
   void write_error(error_code ec)
