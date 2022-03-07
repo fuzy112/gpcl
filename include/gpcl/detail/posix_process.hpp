@@ -39,6 +39,8 @@
 namespace gpcl {
 namespace detail {
 
+extern "C" char **environ;
+
 #ifdef GPCL_DETAIL_USE_PIDFD
 inline int pidfd_open(pid_t pid, unsigned int flags)
 {
@@ -46,11 +48,32 @@ inline int pidfd_open(pid_t pid, unsigned int flags)
 }
 #endif
 
+#if defined(__linux__)
 inline int execveat(int dirfd, const char *pathname, char *const *argv,
                     char *const *envp, int flags)
 {
   return syscall(__NR_execveat, dirfd, pathname, argv, envp, flags);
 }
+#elif defined(__FreeBSD__)
+inline int execveat(int dirfd, const char *pathname, char *const *argv,
+                    char *const *envp, int flags)
+{
+  int oflags = O_EXEC | O_CLOEXEC;
+#  ifdef AT_EMPTY_PATH
+  if (flags & AT_EMPTY_PATH)
+    return fexecve(dirfd, argv, envp);
+#  endif
+  if (flags & AT_SYMLINK_NOFOLLOW)
+    oflags |= O_NOFOLLOW;
+  unique_fd file(openat(dirfd, pathname, oflags));
+  GPCL_THROW_LAST_ERROR_IF(!file);
+  return fexecve(file.get(), argv, envp);
+}
+#endif
+
+#ifndef O_PATH
+#  define O_PATH 0
+#endif
 
 struct posix_process_options
 {
@@ -243,7 +266,7 @@ public:
         search_executable(opt.file, opt.follow_symlink, opt.inherit_euid);
 
     int pipes[2];
-    GPCL_THROW_LAST_ERROR_IF(pipe2(pipes, O_CLOEXEC | O_DIRECT) < 0);
+    GPCL_THROW_LAST_ERROR_IF(pipe2(pipes, O_CLOEXEC) < 0);
     unique_fd rdfd(pipes[0]);
     unique_fd wrfd(pipes[1]);
 

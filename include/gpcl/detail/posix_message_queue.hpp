@@ -31,12 +31,9 @@ struct mqd_traits
 {
   using native_handle_type = mqd_t;
 
-  static inline const native_handle_type invalid_value{-1};
+  static inline const native_handle_type invalid_value{(mqd_t)-1};
 
-  static bool is_valid(mqd_t q) noexcept
-  {
-    return q >= 0;
-  }
+  static bool is_valid(mqd_t q) noexcept { return q >= (mqd_t)0; }
 
   static void close(native_handle_type q) noexcept
   {

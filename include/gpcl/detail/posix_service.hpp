@@ -58,7 +58,11 @@ public:
 inline namespace posix_service_detail {
 inline void close_all_fd(int start = 3)
 {
-  unique_dir fd_dir(opendir("/proc/self/fd"));
+  const char *fd_dir_path = "/proc/self/fd";
+#ifdef __FreeBSD__
+  fd_dir_path = "/dev/fd";
+#endif
+  unique_dir fd_dir(opendir(fd_dir_path));
 
   if (fd_dir)
   {
@@ -86,13 +90,21 @@ inline void close_all_fd(int start = 3)
     GPCL_CATCH(...) { fd_max = 8192; }
     GPCL_CATCH_END
     for (int fd = start; fd < fd_max; ++fd)
-      GPCL_THROW_LAST_ERROR_IF(::close(fd) < 0 && errno != EINVAL);
+      GPCL_THROW_LAST_ERROR_IF(::close(fd) < 0 && errno != EINVAL &&
+                               errno != EBADF);
   }
 }
 
 inline void reset_signal_handlers()
 {
-  for (int sig = 1; sig < _NSIG; ++sig)
+#ifdef _NSIG
+  int nsig = _NSIG;
+#elif defined(NSIG)
+  int nsig = NSIG;
+#else
+  int nsig = 32;
+#endif
+  for (int sig = 1; sig < nsig; ++sig)
   {
     GPCL_THROW_LAST_ERROR_IF(SIG_ERR == ::signal(sig, SIG_DFL) &&
                              errno != EINVAL);
@@ -201,7 +213,7 @@ public:
     sanitize_environ();
 
     int pipefd[2];
-    GPCL_THROW_LAST_ERROR_IF(pipe2(pipefd, O_CLOEXEC | O_DIRECT) < 0);
+    GPCL_THROW_LAST_ERROR_IF(pipe2(pipefd, O_CLOEXEC) < 0);
     GPCL_ASSERT(pipefd[0] >= 3);
     GPCL_ASSERT(pipefd[1] >= 3);
 
@@ -284,9 +296,9 @@ private:
     if (len == 0)
       GPCL_THROW_ERRNO(EINVAL, __func__);
     GPCL_ASSERT(len == sizeof(buf));
-    error_code ec(buf.code, *buf.category);
+    error_code ec(buf.code, system_category());
     if (ec)
-      GPCL_THROW_SYSTEM_ERROR(buf.code, *buf.category, __func__);
+      GPCL_THROW_SYSTEM_ERROR(buf.code, system_category(), __func__);
     exit(0);
   }
 
@@ -295,7 +307,7 @@ private:
     rdfd_.reset();
 
     int pipefd2[2];
-    GPCL_THROW_LAST_ERROR_IF(::pipe2(pipefd2, O_CLOEXEC | O_DIRECT) < 0);
+    GPCL_THROW_LAST_ERROR_IF(::pipe2(pipefd2, O_CLOEXEC) < 0);
     GPCL_ASSERT(pipefd2[0] >= 3);
     GPCL_ASSERT(pipefd2[1] >= 3);
 
@@ -345,6 +357,8 @@ private:
 
   void write_error(error_code ec)
   {
+    GPCL_ASSERT(strcmp(ec.category().name(), "system") == 0 ||
+                strcmp(ec.category().name(), "generic") == 0);
     error_data buf = {ec.value(), &ec.category()};
     GPCL_THROW_LAST_ERROR_IF(::write(wrfd_.get(), &buf, sizeof(buf)) < 0);
 
