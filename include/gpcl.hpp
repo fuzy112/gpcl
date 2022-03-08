@@ -112,6 +112,7 @@
 #include <gpcl/scoped_array.hpp>
 #include <gpcl/scoped_lock.hpp>
 #include <gpcl/semaphore.hpp>
+#include <gpcl/service.hpp>
 #include <gpcl/shared_memory_object.hpp>
 #include <gpcl/shared_ptr.hpp>
 #include <gpcl/signal.hpp>

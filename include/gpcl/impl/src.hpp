@@ -38,6 +38,7 @@
 #include <gpcl/detail/impl/posix_mutex.ipp>
 #include <gpcl/detail/impl/posix_pid_file.ipp>
 #include <gpcl/detail/impl/posix_semaphore.ipp>
+#include <gpcl/detail/impl/posix_service.ipp>
 #include <gpcl/detail/impl/posix_thread.ipp>
 #endif
 
