@@ -50,7 +50,7 @@ public:
   explicit basic_ispanstream(gpcl::span<CharType> s,
                              std::ios_base::openmode mode = std::ios_base::in)
       : detail::spanstream_base<CharType, Traits>(s, mode),
-        stream_type(rdbuf())
+        stream_type(&this->spanbuf_)
   {
   }
 
@@ -112,7 +112,7 @@ public:
   explicit basic_ospanstream(gpcl::span<CharType> s,
                              std::ios_base::openmode mode = std::ios_base::out)
       : detail::spanstream_base<CharType, Traits>(s, mode),
-        stream_type(rdbuf())
+        stream_type(&this->spanbuf_)
   {
   }
 
@@ -174,7 +174,7 @@ public:
                             std::ios_base::openmode mode = std::ios_base::in |
                                                            std::ios_base::out)
       : detail::spanstream_base<CharType, Traits>(s, mode),
-        stream_type(rdbuf())
+        stream_type(&this->spanbuf_)
   {
   }
 

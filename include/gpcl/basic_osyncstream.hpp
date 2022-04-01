@@ -50,13 +50,13 @@ public:
 
   basic_osyncstream(streambuf_type *buf, const Allocator &alloc)
       : detail::osyncstream_base<CharType, Traits, Allocator>(buf, alloc),
-        std::basic_ostream<CharType, Traits>(rdbuf())
+        std::basic_ostream<CharType, Traits>(&this->buf_)
   {
   }
 
   explicit basic_osyncstream(streambuf_type *buf)
       : detail::osyncstream_base<CharType, Traits, Allocator>(buf),
-        std::basic_ostream<CharType, Traits>(rdbuf())
+        std::basic_ostream<CharType, Traits>(&this->buf_)
   {
   }
 
