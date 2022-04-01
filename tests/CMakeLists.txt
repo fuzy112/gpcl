@@ -25,6 +25,7 @@ set(TESTS_SRCS
     syncbuf_test.cpp
     thread_test.cpp
     time_test.cpp
+    tuple_for_each_test.cpp
     unique_ptr_test.cpp
     vector_test.cpp)
 
