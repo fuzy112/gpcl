@@ -17,8 +17,6 @@
 #  include <gpcl/detail/posix_tss_ptr.hpp>
 #elif defined(GPCL_WINDOWS)
 #  include <gpcl/detail/win_tss_ptr.hpp>
-#else
-#  include <gpcl/detail/keyword_tss_ptr.hpp>
 #endif
 
 namespace gpcl {
@@ -28,8 +26,6 @@ template <typename T>
 using tss_ptr = detail::posix_tss_ptr<T>;
 #elif defined(GPCL_WINDOWS)
 using tss_ptr = detail::win_tss_ptr<T>;
-#else
-using tss_ptr = detail::keyword_tss_ptr<T>;
 #endif
 
 } // namespace gpcl

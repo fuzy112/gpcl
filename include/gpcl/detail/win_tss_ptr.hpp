@@ -1,82 +1,59 @@
+//
+// win_tss_ptr.hpp
+// ~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
 #ifndef GPCL_DETAIL_WIN_TSS_PTR_HPP
 #define GPCL_DETAIL_WIN_TSS_PTR_HPP
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/throw_system_error.hpp>
-#include <gpcl/detail/win_once_flag.hpp>
 
 #include <processthreadsapi.h>
 
 namespace gpcl ::detail {
 
-class win_tss_index
+template <typename T>
+class win_tss_ptr
 {
 public:
-  constexpr win_tss_index() = default;
-  ~win_tss_index()
+  win_tss_ptr()
   {
-    GPCL_TRY { init_once(); }
-    GPCL_CATCH(...) { return; }
-    GPCL_CATCH_END
-
-    if (!::TlsFree(index_))
-      abort();
+    key_ = ::TlsAlloc();
+    GPCL_THROW_LAST_ERROR_IF(key_ == TLS_OUT_OF_INDEXES);
   }
 
-  void init_once()
-  {
-    call_once(once_, [&] {
-      index_ = ::TlsAlloc();
-      GPCL_THROW_LAST_ERROR_IF(index_ == TLS_OUT_OF_INDEX);
-    });
-  }
+  ~win_tss_ptr() { ::TlsFree(key_); }
 
-  void *get() const
+  win_tss_ptr(const win_tss_ptr &) = delete;
+  win_tss_ptr &operator=(const win_tss_ptr &) = delete;
+
+  operator T *() const
   {
-    init_once();
-    void *value = ::TlsGetValue(index_);
-    if (value == nullptr)
+    auto value = ::TlsGetValue(key_);
+    if (value == 0)
     {
       DWORD err = ::GetLastError();
       if (err != ERROR_SUCCESS)
-      {
-        throw_system_error(err, "get", GPCL_SOURCE_LOCATION_CURRENT_LINE);
-      }
+        throw_system_error(err, "TlsGetValue",
+                           GPCL_SOURCE_LOCATION_CURRENT_LINE);
     }
 
     return value;
   }
 
-  void set(void *value)
-  {
-    init_once();
-    GPCL_THROW_LAST_ERROR_IF(::TlsSetValue(index_, value) == 0);
+  void operator=(T *value) {
+    GPCL_THROW_LAST_ERROR_IF(!::TlsSetValue(key_, value));
   }
 
 private:
-  win_once_flag once_;
-  DWORD index_{};
+  DWORD key_;
 };
-
-template <typename T>
-class win_tss_ptr
-{
-public:
-  constexpr win_tss_ptr() = default;
-
-  win_tss_ptr(const win_tss_ptr &) = delete;
-  win_tss_ptr &operator=(const win_tss_ptr &) = delete;
-
-  operator T *() const { return index_.get(); }
-
-  void operator=(T *value) { index_.set(value); }
-
-private:
-  static win_tss_index index_;
-};
-
-template <typename T>
-win_tss_index win_tss_ptr<T>::index_;
 
 } // namespace gpcl::detail
 
