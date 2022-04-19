@@ -82,6 +82,11 @@ public:
     return h_;
   }
 
+  native_handle_type native_handle() const noexcept
+  {
+    return get();
+  }
+
   friend void swap(unique_handle &x, unique_handle &y) noexcept { x.swap(y); }
 
   friend bool operator<(const unique_handle &x, const unique_handle &y) noexcept
