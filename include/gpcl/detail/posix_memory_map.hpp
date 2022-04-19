@@ -17,6 +17,7 @@
 #include <gpcl/detail/throw_system_error.hpp>
 
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 namespace gpcl::detail {
@@ -26,6 +27,17 @@ using offset_t = std::ptrdiff_t;
 struct posix_memory_map_options
 {
   int flags = 0;
+};
+
+template <typename T, typename = void>
+struct has_size : std::false_type
+{
+};
+
+template <typename T>
+struct has_size<T, std::void_t<decltype(std::declval<T>().size())>>
+    : std::true_type
+{
 };
 
 template <typename MemoryMappable>
@@ -41,8 +53,18 @@ memory_map(const MemoryMappable &mappable, access_mode mode, offset_t offset,
     prot = PROT_READ;
 
   if (!size)
-    size = mappable.size();
-
+  {
+    if constexpr (has_size<MemoryMappable>::value)
+    {
+      size = mappable.size();
+    }
+    else
+    {
+      struct stat sb;
+      GPCL_THROW_LAST_ERROR_IF(::fstat(mappable.native_handle(), &sb) < 0);
+      size = sb.st_size;
+    }
+  }
 #if defined(GPCL_LINUX) && defined(MAP_SHARED_VALIDATE)
   options.flags |= MAP_SHARED_VALIDATE;
 #else
