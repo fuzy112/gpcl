@@ -58,6 +58,7 @@ struct buffer_fn
   template <typename... Args>
   auto operator()(Args &&... args) const
   {
+    using gpcl::detail::buffer;
     return buffer(static_cast<Args &&>(args)...);
   }
 };
