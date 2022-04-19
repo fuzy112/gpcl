@@ -303,4 +303,12 @@
 #define GPCL_TO_STR_IMPL(x) #x
 #define GPCL_TO_STR(x) GPCL_TO_STR_IMPL(x)
 
+#if GPCL_GCC || GPCL_CLANG
+#  define GPCL_THREAD_KEYWORD __thread
+#elif GPCL_MSVC
+#  define GPCL_THREAD_KEYWORD __declspec(thread)
+#else
+#  define GPCL_THREAD_KEYWORD thread_local
+#endif
+
 #endif // GPCL_DETAIL_CONFIG_HPP
