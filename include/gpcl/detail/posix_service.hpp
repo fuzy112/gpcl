@@ -71,7 +71,7 @@ class posix_service
 public:
   explicit posix_service(std::string name) : service_name_(std::move(name)) {}
 
-  ~posix_service() {}
+  virtual ~posix_service() = default;
 
   GPCL_DECL void start();
 
