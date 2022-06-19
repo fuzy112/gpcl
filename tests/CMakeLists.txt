@@ -27,7 +27,8 @@ set(TESTS_SRCS
     time_test.cpp
     tuple_for_each_test.cpp
     unique_ptr_test.cpp
-    vector_test.cpp)
+    vector_test.cpp
+    string_utils_test.cpp)
 
 set(TEST_FIXTURES syncbuf)
 

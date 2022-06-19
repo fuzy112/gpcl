@@ -54,6 +54,7 @@
 #include <gpcl/expected.hpp>
 #include <gpcl/expected_fwd.hpp>
 #include <gpcl/file.hpp>
+#include <gpcl/flat_buffer.hpp>
 #include <gpcl/function.hpp>
 #include <gpcl/function_ref.hpp>
 #include <gpcl/future.hpp>
@@ -124,6 +125,7 @@
 #include <gpcl/sqlite.hpp>
 #include <gpcl/stacktrace.hpp>
 #include <gpcl/strerror.hpp>
+#include <gpcl/string_utils.hpp>
 #include <gpcl/swap.hpp>
 #include <gpcl/syncbuf.hpp>
 #include <gpcl/tag_invoke.hpp>
@@ -131,6 +133,7 @@
 #include <gpcl/thread_attributes.hpp>
 #include <gpcl/throw_exception.hpp>
 #include <gpcl/time.hpp>
+#include <gpcl/tss_ptr.hpp>
 #include <gpcl/type_identity.hpp>
 #include <gpcl/typeid.hpp>
 #include <gpcl/unexpected.hpp>
