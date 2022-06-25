@@ -13,6 +13,7 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/dynarray.hpp>
+#include <gpcl/flags.hpp>
 
 #include <algorithm>
 #include <iterator>
@@ -51,6 +52,16 @@ public:
   operator std::basic_string<value_type>() const { return str(); }
 
   bool empty() const { return this->first == this->second; }
+
+  sub_string trimmed() const
+  {
+    auto i = std::find_if(this->first, this->second,
+                          [](auto ch) { return !std::isspace(ch); });
+
+    auto j =
+        std::find_if(i, this->second, [](auto ch) { return std::isspace(ch); });
+    return sub_string{{i, j}};
+  }
 };
 
 template <typename BidIt,
@@ -152,24 +163,51 @@ public:
     result_.sub_strings_.clear();
   }
 
-  void append(value_type val) { result_.sub_strings_.push_back(val); }
+  void add(value_type val) { result_.sub_strings_.push_back(val); }
 };
 } // namespace detail
 
 enum class split_flag
 {
-  reserve_empty_string,
-  skip_empty_string,
+  skip_empty_string = (1 << 0),
+  trim_results = (1 << 1),
 };
+
+GPCL_DEFINE_FLAGS(split_flags, split_flag)
 
 template <typename BidIt, typename Alloc, typename Elem>
 void split(BidIt first, BidIt last, split_results<BidIt, Alloc> &result,
-           const Elem *delim,
-           split_flag flag = split_flag::reserve_empty_string)
+           const Elem *delim, split_flags flag = split_flags())
+{
+  detail::split_results_builder<BidIt, Alloc> rb(result, first);
+  const Elem *delim_end = delim;
+  while (*delim_end != Elem())
+    ++delim_end;
+
+  for (;;)
+  {
+    auto pos = std::search(first, last, delim, delim_end);
+    gpcl::sub_string<BidIt> substr{{first, pos}};
+    if (!substr.empty() || !flag.is_set(split_flag::skip_empty_string))
+      if (flag & split_flag::trim_results)
+        rb.add(substr.trimmed());
+      else
+        rb.add(substr);
+
+    if (pos == last)
+      break;
+
+    first = pos + (delim_end - delim);
+  }
+}
+
+template <typename BidIt, typename Alloc, typename Elem>
+void split_old(BidIt first, BidIt last, split_results<BidIt, Alloc> &result,
+               const Elem *delim, split_flags flag = split_flags())
 {
   detail::split_results_builder<BidIt, Alloc> rb(result, first);
 
-  std::size_t delim_length = std::strlen(delim);
+  const std::size_t delim_length = std::strlen(delim);
   auto full_length = std::distance(first, last);
 
   const Elem *delim_end = delim + delim_length;
@@ -181,9 +219,9 @@ void split(BidIt first, BidIt last, split_results<BidIt, Alloc> &result,
     if (std::equal(delim, delim_end, first))
     {
       const gpcl::sub_string<BidIt> substr{{substr_start, first}};
-      if (!substr.empty() || flag == split_flag::reserve_empty_string)
+      if (!substr.empty() || !flag.is_set(split_flag::skip_empty_string))
       {
-        rb.append(substr);
+        rb.add(substr);
       }
       first += delim_length;
       substr_start = first;
@@ -195,31 +233,28 @@ void split(BidIt first, BidIt last, split_results<BidIt, Alloc> &result,
   }
 
   const gpcl::sub_string<BidIt> substr{{substr_start, last}};
-  if (!substr.empty() || flag == split_flag::reserve_empty_string)
+  if (!substr.empty() || !flag.is_set(split_flag::skip_empty_string))
   {
-    rb.append(substr);
+    rb.add(substr);
   }
 }
 
 template <typename Elem, typename Alloc>
 void split(const Elem *ptr, split_results<const Elem *, Alloc> &result,
-           const Elem *delim,
-           split_flag flag = split_flag::reserve_empty_string)
+           const Elem *delim, split_flags flag = split_flags())
 {
   return gpcl::split(ptr, ptr + std::strlen(ptr), result, delim, flag);
 }
 
 template <typename Elem, typename IOTraits, typename IOAlloc, typename Alloc2>
-void split(
-    const std::basic_string<Elem, IOTraits, IOAlloc> &str,
-    split_results<
-        typename std::basic_string<Elem, IOTraits, IOAlloc>::const_iterator,
-        Alloc2> &result,
-    const Elem *delim, split_flag flag = split_flag::reserve_empty_string)
+void split(const std::basic_string<Elem, IOTraits, IOAlloc> &str,
+           split_results<typename std::basic_string<Elem, IOTraits,
+                                                    IOAlloc>::const_iterator,
+                         Alloc2> &result,
+           const Elem *delim, split_flags flag = split_flags())
 {
   return gpcl::split(str.cbegin(), str.cend(), result, delim, flag);
 }
-
 
 } // namespace gpcl
 

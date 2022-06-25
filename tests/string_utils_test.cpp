@@ -10,7 +10,7 @@ TEST_CASE("split")
 
   gpcl::ssplit_results results;
 
-  gpcl::split(names, results, ", ");
+  gpcl::split(names, results, ",", gpcl::split_flag::trim_results);
 
   CHECK(results.size() == expected.size());
   CHECK(results.position(0) == 0);
@@ -39,3 +39,4 @@ TEST_CASE("split c")
   CHECK(results.position(2) == 4);
   CHECK(results.position(3) == 7);
 }
+

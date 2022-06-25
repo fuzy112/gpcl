@@ -54,6 +54,7 @@
 #include <gpcl/expected.hpp>
 #include <gpcl/expected_fwd.hpp>
 #include <gpcl/file.hpp>
+#include <gpcl/flags.hpp>
 #include <gpcl/flat_buffer.hpp>
 #include <gpcl/function.hpp>
 #include <gpcl/function_ref.hpp>

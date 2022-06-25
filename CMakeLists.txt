@@ -1,6 +1,6 @@
 #
 # CMakeLists.txt
-# ~~~
+# ~~~~~~~~~~~~~~
 #
 # Copyright (c) 2020-2022 Zhengyi Fu (tsingyat at outlook dot com)
 #
