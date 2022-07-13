@@ -220,6 +220,26 @@ public:
     add_ordered_block(chunk, partition_sz * n, partition_sz);
   }
 
+  bool is_free(void const *p) const
+  {
+    void_pointer iter = free_list_;
+    while (iter)
+    {
+      if (iter == p)
+        return true;
+
+      iter = next_chunk(iter);
+    }
+
+    return false;
+  }
+
+  bool is_free_ordered(void const *p) const
+  {
+    // @todo
+    return is_free(p);
+  }
+
 private:
   void_pointer &upper_bound(void_pointer const p) noexcept
   {

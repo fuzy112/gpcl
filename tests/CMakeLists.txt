@@ -28,7 +28,8 @@ set(TESTS_SRCS
     tuple_for_each_test.cpp
     unique_ptr_test.cpp
     vector_test.cpp
-    string_utils_test.cpp)
+    string_utils_test.cpp
+    pool_test.cpp)
 
 set(TEST_FIXTURES syncbuf)
 

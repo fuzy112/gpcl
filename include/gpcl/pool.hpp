@@ -179,9 +179,19 @@ public:
     next_size_ = next_size;
   }
 
-  bool is_from(void *) const noexcept
+  bool is_from(void *ptr) const noexcept
   {
-    GPCL_UNIMPLEMENTED();
+    block_info block = block_list_;
+    while (block.ptr)
+    {
+      if (ptr >= block.ptr && ptr < block.ptr + block_info_offset(block.size))
+        return (reinterpret_cast<char *>(ptr) - block.ptr) % chunk_size_ == 0 &&
+               !storage_.is_free(ptr);
+
+      block = *reinterpret_cast<block_info *>(block.ptr +
+                                              block_info_offset(block.size));
+    }
+
     return false;
   }
 
@@ -228,7 +238,7 @@ private:
     return {ptr, sz};
   }
 
-  difference_type block_info_offset(size_type block_size)
+  static difference_type block_info_offset(size_type block_size)
   {
     return (block_size - sizeof(block_info)) / alignof(block_info) *
            alignof(block_info);
