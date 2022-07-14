@@ -240,6 +240,11 @@ public:
     return is_free(p);
   }
 
+  void reset()
+  {
+    free_list_ = nullptr;
+  }
+
 private:
   void_pointer &upper_bound(void_pointer const p) noexcept
   {

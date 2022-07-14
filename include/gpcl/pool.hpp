@@ -56,10 +56,10 @@ struct default_new_delete_user_allocator
 
   [[nodiscard]] static char *malloc(size_type sz) noexcept
   {
-    return reinterpret_cast<char *>(::operator new[](sz, std::nothrow));
+    return reinterpret_cast<char *>(::new (std::nothrow) char[sz]);
   }
 
-  static void free(char *p) noexcept { ::operator delete[](p, std::nothrow); }
+  static void free(char *p) noexcept { ::delete[] p; }
 };
 
 template <typename UA = default_new_delete_user_allocator,
@@ -185,8 +185,7 @@ public:
     while (block.ptr)
     {
       if (ptr >= block.ptr && ptr < block.ptr + block_info_offset(block.size))
-        return (reinterpret_cast<char *>(ptr) - block.ptr) % chunk_size_ == 0 &&
-               !storage_.is_free(ptr);
+        return (reinterpret_cast<char *>(ptr) - block.ptr) % chunk_size_ == 0;
 
       block = *reinterpret_cast<block_info *>(block.ptr +
                                               block_info_offset(block.size));
@@ -195,7 +194,7 @@ public:
     return false;
   }
 
-private:
+protected:
   struct block_info
   {
     // Pointer to the start of the next block.
