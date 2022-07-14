@@ -189,11 +189,12 @@ void split(BidIt first, BidIt last, split_results<BidIt, Alloc> &result,
     auto pos = std::search(first, last, delim, delim_end);
     gpcl::sub_string<BidIt> substr{{first, pos}};
     if (!substr.empty() || !flag.is_set(split_flag::skip_empty_string))
+    {
       if (flag & split_flag::trim_results)
         rb.add(substr.trimmed());
       else
         rb.add(substr);
-
+    }
     if (pos == last)
       break;
 

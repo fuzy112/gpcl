@@ -15,7 +15,7 @@ project(
   VERSION 0.9.0
   DESCRIPTION "General purpose C++ libraries"
   HOMEPAGE_URL "https://github.com/Chingyat/gpcl"
-  LANGUAGES CXX)
+  LANGUAGES CXX C)
 
 math(
   EXPR
@@ -41,7 +41,7 @@ option(GPCL_DOC_LINK_TO_CPPREFERENCE_ONLINE
        "link to external cppreference documentation" TRUE)
 option(GPCL_ENABLE_LLVM "Link to LLVM if found" TRUE)
 option(GPCL_LINK_TO_LLVM_SO "Link to libLLVM.so rather than LLVMSymbolize"
-       FALSE)
+       TRUE)
 option(GPCL_ENABLE_BFD "Link to BFD if found" TRUE)
 option(GPCL_ENABLE_PCH "Enable precompiled headers" TRUE)
 option(BUILD_SHARED_LIBS "Create shared libraies" TRUE)

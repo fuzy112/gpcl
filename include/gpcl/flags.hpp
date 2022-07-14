@@ -28,6 +28,8 @@ private:
   value_type value_;
 
 public:
+  constexpr basic_flags() = default;
+
   constexpr basic_flags(enum_type e) : value_(static_cast<value_type>(e)) {}
 
   explicit constexpr basic_flags(value_type v) : value_(v) {}
