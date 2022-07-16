@@ -159,6 +159,10 @@ if(NOT GPCL_ENABLE_RTTI)
   target_compile_definitions(gpcl PUBLIC GPCL_CONFIG_NO_RTTI=1)
 endif()
 
+if(CMAKE_DL_LIBS)
+  target_link_libraries(gpcl PUBLIC ${CMAKE_DL_LIBS})
+endif()
+
 mark_as_advanced(GPCL_BFD GPCL_LLVM GPCL_SQLITE)
 
 target_compile_features(gpcl PUBLIC cxx_std_17)
