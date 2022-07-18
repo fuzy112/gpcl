@@ -17,6 +17,9 @@
 #include <gpcl/swap.hpp>
 
 namespace gpcl {
+
+/// This is a very simple class used to manage dynamic array of T allocated by
+/// new expression.
 template <typename T>
 class scoped_array : noncopyable
 {
@@ -35,11 +38,7 @@ private:
 public:
   explicit scoped_array(pointer p = nullptr) noexcept : data_(p) {}
 
-  ~scoped_array()
-  {
-    delete[] data_;
-    data_ = nullptr;
-  }
+  ~scoped_array() { reset(); }
 
   pointer get() noexcept { return data_; }
 
