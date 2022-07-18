@@ -14,8 +14,10 @@
 #include <map>
 #include <string>
 
+#include <inttypes.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <ucontext.h>
 
@@ -183,7 +185,7 @@ inline void gc_mark_stack()
   {
     if (line.find("rw-p") != line.npos && line.find("[heap]") == line.npos)
     {
-      sscanf(line.c_str(), "%lx-%lx", &start, &end);
+      sscanf(line.c_str(), "%" SCNxPTR "-%" SCNxPTR "", &start, &end);
 
       try_catch_segv([&] { gc_mark_region((void *)start, end - start); });
     }
@@ -250,7 +252,7 @@ inline void auto_gc()
   gpcl::thread([] {
     while (!detail::gc_exit)
     {
-      if (::sleep(1))
+      if (::usleep(400000))
         break;
       gc();
     }
