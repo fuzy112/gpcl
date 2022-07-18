@@ -93,7 +93,18 @@ inline std::string_view signal_name(int signum)
 
 #undef GPCL_MATCH_SIGNAL
 
-  GPCL_THROW(system_error(make_error_code(errc::invalid_argument)));
+#if defined(SIGRTMIN) && defined(SIGRTMAX)
+  if (signum >= SIGRTMIN && signum <= SIGRTMAX)
+  {
+    std::stringstream ss;
+    ss << "SIGRTMIN+" << (signum - SIGRTMIN);
+    return ss.str();
+  }
+#endif
+
+  std::stringstream ss;
+  ss << "signal " << signum;
+  return ss.str();
 }
 } // namespace gpcl
 
