@@ -30,6 +30,8 @@ struct is_propagate_const<propagate_const<T>> : std::true_type
 {
 };
 
+/// When T is a pointer-like type, propagate_const<T> propagates constness
+/// to the element type of T.
 template <typename T>
 class propagate_const
 {
