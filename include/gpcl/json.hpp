@@ -1028,9 +1028,15 @@ public:
       return const_iterator();
     }
 
-    const_iterator cbegin() const { return begin(); }
+    const_iterator cbegin() const
+    {
+      return begin();
+    }
 
-    const_iterator cend() const { return end(); }
+    const_iterator cend() const
+    {
+      return end();
+    }
 
     /// @}
 
@@ -1070,9 +1076,15 @@ public:
       return visit(make_const_visitor(json_at<value const &>(s)), data_);
     }
 
-    value &operator[](std::size_t index) { return at(index); }
+    value &operator[](std::size_t index)
+    {
+      return at(index);
+    }
 
-    value const &operator[](std::size_t index) const { return at(index); }
+    value const &operator[](std::size_t index) const
+    {
+      return at(index);
+    }
 
     value &operator[](const string_type &s)
     {
@@ -1116,11 +1128,20 @@ public:
       return v.back();
     }
 
-    void push_back(value const &v) { get<array_type>().push_back(v); }
+    void push_back(value const &v)
+    {
+      get<array_type>().push_back(v);
+    }
 
-    void push_back(value &&v) { get<array_type>().push_back(std::move(v)); }
+    void push_back(value &&v)
+    {
+      get<array_type>().push_back(std::move(v));
+    }
 
-    void push_back(CharType ch) { get<string_type>().push_back(ch); }
+    void push_back(CharType ch)
+    {
+      get<string_type>().push_back(ch);
+    }
 
     void pop_back()
     {
@@ -1554,7 +1575,7 @@ public:
     /// Context states.
     /// @{
 
-    struct toplevel_context
+    struct value_context
     {
       value value_;
     };
@@ -1572,8 +1593,7 @@ public:
 
     /// @}
 
-    using context_type =
-        variant<toplevel_context, array_context, object_context>;
+    using context_type = variant<value_context, array_context, object_context>;
 
     using stack_type =
         std::vector<context_type, typename std::allocator_traits<Allocator1>::
@@ -1586,7 +1606,7 @@ public:
     explicit value_builder(Allocator1 const &alloc = Allocator1())
         : stack_(alloc)
     {
-      stack_.emplace_back(toplevel_context{});
+      stack_.emplace_back(value_context{});
     }
 
   private:
@@ -1632,7 +1652,7 @@ public:
       throw_json_error(json_errc::failed_to_parse, "parser", true);
     }
 
-    void handle_value(toplevel_context &ctx, value v)
+    void handle_value(value_context &ctx, value v)
     {
       ctx.value_ = std::move(v);
     }
@@ -1666,7 +1686,7 @@ public:
                          "value_builder::get_value()", true);
       }
 
-      return get<toplevel_context>(stack_[0]).value_;
+      return get<value_context>(stack_[0]).value_;
     }
 
     /// Consume an event.
