@@ -29,7 +29,8 @@ set(TESTS_SRCS
     unique_ptr_test.cpp
     vector_test.cpp
     string_utils_test.cpp
-    pool_test.cpp)
+    pool_test.cpp
+    compressed_pointer_test.cpp)
 
 set(TEST_FIXTURES syncbuf)
 
