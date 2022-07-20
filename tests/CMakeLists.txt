@@ -30,7 +30,8 @@ set(TESTS_SRCS
     vector_test.cpp
     string_utils_test.cpp
     pool_test.cpp
-    compressed_pointer_test.cpp)
+    compressed_pointer_test.cpp
+    rbtree_test.cpp)
 
 set(TEST_FIXTURES syncbuf)
 

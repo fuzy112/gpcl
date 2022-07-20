@@ -26,16 +26,22 @@ public:
 
   static constexpr std::uintptr_t flag_mask = alignment - 1;
 
-  constexpr compressed_pointer(std::nullptr_t) {}
+  constexpr explicit compressed_pointer(std::nullptr_t) {}
 
-  compressed_pointer(T *p = nullptr, std::uintptr_t f = 0)
+  explicit compressed_pointer(T *p = nullptr, std::uintptr_t f = 0)
   {
     set_pointer_and_flags(p, f);
   }
 
   compressed_pointer &operator=(pointer p)
   {
-    set_pointer_and_flags(p, 0);
+    set_pointer_and_flags(p, flags());
+    return *this;
+  }
+
+  compressed_pointer &operator=(std::nullptr_t)
+  {
+    set_pointer_and_flags(0, flags());
     return *this;
   }
 
@@ -51,6 +57,8 @@ public:
 
   reference operator*() const { return get(); }
 
+  pointer operator->() const { return get(); }
+
   explicit operator bool() const { return get() != nullptr; }
 
   std::uintptr_t flags() const { return data_ & flag_mask; }
@@ -60,7 +68,7 @@ public:
   void set_pointer_and_flags(pointer p, std::uintptr_t f)
   {
     GPCL_ASSERT((reinterpret_cast<std::uintptr_t>(p) & flag_mask) == 0);
-    GPCL_ASSERT((f & ~flag_mask) == 0);
+    GPCL_ASSERT((f & flag_mask) == f);
     data_ = reinterpret_cast<std::uintptr_t>(p) | f;
   }
 
