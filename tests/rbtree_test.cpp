@@ -25,29 +25,28 @@ TEST_CASE ("rbtree") {
 	MyClass o1(1);
 	MyClass o2(2);
 	MyClass o3(3);
+	MyClass o4(4);
+	MyClass o5(5);
+	MyClass o6(6);
 
 	gpcl::rbtree<MyClass> tree;
 
-	tree.insert(o1);
-	tree.insert(o3);
+	tree.insert(&o1);
+	tree.insert(&o2);
 
+	// dump_tree(tree);
+	tree.insert(&o3);
+	tree.insert(&o4);
+	tree.insert(&o5);
+	tree.insert(&o6);
 
+	// dump_tree(tree);
+	// // tree.dump();
+
+	dump_tree(tree);
+
+	tree.remove(&o3);
+	
+	dump_tree(tree);
 	// tree.dump();
-
-	CHECK(tree.find(o1) == &o1);
-	CHECK(tree.find(o2) == nullptr);
-	tree.insert(o2);
-
-	// tree.dump();
-	CHECK(tree.find(o2) == &o2);
-
-	std::vector<MyClass> vec;
-	std::random_device rd;
-	for (int i=0; i < 10; ++i) {
-		vec.emplace_back(rd() % 100);
-	}
-	for (auto &o : vec) {
-		tree.insert(o);
-	}
-	tree.dump();
 }

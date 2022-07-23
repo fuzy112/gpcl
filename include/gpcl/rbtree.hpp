@@ -11,294 +11,479 @@
 
 namespace gpcl {
 
-template <typename T, typename Compare, typename Tag>
+template <typename T, typename Tag, typename Compare>
+class rbtree_base;
+
+template <typename T, typename Tag, typename Compare>
+class rbtree_node_base;
+
+template <typename T, typename Tag, typename Compare>
 class rbtree;
 
-template <typename T, typename Tag = class default_tag>
-class rbtree_node
+template <typename T, typename Tag, typename Compare>
+class rbtree_base
 {
-  template <typename, typename, typename>
-  friend class rbtree;
-
 public:
-  enum color_type
-  {
-    red = false,
-    black = true,
-  };
+  using node_base_type = rbtree_node_base<T, Tag, Compare>;
+
+  node_base_type *left;
+
+  constexpr rbtree_base() noexcept : left() {}
+
+  rbtree_base(const rbtree_base &) = delete;
+  rbtree_base &operator=(const rbtree_base &) = delete;
+};
+
+template <typename T, typename Tag = class default_tag,
+          typename Compare = std::less<T>>
+class rbtree_node_base : public rbtree_base<T, Tag, Compare>
+{
+public:
+  using base_type = rbtree_base<T, Tag, Compare>;
+
+  using base_type::left;
+  rbtree_node_base *right;
+  base_type *parent;
+  bool is_black;
 
 protected:
-  constexpr rbtree_node() = default;
+  constexpr rbtree_node_base() noexcept : right(), parent(), is_black() {}
 
-  constexpr rbtree_node(const rbtree_node &other) noexcept {}
-
-  rbtree_node &operator=(const rbtree_node &other) noexcept { return *this; }
-
-  ~rbtree_node() = default;
-
-private:
-  color_type color() const noexcept
+public:
+  rbtree_node_base *parent_unsafe() const noexcept
   {
-    return static_cast<color_type>(rb_parent.flags() & 1);
+    return static_cast<rbtree_node_base *>(parent);
   }
 
-  void color(color_type c) noexcept { rb_parent.flags(c); }
+  void set_parent(rbtree_node_base *p) noexcept { parent = p; }
+
+  bool is_left_child_of_parent() const noexcept
+  {
+    return (parent->left == this);
+  }
 
   T &value() noexcept { return static_cast<T &>(*this); }
 
-  const T &value() const noexcept { return static_cast<const T &>(*this); }
+  T const &value() const noexcept { return static_cast<T const &>(*this); }
 
-  detail::compressed_pointer<rbtree_node, alignof(void *)> rb_parent;
-  rbtree_node *rb_left{};
-  rbtree_node *rb_right{};
+  std::string id() const
+  {
+    return std::string("node") +
+           std::to_string(reinterpret_cast<std::uintptr_t>(this));
+  }
+
+  std::string node_def() const
+  {
+    return id() + "[label=" + lexical_cast<std::string>(value()) +
+           " color=" + (is_black ? "black" : "red") + "]";
+  }
 };
 
-template <typename T, typename Compare = std::less<T>,
-          typename Tag = class default_tag>
+template <typename NodePtr>
+std::string dump_node(NodePtr x, std::ostream &out)
+{
+  if (!x)
+  {
+    static int id = 0;
+    out << "node" << ++id << "[label=nil]\n";
+    return std::string("node") + std::to_string(id);
+  }
+
+  out << x->node_def() << '\n';
+
+  auto left = dump_node(x->left, out);
+  out << x->id() << " -> " << left << '\n';
+  auto right = dump_node(x->right, out);
+  out << x->id() << " -> " << right << '\n';
+  return x->id();
+}
+
+template <typename NodePtr>
+void rbtree_rotate_right(NodePtr x) noexcept
+{
+  GPCL_ASSERT(x);
+
+  NodePtr y = x->left;
+  y->parent = x->parent;
+
+  if (x->is_left_child_of_parent())
+    x->parent->left = y;
+  else
+    x->parent_unsafe()->right = y;
+
+  x->left = y->right;
+  if (y->right != nullptr)
+    y->right->parent = x;
+
+  x->parent = y;
+  y->right = x;
+}
+
+template <typename NodePtr>
+void rbtree_rotate_left(NodePtr x) noexcept
+{
+  NodePtr y = x->right;
+  y->parent = x->parent;
+
+  if (x->is_left_child_of_parent())
+    x->parent->left = y;
+  else
+    x->parent_unsafe()->right = y;
+
+  x->right = y->left;
+  if (y->left != nullptr)
+    y->left->parent = x;
+  x->parent = y;
+  y->left = x;
+}
+
+template <typename T, typename Tag = class default_tag,
+          typename Compare = std::less<T>>
+class rbtree_node : protected rbtree_node_base<T, Tag, Compare>
+{
+  friend rbtree<T, Tag, Compare>;
+  using node_base_type = rbtree_node_base<T, Tag, Compare>;
+  friend node_base_type;
+
+  template <typename NodePtr>
+  friend std::string dump_node(NodePtr x, std::ostream &out);
+
+public:
+  constexpr rbtree_node() = default;
+  constexpr rbtree_node(const rbtree_node &) noexcept : node_base_type() {}
+  constexpr rbtree_node &operator=(const rbtree_node &) noexcept
+  {
+    return *this;
+  }
+};
+
+template <typename T, typename Tag = class default_tag,
+          typename Compare = std::less<T>>
 class rbtree
 {
 public:
-  using tag = Tag;
-  using node_type = rbtree_node<T, Tag>;
   using value_type = T;
+  using node_type = rbtree_node<T, Tag, Compare>;
+  using node_base_type = rbtree_node_base<T, Tag, Compare>;
+  using base_type = rbtree_base<T, Tag, Compare>;
   using compare = Compare;
 
 private:
-  node_type *root_{};
-  compare cmp_;
+  detail::compressed_pair<base_type, compare> p_;
+
+  base_type *get_base() noexcept { return &p_.first(); }
+
+  const base_type *get_base() const noexcept { return &p_.first(); }
 
 public:
   constexpr rbtree() noexcept = default;
 
-  constexpr explicit rbtree(compare cmp) : cmp_(cmp) {}
+  rbtree(const rbtree &) = delete;
+  rbtree &operator=(const rbtree &) = delete;
 
-  void insert(node_type &node)
+  T *root() const noexcept
   {
-    node_type **link = &root_;
-    node_type *parent = nullptr;
-
-    while (*link)
-    {
-      parent = *link;
-      if (cmp_(node.value(), parent->value()))
-        link = &parent->rb_left;
-      else
-        link = &parent->rb_right;
-    }
-
-    link_nodes(&node, parent, *link);
-    rebalance_after_insert(&node);
+    return static_cast<T *>(p_.first().left);
   }
 
+  compare comp() const noexcept { return p_.second(); }
+
   template <typename K>
-  node_type *find(const K &key) const
+  T *find(const K &k) const noexcept
   {
-    node_type *parent = root_;
-    while (parent)
+    node_base_type *p = root();
+    auto cmp = comp();
+
+    while (p != nullptr)
     {
-      if (cmp_(key, parent->value()))
-        parent = parent->rb_left;
-      else if (cmp_(parent->value(), key))
-        parent = parent->rb_right;
+      if (cmp(k, p->value()))
+        p = p->left;
+      else if (cmp(p->value(), k))
+        p = p->right;
       else
-        return parent;
+        return static_cast<T *>(p);
     }
 
     return nullptr;
   }
 
-  node_type *first()
+  void remove(node_type *const x) noexcept
   {
-    node_type *node = root_;
-    node_type *first = nullptr;
-    while (node)
+    // y will be node to delete
+    // either x or x's successor
+    node_base_type *y = (x->right && x->left) ? x->right : x;
+    if (y != x)
     {
-      first = node;
-      node = node->rb_left;
+      // find x's successor
+      while (y->left)
+        y = y->left;
     }
-    return first;
+
+    // z is y's (possible null) single child
+    node_base_type *z = y->left ? y->left : y->right;
+
+    // w is z's (possible null) uncle and will be z's sibling
+    node_base_type *w = nullptr;
+    if (y->is_left_child_of_parent())
+      w = y == root() ? nullptr : y->parent_unsafe()->right;
+    else
+      w = y->parent->left;
+
+    bool remove_black = y->is_black;
+
+    // remove y
+    if (y->is_left_child_of_parent())
+      y->parent->left = z;
+    else
+      y->parent_unsafe()->right = z;
+    if (z != nullptr)
+      z->parent = y->parent;
+
+    if (y != x)
+    {
+      // if x has not already been removed, replace x by y
+
+      y->is_black = x->is_black;
+      y->parent = x->parent;
+      y->left = x->left;
+      y->right = x->right;
+
+      if (x->is_left_child_of_parent())
+        x->parent->left = y;
+      else
+        x->parent_unsafe()->right = y;
+
+      if (x->left != nullptr)
+        x->left->parent = y;
+      if (x->right != nullptr)
+        x->right->parent = y;
+    }
+
+    if (remove_black)
+    {
+      for (;;)
+      {
+        if (z == root())
+          break;
+        if (z != nullptr && !z->is_black)
+        {
+          // Case 1.
+          // z is red
+          // we recolor it black
+          z->is_black = true;
+          break;
+        }
+        else
+        {
+          GPCL_ASSERT(w != nullptr);
+          if (w != nullptr && !w->is_black)
+          {
+            w->parent_unsafe()->is_black = false;
+            w->is_black = true;
+            if (w->is_left_child_of_parent())
+            {
+              rbtree_rotate_right(w->parent_unsafe());
+              w = w->right->left;
+            }
+            else
+            {
+              rbtree_rotate_left(w->parent_unsafe());
+              w = w->left->right;
+            }
+          }
+          else
+          {
+            if ((w->left == nullptr || w->left->is_black) &&
+                (w->right == nullptr || w->right->is_black))
+            {
+              w->is_black = false;
+              z = w->parent_unsafe();
+              if (z == root())
+                break;
+
+              if (z->is_left_child_of_parent())
+                w = z->parent_unsafe()->right;
+              else
+                w = z->parent->left;
+            }
+            else
+            {
+              // w has at least one red child
+              if (w->is_left_child_of_parent())
+              {
+                if (w->right != nullptr && !w->right->is_black)
+                {
+                  w->is_black = false;
+                  w->right->is_black = true;
+                  w = w->right;
+                  rbtree_rotate_left(w->parent_unsafe());
+                }
+                w->is_black = w->parent_unsafe()->is_black;
+                w->parent_unsafe()->is_black = true;
+                w->left->is_black = true;
+                rbtree_rotate_right(w->parent_unsafe());
+                break;
+              }
+              else
+              {
+                if (w->left != nullptr && !w->left->is_black)
+                {
+                  w->is_black = false;
+                  w->left->is_black = true;
+                  w = w->left;
+                  rbtree_rotate_right(w->parent_unsafe());
+                }
+                // !w->right->is_black
+
+                w->is_black = w->parent_unsafe()->is_black;
+                w->parent_unsafe()->is_black = true;
+                w->right->is_black = true;
+                rbtree_rotate_left(w->parent_unsafe());
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
-  void dump()
+  void insert(T *x) noexcept
   {
-    std::string name = tmpnam(NULL);
-    std::ofstream ofile(name);
-    ofile << "digraph {\n";
-    ofile << "ordering=\"out\"\n";
-    ofile << "node" << root_ << "[root=true]\n";
-    dump_node(root_, ofile);
-    ofile << "}\n";
-    ofile.close();
-    std::string cmd = "dotty " + name + "&";
-    std::system(cmd.c_str());
+    GPCL_ASSERT(x != nullptr);
+    node_base_type **link = &get_base()->left;
+    ;
+    node_base_type *p = static_cast<node_base_type *>(get_base());
+
+    auto cmp = comp();
+
+    while (*link != nullptr)
+    {
+      p = *link;
+      if (cmp(*x, p->value()))
+        link = &p->left;
+      else
+        link = &p->right;
+    }
+
+    x->parent = p;
+    *link = x;
+
+    x->left = nullptr;
+    x->right = nullptr;
+
+    rebalance_after_insert(x);
+  }
+
+  template <typename K>
+  T *find_or_insert(const K &k, T *x)
+  {
+    GPCL_ASSERT(x != nullptr);
+    node_base_type **link = &get_base()->left;
+    node_base_type *p = static_cast<node_base_type *>(get_base());
+
+    auto cmp = comp();
+
+    while (*link != nullptr)
+    {
+      p = *link;
+      if (cmp(k, p->value()))
+        link = &p->left;
+      else if (cmp(p->value(), k))
+        link = &p->right;
+      else
+        return static_cast<T *>(p);
+    }
+
+    x->parent = p;
+    *link = x;
+
+    x->left = nullptr;
+    x->right = nullptr;
+
+    rebalance_after_insert(x);
+
+    return nullptr;
   }
 
 private:
-  int node_id = 0;
-
-  void dump_node(node_type *node, std::ostream &out)
+  void rebalance_after_insert(node_base_type *x) noexcept
   {
-    if (node)
+    x->is_black = x == root();
+    while (x != root() && !x->parent_unsafe()->is_black)
     {
-      out << "node" << node << "[label="
-          << std::quoted(gpcl::lexical_cast<std::string>(node->value()))
-          << " color=" << (node->color() == node_type::red ? "red" : "black")
-          << "];\n";
-
-      if (node->rb_left)
+      if (x->parent_unsafe()->is_left_child_of_parent())
       {
-        GPCL_ASSERT(node->rb_left->rb_parent == node);
-        out << "node" << node << " -> "
-            << "node" << node->rb_left << "\n";
-      }
-      else
-      {
-        out << "node" << ++node_id << "[label=nil]\n";
-        out << "node" << node << " -> node" << node_id << "\n";
-      }
-
-      if (node->rb_right)
-      {
-        GPCL_ASSERT(node->rb_right->rb_parent == node);
-        out << "node" << node << " -> "
-            << "node" << node->rb_right << "\n";
-      }
-      else
-      {
-        out << "node" << ++node_id << "[label=nil]\n";
-        out << "node" << node << " -> node" << node_id << "\n";
-      }
-
-      dump_node(node->rb_left, out);
-      dump_node(node->rb_right, out);
-    }
-  }
-
-  void link_nodes(node_type *node, node_type *parent, node_type *&link) noexcept
-  {
-    node->rb_parent = parent;
-    node->color(node_type::red);
-    link = node;
-    node->rb_left = nullptr;
-    node->rb_right = nullptr;
-  }
-
-  void rebalance_after_insert(node_type *x) noexcept
-  {
-    GPCL_ASSERT(x != nullptr);
-    GPCL_ASSERT(x->rb_left == nullptr && x->rb_right == nullptr);
-
-    x->color((x == root_) ? node_type::black : node_type::red);
-
-    while (x != root_ && x->rb_parent->color() == node_type::red)
-    {
-      if (x->rb_parent->rb_parent->rb_right != x->rb_parent)
-      {
-        node_type *y = x->rb_parent->rb_parent->rb_right;
-        if (y != nullptr && y->color() == node_type::red)
+        node_base_type *y = x->parent_unsafe()->parent_unsafe()->right;
+        if (y && !y->is_black)
         {
-          x = x->rb_parent;
-          x->color(node_type::black);
-          x = x->rb_parent;
-          x->color(x == root_ ? node_type::black : node_type::red);
-          y->color(node_type::black);
+          x = x->parent_unsafe();
+          x->is_black = true;
+          y->is_black = true;
+          x = x->parent_unsafe();
+          x->is_black = x == root();
         }
         else
         {
-          if (x == x->rb_parent->rb_right)
+          if (!x->is_left_child_of_parent())
           {
-            x = x->rb_parent;
-            left_rotate(x);
+            x = x->parent_unsafe();
+            rbtree_rotate_left(x);
           }
-          x = x->rb_parent;
-          x->color(node_type::black);
-          x = x->rb_parent;
-          x->color(node_type::red);
-          right_rotate(x);
+
+          x = x->parent_unsafe();
+          x->is_black = true;
+          x = x->parent_unsafe();
+          x->is_black = false;
+          rbtree_rotate_right(x);
           break;
         }
       }
       else
       {
-        node_type *y = x->rb_parent->rb_parent->rb_left;
-        if (y != nullptr && y->color() == node_type::red)
+        node_base_type *y = x->parent_unsafe()->parent_unsafe()->left;
+        if (y && !y->is_black)
         {
-          x = x->rb_parent;
-          x->color(node_type::black);
-          x = x->rb_parent;
-          x->color(x == root_ ? node_type::black : node_type::red);
-          y->color(node_type::black);
+          x = x->parent_unsafe();
+          x->is_black = true;
+          y->is_black = true;
+          x = x->parent_unsafe();
+          x->is_black = x == root();
         }
         else
         {
-          if (x == x->rb_parent->rb_left)
+          if (x->is_left_child_of_parent())
           {
-            x = x->rb_parent;
-            right_rotate(x);
+            x = x->parent_unsafe();
+            rbtree_rotate_right(x);
           }
-          x = x->rb_parent;
-          x->color(node_type::black);
-          x = x->rb_parent;
-          x->color(node_type::red);
-          left_rotate(x);
+          x = x->parent_unsafe();
+          x->is_black = true;
+          x = x->parent_unsafe();
+          x->is_black = false;
+          rbtree_rotate_left(x);
           break;
         }
       }
     }
-  }
-
-  void left_rotate(node_type *x) noexcept
-  {
-    node_type *y = x->rb_right;
-    x->rb_right = y->rb_left;
-    if (y->rb_left != nullptr)
-      y->rb_left->rb_parent = x;
-
-    y->rb_parent = x->rb_parent.get();
-    if (x->rb_parent == nullptr)
-    {
-      root_ = y;
-    }
-    else
-    {
-      if (x == x->rb_parent->rb_left)
-        x->rb_parent->rb_left = y;
-      else
-        x->rb_parent->rb_right = y;
-    }
-    y->rb_left = x;
-    x->rb_parent = y;
-  }
-
-  void right_rotate(node_type *x) noexcept
-  {
-    node_type *y = x->rb_left;
-    x->rb_left = y->rb_right;
-    if (y->rb_right != nullptr)
-      y->rb_right->rb_parent = x;
-
-    y->rb_parent = x->rb_parent.get();
-    if (x->rb_parent == nullptr)
-    {
-      root_ = y;
-    }
-    else
-    {
-      if (x == x->rb_parent->rb_right)
-        x->rb_parent->rb_right = y;
-      else
-        x->rb_parent->rb_left = y;
-    }
-    y->rb_right = x;
-    x->rb_parent = y;
-  }
-
-public:
-  void remove (node_type *z) noexcept
-  {
-
   }
 };
+
+template <typename Tree>
+void dump_tree(Tree &tree)
+{
+  std::string tmpfile = tmpnam(NULL);
+  std::ofstream file(tmpfile);
+  file << "digraph {\n";
+  file << "ordering=out\n";
+  dump_node(tree.root(), file);
+  file << "}\n";
+
+  std::clog << "Output to " << tmpfile << '\n';
+  file.close();
+  std::string cmd = "dotty " + tmpfile + " &";
+  std::system(cmd.c_str());
+}
 
 } // namespace gpcl
 
