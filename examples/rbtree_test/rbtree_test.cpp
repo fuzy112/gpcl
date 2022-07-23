@@ -5,6 +5,10 @@
 #include <string>
 #include <string_view>
 
+#ifdef WITH_LIBEDITLINE
+#include <editline/readline.h> 
+#endif
+
 using gpcl::rbtree;
 using gpcl::rbtree_node;
 
@@ -90,10 +94,17 @@ public:
   void run_one()
   {
 
+#ifndef WITH_LIBEDITLINE
     std::cerr << ">>> ";
 
     std::string line;
     std::getline(std::cin, line);
+#else
+    char *pline = readline(">>> ");
+    if (!pline)
+    	exit(0);
+    std::string line = pline;
+#endif
 
     gpcl::ssplit_results tokens;
     gpcl::split(line, tokens, " ",
