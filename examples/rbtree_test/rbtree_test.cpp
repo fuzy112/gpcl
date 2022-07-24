@@ -6,7 +6,7 @@
 #include <string_view>
 
 #ifdef WITH_LIBEDITLINE
-#include <editline/readline.h> 
+#  include <editline/readline.h>
 #endif
 
 using gpcl::rbtree;
@@ -91,6 +91,20 @@ public:
 
   void clear() { std::system("killall lefty"); }
 
+  void lower_bound(int n)
+  {
+  	node v(n);
+    const node *p = tree_.lower_bound(v);
+    if (p != nullptr)
+    {
+      std::cerr << *p << '\n';
+    }
+    else
+    {
+      std::cerr << "NIL\n";
+    }
+  }
+
   void run_one()
   {
 
@@ -102,7 +116,7 @@ public:
 #else
     char *pline = readline(">>> ");
     if (!pline)
-    	exit(0);
+      exit(0);
     std::string line = pline;
 #endif
 
@@ -132,6 +146,11 @@ public:
     {
       bool e = gpcl::lexical_cast<bool>(tokens.str(1));
       auto_display(e);
+    }
+    else if (tokens.str(0) == "lower_bound")
+    {
+      int n = gpcl::lexical_cast<int>(tokens.str(1));
+      lower_bound(n);
     }
     else if (tokens.str(0) == "display")
     {
