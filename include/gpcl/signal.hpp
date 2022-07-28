@@ -15,11 +15,13 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/error.hpp>
 
+#include <sstream>
+
 #include <signal.h>
 
 namespace gpcl {
 
-inline std::string_view signal_name(int signum)
+inline std::string signal_name(int signum)
 {
   GPCL_ASSERT(signum > 0);
 
@@ -63,9 +65,9 @@ inline std::string_view signal_name(int signum)
 #endif
 #ifdef GPCL_CONFIG_POSIX_SIGNALS
   GPCL_MATCH_SIGNAL(SIGCHLD);
-#ifdef SIGCLD
+#  ifdef SIGCLD
   GPCL_MATCH_SIGNAL(SIGCLD);
-#endif
+#  endif
   GPCL_MATCH_SIGNAL(SIGCONT);
   GPCL_MATCH_SIGNAL(SIGSTOP);
   GPCL_MATCH_SIGNAL(SIGTSTP);
@@ -79,15 +81,15 @@ inline std::string_view signal_name(int signum)
   GPCL_MATCH_SIGNAL(SIGWINCH);
   GPCL_MATCH_SIGNAL(SIGIO);
 // GPCL_MATCH_SIGNAL(SIGPOLL);
-#ifdef SIGPWR
+#  ifdef SIGPWR
   GPCL_MATCH_SIGNAL(SIGPWR);
-#endif
-#ifdef SIGINFO
+#  endif
+#  ifdef SIGINFO
   GPCL_MATCH_SIGNAL(SIGINFO);
-#endif
-#ifdef SIGLOST
+#  endif
+#  ifdef SIGLOST
   GPCL_MATCH_SIGNAL(SIGLOST);
-#endif
+#  endif
   GPCL_MATCH_SIGNAL(SIGSYS);
 #endif // GPCL_CONFIG_POSIX_SIGNALS
 
