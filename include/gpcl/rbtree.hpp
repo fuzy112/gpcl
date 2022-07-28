@@ -1,3 +1,13 @@
+//
+// rbtree.hpp
+// ~~~~~~~~~~
+//
+// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
 #ifndef GPCL_RBTREE_HPP
 #define GPCL_RBTREE_HPP
 
@@ -11,53 +21,57 @@
 
 namespace gpcl {
 
-template <typename T, typename Tag, typename Compare>
-class rbtree_base;
+template <typename>
+class rbtree_end_node;
 
-template <typename T, typename Tag, typename Compare>
+template <typename T, typename Tag, typename VoidPtr>
 class rbtree_node;
 
-template <typename T, typename Tag, typename Compare>
+template <typename T, typename Tag, typename Compare, typename VoidPtr>
 class rbtree_iterator;
 
-template <typename T, typename Tag, typename Compare>
+template <typename T, typename Tag, typename Compare, typename VoidPtr>
 class rbtree_const_iterator;
 
-template <typename T, typename Tag, typename Compare>
+template <typename T, typename Tag, typename Compare, typename VoidPtr>
 class rbtree;
 
-template <typename T, typename Tag, typename Compare>
-class rbtree_base
+template <typename Pointer>
+class rbtree_end_node
 {
-  friend rbtree<T, Tag, Compare>;
-  friend rbtree_iterator<T, Tag, Compare>;
-  friend rbtree_const_iterator<T, Tag, Compare>;
-
 public:
-  using node_type = rbtree_node<T, Tag, Compare>;
+  using pointer = Pointer;
 
-  node_type *left;
+  pointer left;
 
-  constexpr rbtree_base() noexcept : left() {}
+  constexpr rbtree_end_node() noexcept : left() {}
 
-  rbtree_base(const rbtree_base &) = delete;
-  rbtree_base &operator=(const rbtree_base &) = delete;
+  rbtree_end_node(const rbtree_end_node &) = delete;
+  rbtree_end_node &operator=(const rbtree_end_node &) = delete;
 };
 
 template <typename T, typename Tag = class default_tag,
-          typename Compare = std::less<T>>
-class rbtree_node : public rbtree_base<T, Tag, Compare>
+          typename VoidPtr = void *>
+class rbtree_node : public rbtree_end_node<typename std::pointer_traits<
+                        VoidPtr>::template rebind<rbtree_node<T, Tag, VoidPtr>>>
 {
-  friend rbtree<T, Tag, Compare>;
+  template <typename T1, typename Tag1, typename Compare, typename VoidPtr1>
+  friend class rbtree;
 
-private:
-  using base_type = rbtree_base<T, Tag, Compare>;
+public:
+  using void_pointer = VoidPtr;
+  using pointer =
+      typename std::pointer_traits<void_pointer>::template rebind<rbtree_node>;
+  using const_pointer = typename std::pointer_traits<
+      void_pointer>::template rebind<const rbtree_node>;
+  using end_node_type = rbtree_end_node<pointer>;
+  using end_node_ptr = typename std::pointer_traits<
+      void_pointer>::template rebind<end_node_type>;
+  using parent_pointer = end_node_ptr;
+  using node_type = rbtree_node;
 
-  using pointer = rbtree_node *;
-  using const_pointer = const rbtree_node *;
-
-  rbtree_node *right;
-  base_type *parent;
+  pointer right;
+  parent_pointer parent;
   bool is_black;
 
 protected:
@@ -73,9 +87,12 @@ private:
     return static_cast<const_pointer>(parent);
   }
 
+  pointer parent_unsafe() noexcept { return static_cast<pointer>(parent); }
 
-
-  void set_parent(rbtree_node *p) noexcept { parent = p; }
+  void set_parent(pointer p) noexcept
+  {
+    parent = static_cast<parent_pointer>(p);
+  }
 
   bool is_left_child_of_parent() const noexcept
   {
@@ -98,8 +115,8 @@ private:
            " color=" + (is_black ? "black" : "red") + "]";
   }
 
-  template <typename NodePtr>
-  friend std::string dump_node(NodePtr x, std::ostream &out)
+public:
+  friend inline std::string dump_node(const_pointer x, std::ostream &out)
   {
     if (!x)
     {
@@ -118,71 +135,71 @@ private:
   }
 };
 
-template <typename T, typename Tag, typename Compare>
-class rbtree_iterator
-{
-public:
-  using value_type = T;
-  using node_type = rbtree_node<T, Tag, Compare>;
-  using tag = Tag;
-  using compare = Compare;
-  using reference = value_type &;
-  using pointer = value_type *;
-
-  using iterator_category = std::bidirectional_iterator_tag;
-
-private:
-  node_type *node_;
-
-public:
-  constexpr rbtree_iterator() noexcept : node_() {}
-
-  constexpr rbtree_iterator(node_type *node) noexcept : node_(node) {}
-
-  rbtree_iterator &operator++() noexcept
-  {
- 
- } 
-};
-
 template <typename T, typename Tag = class default_tag,
-          typename Compare = std::less<T>>
+          typename Compare = std::less<T>, typename VoidPtr = void *>
 class rbtree
 {
 public:
+  using void_pointer = VoidPtr;
   using value_type = T;
-  using node_type = rbtree_node<T, Tag, Compare>;
-  using base_type = rbtree_base<T, Tag, Compare>;
+  using node_type = rbtree_node<T, Tag, VoidPtr>;
+  using node_pointer =
+      typename std::pointer_traits<void_pointer>::template rebind<node_type>;
+  using const_node_pointer = typename std::pointer_traits<
+      void_pointer>::template rebind<const node_type>;
+  using end_node_type = rbtree_end_node<node_pointer>;
+  using end_node_ptr = typename std::pointer_traits<
+      void_pointer>::template rebind<end_node_type>;
+  using const_end_node_ptr = typename std::pointer_traits<
+      void_pointer>::template rebind<const end_node_type>;
   using compare = Compare;
 
   using reference = T &;
   using const_reference = const T &;
-  using pointer = T *;
-  using const_pointer = const T *;
+  using pointer =
+      typename std::pointer_traits<void_pointer>::template rebind<T>;
+  using const_pointer =
+      typename std::pointer_traits<void_pointer>::template rebind<const T>;
   using size_type = std::size_t;
   using difference_type = std::ptrdiff_t;
 
 private:
-  detail::compressed_pair<base_type, compare> p_;
+  detail::compressed_pair<end_node_type, compare> p_;
 
-  base_type *get_base() noexcept { return &p_.first(); }
+  end_node_ptr get_base() noexcept
+  {
+    return std::pointer_traits<end_node_ptr>::pointer_to(p_.first());
+  }
 
-  const base_type *get_base() const noexcept { return &p_.first(); }
+  const_end_node_ptr get_base() const noexcept
+  {
+    return std::pointer_traits<const_end_node_ptr>::pointer_to(p_.first());
+  }
 
 public:
-  constexpr rbtree() noexcept = default;
+  constexpr rbtree(const compare &cmp = compare()) noexcept(
+      std::is_nothrow_copy_constructible<compare>::value)
+      : p_(detail::piecewise_construct, std::make_tuple(),
+           std::forward_as_tuple(cmp))
+  {
+  }
 
   rbtree(const rbtree &) = delete;
   rbtree &operator=(const rbtree &) = delete;
 
-  T *root() const noexcept { return static_cast<T *>(p_.first().left); }
+  const_pointer root() const noexcept
+  {
+    return static_cast<const_pointer>(p_.first().left);
+  }
+
+  pointer root() noexcept { return static_cast<pointer>(p_.first().left); }
 
   compare comp() const noexcept { return p_.second(); }
 
   template <typename K>
-  T *find(const K &k) const noexcept
+  const_pointer find(const K &k) const noexcept
   {
-    node_type *p = root();
+    const_node_pointer p = root();
     auto cmp = comp();
 
     while (p != nullptr)
@@ -192,17 +209,38 @@ public:
       else if (cmp(p->value(), k))
         p = p->right;
       else
-        return static_cast<T *>(p);
+        return static_cast<const_pointer>(p);
     }
 
     return nullptr;
   }
 
-  void remove(node_type *const x) noexcept
+  template <typename K>
+  pointer find(const K &k) noexcept
   {
+    node_pointer p = root();
+    auto cmp = comp();
+
+    while (p != nullptr)
+    {
+      if (cmp(k, p->value()))
+        p = p->left;
+      else if (cmp(p->value(), k))
+        p = p->right;
+      else
+        return static_cast<pointer>(p);
+    }
+
+    return nullptr;
+  }
+
+  void remove(reference v) noexcept
+  {
+    node_pointer x = std::pointer_traits<node_pointer>::pointer_to(v);
+
     // y will be node to delete
     // either x or x's successor
-    node_type *y = (x->right && x->left) ? x->right : x;
+    node_pointer y = (x->right && x->left) ? x->right : x;
     if (y != x)
     {
       // find x's successor
@@ -211,10 +249,10 @@ public:
     }
 
     // z is y's (possible null) single child
-    node_type *z = y->left ? y->left : y->right;
+    node_pointer z = y->left ? y->left : y->right;
 
     // w is z's (possible null) uncle and will be z's sibling
-    node_type *w = nullptr;
+    node_pointer w = nullptr;
     if (y->is_left_child_of_parent())
       w = y == root() ? nullptr : y->parent_unsafe()->right;
     else
@@ -245,9 +283,9 @@ public:
         x->parent_unsafe()->right = y;
 
       if (x->left != nullptr)
-        x->left->parent = y;
+        x->left->set_parent(y);
       if (x->right != nullptr)
-        x->right->parent = y;
+        x->right->set_parent(y);
     }
 
     if (remove_black)
@@ -339,25 +377,25 @@ public:
     }
   }
 
-  void insert(T *x) noexcept
+  void insert(reference v) noexcept
   {
-    GPCL_ASSERT(x != nullptr);
-    node_type **link = &get_base()->left;
-    ;
-    node_type *p = static_cast<node_type *>(get_base());
+    node_pointer *link = std::addressof(get_base()->left);
+    node_pointer p = static_cast<node_pointer>(get_base());
+
+    node_pointer x = std::pointer_traits<node_pointer>::pointer_to(v);
 
     auto cmp = comp();
 
     while (*link != nullptr)
     {
       p = *link;
-      if (cmp(*x, p->value()))
+      if (cmp(v, p->value()))
         link = &p->left;
       else
         link = &p->right;
     }
 
-    x->parent = p;
+    x->set_parent(p);
     *link = x;
 
     x->left = nullptr;
@@ -367,11 +405,11 @@ public:
   }
 
   template <typename K>
-  T *find_or_insert(const K &k, T *x)
+  pointer find_or_insert(const K &k, reference v)
   {
-    GPCL_ASSERT(x != nullptr);
-    node_type **link = &get_base()->left;
-    node_type *p = static_cast<node_type *>(get_base());
+    node_pointer *link = std::addressof(get_base()->left);
+    node_pointer p = static_cast<node_pointer>(get_base());
+    node_pointer x = std::pointer_traits<node_pointer>::pointer_to(v);
 
     auto cmp = comp();
 
@@ -383,10 +421,10 @@ public:
       else if (cmp(p->value(), k))
         link = &p->right;
       else
-        return static_cast<T *>(p);
+        return static_cast<pointer>(p);
     }
 
-    x->parent = p;
+    x->set_parent(p);
     *link = x;
 
     x->left = nullptr;
@@ -398,10 +436,10 @@ public:
   }
 
   template <typename K>
-  const T *lower_bound(const K &k) const noexcept
+  const_pointer upper_bound(const K &k) const noexcept
   {
-    const node_type *p = 0;
-    const node_type *const *link = &get_base()->left;
+    const_node_pointer p = 0;
+    const_node_pointer const *link = std::addressof(get_base()->left);
     auto cmp = comp();
 
     while (*link)
@@ -414,18 +452,18 @@ public:
         link = &p->right;
     }
 
-    return static_cast<const T *>(p);
+    return static_cast<const_pointer>(p);
   }
 
 private:
-  void rebalance_after_insert(node_type *x) noexcept
+  void rebalance_after_insert(node_pointer x) noexcept
   {
     x->is_black = x == root();
     while (x != root() && !x->parent_unsafe()->is_black)
     {
       if (x->parent_unsafe()->is_left_child_of_parent())
       {
-        node_type *y = x->parent_unsafe()->parent_unsafe()->right;
+        node_pointer y = x->parent_unsafe()->parent_unsafe()->right;
         if (y && !y->is_black)
         {
           x = x->parent_unsafe();
@@ -452,7 +490,7 @@ private:
       }
       else
       {
-        node_type *y = x->parent_unsafe()->parent_unsafe()->left;
+        node_pointer y = x->parent_unsafe()->parent_unsafe()->left;
         if (y && !y->is_black)
         {
           x = x->parent_unsafe();
@@ -479,11 +517,11 @@ private:
     }
   }
 
-  void rotate_right(node_type *x) noexcept
+  void rotate_right(node_pointer x) noexcept
   {
     GPCL_ASSERT(x);
 
-    node_type *y = x->left;
+    node_pointer y = x->left;
     y->parent = x->parent;
 
     if (x->is_left_child_of_parent())
@@ -493,17 +531,17 @@ private:
 
     x->left = y->right;
     if (y->right != nullptr)
-      y->right->parent = x;
+      y->right->set_parent(x);
 
-    x->parent = y;
+    x->set_parent(y);
     y->right = x;
   }
 
-  void rotate_left(node_type *x) noexcept
+  void rotate_left(node_pointer x) noexcept
   {
     GPCL_ASSERT(x);
 
-    node_type *y = x->right;
+    node_pointer y = x->right;
     y->parent = x->parent;
 
     if (x->is_left_child_of_parent())
@@ -513,20 +551,20 @@ private:
 
     x->right = y->left;
     if (y->left != nullptr)
-      y->left->parent = x;
-    x->parent = y;
+      y->left->set_parent(x);
+    x->set_parent(y);
     y->left = x;
   }
 };
 
 template <typename Tree>
-void dump_tree(Tree &tree)
+void dump_tree(const Tree &tree)
 {
   std::string tmpfile = tmpnam(NULL);
   std::ofstream file(tmpfile);
   file << "digraph {\n";
   file << "ordering=out\n";
-  dump_node(tree.root(), file);
+  dump_node(static_cast<typename Tree::const_node_pointer>(tree.root()), file);
   file << "}\n";
 
   std::clog << "Output to " << tmpfile << '\n';

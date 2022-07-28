@@ -9,6 +9,8 @@
 #  include <editline/readline.h>
 #endif
 
+#include <sys/stat.h>
+
 using gpcl::rbtree;
 using gpcl::rbtree_node;
 
@@ -52,7 +54,7 @@ public:
   void insert(int n)
   {
     node *p = new node(n);
-    tree_.insert(p);
+    tree_.insert(*p);
 
     if (auto_display_)
       display();
@@ -68,7 +70,7 @@ public:
       return;
     }
 
-    tree_.remove(p);
+    tree_.remove(*p);
     delete p;
 
     if (auto_display_)
@@ -80,7 +82,7 @@ public:
     while (tree_.root() != nullptr)
     {
       node *p = tree_.root();
-      tree_.remove(p);
+      tree_.remove(*p);
       delete p;
     }
   }
@@ -91,10 +93,10 @@ public:
 
   void clear() { std::system("killall lefty"); }
 
-  void lower_bound(int n)
+  void upper_bound(int n)
   {
-  	node v(n);
-    const node *p = tree_.lower_bound(v);
+    node v(n);
+    const node *p = tree_.upper_bound(v);
     if (p != nullptr)
     {
       std::cerr << *p << '\n';
@@ -147,10 +149,10 @@ public:
       bool e = gpcl::lexical_cast<bool>(tokens.str(1));
       auto_display(e);
     }
-    else if (tokens.str(0) == "lower_bound")
+    else if (tokens.str(0) == "upper_bound")
     {
       int n = gpcl::lexical_cast<int>(tokens.str(1));
-      lower_bound(n);
+      upper_bound(n);
     }
     else if (tokens.str(0) == "display")
     {
@@ -193,6 +195,26 @@ private:
 
 int main()
 {
+  char path[500];
+  if (readlink("/proc/self/fd/2", path, sizeof(path)) == -1)
+  {
+    perror("/proc/self/fd/2");
+    return 1;
+  }
+
+  struct stat st;
+  if (stat(path, &st) == -1)
+  {
+    perror(path);
+    return 2;
+  }
+
+  if (!S_ISCHR(st.st_mode))
+  {
+    std::cerr << path << "is not character device\n";
+    return 0;
+  }
+
   application app;
 
   app.run();

@@ -81,12 +81,39 @@ public:
   }
 
   /// Constructor
-  offset_ptr(T *ptr);
+  explicit offset_ptr(T *ptr);
 
   /// Copy constructor
   inline constexpr offset_ptr(const offset_ptr &other) noexcept
       : offset_ptr(other.get())
   {
+  }
+
+  template <typename U,
+            std::enable_if_t<std::is_constructible<T *, U *>::value &&
+                                 std::is_convertible<U *, T *>::value,
+                             int> = 0>
+  offset_ptr(const offset_ptr<U> &other) noexcept : offset_ptr((other.get()))
+  {
+  }
+
+  template <typename U,
+            std::enable_if_t<(std::is_constructible<T *, U *>::value ||
+                              std::is_base_of<std::remove_cv_t<U>,
+                                              std::remove_cv_t<T>>::value) &&
+                                 !std::is_convertible<U *, T *>::value,
+                             int> = 0>
+  explicit offset_ptr(const offset_ptr<U> &other) noexcept
+      : offset_ptr(static_cast<T *>(other.get()))
+  {
+  }
+
+  template <typename U,
+            typename std::enable_if_t<
+                std::is_same<U, T>::value && !std::is_void<T>::value, int> = 0>
+  static offset_ptr pointer_to(U &x) noexcept
+  {
+    return offset_ptr(std::addressof(x));
   }
 
   /// Converts to raw pointer
@@ -104,7 +131,8 @@ public:
   /// Dereference
   /// @return reference to the value
   template <typename U = T>
-  inline typename std::enable_if<!std::is_void<U>::value, U>::type &operator*() const;
+  inline typename std::enable_if<!std::is_void<U>::value, U>::type &
+  operator*() const;
 
   /// Member access operator
   /// @return a raw pointer
@@ -189,36 +217,6 @@ public:
     return *(*this + diff);
   }
 
-  inline bool operator==(const offset_ptr &other) const noexcept
-  {
-    return this->get() == other.get();
-  }
-
-  inline bool operator!=(const offset_ptr &other) const noexcept
-  {
-    return !(*this == other);
-  }
-
-  inline bool operator==(std::nullptr_t) const noexcept
-  {
-    return this->get() == nullptr;
-  }
-
-  inline bool operator!=(std::nullptr_t) const noexcept
-  {
-    return this->get() != nullptr;
-  }
-
-  inline bool operator==(pointer ptr) const noexcept
-  {
-    return this->get() == ptr;
-  }
-
-  inline bool operator!=(pointer ptr) const noexcept
-  {
-    return this->get() == ptr;
-  }
-
   template <
       typename Dummy = T,
       typename std::enable_if<std::is_convertible<Dummy *, const char *>::value,
@@ -229,31 +227,6 @@ public:
     return get() == str;
   }
 
-  friend inline bool operator<(const offset_ptr &x,
-                               const offset_ptr &y) noexcept
-  {
-    return x.get() < y.get();
-  }
-
-
-  friend inline bool operator>(const offset_ptr &x,
-                               const offset_ptr &y) noexcept
-  {
-    return y < x;
-  }
-
-  friend inline bool operator<=(const offset_ptr &x,
-                                const offset_ptr &y) noexcept
-  {
-    return !(x > y);
-  }
-
-  friend inline bool operator>=(const offset_ptr &x,
-                                const offset_ptr &y) noexcept
-  {
-    return !(x < y);
-  }
-
   inline explicit operator bool() const noexcept { return get() != nullptr; }
 
   template <
@@ -262,6 +235,186 @@ public:
                               int>::type = 0>
   bool operator!=(const std::string &str) const;
 };
+
+template <typename T>
+bool operator==(const offset_ptr<T> &x, std::nullptr_t) noexcept
+{
+  return x.get() == nullptr;
+}
+
+template <typename T>
+bool operator==(std::nullptr_t, const offset_ptr<T> &y) noexcept
+{
+  return nullptr == y.get();
+}
+
+template <typename T, typename U>
+bool operator==(const offset_ptr<T> &x, U *y) noexcept
+{
+  return x.get() == y;
+}
+
+template <typename T, typename U>
+bool operator==(T *x, const offset_ptr<U> &y) noexcept
+{
+  return x == y.get();
+}
+
+template <typename T, typename U>
+bool operator==(const offset_ptr<T> &x, const offset_ptr<U> &y) noexcept
+{
+  return x.get() == y.get();
+}
+
+template <typename T>
+bool operator!=(const offset_ptr<T> &x, std::nullptr_t) noexcept
+{
+  return x.get() != nullptr;
+}
+
+template <typename T>
+bool operator!=(std::nullptr_t, const offset_ptr<T> &y) noexcept
+{
+  return nullptr != y.get();
+}
+
+template <typename T, typename U>
+bool operator!=(const offset_ptr<T> &x, U *y) noexcept
+{
+  return x.get() != y;
+}
+
+template <typename T, typename U>
+bool operator!=(T *x, const offset_ptr<U> &y) noexcept
+{
+  return x == y.get();
+}
+
+template <typename T, typename U>
+bool operator!=(const offset_ptr<T> &x, const offset_ptr<U> &y) noexcept
+{
+  return !(x == y);
+}
+
+template <typename T>
+bool operator<(const offset_ptr<T> &x, std::nullptr_t) noexcept
+{
+  return x.get() < nullptr;
+}
+
+template <typename T>
+bool operator<(std::nullptr_t, const offset_ptr<T> &y) noexcept
+{
+  return nullptr < y.get();
+}
+
+template <typename T, typename U>
+bool operator<(const offset_ptr<T> &x, U *y) noexcept
+{
+  return x.get() < y;
+}
+
+template <typename T, typename U>
+bool operator<(T *x, const offset_ptr<U> &y) noexcept
+{
+  return x == y.get();
+}
+
+template <typename T, typename U>
+inline bool operator<(const offset_ptr<T> &x, const offset_ptr<U> &y) noexcept
+{
+  return x.get() < y.get();
+}
+
+template <typename T>
+bool operator>(const offset_ptr<T> &x, std::nullptr_t) noexcept
+{
+  return x.get() > nullptr;
+}
+
+template <typename T>
+bool operator>(std::nullptr_t, const offset_ptr<T> &y) noexcept
+{
+  return nullptr > y.get();
+}
+
+template <typename T, typename U>
+bool operator>(const offset_ptr<T> &x, U *y) noexcept
+{
+  return x.get() > y;
+}
+
+template <typename T, typename U>
+bool operator>(T *x, const offset_ptr<U> &y) noexcept
+{
+  return x > y.get();
+}
+
+template <typename T, typename U>
+inline bool operator>(const offset_ptr<T> &x, const offset_ptr<U> &y) noexcept
+{
+  return y < x;
+}
+
+template <typename T>
+bool operator<=(const offset_ptr<T> &x, std::nullptr_t) noexcept
+{
+  return x.get() <= nullptr;
+}
+
+template <typename T>
+bool operator<=(std::nullptr_t, const offset_ptr<T> &y) noexcept
+{
+  return nullptr <= y.get();
+}
+
+template <typename T, typename U>
+bool operator<=(const offset_ptr<T> &x, U *y) noexcept
+{
+  return x.get() <= y;
+}
+
+template <typename T, typename U>
+bool operator<=(T *x, const offset_ptr<U> &y) noexcept
+{
+  return x <= y.get();
+}
+
+template <typename T, typename U>
+inline bool operator<=(const offset_ptr<T> &x, const offset_ptr<U> &y) noexcept
+{
+  return !(x > y);
+}
+
+template <typename T>
+bool operator>=(const offset_ptr<T> &x, std::nullptr_t) noexcept
+{
+  return x.get() >= nullptr;
+}
+
+template <typename T>
+bool operator>=(std::nullptr_t, const offset_ptr<T> &y) noexcept
+{
+  return nullptr >= y.get();
+}
+
+template <typename T, typename U>
+bool operator>=(const offset_ptr<T> &x, U *y) noexcept
+{
+  return x.get() >= y;
+}
+
+template <typename T, typename U>
+bool operator>=(T *x, const offset_ptr<U> &y) noexcept
+{
+  return x >= y.get();
+}
+
+template <typename T, typename U>
+inline bool operator>=(const offset_ptr<T> &x, const offset_ptr<U> &y) noexcept
+{
+  return !(x < y);
+}
 
 template <typename T, typename U>
 offset_ptr<T> static_pointer_cast(const offset_ptr<U> &p) noexcept
