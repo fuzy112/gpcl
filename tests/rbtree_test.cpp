@@ -84,4 +84,17 @@ TEST_CASE("rbtree with fancy pointer")
   tree.remove(o3);
 
   dump_tree(tree);
+
+  // for (auto &x : std::as_const(tree))
+  // {
+  //   std::cout << x.value << '\n';
+  // }
+
+  // std::for_each(
+  //   tree.crbegin(),
+  //   tree.crend(),
+  //   [](const MyClass &x) {
+  //     std::cout << x.value << '\n';
+  //   }
+  // );
 }

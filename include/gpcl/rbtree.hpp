@@ -27,10 +27,10 @@ class rbtree_end_node;
 template <typename T, typename Tag, typename VoidPtr>
 class rbtree_node;
 
-template <typename T, typename Tag, typename Compare, typename VoidPtr>
+template <typename T, typename Tag, typename VoidPtr>
 class rbtree_iterator;
 
-template <typename T, typename Tag, typename Compare, typename VoidPtr>
+template <typename T, typename Tag, typename VoidPtr>
 class rbtree_const_iterator;
 
 template <typename T, typename Tag, typename Compare, typename VoidPtr>
@@ -70,6 +70,8 @@ public:
   using parent_pointer = end_node_ptr;
   using node_type = rbtree_node;
 
+  using iter_pointer = end_node_ptr;
+
   pointer right;
   parent_pointer parent;
   bool is_black;
@@ -81,7 +83,7 @@ protected:
 
   rbtree_node &operator=(const rbtree_node &) noexcept { return *this; }
 
-private:
+public:
   const_pointer parent_unsafe() const noexcept
   {
     return static_cast<const_pointer>(parent);
@@ -115,6 +117,30 @@ private:
            " color=" + (is_black ? "black" : "red") + "]";
   }
 
+  pointer maximum_in_subtree() noexcept
+  {
+    pointer y = nullptr;
+    pointer x = static_cast<pointer>(this);
+    while (x != nullptr)
+    {
+      y = x;
+      x = x->right;
+    }
+    return y;
+  }
+
+  pointer minimum_in_subtree() noexcept
+  {
+    pointer y = nullptr;
+    pointer x = static_cast<pointer>(this);
+    while (x != nullptr)
+    {
+      y = x;
+      x = x->left;
+    }
+    return y;
+  }
+
 public:
   friend inline std::string dump_node(const_pointer x, std::ostream &out)
   {
@@ -132,6 +158,186 @@ public:
     auto right = dump_node(x->right, out);
     out << x->id() << " -> " << right << '\n';
     return x->id();
+  }
+};
+
+template <typename NodePtr,
+          typename IterPtr = typename std::pointer_traits<
+              NodePtr>::template rebind<rbtree_end_node<NodePtr>>>
+IterPtr rbtree_next(NodePtr x) noexcept
+{
+  if (x->right != nullptr)
+    return static_cast<IterPtr>(x->right->minimum_in_subtree());
+
+  while (!x->is_left_child_of_parent())
+    x = x->parent_unsafe();
+
+  return x->parent;
+}
+
+// Calling prev on the first node is undefined behaviour
+template <typename NodePtr,
+          typename IterPtr = typename std::pointer_traits<
+              NodePtr>::template rebind<rbtree_end_node<NodePtr>>>
+IterPtr rbtree_prev(NodePtr x) noexcept
+{
+  if (x->left != nullptr)
+    return static_cast<IterPtr>(x->left->maximum_in_subtree());
+
+  while (x->is_left_child_of_parent())
+    x = x->parent_unsafe();
+
+  return x->parent;
+}
+
+template <typename T, typename Tag, typename VoidPtr>
+class rbtree_iterator
+{
+public:
+  using void_pointer = VoidPtr;
+  using node_type = rbtree_node<T, Tag, VoidPtr>;
+  using node_pointer = typename node_type::pointer;
+  using end_node_type = typename node_type::end_node_type;
+  using end_node_ptr = typename node_type::end_node_ptr;
+  using iter_pointer = end_node_ptr;
+
+  using value_type = T;
+  using pointer =
+      typename std::pointer_traits<void_pointer>::template rebind<T>;
+  using reference = T &;
+  using difference_type =
+      typename std::pointer_traits<void_pointer>::difference_type;
+  using size_type = std::make_unsigned_t<difference_type>;
+  using iterator_category = std::bidirectional_iterator_tag;
+
+  iter_pointer ptr_;
+
+  explicit rbtree_iterator(iter_pointer p = nullptr) noexcept : ptr_(p) {}
+
+  rbtree_iterator &operator++() noexcept
+  {
+    GPCL_ASSERT(ptr_ != nullptr);
+    ptr_ = rbtree_next(static_cast<node_pointer>(ptr_));
+    return *this;
+  }
+
+  rbtree_iterator operator++(int) noexcept
+  {
+    auto ret = *this;
+    ++*this;
+    return ret;
+  }
+
+  rbtree_iterator &operator--() noexcept
+  {
+    GPCL_ASSERT(ptr_ != nullptr);
+    ptr_ = rbtree_prev(static_cast<node_pointer>(ptr_));
+    return *this;
+  }
+
+  rbtree_iterator operator--(int) noexcept
+  {
+    auto ret = *this;
+    --*this;
+    return ret;
+  }
+
+  reference operator*() const noexcept
+  {
+    GPCL_ASSERT(ptr_ != nullptr);
+    return *static_cast<pointer>(ptr_);
+  }
+
+  pointer operator->() const noexcept { return static_cast<pointer>(ptr_); }
+
+  friend bool operator==(const rbtree_iterator &x,
+                         const rbtree_iterator &y) noexcept
+  {
+    return x.ptr_ == y.ptr_;
+  }
+
+  friend bool operator!=(const rbtree_iterator &x,
+                         const rbtree_iterator &y) noexcept
+  {
+    return !(x == y);
+  }
+};
+
+template <typename T, typename Tag, typename VoidPtr>
+class rbtree_const_iterator
+{
+public:
+  using void_pointer = VoidPtr;
+  using node_type = rbtree_node<T, Tag, VoidPtr>;
+  using node_pointer = typename node_type::pointer;
+  using end_node_type = typename node_type::end_node_type;
+  using end_node_ptr = typename node_type::end_node_ptr;
+  using iter_pointer = end_node_ptr;
+
+  using value_type = T;
+  using pointer =
+      typename std::pointer_traits<void_pointer>::template rebind<const T>;
+  using reference = const T &;
+  using difference_type =
+      typename std::pointer_traits<void_pointer>::difference_type;
+  using size_type = std::make_unsigned_t<difference_type>;
+  using iterator_category = std::bidirectional_iterator_tag;
+
+  iter_pointer ptr_;
+
+  explicit rbtree_const_iterator(iter_pointer p = nullptr) noexcept : ptr_(p) {}
+
+  rbtree_const_iterator(rbtree_iterator<T, Tag, VoidPtr> iter) noexcept
+      : ptr_(iter.ptr_)
+  {
+  }
+
+  rbtree_const_iterator &operator++() noexcept
+  {
+    GPCL_ASSERT(ptr_ != nullptr);
+    ptr_ = rbtree_next(static_cast<node_pointer>(ptr_));
+    return *this;
+  }
+
+  rbtree_const_iterator operator++(int) noexcept
+  {
+    auto ret = *this;
+    ++*this;
+    return ret;
+  }
+
+  rbtree_const_iterator &operator--() noexcept
+  {
+    GPCL_ASSERT(ptr_ != nullptr);
+    ptr_ = rbtree_prev(static_cast<node_pointer>(ptr_));
+    return *this;
+  }
+
+  rbtree_const_iterator operator--(int) noexcept
+  {
+    auto ret = *this;
+    --*this;
+    return ret;
+  }
+
+  reference operator*() const noexcept
+  {
+    GPCL_ASSERT(ptr_ != nullptr);
+    return *static_cast<pointer>(ptr_);
+  }
+
+  pointer operator->() const noexcept { return static_cast<pointer>(ptr_); }
+
+  friend bool operator==(const rbtree_const_iterator &x,
+                         const rbtree_const_iterator &y) noexcept
+  {
+    return x.ptr_ == y.ptr_;
+  }
+
+  friend bool operator!=(const rbtree_const_iterator &x,
+                         const rbtree_const_iterator &y) noexcept
+  {
+    return !(x == y);
   }
 };
 
@@ -153,6 +359,7 @@ public:
   using const_end_node_ptr = typename std::pointer_traits<
       void_pointer>::template rebind<const end_node_type>;
   using compare = Compare;
+  using iter_pointer = end_node_ptr;
 
   using reference = T &;
   using const_reference = const T &;
@@ -163,17 +370,23 @@ public:
   using size_type = std::size_t;
   using difference_type = std::ptrdiff_t;
 
-private:
-  detail::compressed_pair<end_node_type, compare> p_;
+  using iterator = rbtree_iterator<T, Tag, VoidPtr>;
+  using const_iterator = rbtree_const_iterator<T, Tag, VoidPtr>;
 
-  end_node_ptr get_base() noexcept
+  using reverse_iterator = std::reverse_iterator<iterator>;
+  using reverse_const_iterator = std::reverse_iterator<const_iterator>;
+
+private:
+  mutable detail::compressed_pair<end_node_type, compare> p_;
+
+  end_node_ptr get_base() const noexcept
   {
     return std::pointer_traits<end_node_ptr>::pointer_to(p_.first());
   }
 
-  const_end_node_ptr get_base() const noexcept
+  node_pointer root_node() const noexcept
   {
-    return std::pointer_traits<const_end_node_ptr>::pointer_to(p_.first());
+    return static_cast<node_pointer>(p_.first().left);
   }
 
 public:
@@ -189,12 +402,57 @@ public:
 
   const_pointer root() const noexcept
   {
-    return static_cast<const_pointer>(p_.first().left);
+    return static_cast<const_pointer>(root_node());
   }
 
-  pointer root() noexcept { return static_cast<pointer>(p_.first().left); }
+  pointer root() noexcept { return static_cast<pointer>(root_node()); }
 
   compare comp() const noexcept { return p_.second(); }
+
+  iterator begin() noexcept
+  {
+    if (root_node())
+      return iterator(
+          static_cast<iter_pointer>(root_node()->minimum_in_subtree()));
+    return end();
+  }
+
+  const_iterator begin() const noexcept
+  {
+    if (root_node())
+      return const_iterator(
+          static_cast<iter_pointer>(root_node()->minimum_in_subtree()));
+    return end();
+  }
+
+  const_iterator cbegin() const noexcept { return begin(); }
+
+  iterator end() noexcept { return iterator(get_base()); }
+
+  const_iterator end() const noexcept
+  {
+    return const_iterator(static_cast<iter_pointer>(get_base()));
+  }
+
+  const_iterator cend() const noexcept { return end(); }
+
+  reverse_iterator rbegin() noexcept { return reverse_iterator(end()); }
+
+  reverse_const_iterator rbegin() const noexcept
+  {
+    return reverse_const_iterator(end());
+  }
+
+  reverse_const_iterator crbegin() const noexcept { return rbegin(); }
+
+  reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
+
+  reverse_const_iterator rend() const noexcept
+  {
+    return reverse_const_iterator(begin());
+  }
+
+  reverse_const_iterator crend() const noexcept { return rend(); }
 
   template <typename K>
   const_pointer find(const K &k) const noexcept

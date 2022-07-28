@@ -195,23 +195,16 @@ private:
 
 int main()
 {
-  char path[500];
-  if (readlink("/proc/self/fd/2", path, sizeof(path)) == -1)
-  {
-    perror("/proc/self/fd/2");
-    return 1;
-  }
-
   struct stat st;
-  if (stat(path, &st) == -1)
+  if (fstat(2, &st) == -1)
   {
-    perror(path);
+    perror("stderr");
     return 2;
   }
 
   if (!S_ISCHR(st.st_mode))
   {
-    std::cerr << path << "is not character device\n";
+    std::cerr << "stderr is not character device\n";
     return 0;
   }
 
