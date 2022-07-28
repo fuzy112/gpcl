@@ -1,5 +1,6 @@
 #include <gpcl/buffer.hpp>
 #include <gpcl/buffers_range_ref.hpp>
+#include <gpcl/flat_buffer.hpp>
 
 #include "doctest.h"
 #include <array>
@@ -32,7 +33,6 @@ TEST_CASE("buffers_range_ref")
   CHECK(total_size == sizeof(data.a) + sizeof(data.b) + sizeof(data.c));
 }
 
-#include <gpcl/flat_buffer.hpp>
 
 TEST_CASE("flat_buffer")
 {

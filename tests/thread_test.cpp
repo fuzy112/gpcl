@@ -1,4 +1,5 @@
 #include <gpcl/thread.hpp>
+#include <gpcl/tss_ptr.hpp>
 
 #include "doctest.h"
 
@@ -21,7 +22,6 @@ TEST_CASE("thread::hardware_concurrency")
   CHECK(gpcl::thread::hardware_concurrency() != 0);
 }
 
-#include <gpcl/tss_ptr.hpp>
 
 TEST_CASE("tss_ptr")
 {

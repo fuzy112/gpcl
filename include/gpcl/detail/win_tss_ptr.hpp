@@ -13,6 +13,7 @@
 
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/throw_system_error.hpp>
+#include <gpcl/source_location.hpp>
 
 #include <processthreadsapi.h>
 
@@ -40,14 +41,15 @@ public:
     {
       DWORD err = ::GetLastError();
       if (err != ERROR_SUCCESS)
-        throw_system_error(err, "TlsGetValue",
-                           GPCL_SOURCE_LOCATION_CURRENT_LINE);
+        throw_last_error(err, "TlsGetValue",
+                         GPCL_SOURCE_LOCATION_CURRENT_LINE());
     }
 
-    return value;
+    return reinterpret_cast<T *>(value);
   }
 
-  void operator=(T *value) {
+  void operator=(T *value)
+  {
     GPCL_THROW_LAST_ERROR_IF(!::TlsSetValue(key_, value));
   }
 
