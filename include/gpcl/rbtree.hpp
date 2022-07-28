@@ -24,16 +24,16 @@ namespace gpcl {
 template <typename>
 class rbtree_end_node;
 
-template <typename T, typename Tag, typename VoidPtr>
+template <typename, typename, typename>
 class rbtree_node;
 
-template <typename T, typename Tag, typename VoidPtr>
+template <typename, typename, typename>
 class rbtree_iterator;
 
-template <typename T, typename Tag, typename VoidPtr>
+template <typename, typename, typename>
 class rbtree_const_iterator;
 
-template <typename T, typename Tag, typename Compare, typename VoidPtr>
+template <typename, typename, typename, typename>
 class rbtree;
 
 template <typename Pointer>
@@ -42,9 +42,9 @@ class rbtree_end_node
 public:
   using pointer = Pointer;
 
-  pointer left;
+  pointer left_;
 
-  constexpr rbtree_end_node() noexcept : left() {}
+  constexpr rbtree_end_node() noexcept : left_() {}
 
   rbtree_end_node(const rbtree_end_node &) = delete;
   rbtree_end_node &operator=(const rbtree_end_node &) = delete;
@@ -55,7 +55,7 @@ template <typename T, typename Tag = class default_tag,
 class rbtree_node : public rbtree_end_node<typename std::pointer_traits<
                         VoidPtr>::template rebind<rbtree_node<T, Tag, VoidPtr>>>
 {
-  template <typename T1, typename Tag1, typename Compare, typename VoidPtr1>
+  template <typename, typename, typename, typename>
   friend class rbtree;
 
 public:
@@ -72,12 +72,12 @@ public:
 
   using iter_pointer = end_node_ptr;
 
-  pointer right;
-  parent_pointer parent;
-  bool is_black;
+  pointer right_;
+  parent_pointer parent_;
+  bool is_black_;
 
 protected:
-  constexpr rbtree_node() noexcept : right(), parent(), is_black() {}
+  constexpr rbtree_node() noexcept : right_(), parent_(), is_black_() {}
 
   constexpr rbtree_node(const rbtree_node &) noexcept : rbtree_node() {}
 
@@ -86,19 +86,19 @@ protected:
 public:
   const_pointer parent_unsafe() const noexcept
   {
-    return static_cast<const_pointer>(parent);
+    return static_cast<const_pointer>(parent_);
   }
 
-  pointer parent_unsafe() noexcept { return static_cast<pointer>(parent); }
+  pointer parent_unsafe() noexcept { return static_cast<pointer>(parent_); }
 
   void set_parent(pointer p) noexcept
   {
-    parent = static_cast<parent_pointer>(p);
+    parent_ = static_cast<parent_pointer>(p);
   }
 
   bool is_left_child_of_parent() const noexcept
   {
-    return (parent->left == this);
+    return (parent_->left_ == this);
   }
 
   T &value() noexcept { return static_cast<T &>(*this); }
@@ -114,7 +114,7 @@ public:
   std::string node_def() const
   {
     return id() + "[label=" + lexical_cast<std::string>(value()) +
-           " color=" + (is_black ? "black" : "red") + "]";
+           " color=" + (is_black_ ? "black" : "red") + "]";
   }
 
   pointer maximum_in_subtree() noexcept
@@ -124,7 +124,7 @@ public:
     while (x != nullptr)
     {
       y = x;
-      x = x->right;
+      x = x->right_;
     }
     return y;
   }
@@ -136,7 +136,7 @@ public:
     while (x != nullptr)
     {
       y = x;
-      x = x->left;
+      x = x->left_;
     }
     return y;
   }
@@ -153,10 +153,10 @@ public:
 
     out << x->node_def() << '\n';
 
-    auto left = dump_node(x->left, out);
-    out << x->id() << " -> " << left << '\n';
-    auto right = dump_node(x->right, out);
-    out << x->id() << " -> " << right << '\n';
+    auto left_ = dump_node(x->left_, out);
+    out << x->id() << " -> " << left_ << '\n';
+    auto right_ = dump_node(x->right_, out);
+    out << x->id() << " -> " << right_ << '\n';
     return x->id();
   }
 };
@@ -166,13 +166,13 @@ template <typename NodePtr,
               NodePtr>::template rebind<rbtree_end_node<NodePtr>>>
 IterPtr rbtree_next(NodePtr x) noexcept
 {
-  if (x->right != nullptr)
-    return static_cast<IterPtr>(x->right->minimum_in_subtree());
+  if (x->right_ != nullptr)
+    return static_cast<IterPtr>(x->right_->minimum_in_subtree());
 
   while (!x->is_left_child_of_parent())
     x = x->parent_unsafe();
 
-  return x->parent;
+  return x->parent_;
 }
 
 // Calling prev on the first node is undefined behaviour
@@ -181,13 +181,13 @@ template <typename NodePtr,
               NodePtr>::template rebind<rbtree_end_node<NodePtr>>>
 IterPtr rbtree_prev(NodePtr x) noexcept
 {
-  if (x->left != nullptr)
-    return static_cast<IterPtr>(x->left->maximum_in_subtree());
+  if (x->left_ != nullptr)
+    return static_cast<IterPtr>(x->left_->maximum_in_subtree());
 
   while (x->is_left_child_of_parent())
     x = x->parent_unsafe();
 
-  return x->parent;
+  return x->parent_;
 }
 
 template <typename T, typename Tag, typename VoidPtr>
@@ -386,7 +386,7 @@ private:
 
   node_pointer root_node() const noexcept
   {
-    return static_cast<node_pointer>(p_.first().left);
+    return static_cast<node_pointer>(p_.first().left_);
   }
 
 public:
@@ -463,9 +463,9 @@ public:
     while (p != nullptr)
     {
       if (cmp(k, p->value()))
-        p = p->left;
+        p = p->left_;
       else if (cmp(p->value(), k))
-        p = p->right;
+        p = p->right_;
       else
         return static_cast<const_pointer>(p);
     }
@@ -482,9 +482,9 @@ public:
     while (p != nullptr)
     {
       if (cmp(k, p->value()))
-        p = p->left;
+        p = p->left_;
       else if (cmp(p->value(), k))
-        p = p->right;
+        p = p->right_;
       else
         return static_cast<pointer>(p);
     }
@@ -498,52 +498,52 @@ public:
 
     // y will be node to delete
     // either x or x's successor
-    node_pointer y = (x->right && x->left) ? x->right : x;
+    node_pointer y = (x->right_ && x->left_) ? x->right_ : x;
     if (y != x)
     {
       // find x's successor
-      while (y->left)
-        y = y->left;
+      while (y->left_)
+        y = y->left_;
     }
 
     // z is y's (possible null) single child
-    node_pointer z = y->left ? y->left : y->right;
+    node_pointer z = y->left_ ? y->left_ : y->right_;
 
     // w is z's (possible null) uncle and will be z's sibling
     node_pointer w = nullptr;
     if (y->is_left_child_of_parent())
-      w = y == root() ? nullptr : y->parent_unsafe()->right;
+      w = y == root() ? nullptr : y->parent_unsafe()->right_;
     else
-      w = y->parent->left;
+      w = y->parent_->left_;
 
-    bool remove_black = y->is_black;
+    bool remove_black = y->is_black_;
 
     // remove y
     if (y->is_left_child_of_parent())
-      y->parent->left = z;
+      y->parent_->left_ = z;
     else
-      y->parent_unsafe()->right = z;
+      y->parent_unsafe()->right_ = z;
     if (z != nullptr)
-      z->parent = y->parent;
+      z->parent_ = y->parent_;
 
     if (y != x)
     {
       // if x has not already been removed, replace x by y
 
-      y->is_black = x->is_black;
-      y->parent = x->parent;
-      y->left = x->left;
-      y->right = x->right;
+      y->is_black_ = x->is_black_;
+      y->parent_ = x->parent_;
+      y->left_ = x->left_;
+      y->right_ = x->right_;
 
       if (x->is_left_child_of_parent())
-        x->parent->left = y;
+        x->parent_->left_ = y;
       else
-        x->parent_unsafe()->right = y;
+        x->parent_unsafe()->right_ = y;
 
-      if (x->left != nullptr)
-        x->left->set_parent(y);
-      if (x->right != nullptr)
-        x->right->set_parent(y);
+      if (x->left_ != nullptr)
+        x->left_->set_parent(y);
+      if (x->right_ != nullptr)
+        x->right_->set_parent(y);
     }
 
     if (remove_black)
@@ -552,79 +552,79 @@ public:
       {
         if (z == root())
           break;
-        if (z != nullptr && !z->is_black)
+        if (z != nullptr && !z->is_black_)
         {
           // Case 1.
           // z is red
           // we recolor it black
-          z->is_black = true;
+          z->is_black_ = true;
           break;
         }
         else
         {
           GPCL_ASSERT(w != nullptr);
-          if (w != nullptr && !w->is_black)
+          if (w != nullptr && !w->is_black_)
           {
-            w->parent_unsafe()->is_black = false;
-            w->is_black = true;
+            w->parent_unsafe()->is_black_ = false;
+            w->is_black_ = true;
             if (w->is_left_child_of_parent())
             {
-              rotate_right(w->parent_unsafe());
-              w = w->right->left;
+              rotate_right_(w->parent_unsafe());
+              w = w->right_->left_;
             }
             else
             {
               rotate_left(w->parent_unsafe());
-              w = w->left->right;
+              w = w->left_->right_;
             }
           }
           else
           {
-            if ((w->left == nullptr || w->left->is_black) &&
-                (w->right == nullptr || w->right->is_black))
+            if ((w->left_ == nullptr || w->left_->is_black_) &&
+                (w->right_ == nullptr || w->right_->is_black_))
             {
-              w->is_black = false;
+              w->is_black_ = false;
               z = w->parent_unsafe();
               if (z == root())
                 break;
 
               if (z->is_left_child_of_parent())
-                w = z->parent_unsafe()->right;
+                w = z->parent_unsafe()->right_;
               else
-                w = z->parent->left;
+                w = z->parent_->left_;
             }
             else
             {
               // w has at least one red child
               if (w->is_left_child_of_parent())
               {
-                if (w->right != nullptr && !w->right->is_black)
+                if (w->right_ != nullptr && !w->right_->is_black_)
                 {
-                  w->is_black = false;
-                  w->right->is_black = true;
-                  w = w->right;
+                  w->is_black_ = false;
+                  w->right_->is_black_ = true;
+                  w = w->right_;
                   rotate_left(w->parent_unsafe());
                 }
-                w->is_black = w->parent_unsafe()->is_black;
-                w->parent_unsafe()->is_black = true;
-                w->left->is_black = true;
-                rotate_right(w->parent_unsafe());
+                w->is_black_ = w->parent_unsafe()->is_black_;
+                w->parent_unsafe()->is_black_ = true;
+                w->left_->is_black_ = true;
+                rotate_right_(w->parent_unsafe());
                 break;
               }
               else
               {
-                if (w->left != nullptr && !w->left->is_black)
+                if (w->left_ != nullptr && !w->left_->is_black_)
                 {
-                  w->is_black = false;
-                  w->left->is_black = true;
-                  w = w->left;
-                  rotate_right(w->parent_unsafe());
+                  w->is_black_ = false;
+                  w->left_->is_black_ = true;
+                  w = w->left_;
+                  rotate_right_(w->parent_unsafe());
                 }
-                // !w->right->is_black
+                // !w->right_->is_black_
 
-                w->is_black = w->parent_unsafe()->is_black;
-                w->parent_unsafe()->is_black = true;
-                w->right->is_black = true;
+                w->is_black_ = w->parent_unsafe()->is_black_;
+                w->parent_unsafe()->is_black_ = true;
+                w->right_->is_black_ = true;
                 rotate_left(w->parent_unsafe());
                 break;
               }
@@ -637,7 +637,7 @@ public:
 
   void insert(reference v) noexcept
   {
-    node_pointer *link = std::addressof(get_base()->left);
+    node_pointer *link = std::addressof(get_base()->left_);
     node_pointer p = static_cast<node_pointer>(get_base());
 
     node_pointer x = std::pointer_traits<node_pointer>::pointer_to(v);
@@ -648,16 +648,16 @@ public:
     {
       p = *link;
       if (cmp(v, p->value()))
-        link = &p->left;
+        link = &p->left_;
       else
-        link = &p->right;
+        link = &p->right_;
     }
 
     x->set_parent(p);
     *link = x;
 
-    x->left = nullptr;
-    x->right = nullptr;
+    x->left_ = nullptr;
+    x->right_ = nullptr;
 
     rebalance_after_insert(x);
   }
@@ -665,7 +665,7 @@ public:
   template <typename K>
   pointer find_or_insert(const K &k, reference v)
   {
-    node_pointer *link = std::addressof(get_base()->left);
+    node_pointer *link = std::addressof(get_base()->left_);
     node_pointer p = static_cast<node_pointer>(get_base());
     node_pointer x = std::pointer_traits<node_pointer>::pointer_to(v);
 
@@ -675,9 +675,9 @@ public:
     {
       p = *link;
       if (cmp(k, p->value()))
-        link = &p->left;
+        link = &p->left_;
       else if (cmp(p->value(), k))
-        link = &p->right;
+        link = &p->right_;
       else
         return static_cast<pointer>(p);
     }
@@ -685,8 +685,8 @@ public:
     x->set_parent(p);
     *link = x;
 
-    x->left = nullptr;
-    x->right = nullptr;
+    x->left_ = nullptr;
+    x->right_ = nullptr;
 
     rebalance_after_insert(x);
 
@@ -697,7 +697,7 @@ public:
   const_pointer upper_bound(const K &k) const noexcept
   {
     const_node_pointer p = 0;
-    const_node_pointer const *link = std::addressof(get_base()->left);
+    const_node_pointer const *link = std::addressof(get_base()->left_);
     auto cmp = comp();
 
     while (*link)
@@ -705,9 +705,9 @@ public:
       p = *link;
 
       if (cmp(k, p->value()))
-        link = &p->left;
+        link = &p->left_;
       else
-        link = &p->right;
+        link = &p->right_;
     }
 
     return static_cast<const_pointer>(p);
@@ -716,19 +716,19 @@ public:
 private:
   void rebalance_after_insert(node_pointer x) noexcept
   {
-    x->is_black = x == root();
-    while (x != root() && !x->parent_unsafe()->is_black)
+    x->is_black_ = x == root();
+    while (x != root() && !x->parent_unsafe()->is_black_)
     {
       if (x->parent_unsafe()->is_left_child_of_parent())
       {
-        node_pointer y = x->parent_unsafe()->parent_unsafe()->right;
-        if (y && !y->is_black)
+        node_pointer y = x->parent_unsafe()->parent_unsafe()->right_;
+        if (y && !y->is_black_)
         {
           x = x->parent_unsafe();
-          x->is_black = true;
-          y->is_black = true;
+          x->is_black_ = true;
+          y->is_black_ = true;
           x = x->parent_unsafe();
-          x->is_black = x == root();
+          x->is_black_ = x == root();
         }
         else
         {
@@ -739,35 +739,35 @@ private:
           }
 
           x = x->parent_unsafe();
-          x->is_black = true;
+          x->is_black_ = true;
           x = x->parent_unsafe();
-          x->is_black = false;
-          rotate_right(x);
+          x->is_black_ = false;
+          rotate_right_(x);
           break;
         }
       }
       else
       {
-        node_pointer y = x->parent_unsafe()->parent_unsafe()->left;
-        if (y && !y->is_black)
+        node_pointer y = x->parent_unsafe()->parent_unsafe()->left_;
+        if (y && !y->is_black_)
         {
           x = x->parent_unsafe();
-          x->is_black = true;
-          y->is_black = true;
+          x->is_black_ = true;
+          y->is_black_ = true;
           x = x->parent_unsafe();
-          x->is_black = x == root();
+          x->is_black_ = x == root();
         }
         else
         {
           if (x->is_left_child_of_parent())
           {
             x = x->parent_unsafe();
-            rotate_right(x);
+            rotate_right_(x);
           }
           x = x->parent_unsafe();
-          x->is_black = true;
+          x->is_black_ = true;
           x = x->parent_unsafe();
-          x->is_black = false;
+          x->is_black_ = false;
           rotate_left(x);
           break;
         }
@@ -775,43 +775,43 @@ private:
     }
   }
 
-  void rotate_right(node_pointer x) noexcept
+  void rotate_right_(node_pointer x) noexcept
   {
     GPCL_ASSERT(x);
 
-    node_pointer y = x->left;
-    y->parent = x->parent;
+    node_pointer y = x->left_;
+    y->parent_ = x->parent_;
 
     if (x->is_left_child_of_parent())
-      x->parent->left = y;
+      x->parent_->left_ = y;
     else
-      x->parent_unsafe()->right = y;
+      x->parent_unsafe()->right_ = y;
 
-    x->left = y->right;
-    if (y->right != nullptr)
-      y->right->set_parent(x);
+    x->left_ = y->right_;
+    if (y->right_ != nullptr)
+      y->right_->set_parent(x);
 
     x->set_parent(y);
-    y->right = x;
+    y->right_ = x;
   }
 
   void rotate_left(node_pointer x) noexcept
   {
     GPCL_ASSERT(x);
 
-    node_pointer y = x->right;
-    y->parent = x->parent;
+    node_pointer y = x->right_;
+    y->parent_ = x->parent_;
 
     if (x->is_left_child_of_parent())
-      x->parent->left = y;
+      x->parent_->left_ = y;
     else
-      x->parent_unsafe()->right = y;
+      x->parent_unsafe()->right_ = y;
 
-    x->right = y->left;
-    if (y->left != nullptr)
-      y->left->set_parent(x);
+    x->right_ = y->left_;
+    if (y->left_ != nullptr)
+      y->left_->set_parent(x);
     x->set_parent(y);
-    y->left = x;
+    y->left_ = x;
   }
 };
 
