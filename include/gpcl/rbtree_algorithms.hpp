@@ -549,6 +549,33 @@ struct rbtree_algorithms
 
   template <typename K, typename Compare = std::less<K>,
             typename Project = gpcl::identity_t>
+  static std::size_t count(const_node_pointer header, const K &k,
+                           const Compare &comp = Compare(),
+                           const Project &proj = Project())
+  {
+    std::size_t num{0};
+
+    for (node_pointer n = lower_bound(header, k, comp, proj),
+                      end = upper_bound(header, k, comp, proj);
+         n != end; n = next_node(n))
+      ++num;
+
+    return num;
+  }
+
+  static std::size_t size(const_node_pointer header)
+  {
+    std::size_t num{0};
+
+    for (node_pointer n = begin_node(header), end = end_node(header); n != end;
+         n = next_node(n))
+      ++num;
+
+    return num;
+  }
+
+  template <typename K, typename Compare = std::less<K>,
+            typename Project = gpcl::identity_t>
   static node_pointer find(const_node_pointer header, const K &k,
                            const Compare &comp = Compare(),
                            const Project &proj = Project())
@@ -596,7 +623,7 @@ struct rbtree_algorithms
   template <typename K, typename Compare = std::less<K>,
             typename Project = gpcl::identity_t>
   static node_pointer lower_bound(const_node_pointer header, const K &k,
-                                  const Compare& comp = Compare(),
+                                  const Compare &comp = Compare(),
                                   const Project &proj = Project())
   {
     node_pointer q = node_traits::get_parent(header);
@@ -614,6 +641,16 @@ struct rbtree_algorithms
     }
 
     return q != null() ? q : p;
+  }
+
+  template <typename K, typename Compare = std::less<K>,
+            typename Project = gpcl::identity_t>
+  static std::pair<node_pointer, node_pointer>
+  equal_range(const_node_pointer header, const K &k,
+              const Compare &comp = Compare(), const Project &proj = Project())
+  {
+    return std::make_pair(lower_bound(header, k, comp, proj),
+                          upper_bound(header, k, comp, proj));
   }
 
   static void insert_before(node_pointer header, node_pointer pos,

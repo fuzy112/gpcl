@@ -336,4 +336,9 @@ TEST_CASE("rbtree search")
   CHECK(n == &n4);
   n = my_rbtree_alg::next_node(&n4);
   CHECK(n == &header);
+
+  CHECK(my_rbtree_alg::size(&header) == 6);
+  CHECK(my_rbtree_alg::count(&header, 1, std::less<int>(), std::mem_fn(&my_node::value)) == 1);
+  CHECK(my_rbtree_alg::count(&header, 2, std::less<int>(), std::mem_fn(&my_node::value)) == 3);
+
 }

@@ -379,7 +379,7 @@ public:
     }
     else
     {
-      return -1;
+      return hook_traits::size(header());
     }
   }
 
@@ -487,6 +487,55 @@ public:
   {
     return const_iterator(algo::upper_bound(header(), key, comp(), project()),
                           project());
+  }
+
+  std::pair<iterator, iterator> equal_range(const_reference value)
+  {
+    const auto [first, last] =
+        algo::equal_range(header(), value, comp(), project());
+    return std::make_pair(iterator(first, project()),
+                          iterator(last, project()));
+  }
+
+  std::pair<const_iterator, const_iterator>
+  equal_range(const_reference value) const
+  {
+    const auto [first, last] =
+        algo::equal_range(header(), value, comp(), project());
+    return std::make_pair(const_iterator(first, project()),
+                          const_iterator(last, project()));
+  }
+
+  template <typename K, typename Compare = compare,
+            std::void_t<typename Compare::is_transparent> * = 0>
+  std::pair<iterator, iterator> equal_range(const K &key)
+  {
+    const auto [first, last] =
+        algo::equal_range(header(), key, comp(), project());
+    return std::make_pair(iterator(first, project()),
+                          iterator(last, project()));
+  }
+
+  template <typename K, typename Compare = compare,
+            std::void_t<typename Compare::is_transparent> * = 0>
+  std::pair<const_iterator, const_iterator> equal_range(const K &key) const
+  {
+    const auto [first, last] =
+        algo::equal_range(header(), key, comp(), project());
+    return std::make_pair(const_iterator(first, project()),
+                          const_iterator(last, project()));
+  }
+
+  size_type count(const_reference value) const
+  {
+    return algo::count(header(), value, comp(), project());
+  }
+
+  template <typename K, typename Compare = compare,
+            std::void_t<typename Compare::is_transparent> * = 0>
+  size_type count(const K &key) const
+  {
+    return algo::count(header(), key, comp(), project());
   }
 
   void insert_equal(reference value)
