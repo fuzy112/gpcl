@@ -247,7 +247,6 @@ public:
   }
 };
 
-
 template <typename T, typename Hook>
 class const_tree_iterator
 {
@@ -278,13 +277,12 @@ private:
 public:
   const_tree_iterator() = default;
 
-  const_tree_iterator(tree_iterator<T, Hook> iter) noexcept
-    : pair_(iter.pair_)
+  const_tree_iterator(tree_iterator<T, Hook> iter) noexcept : pair_(iter.pair_)
   {
   }
 
   explicit const_tree_iterator(node_pointer p,
-                         projection proj = projection()) noexcept
+                               projection proj = projection()) noexcept
       : pair_(p, proj)
   {
   }
@@ -336,7 +334,6 @@ public:
   }
 };
 
-
 template <typename T, typename... Options>
 class rbtree
 {
@@ -369,8 +366,7 @@ public:
   using iterator = tree_iterator<T, hook_traits>;
   using const_iterator = const_tree_iterator<T, hook_traits>;
 
-  explicit rbtree(compare comp = compare(),
-                            projection proj = projection())
+  explicit rbtree(compare comp = compare(), projection proj = projection())
       : pair_(comp, proj)
   {
   }
@@ -436,6 +432,62 @@ public:
   const_iterator cend() const noexcept { return end(); }
 
   const_iterator croot() const noexcept { return root(); }
+
+  iterator lower_bound(const_reference value)
+  {
+    return iterator(algo::lower_bound(header(), value, comp(), project()),
+                    project());
+  }
+
+  const_iterator lower_bound(const_reference value) const
+  {
+    return const_iterator(algo::lower_bound(header(), value, comp(), project()),
+                          project());
+  }
+
+  template <typename K, typename Compare = compare,
+            std::void_t<typename Compare::is_transparent> * = 0>
+  iterator lower_bound(const K &key)
+  {
+    return iterator(algo::lower_bound(header(), key, comp(), project()),
+                    project());
+  }
+
+  template <typename K, typename Compare = compare,
+            std::void_t<typename Compare::is_transparent> * = 0>
+  const_iterator lower_bound(const K &key) const
+  {
+    return const_iterator(algo::lower_bound(header(), key, comp(), project()),
+                          project());
+  }
+
+  iterator upper_bound(const_reference value)
+  {
+    return iterator(algo::upper_bound(header(), value, comp(), project()),
+                    project());
+  }
+
+  const_iterator upper_bound(const_reference value) const
+  {
+    return const_iterator(algo::upper_bound(header(), value, comp(), project()),
+                          project());
+  }
+
+  template <typename K, typename Compare = compare,
+            std::void_t<typename Compare::is_transparent> * = 0>
+  iterator upper_bound(const K &key)
+  {
+    return iterator(algo::upper_bound(header(), key, comp(), project()),
+                    project());
+  }
+
+  template <typename K, typename Compare = compare,
+            std::void_t<typename Compare::is_transparent> * = 0>
+  const_iterator upper_bound(const K &key) const
+  {
+    return const_iterator(algo::upper_bound(header(), key, comp(), project()),
+                          project());
+  }
 
   void insert_equal(reference value)
   {

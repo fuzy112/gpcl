@@ -94,15 +94,15 @@ TEST_CASE("rbtree with fancy pointer")
 
   // dump_tree(tree);
 
-  for (auto &x : tree)
-  {
-    std::cout << x.value << '\n';
-  }
+  // for (auto &x : tree)
+  // {
+  //   std::cout << x.value << '\n';
+  // }
 
-  for (auto &x : std::as_const(tree))
-  {
-    std::cout << x.value << '\n';
-  }
+  // for (auto &x : std::as_const(tree))
+  // {
+  //   std::cout << x.value << '\n';
+  // }
 
   // std::for_each(
   //   tree.crbegin(),
