@@ -12,6 +12,7 @@
 #define GPCL_RBTREE_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/invoke.hpp>
 #include <gpcl/meta.hpp>
 #include <gpcl/options.hpp>
 #include <gpcl/rbtree_algorithms.hpp>
@@ -163,6 +164,179 @@ struct rbtree_hook_traits<rbtree_base_hook<T, Options...>>
   }
 };
 
+template <typename T, typename Hook>
+class tree_iterator
+{
+public:
+  using pointer = typename Hook::pointer;
+  using value_type = typename Hook::value_type;
+  using reference = typename Hook::reference;
+  using size_type = std::size_t;
+  using difference_type = std::size_t;
+  using iterator_category = std::bidirectional_iterator_tag;
+
+  using node_type = typename Hook::node_type;
+  using node_pointer = typename Hook::node_pointer;
+
+  using projection = typename Hook::projection;
+
+  using algo = rbtree_algorithms<Hook>;
+
+private:
+  detail::compressed_pair<node_pointer, projection> pair_;
+
+  node_pointer &ptr() noexcept { return pair_.first(); }
+  node_pointer const &ptr() const noexcept { return pair_.first(); }
+
+  projection &project() noexcept { return pair_.second(); }
+  projection const &project() const noexcept { return pair_.second(); }
+
+public:
+  tree_iterator() = default;
+
+  explicit tree_iterator(node_pointer p,
+                         projection proj = projection()) noexcept
+      : pair_(p, proj)
+  {
+  }
+
+  reference operator*() const noexcept
+  {
+    return gpcl::invoke(project(), ptr());
+  }
+
+  pointer operator->() const noexcept
+  {
+    return std::pointer_traits<pointer>::pointer_to(**this);
+  }
+
+  tree_iterator &operator++() noexcept
+  {
+    ptr() = algo::next_node(ptr());
+    return *this;
+  }
+
+  tree_iterator operator++(int) noexcept
+  {
+    auto ret = *this;
+    ++*this;
+    return ret;
+  }
+
+  tree_iterator &operator--() noexcept
+  {
+    ptr() = algo::prev_node(ptr());
+    return *this;
+  }
+
+  tree_iterator operator--(int) noexcept
+  {
+    auto ret = *this;
+    --*this;
+    return ret;
+  }
+
+  bool operator==(const tree_iterator &rhs) const noexcept
+  {
+    return ptr() == rhs.ptr();
+  }
+
+  bool operator!=(const tree_iterator &rhs) const noexcept
+  {
+    return !(*this == rhs);
+  }
+};
+
+
+template <typename T, typename Hook>
+class const_tree_iterator
+{
+public:
+  using pointer = typename Hook::const_pointer;
+  using value_type = typename Hook::value_type;
+  using reference = typename Hook::const_reference;
+  using size_type = std::size_t;
+  using difference_type = std::size_t;
+  using iterator_category = std::bidirectional_iterator_tag;
+
+  using node_type = typename Hook::node_type;
+  using node_pointer = typename Hook::node_pointer;
+
+  using projection = typename Hook::projection;
+
+  using algo = rbtree_algorithms<Hook>;
+
+private:
+  detail::compressed_pair<node_pointer, projection> pair_;
+
+  node_pointer &ptr() noexcept { return pair_.first(); }
+  node_pointer const &ptr() const noexcept { return pair_.first(); }
+
+  projection &project() noexcept { return pair_.second(); }
+  projection const &project() const noexcept { return pair_.second(); }
+
+public:
+  const_tree_iterator() = default;
+
+  const_tree_iterator(tree_iterator<T, Hook> iter) noexcept
+    : pair_(iter.pair_)
+  {
+  }
+
+  explicit const_tree_iterator(node_pointer p,
+                         projection proj = projection()) noexcept
+      : pair_(p, proj)
+  {
+  }
+
+  reference operator*() const noexcept
+  {
+    return gpcl::invoke(project(), ptr());
+  }
+
+  pointer operator->() const noexcept
+  {
+    return std::pointer_traits<pointer>::pointer_to(**this);
+  }
+
+  const_tree_iterator &operator++() noexcept
+  {
+    ptr() = algo::next_node(ptr());
+    return *this;
+  }
+
+  const_tree_iterator operator++(int) noexcept
+  {
+    auto ret = *this;
+    ++*this;
+    return ret;
+  }
+
+  const_tree_iterator &operator--() noexcept
+  {
+    ptr() = algo::prev_node(ptr());
+    return *this;
+  }
+
+  const_tree_iterator operator--(int) noexcept
+  {
+    auto ret = *this;
+    --*this;
+    return ret;
+  }
+
+  bool operator==(const const_tree_iterator &rhs) const noexcept
+  {
+    return ptr() == rhs.ptr();
+  }
+
+  bool operator!=(const const_tree_iterator &rhs) const noexcept
+  {
+    return !(*this == rhs);
+  }
+};
+
+
 template <typename T, typename... Options>
 class rbtree
 {
@@ -192,18 +366,23 @@ public:
 
   using algo = rbtree_algorithms<hook_traits>;
 
-  constexpr explicit rbtree(compare comp = compare(),
+  using iterator = tree_iterator<T, hook_traits>;
+  using const_iterator = const_tree_iterator<T, hook_traits>;
+
+  explicit rbtree(compare comp = compare(),
                             projection proj = projection())
       : pair_(comp, proj)
   {
-    algo::init_header(header());
   }
 
   size_type size() const noexcept
   {
-    if constexpr (constant_time_size_) {
+    if constexpr (constant_time_size_)
+    {
       return pair1_.second();
-    } else {
+    }
+    else
+    {
       return -1;
     }
   }
@@ -222,20 +401,54 @@ public:
     return std::pointer_traits<const_node_pointer>::pointer_to(pair1_.first());
   }
 
+  iterator begin() noexcept
+  {
+    return iterator(algo::begin_node(header()), project());
+  }
+
+  const_iterator begin() const noexcept
+  {
+    return const_iterator(algo::begin_node(header()), project());
+  }
+
+  iterator end() noexcept
+  {
+    return iterator(algo::end_node(header()), project());
+  }
+
+  const_iterator end() const noexcept
+  {
+    return const_iterator(algo::end_node(header()), project());
+  }
+
+  iterator root() noexcept
+  {
+    return iterator(algo::root_node(header()), project());
+  }
+
+  const_iterator root() const noexcept
+  {
+    return const_iterator(algo::root_node(header()), project());
+  }
+
+  const_iterator cbegin() const noexcept { return begin(); }
+
+  const_iterator cend() const noexcept { return end(); }
+
+  const_iterator croot() const noexcept { return root(); }
+
   void insert_equal(reference value)
   {
     algo::insert_equal_upper_bound(
-        header(),
-        std::pointer_traits<node_pointer>::pointer_to(value), comp(),
+        header(), std::pointer_traits<node_pointer>::pointer_to(value), comp(),
         project());
 
     update_size(+1);
   }
 
-  void erase(reference value)
+  void erase(reference value) noexcept
   {
-    algo::erase(header(),
-                std::pointer_traits<node_pointer>::pointer_to(value));
+    algo::erase(header(), std::pointer_traits<node_pointer>::pointer_to(value));
 
     update_size(-1);
   }
@@ -243,18 +456,26 @@ public:
 private:
   void update_size(difference_type diff) noexcept
   {
-    if constexpr (constant_time_size_) {
+    if constexpr (constant_time_size_)
+    {
       pair1_.second() += diff;
     }
   }
 
   class header_node : public node_type
   {
+  public:
+    header_node() noexcept : node_type()
+    {
+      algo::init_header(std::pointer_traits<node_pointer>::pointer_to(*this));
+    }
   };
 
   static constexpr constant_time_size constant_time_size_{};
 
-  struct empty_class {};
+  struct empty_class
+  {
+  };
 
   gpcl::detail::compressed_pair<
       header_node, meta::if_<constant_time_size, size_type, empty_class>>

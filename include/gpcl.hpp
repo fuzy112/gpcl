@@ -59,7 +59,6 @@
 #include <gpcl/function.hpp>
 #include <gpcl/function_ref.hpp>
 #include <gpcl/future.hpp>
-#include <gpcl/gc.hpp>
 #include <gpcl/generic_pointer_cast.hpp>
 #include <gpcl/get_deleter.hpp>
 #include <gpcl/getopt.hpp>

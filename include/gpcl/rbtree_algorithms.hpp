@@ -103,6 +103,11 @@ struct rbtree_algorithms
         const_cast<node_type &>(*header));
   }
 
+  static node_pointer root_node(const_node_pointer header) noexcept
+  {
+    return node_traits::get_parent(header);
+  }
+
   static void swap_tree(node_pointer header1, node_pointer header2) noexcept
   {
     node_pointer t = node_traits::get_parent(header1);
@@ -128,7 +133,7 @@ struct rbtree_algorithms
       return rightmost(t);
 
     node_pointer p = node_traits::get_parent(n);
-    while (node_traits::get_right(p) == n)
+    while (node_traits::get_left(p) == n && node_traits::get_parent(p) != n)
     {
       n = p;
       p = node_traits::get_parent(p);
@@ -147,7 +152,7 @@ struct rbtree_algorithms
       return leftmost(t);
 
     node_pointer p = node_traits::get_parent(n);
-    while (node_traits::get_left(p) == n)
+    while (node_traits::get_right(p) == n && node_traits::get_parent(p) != n)
     {
       n = p;
       p = node_traits::get_parent(p);

@@ -312,4 +312,28 @@ TEST_CASE("rbtree search")
   CHECK(last == &n3);
   CHECK(my_rbtree_alg::next_node(first) == &n22);
   CHECK(my_rbtree_alg::prev_node(last) == &n222);
+
+  /*
+        1         1          2          2            2                 2
+                   \        / \        / \          / \               / \
+                    2      1   3      1   3        1   3             1   3
+                                           \          / \               / \
+                                            4        2   4             2   4
+                                                                        \
+                                                                         2
+  */
+
+  CHECK(header.right == &n1);
+  n = my_rbtree_alg::next_node(&n1);
+  CHECK(n == &n2);
+  n = my_rbtree_alg::next_node(&n2);
+  CHECK(n == &n22);
+  n = my_rbtree_alg::next_node(&n22);
+  CHECK(n == &n222);
+  n = my_rbtree_alg::next_node(&n222);
+  CHECK(n == &n3);
+  n = my_rbtree_alg::next_node(&n3);
+  CHECK(n == &n4);
+  n = my_rbtree_alg::next_node(&n4);
+  CHECK(n == &header);
 }
