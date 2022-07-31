@@ -11,825 +11,256 @@
 #ifndef GPCL_RBTREE_HPP
 #define GPCL_RBTREE_HPP
 
-#include <gpcl/detail/assert.hpp>
-#include <gpcl/detail/compressed_pointer.hpp>
 #include <gpcl/detail/config.hpp>
-#include <gpcl/lexical_cast.hpp>
-
-#include <fstream>
-#include <functional>
+#include <gpcl/meta.hpp>
+#include <gpcl/options.hpp>
+#include <gpcl/rbtree_algorithms.hpp>
 
 namespace gpcl {
 
-template <typename>
-class rbtree_end_node;
+struct default_tag;
 
-template <typename, typename, typename>
-class rbtree_node;
+template <typename Hook>
+struct rbtree_hook_traits;
 
-template <typename, typename, typename>
-class rbtree_iterator;
+template <typename T, typename... Options>
+class rbtree_base_hook;
 
-template <typename, typename, typename>
-class rbtree_const_iterator;
+class default_tag;
 
-template <typename, typename, typename, typename>
-class rbtree;
-
-template <typename Pointer>
-class rbtree_end_node
+template <typename T, typename... Options>
+class rbtree_base_hook
 {
-public:
-  using pointer = Pointer;
+  friend rbtree_hook_traits<rbtree_base_hook>;
 
-  pointer left_;
-
-  constexpr rbtree_end_node() noexcept : left_() {}
-
-  rbtree_end_node(const rbtree_end_node &) = delete;
-  rbtree_end_node &operator=(const rbtree_end_node &) = delete;
-};
-
-template <typename T, typename Tag = class default_tag,
-          typename VoidPtr = void *>
-class rbtree_node : public rbtree_end_node<typename std::pointer_traits<
-                        VoidPtr>::template rebind<rbtree_node<T, Tag, VoidPtr>>>
-{
-  template <typename, typename, typename, typename>
-  friend class rbtree;
-
-public:
-  using void_pointer = VoidPtr;
-  using pointer =
-      typename std::pointer_traits<void_pointer>::template rebind<rbtree_node>;
-  using const_pointer = typename std::pointer_traits<
-      void_pointer>::template rebind<const rbtree_node>;
-  using end_node_type = rbtree_end_node<pointer>;
-  using end_node_ptr = typename std::pointer_traits<
-      void_pointer>::template rebind<end_node_type>;
-  using parent_pointer = end_node_ptr;
-  using node_type = rbtree_node;
-
-  using iter_pointer = end_node_ptr;
-
-  pointer right_;
-  parent_pointer parent_;
-  bool is_black_;
-
-protected:
-  constexpr rbtree_node() noexcept : right_(), parent_(), is_black_() {}
-
-  constexpr rbtree_node(const rbtree_node &) noexcept : rbtree_node() {}
-
-  rbtree_node &operator=(const rbtree_node &) noexcept { return *this; }
-
-public:
-  const_pointer parent_unsafe() const noexcept
-  {
-    return static_cast<const_pointer>(parent_);
-  }
-
-  pointer parent_unsafe() noexcept { return static_cast<pointer>(parent_); }
-
-  void set_parent(pointer p) noexcept
-  {
-    parent_ = static_cast<parent_pointer>(p);
-  }
-
-  bool is_left_child_of_parent() const noexcept
-  {
-    return (parent_->left_ == this);
-  }
-
-  T &value() noexcept { return static_cast<T &>(*this); }
-
-  T const &value() const noexcept { return static_cast<T const &>(*this); }
-
-  std::string id() const
-  {
-    return std::string("node") +
-           std::to_string(reinterpret_cast<std::uintptr_t>(this));
-  }
-
-  std::string node_def() const
-  {
-    return id() + "[label=" + lexical_cast<std::string>(value()) +
-           " color=" + (is_black_ ? "black" : "red") + "]";
-  }
-
-  pointer maximum_in_subtree() noexcept
-  {
-    pointer y = nullptr;
-    pointer x = static_cast<pointer>(this);
-    while (x != nullptr)
-    {
-      y = x;
-      x = x->right_;
-    }
-    return y;
-  }
-
-  pointer minimum_in_subtree() noexcept
-  {
-    pointer y = nullptr;
-    pointer x = static_cast<pointer>(this);
-    while (x != nullptr)
-    {
-      y = x;
-      x = x->left_;
-    }
-    return y;
-  }
-
-public:
-  friend inline std::string dump_node(const_pointer x, std::ostream &out)
-  {
-    if (!x)
-    {
-      static int id = 0;
-      out << "node" << ++id << "[label=nil]\n";
-      return std::string("node") + std::to_string(id);
-    }
-
-    out << x->node_def() << '\n';
-
-    auto left_ = dump_node(x->left_, out);
-    out << x->id() << " -> " << left_ << '\n';
-    auto right_ = dump_node(x->right_, out);
-    out << x->id() << " -> " << right_ << '\n';
-    return x->id();
-  }
-};
-
-template <typename NodePtr,
-          typename IterPtr = typename std::pointer_traits<
-              NodePtr>::template rebind<rbtree_end_node<NodePtr>>>
-IterPtr rbtree_next(NodePtr x) noexcept
-{
-  if (x->right_ != nullptr)
-    return static_cast<IterPtr>(x->right_->minimum_in_subtree());
-
-  while (!x->is_left_child_of_parent())
-    x = x->parent_unsafe();
-
-  return x->parent_;
-}
-
-// Calling prev on the first node is undefined behaviour
-template <typename NodePtr,
-          typename IterPtr = typename std::pointer_traits<
-              NodePtr>::template rebind<rbtree_end_node<NodePtr>>>
-IterPtr rbtree_prev(NodePtr x) noexcept
-{
-  if (x->left_ != nullptr)
-    return static_cast<IterPtr>(x->left_->maximum_in_subtree());
-
-  while (x->is_left_child_of_parent())
-    x = x->parent_unsafe();
-
-  return x->parent_;
-}
-
-template <typename T, typename Tag, typename VoidPtr>
-class rbtree_iterator
-{
-public:
-  using void_pointer = VoidPtr;
-  using node_type = rbtree_node<T, Tag, VoidPtr>;
-  using node_pointer = typename node_type::pointer;
-  using end_node_type = typename node_type::end_node_type;
-  using end_node_ptr = typename node_type::end_node_ptr;
-  using iter_pointer = end_node_ptr;
-
+private:
+  using option_list = meta::list<Options...>;
   using value_type = T;
-  using pointer =
-      typename std::pointer_traits<void_pointer>::template rebind<T>;
   using reference = T &;
-  using difference_type =
-      typename std::pointer_traits<void_pointer>::difference_type;
-  using size_type = std::make_unsigned_t<difference_type>;
-  using iterator_category = std::bidirectional_iterator_tag;
+  using const_reference = const T &;
 
-  iter_pointer ptr_;
+  using void_pointer =
+      typename options::find_option<option_list, options::void_pointer,
+                                    options::void_pointer<void *>>::type;
+  using tag = typename options::find_option<option_list, options::tag,
+                                            options::tag<default_tag>>::type;
 
-  explicit rbtree_iterator(iter_pointer p = nullptr) noexcept : ptr_(p) {}
+  using compare =
+      typename options::find_option<option_list, options::compare,
+                                    options::compare<std::less<T>>>::type;
 
-  rbtree_iterator &operator++() noexcept
-  {
-    GPCL_ASSERT(ptr_ != nullptr);
-    ptr_ = rbtree_next(static_cast<node_pointer>(ptr_));
-    return *this;
-  }
-
-  rbtree_iterator operator++(int) noexcept
-  {
-    auto ret = *this;
-    ++*this;
-    return ret;
-  }
-
-  rbtree_iterator &operator--() noexcept
-  {
-    GPCL_ASSERT(ptr_ != nullptr);
-    ptr_ = rbtree_prev(static_cast<node_pointer>(ptr_));
-    return *this;
-  }
-
-  rbtree_iterator operator--(int) noexcept
-  {
-    auto ret = *this;
-    --*this;
-    return ret;
-  }
-
-  reference operator*() const noexcept
-  {
-    GPCL_ASSERT(ptr_ != nullptr);
-    return *static_cast<pointer>(ptr_);
-  }
-
-  pointer operator->() const noexcept { return static_cast<pointer>(ptr_); }
-
-  friend bool operator==(const rbtree_iterator &x,
-                         const rbtree_iterator &y) noexcept
-  {
-    return x.ptr_ == y.ptr_;
-  }
-
-  friend bool operator!=(const rbtree_iterator &x,
-                         const rbtree_iterator &y) noexcept
-  {
-    return !(x == y);
-  }
-};
-
-template <typename T, typename Tag, typename VoidPtr>
-class rbtree_const_iterator
-{
-public:
-  using void_pointer = VoidPtr;
-  using node_type = rbtree_node<T, Tag, VoidPtr>;
-  using node_pointer = typename node_type::pointer;
-  using end_node_type = typename node_type::end_node_type;
-  using end_node_ptr = typename node_type::end_node_ptr;
-  using iter_pointer = end_node_ptr;
-
-  using value_type = T;
-  using pointer =
-      typename std::pointer_traits<void_pointer>::template rebind<const T>;
-  using reference = const T &;
-  using difference_type =
-      typename std::pointer_traits<void_pointer>::difference_type;
-  using size_type = std::make_unsigned_t<difference_type>;
-  using iterator_category = std::bidirectional_iterator_tag;
-
-  iter_pointer ptr_;
-
-  explicit rbtree_const_iterator(iter_pointer p = nullptr) noexcept : ptr_(p) {}
-
-  rbtree_const_iterator(rbtree_iterator<T, Tag, VoidPtr> iter) noexcept
-      : ptr_(iter.ptr_)
-  {
-  }
-
-  rbtree_const_iterator &operator++() noexcept
-  {
-    GPCL_ASSERT(ptr_ != nullptr);
-    ptr_ = rbtree_next(static_cast<node_pointer>(ptr_));
-    return *this;
-  }
-
-  rbtree_const_iterator operator++(int) noexcept
-  {
-    auto ret = *this;
-    ++*this;
-    return ret;
-  }
-
-  rbtree_const_iterator &operator--() noexcept
-  {
-    GPCL_ASSERT(ptr_ != nullptr);
-    ptr_ = rbtree_prev(static_cast<node_pointer>(ptr_));
-    return *this;
-  }
-
-  rbtree_const_iterator operator--(int) noexcept
-  {
-    auto ret = *this;
-    --*this;
-    return ret;
-  }
-
-  reference operator*() const noexcept
-  {
-    GPCL_ASSERT(ptr_ != nullptr);
-    return *static_cast<pointer>(ptr_);
-  }
-
-  pointer operator->() const noexcept { return static_cast<pointer>(ptr_); }
-
-  friend bool operator==(const rbtree_const_iterator &x,
-                         const rbtree_const_iterator &y) noexcept
-  {
-    return x.ptr_ == y.ptr_;
-  }
-
-  friend bool operator!=(const rbtree_const_iterator &x,
-                         const rbtree_const_iterator &y) noexcept
-  {
-    return !(x == y);
-  }
-};
-
-template <typename T, typename Tag = class default_tag,
-          typename Compare = std::less<T>, typename VoidPtr = void *>
-class rbtree
-{
-public:
-  using void_pointer = VoidPtr;
-  using value_type = T;
-  using node_type = rbtree_node<T, Tag, VoidPtr>;
+  using node_type = rbtree_base_hook<T, Options...>;
   using node_pointer =
       typename std::pointer_traits<void_pointer>::template rebind<node_type>;
   using const_node_pointer = typename std::pointer_traits<
       void_pointer>::template rebind<const node_type>;
-  using end_node_type = rbtree_end_node<node_pointer>;
-  using end_node_ptr = typename std::pointer_traits<
-      void_pointer>::template rebind<end_node_type>;
-  using const_end_node_ptr = typename std::pointer_traits<
-      void_pointer>::template rebind<const end_node_type>;
-  using compare = Compare;
-  using iter_pointer = end_node_ptr;
+  using color_type = bool;
 
-  using reference = T &;
-  using const_reference = const T &;
   using pointer =
-      typename std::pointer_traits<void_pointer>::template rebind<T>;
-  using const_pointer =
-      typename std::pointer_traits<void_pointer>::template rebind<const T>;
-  using size_type = std::size_t;
-  using difference_type = std::ptrdiff_t;
+      typename std::pointer_traits<void_pointer>::template rebind<value_type>;
+  using const_pointer = typename std::pointer_traits<
+      void_pointer>::template rebind<const value_type>;
 
-  using iterator = rbtree_iterator<T, Tag, VoidPtr>;
-  using const_iterator = rbtree_const_iterator<T, Tag, VoidPtr>;
+  struct projection
+  {
+    reference operator()(node_pointer n) const noexcept
+    {
+      return static_cast<reference>(*n);
+    }
 
-  using reverse_iterator = std::reverse_iterator<iterator>;
-  using reverse_const_iterator = std::reverse_iterator<const_iterator>;
+    const_reference operator()(const_node_pointer n) const noexcept
+    {
+      return static_cast<const_reference>(*n);
+    }
+  };
 
 private:
-  mutable detail::compressed_pair<end_node_type, compare> p_;
+  node_pointer parent_;
+  node_pointer left_;
+  node_pointer right_;
+  color_type color_;
 
-  end_node_ptr get_base() const noexcept
-  {
-    return std::pointer_traits<end_node_ptr>::pointer_to(p_.first());
-  }
-
-  node_pointer root_node() const noexcept
-  {
-    return static_cast<node_pointer>(p_.first().left_);
-  }
-
-public:
-  constexpr rbtree(const compare &cmp = compare()) noexcept(
-      std::is_nothrow_copy_constructible<compare>::value)
-      : p_(detail::piecewise_construct, std::make_tuple(),
-           std::forward_as_tuple(cmp))
+protected:
+  constexpr rbtree_base_hook() noexcept : parent_(), left_(), right_(), color_()
   {
   }
 
-  rbtree(const rbtree &) = delete;
-  rbtree &operator=(const rbtree &) = delete;
+  rbtree_base_hook(const rbtree_base_hook &) = delete;
+  rbtree_base_hook &operator=(const rbtree_base_hook &) = delete;
 
-  const_pointer root() const noexcept
+  ~rbtree_base_hook() = default;
+};
+
+template <typename T, typename... Options>
+struct rbtree_hook_traits<rbtree_base_hook<T, Options...>>
+{
+  using node_type = rbtree_base_hook<T, Options...>;
+  using node_pointer = typename node_type::node_pointer;
+  using const_node_pointer = typename node_type::const_node_pointer;
+  using color_type = typename node_type::color_type;
+
+  using value_type = typename node_type::value_type;
+  using reference = typename node_type::reference;
+  using const_reference = typename node_type::const_reference;
+  using pointer = typename node_type::pointer;
+  using const_pointer = typename node_type::const_pointer;
+
+  using compare = typename node_type::compare;
+  using projection = typename node_type::projection;
+
+  static node_pointer get_parent(const_node_pointer n) noexcept
   {
-    return static_cast<const_pointer>(root_node());
+    return n->parent_;
   }
 
-  pointer root() noexcept { return static_cast<pointer>(root_node()); }
-
-  compare comp() const noexcept { return p_.second(); }
-
-  iterator begin() noexcept
+  static void set_parent(node_pointer n, node_pointer p) noexcept
   {
-    if (root_node())
-      return iterator(
-          static_cast<iter_pointer>(root_node()->minimum_in_subtree()));
-    return end();
+    n->parent_ = p;
   }
 
-  const_iterator begin() const noexcept
+  static node_pointer get_left(const_node_pointer p) noexcept
   {
-    if (root_node())
-      return const_iterator(
-          static_cast<iter_pointer>(root_node()->minimum_in_subtree()));
-    return end();
+    return p->left_;
   }
 
-  const_iterator cbegin() const noexcept { return begin(); }
-
-  iterator end() noexcept { return iterator(get_base()); }
-
-  const_iterator end() const noexcept
+  static void set_left(node_pointer p, node_pointer n) noexcept
   {
-    return const_iterator(static_cast<iter_pointer>(get_base()));
+    p->left_ = n;
   }
 
-  const_iterator cend() const noexcept { return end(); }
-
-  reverse_iterator rbegin() noexcept { return reverse_iterator(end()); }
-
-  reverse_const_iterator rbegin() const noexcept
+  static node_pointer get_right(const_node_pointer p) noexcept
   {
-    return reverse_const_iterator(end());
+    return p->right_;
   }
 
-  reverse_const_iterator crbegin() const noexcept { return rbegin(); }
-
-  reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
-
-  reverse_const_iterator rend() const noexcept
+  static void set_right(node_pointer p, node_pointer n) noexcept
   {
-    return reverse_const_iterator(begin());
+    p->right_ = n;
   }
 
-  reverse_const_iterator crend() const noexcept { return rend(); }
-
-  template <typename K>
-  const_pointer find(const K &k) const noexcept
+  static color_type get_color(const_node_pointer n) noexcept
   {
-    const_node_pointer p = root();
-    auto cmp = comp();
-
-    while (p != nullptr)
-    {
-      if (cmp(k, p->value()))
-        p = p->left_;
-      else if (cmp(p->value(), k))
-        p = p->right_;
-      else
-        return static_cast<const_pointer>(p);
-    }
-
-    return nullptr;
+    return n->color_;
   }
 
-  template <typename K>
-  pointer find(const K &k) noexcept
+  static void set_color(node_pointer n, color_type c) noexcept
   {
-    node_pointer p = root();
-    auto cmp = comp();
-
-    while (p != nullptr)
-    {
-      if (cmp(k, p->value()))
-        p = p->left_;
-      else if (cmp(p->value(), k))
-        p = p->right_;
-      else
-        return static_cast<pointer>(p);
-    }
-
-    return nullptr;
+    n->color_ = c;
   }
 
-  void remove(reference v) noexcept
+  static constexpr color_type black() noexcept { return 1; }
+
+  static constexpr color_type red() noexcept { return 0; }
+
+  static constexpr reference to_value(node_pointer n) noexcept
   {
-    node_pointer x = std::pointer_traits<node_pointer>::pointer_to(v);
-
-    // y will be node to delete
-    // either x or x's successor
-    node_pointer y = (x->right_ && x->left_) ? x->right_ : x;
-    if (y != x)
-    {
-      // find x's successor
-      while (y->left_)
-        y = y->left_;
-    }
-
-    // z is y's (possible null) single child
-    node_pointer z = y->left_ ? y->left_ : y->right_;
-
-    // w is z's (possible null) uncle and will be z's sibling
-    node_pointer w = nullptr;
-    if (y->is_left_child_of_parent())
-      w = y == root() ? nullptr : y->parent_unsafe()->right_;
-    else
-      w = y->parent_->left_;
-
-    bool remove_black = y->is_black_;
-
-    // remove y
-    if (y->is_left_child_of_parent())
-      y->parent_->left_ = z;
-    else
-      y->parent_unsafe()->right_ = z;
-    if (z != nullptr)
-      z->parent_ = y->parent_;
-
-    if (y != x)
-    {
-      // if x has not already been removed, replace x by y
-
-      y->is_black_ = x->is_black_;
-      y->parent_ = x->parent_;
-      y->left_ = x->left_;
-      y->right_ = x->right_;
-
-      if (x->is_left_child_of_parent())
-        x->parent_->left_ = y;
-      else
-        x->parent_unsafe()->right_ = y;
-
-      if (x->left_ != nullptr)
-        x->left_->set_parent(y);
-      if (x->right_ != nullptr)
-        x->right_->set_parent(y);
-    }
-
-    if (remove_black)
-    {
-      for (;;)
-      {
-        if (z == root())
-          break;
-        if (z != nullptr && !z->is_black_)
-        {
-          // Case 1.
-          // z is red
-          // we recolor it black
-          z->is_black_ = true;
-          break;
-        }
-        else
-        {
-          GPCL_ASSERT(w != nullptr);
-          if (w != nullptr && !w->is_black_)
-          {
-            w->parent_unsafe()->is_black_ = false;
-            w->is_black_ = true;
-            if (w->is_left_child_of_parent())
-            {
-              rotate_right_(w->parent_unsafe());
-              w = w->right_->left_;
-            }
-            else
-            {
-              rotate_left(w->parent_unsafe());
-              w = w->left_->right_;
-            }
-          }
-          else
-          {
-            if ((w->left_ == nullptr || w->left_->is_black_) &&
-                (w->right_ == nullptr || w->right_->is_black_))
-            {
-              w->is_black_ = false;
-              z = w->parent_unsafe();
-              if (z == root())
-                break;
-
-              if (z->is_left_child_of_parent())
-                w = z->parent_unsafe()->right_;
-              else
-                w = z->parent_->left_;
-            }
-            else
-            {
-              // w has at least one red child
-              if (w->is_left_child_of_parent())
-              {
-                if (w->right_ != nullptr && !w->right_->is_black_)
-                {
-                  w->is_black_ = false;
-                  w->right_->is_black_ = true;
-                  w = w->right_;
-                  rotate_left(w->parent_unsafe());
-                }
-                w->is_black_ = w->parent_unsafe()->is_black_;
-                w->parent_unsafe()->is_black_ = true;
-                w->left_->is_black_ = true;
-                rotate_right_(w->parent_unsafe());
-                break;
-              }
-              else
-              {
-                if (w->left_ != nullptr && !w->left_->is_black_)
-                {
-                  w->is_black_ = false;
-                  w->left_->is_black_ = true;
-                  w = w->left_;
-                  rotate_right_(w->parent_unsafe());
-                }
-                // !w->right_->is_black_
-
-                w->is_black_ = w->parent_unsafe()->is_black_;
-                w->parent_unsafe()->is_black_ = true;
-                w->right_->is_black_ = true;
-                rotate_left(w->parent_unsafe());
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
+    return static_cast<reference>(*n);
   }
 
-  void insert(reference v) noexcept
+  static constexpr const_reference to_value(const_node_pointer n) noexcept
   {
-    node_pointer *link = std::addressof(get_base()->left_);
-    node_pointer p = static_cast<node_pointer>(get_base());
-
-    node_pointer x = std::pointer_traits<node_pointer>::pointer_to(v);
-
-    auto cmp = comp();
-
-    while (*link != nullptr)
-    {
-      p = *link;
-      if (cmp(v, p->value()))
-        link = &p->left_;
-      else
-        link = &p->right_;
-    }
-
-    x->set_parent(p);
-    *link = x;
-
-    x->left_ = nullptr;
-    x->right_ = nullptr;
-
-    rebalance_after_insert(x);
-  }
-
-  template <typename K>
-  pointer find_or_insert(const K &k, reference v)
-  {
-    node_pointer *link = std::addressof(get_base()->left_);
-    node_pointer p = static_cast<node_pointer>(get_base());
-    node_pointer x = std::pointer_traits<node_pointer>::pointer_to(v);
-
-    auto cmp = comp();
-
-    while (*link != nullptr)
-    {
-      p = *link;
-      if (cmp(k, p->value()))
-        link = &p->left_;
-      else if (cmp(p->value(), k))
-        link = &p->right_;
-      else
-        return static_cast<pointer>(p);
-    }
-
-    x->set_parent(p);
-    *link = x;
-
-    x->left_ = nullptr;
-    x->right_ = nullptr;
-
-    rebalance_after_insert(x);
-
-    return nullptr;
-  }
-
-  template <typename K>
-  const_pointer upper_bound(const K &k) const noexcept
-  {
-    const_node_pointer p = 0;
-    const_node_pointer const *link = std::addressof(get_base()->left_);
-    auto cmp = comp();
-
-    while (*link)
-    {
-      p = *link;
-
-      if (cmp(k, p->value()))
-        link = &p->left_;
-      else
-        link = &p->right_;
-    }
-
-    return static_cast<const_pointer>(p);
-  }
-
-private:
-  void rebalance_after_insert(node_pointer x) noexcept
-  {
-    x->is_black_ = x == root();
-    while (x != root() && !x->parent_unsafe()->is_black_)
-    {
-      if (x->parent_unsafe()->is_left_child_of_parent())
-      {
-        node_pointer y = x->parent_unsafe()->parent_unsafe()->right_;
-        if (y && !y->is_black_)
-        {
-          x = x->parent_unsafe();
-          x->is_black_ = true;
-          y->is_black_ = true;
-          x = x->parent_unsafe();
-          x->is_black_ = x == root();
-        }
-        else
-        {
-          if (!x->is_left_child_of_parent())
-          {
-            x = x->parent_unsafe();
-            rotate_left(x);
-          }
-
-          x = x->parent_unsafe();
-          x->is_black_ = true;
-          x = x->parent_unsafe();
-          x->is_black_ = false;
-          rotate_right_(x);
-          break;
-        }
-      }
-      else
-      {
-        node_pointer y = x->parent_unsafe()->parent_unsafe()->left_;
-        if (y && !y->is_black_)
-        {
-          x = x->parent_unsafe();
-          x->is_black_ = true;
-          y->is_black_ = true;
-          x = x->parent_unsafe();
-          x->is_black_ = x == root();
-        }
-        else
-        {
-          if (x->is_left_child_of_parent())
-          {
-            x = x->parent_unsafe();
-            rotate_right_(x);
-          }
-          x = x->parent_unsafe();
-          x->is_black_ = true;
-          x = x->parent_unsafe();
-          x->is_black_ = false;
-          rotate_left(x);
-          break;
-        }
-      }
-    }
-  }
-
-  void rotate_right_(node_pointer x) noexcept
-  {
-    GPCL_ASSERT(x);
-
-    node_pointer y = x->left_;
-    y->parent_ = x->parent_;
-
-    if (x->is_left_child_of_parent())
-      x->parent_->left_ = y;
-    else
-      x->parent_unsafe()->right_ = y;
-
-    x->left_ = y->right_;
-    if (y->right_ != nullptr)
-      y->right_->set_parent(x);
-
-    x->set_parent(y);
-    y->right_ = x;
-  }
-
-  void rotate_left(node_pointer x) noexcept
-  {
-    GPCL_ASSERT(x);
-
-    node_pointer y = x->right_;
-    y->parent_ = x->parent_;
-
-    if (x->is_left_child_of_parent())
-      x->parent_->left_ = y;
-    else
-      x->parent_unsafe()->right_ = y;
-
-    x->right_ = y->left_;
-    if (y->left_ != nullptr)
-      y->left_->set_parent(x);
-    x->set_parent(y);
-    y->left_ = x;
+    return static_cast<const_reference>(*n);
   }
 };
 
-template <typename Tree>
-void dump_tree(const Tree &tree)
+template <typename T, typename... Options>
+class rbtree
 {
-  std::string tmpfile = tmpnam(NULL);
-  std::ofstream file(tmpfile);
-  file << "digraph {\n";
-  file << "ordering=out\n";
-  dump_node(static_cast<typename Tree::const_node_pointer>(tree.root()), file);
-  file << "}\n";
+public:
+  using hook_traits =
+      options::find_option<meta::list<Options...>, rbtree_hook_traits, void>;
+  using node_type = typename hook_traits::node_type;
+  using node_pointer = typename hook_traits::node_pointer;
+  using const_node_pointer = typename hook_traits::const_node_pointer;
+  using color_type = typename hook_traits::color_type;
 
-  std::clog << "Output to " << tmpfile << '\n';
-  file.close();
-  std::string cmd = "dotty " + tmpfile + " &";
-  std::system(cmd.c_str());
-}
+  using value_type = T;
+  using reference = value_type &;
+  using const_reference = const value_type &;
+  using pointer = typename hook_traits::pointer;
+  using const_pointer = typename hook_traits::const_pointer;
+
+  using compare = typename hook_traits::compare;
+  using projection = typename hook_traits::projection;
+
+  using size_type = std::size_t;
+  using difference_type = std::ptrdiff_t;
+  using constant_time_size =
+      typename options::find_option<meta::list<Options...>,
+                                    options::constant_time_size,
+                                    options::constant_time_size_c<true>>::type;
+
+  using algo = rbtree_algorithms<hook_traits>;
+
+  constexpr explicit rbtree(compare comp = compare(),
+                            projection proj = projection())
+      : pair_(comp, proj)
+  {
+    algo::init_header(header());
+  }
+
+  size_type size() const noexcept
+  {
+    if constexpr (constant_time_size_) {
+      return pair1_.second();
+    } else {
+      return -1;
+    }
+  }
+
+  compare comp() const { return pair_.first(); }
+
+  projection project() const { return pair_.second(); }
+
+  node_pointer header() noexcept
+  {
+    return std::pointer_traits<node_pointer>::pointer_to(pair1_.first());
+  }
+
+  const_node_pointer header() const noexcept
+  {
+    return std::pointer_traits<const_node_pointer>::pointer_to(pair1_.first());
+  }
+
+  void insert_equal(reference value)
+  {
+    algo::insert_equal_upper_bound(
+        header(),
+        std::pointer_traits<node_pointer>::pointer_to(value), comp(),
+        project());
+
+    update_size(+1);
+  }
+
+  void erase(reference value)
+  {
+    algo::erase(header(),
+                std::pointer_traits<node_pointer>::pointer_to(value));
+
+    update_size(-1);
+  }
+
+private:
+  void update_size(difference_type diff) noexcept
+  {
+    if constexpr (constant_time_size_) {
+      pair1_.second() += diff;
+    }
+  }
+
+  class header_node : public node_type
+  {
+  };
+
+  static constexpr constant_time_size constant_time_size_{};
+
+  struct empty_class {};
+
+  gpcl::detail::compressed_pair<
+      header_node, meta::if_<constant_time_size, size_type, empty_class>>
+      pair1_;
+  gpcl::detail::compressed_pair<compare, projection> pair_;
+};
 
 } // namespace gpcl
 

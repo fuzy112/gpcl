@@ -425,6 +425,22 @@ template <typename List, typename X>
 using find_index =
     second<fold<List, pair<size_t<0>, npos>, detail::find_index_helper<X>>>;
 
+
+
+namespace detail
+{
+  template <typename P>
+  struct filter_helper
+  {
+    template <typename State, typename X>
+    using invoke = if_<meta::invoke<P, X>, meta::push_back<State, X>, State>;
+  };
+}
+
+template <typename List, typename P>
+using filter = fold<List, list<>, detail::filter_helper<P>>;
+
+
 namespace detail {
 
 template <typename F>

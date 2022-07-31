@@ -59,9 +59,11 @@
 #include <gpcl/function.hpp>
 #include <gpcl/function_ref.hpp>
 #include <gpcl/future.hpp>
+#include <gpcl/gc.hpp>
 #include <gpcl/generic_pointer_cast.hpp>
 #include <gpcl/get_deleter.hpp>
 #include <gpcl/getopt.hpp>
+#include <gpcl/identity.hpp>
 #include <gpcl/in_place.hpp>
 #include <gpcl/in_place_type.hpp>
 #include <gpcl/intrusive_list.hpp>
@@ -101,6 +103,7 @@
 #include <gpcl/once_flag.hpp>
 #include <gpcl/optional.hpp>
 #include <gpcl/optional_fwd.hpp>
+#include <gpcl/options.hpp>
 #include <gpcl/ospanstream.hpp>
 #include <gpcl/osyncstream.hpp>
 #include <gpcl/pid_file.hpp>
@@ -108,6 +111,8 @@
 #include <gpcl/pool_allocator.hpp>
 #include <gpcl/process.hpp>
 #include <gpcl/propagate_const.hpp>
+#include <gpcl/rbtree.hpp>
+#include <gpcl/rbtree_algorithms.hpp>
 #include <gpcl/scope_exit.hpp>
 #include <gpcl/scope_fail.hpp>
 #include <gpcl/scope_success.hpp>

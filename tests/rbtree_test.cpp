@@ -7,8 +7,9 @@
 class my_tag;
 
 class MyClass
-    : public gpcl::rbtree_node<MyClass>,
-      public gpcl::rbtree_node<MyClass, my_tag, gpcl::offset_ptr<void>>
+    : public gpcl::rbtree_base_hook<MyClass>,
+      public gpcl::rbtree_base_hook<MyClass, gpcl::tag<my_tag>,
+                                    gpcl::void_pointer<gpcl::offset_ptr<void>>>
 {
 public:
   int value;
@@ -32,32 +33,35 @@ TEST_CASE("rbtree")
   MyClass o5(5);
   MyClass o6(6);
 
-  gpcl::rbtree<MyClass> tree;
+  gpcl::rbtree<MyClass, gpcl::rbtree_hook_traits<gpcl::rbtree_base_hook<MyClass>>>
+      tree;
 
-  tree.insert(o1);
-  tree.insert(o2);
+  tree.insert_equal(o1);
+  tree.insert_equal(o2);
 
   // dump_tree(tree);
-  tree.insert(o3);
-  tree.insert(o4);
-  tree.insert(o5);
-  tree.insert(o6);
+  tree.insert_equal(o3);
+  tree.insert_equal(o4);
+  tree.insert_equal(o5);
+  tree.insert_equal(o6);
 
   // dump_tree(tree);
   // // tree.dump();
 
-  dump_tree(tree);
+  // dump_tree(tree);
 
-  tree.remove(o3);
+  tree.erase(o3);
 
-  dump_tree(tree);
+  // dump_tree(tree);
   // tree.dump();
 }
 
 TEST_CASE("rbtree with fancy pointer")
 {
   using my_tree =
-      gpcl::rbtree<MyClass, my_tag, std::less<MyClass>, gpcl::offset_ptr<void>>;
+      gpcl::rbtree<MyClass, gpcl::rbtree_hook_traits<gpcl::rbtree_base_hook<
+                                MyClass, gpcl::tag<my_tag>,
+                                gpcl::void_pointer<gpcl::offset_ptr<void>>>>>;
   my_tree tree;
 
   MyClass o1(1);
@@ -67,23 +71,27 @@ TEST_CASE("rbtree with fancy pointer")
   MyClass o5(5);
   MyClass o6(6);
 
-  tree.insert(o1);
-  tree.insert(o2);
+  tree.insert_equal(o1);
+  tree.insert_equal(o2);
 
   // dump_tree(tree);
-  tree.insert(o3);
-  tree.insert(o4);
-  tree.insert(o5);
-  tree.insert(o6);
+  tree.insert_equal(o3);
+  tree.insert_equal(o4);
+  tree.insert_equal(o5);
+  tree.insert_equal(o6);
+
+  CHECK(tree.size() == 6);
 
   // dump_tree(tree);
   // // tree.dump();
 
-  dump_tree(tree);
+  // dump_tree(tree);
 
-  tree.remove(o3);
+  tree.erase(o3);
 
-  dump_tree(tree);
+  CHECK(tree.size() == 5);
+
+  // dump_tree(tree);
 
   // for (auto &x : std::as_const(tree))
   // {
