@@ -21,198 +21,192 @@ namespace gpcl {
 
 struct default_tag;
 
-template <typename Hook>
-struct rbtree_hook_traits;
+template <typename ValueTraits>
+class const_tree_iterator;
+template <typename ValueTraits>
+class tree_iterator;
 
-template <typename T, typename... Options>
-class rbtree_base_hook;
+namespace detail {
+template <typename NodeType>
+struct rbtree_node_traits
+{
+  using node_type = NodeType;
+  using node_pointer = typename node_type::node_pointer;
+  using const_node_pointer = typename node_type::const_node_pointer;
+  using color_type = typename node_type::color_type;
 
-class default_tag;
+  static color_type red() noexcept { return node_type::red(); }
 
-template <typename T, typename... Options>
+  static color_type black() noexcept { return node_type::black(); }
+
+  static node_pointer get_parent(const_node_pointer n) noexcept
+  {
+    GPCL_ASSERT(n);
+
+    return n->parent;
+  }
+
+  static void set_parent(node_pointer n, node_pointer p) noexcept
+  {
+    GPCL_ASSERT(n);
+    n->parent = p;
+  }
+
+  static node_pointer get_left(const_node_pointer n) noexcept
+  {
+    GPCL_ASSERT(n);
+    return n->left;
+  }
+
+  static void set_left(node_pointer n, node_pointer x) noexcept
+  {
+    GPCL_ASSERT(n);
+
+    n->left = x;
+  }
+
+  static node_pointer get_right(const_node_pointer n) noexcept
+  {
+    return n->right;
+  }
+
+  static void set_right(node_pointer n, node_pointer x) noexcept
+  {
+    GPCL_ASSERT(n);
+    n->right = x;
+  }
+
+  static color_type get_color(const_node_pointer n) noexcept
+  {
+    GPCL_ASSERT(n);
+    return n->color;
+  }
+
+  static void set_color(node_pointer n, color_type c) noexcept
+  {
+    GPCL_ASSERT(n);
+    n->color = c;
+  }
+};
+} // namespace detail
+
+template <typename... Options>
 class rbtree_base_hook
 {
-  friend rbtree_hook_traits<rbtree_base_hook>;
-
 private:
-  using option_list = meta::list<Options...>;
-  using value_type = T;
-  using reference = T &;
-  using const_reference = const T &;
+  friend detail::rbtree_node_traits<rbtree_base_hook>;
 
   using void_pointer =
-      typename options::find_option<option_list, options::void_pointer,
+      typename options::find_option<meta::list<Options...>,
+                                    options::void_pointer,
                                     options::void_pointer<void *>>::type;
-  using tag = typename options::find_option<option_list, options::tag,
-                                            options::tag<default_tag>>::type;
 
-  using compare =
-      typename options::find_option<option_list, options::compare,
-                                    options::compare<std::less<T>>>::type;
-
-  using node_type = rbtree_base_hook<T, Options...>;
+  using node_type = rbtree_base_hook;
   using node_pointer =
       typename std::pointer_traits<void_pointer>::template rebind<node_type>;
   using const_node_pointer = typename std::pointer_traits<
       void_pointer>::template rebind<const node_type>;
   using color_type = bool;
 
-  using pointer =
-      typename std::pointer_traits<void_pointer>::template rebind<value_type>;
-  using const_pointer = typename std::pointer_traits<
-      void_pointer>::template rebind<const value_type>;
+  static constexpr color_type red() noexcept { return 0; }
+  static constexpr color_type black() noexcept { return 1; }
 
-  struct projection
-  {
-    reference operator()(node_pointer n) const noexcept
-    {
-      return static_cast<reference>(*n);
-    }
-
-    const_reference operator()(const_node_pointer n) const noexcept
-    {
-      return static_cast<const_reference>(*n);
-    }
-  };
-
-private:
-  node_pointer parent_;
-  node_pointer left_;
-  node_pointer right_;
-  color_type color_;
+  node_pointer parent;
+  node_pointer left;
+  node_pointer right;
+  color_type color;
 
 protected:
-  constexpr rbtree_base_hook() noexcept : parent_(), left_(), right_(), color_()
-  {
-  }
-
-  rbtree_base_hook(const rbtree_base_hook &) = delete;
-  rbtree_base_hook &operator=(const rbtree_base_hook &) = delete;
+  constexpr rbtree_base_hook() = default;
 
   ~rbtree_base_hook() = default;
 };
 
+namespace detail {
+template <typename T, typename Hook>
+struct rbtree_value_traits;
+
 template <typename T, typename... Options>
-struct rbtree_hook_traits<rbtree_base_hook<T, Options...>>
+struct rbtree_value_traits<T, rbtree_base_hook<Options...>>
 {
-  using node_type = rbtree_base_hook<T, Options...>;
-  using node_pointer = typename node_type::node_pointer;
-  using const_node_pointer = typename node_type::const_node_pointer;
-  using color_type = typename node_type::color_type;
+  using value_type = T;
+  using node_type = rbtree_base_hook<Options...>;
+  using node_traits = detail::rbtree_node_traits<node_type>;
+  using node_pointer = typename node_traits::node_pointer;
+  using const_node_pointer = typename node_traits::const_node_pointer;
 
-  using value_type = typename node_type::value_type;
-  using reference = typename node_type::reference;
-  using const_reference = typename node_type::const_reference;
-  using pointer = typename node_type::pointer;
-  using const_pointer = typename node_type::const_pointer;
+  using pointer =
+      typename std::pointer_traits<node_pointer>::template rebind<value_type>;
+  using const_pointer = typename std::pointer_traits<
+      node_pointer>::template rebind<const value_type>;
 
-  using compare = typename node_type::compare;
-  using projection = typename node_type::projection;
+  using link_mode_type = typename options::find_option<
+      meta::list<Options...>, options::link_mode,
+      options::link_mode<options::normal_link>>::type;
 
-  static node_pointer get_parent(const_node_pointer n) noexcept
+  static constexpr link_mode_type link_mode{};
+
+  static node_pointer to_node_pointer(value_type &value) noexcept
   {
-    return n->parent_;
+    return std::pointer_traits<node_pointer>::pointer_to(value);
   }
 
-  static void set_parent(node_pointer n, node_pointer p) noexcept
+  static const_node_pointer to_node_pointer(const value_type &value) noexcept
   {
-    n->parent_ = p;
+    return std::pointer_traits<const_node_pointer>::pointer_to(value);
   }
 
-  static node_pointer get_left(const_node_pointer p) noexcept
+  static pointer to_value_pointer(node_pointer n) noexcept
   {
-    return p->left_;
+    return static_cast<pointer>(n);
   }
 
-  static void set_left(node_pointer p, node_pointer n) noexcept
+  static const_pointer to_value_pointer(const_node_pointer n) noexcept
   {
-    p->left_ = n;
-  }
-
-  static node_pointer get_right(const_node_pointer p) noexcept
-  {
-    return p->right_;
-  }
-
-  static void set_right(node_pointer p, node_pointer n) noexcept
-  {
-    p->right_ = n;
-  }
-
-  static color_type get_color(const_node_pointer n) noexcept
-  {
-    return n->color_;
-  }
-
-  static void set_color(node_pointer n, color_type c) noexcept
-  {
-    n->color_ = c;
-  }
-
-  static constexpr color_type black() noexcept { return 1; }
-
-  static constexpr color_type red() noexcept { return 0; }
-
-  static constexpr reference to_value(node_pointer n) noexcept
-  {
-    return static_cast<reference>(*n);
-  }
-
-  static constexpr const_reference to_value(const_node_pointer n) noexcept
-  {
-    return static_cast<const_reference>(*n);
+    return static_cast<const_pointer>(n);
   }
 };
 
-template <typename T, typename Hook>
+}; // namespace detail
+
+template <typename ValueTraits>
 class tree_iterator
 {
 public:
-  using pointer = typename Hook::pointer;
-  using value_type = typename Hook::value_type;
-  using reference = typename Hook::reference;
+  using value_traits = ValueTraits;
+  using node_traits = typename value_traits::node_traits;
+  using value_type = typename value_traits::value_type;
+  using node_pointer = typename value_traits::node_pointer;
+  using const_node_pointer = typename value_traits::const_node_pointer;
+
+  using pointer = typename value_traits::pointer;
+  using reference = value_type &;
   using size_type = std::size_t;
   using difference_type = std::size_t;
   using iterator_category = std::bidirectional_iterator_tag;
 
-  using node_type = typename Hook::node_type;
-  using node_pointer = typename Hook::node_pointer;
-
-  using projection = typename Hook::projection;
-
-  using algo = rbtree_algorithms<Hook>;
+  using algo = rbtree_algorithms<node_traits>;
 
 private:
-  detail::compressed_pair<node_pointer, projection> pair_;
+  friend const_tree_iterator<value_traits>;
 
-  node_pointer &ptr() noexcept { return pair_.first(); }
-  node_pointer const &ptr() const noexcept { return pair_.first(); }
-
-  projection &project() noexcept { return pair_.second(); }
-  projection const &project() const noexcept { return pair_.second(); }
+  node_pointer n_;
 
 public:
   tree_iterator() = default;
 
-  explicit tree_iterator(node_pointer p,
-                         projection proj = projection()) noexcept
-      : pair_(p, proj)
-  {
-  }
+  explicit tree_iterator(node_pointer p) noexcept : n_(p) {}
 
-  reference operator*() const noexcept
-  {
-    return gpcl::invoke(project(), ptr());
-  }
+  reference operator*() const noexcept { return *this->operator->(); }
 
   pointer operator->() const noexcept
   {
-    return std::pointer_traits<pointer>::pointer_to(**this);
+    return value_traits::to_value_pointer(n_);
   }
 
   tree_iterator &operator++() noexcept
   {
-    ptr() = algo::next_node(ptr());
+    n_ = algo::next_node(n_);
     return *this;
   }
 
@@ -225,7 +219,7 @@ public:
 
   tree_iterator &operator--() noexcept
   {
-    ptr() = algo::prev_node(ptr());
+    n_ = algo::prev_node(n_);
     return *this;
   }
 
@@ -238,7 +232,7 @@ public:
 
   bool operator==(const tree_iterator &rhs) const noexcept
   {
-    return ptr() == rhs.ptr();
+    return n_ == rhs.n_;
   }
 
   bool operator!=(const tree_iterator &rhs) const noexcept
@@ -246,60 +240,44 @@ public:
     return !(*this == rhs);
   }
 };
-
-template <typename T, typename Hook>
+template <typename ValueTraits>
 class const_tree_iterator
 {
 public:
-  using pointer = typename Hook::const_pointer;
-  using value_type = typename Hook::value_type;
-  using reference = typename Hook::const_reference;
+  using value_traits = ValueTraits;
+  using node_traits = typename value_traits::node_traits;
+  using value_type = typename value_traits::value_type;
+  using node_pointer = typename value_traits::node_pointer;
+  using const_node_pointer = typename value_traits::const_node_pointer;
+
+  using pointer = typename value_traits::const_pointer;
+  using reference = const value_type &;
   using size_type = std::size_t;
   using difference_type = std::size_t;
   using iterator_category = std::bidirectional_iterator_tag;
 
-  using node_type = typename Hook::node_type;
-  using node_pointer = typename Hook::node_pointer;
-
-  using projection = typename Hook::projection;
-
-  using algo = rbtree_algorithms<Hook>;
+  using algo = rbtree_algorithms<node_traits>;
 
 private:
-  detail::compressed_pair<node_pointer, projection> pair_;
-
-  node_pointer &ptr() noexcept { return pair_.first(); }
-  node_pointer const &ptr() const noexcept { return pair_.first(); }
-
-  projection &project() noexcept { return pair_.second(); }
-  projection const &project() const noexcept { return pair_.second(); }
+  const_node_pointer n_;
 
 public:
   const_tree_iterator() = default;
 
-  const_tree_iterator(tree_iterator<T, Hook> iter) noexcept : pair_(iter.pair_)
-  {
-  }
+  explicit const_tree_iterator(const_node_pointer p) noexcept : n_(p) {}
 
-  explicit const_tree_iterator(node_pointer p,
-                               projection proj = projection()) noexcept
-      : pair_(p, proj)
-  {
-  }
+  const_tree_iterator(tree_iterator<ValueTraits> iter) noexcept : n_(iter.n_) {}
 
-  reference operator*() const noexcept
-  {
-    return gpcl::invoke(project(), ptr());
-  }
+  reference operator*() const noexcept { return *this->operator->(); }
 
   pointer operator->() const noexcept
   {
-    return std::pointer_traits<pointer>::pointer_to(**this);
+    return value_traits::to_value_pointer(n_);
   }
 
   const_tree_iterator &operator++() noexcept
   {
-    ptr() = algo::next_node(ptr());
+    n_ = algo::next_node(n_);
     return *this;
   }
 
@@ -312,7 +290,7 @@ public:
 
   const_tree_iterator &operator--() noexcept
   {
-    ptr() = algo::prev_node(ptr());
+    n_ = algo::prev_node(n_);
     return *this;
   }
 
@@ -325,7 +303,7 @@ public:
 
   bool operator==(const const_tree_iterator &rhs) const noexcept
   {
-    return ptr() == rhs.ptr();
+    return n_ == rhs.n_;
   }
 
   bool operator!=(const const_tree_iterator &rhs) const noexcept
@@ -334,25 +312,145 @@ public:
   }
 };
 
+namespace detail {
+
+template <typename T>
+struct identity
+{
+  using type = T;
+
+  constexpr T &operator()(T &value) const noexcept { return value; }
+
+  constexpr const T &operator()(const T &value) const noexcept { return value; }
+
+  constexpr T &&operator()(T &&value) const noexcept
+  {
+    return std::move(value);
+  }
+
+  constexpr const T &&operator()(const T &&value) const noexcept
+  {
+    return std::move(value);
+  }
+};
+
+template <typename ValueType, typename KeyCompare, typename KeyOfValue>
+struct value_compare
+{
+  using value_type = ValueType;
+  using key_type = typename KeyOfValue::type;
+
+  using key_compare = KeyCompare;
+  using key_of_value = KeyOfValue;
+
+  detail::compressed_pair<KeyCompare, KeyOfValue> pair_;
+
+  constexpr value_compare(KeyCompare key_comp, KeyOfValue key_of_v) noexcept
+      : pair_(key_comp, key_of_v)
+  {
+  }
+
+  constexpr bool operator()(const value_type &x,
+                            const value_type &y) const noexcept
+  {
+    return pair_.first()(pair_.second()(x), pair_.second()(y));
+  }
+
+  key_compare key_comp() const noexcept { return pair_.first(); }
+
+  key_of_value get_key_of_value() const noexcept { return pair_.second(); }
+};
+
+template <typename ValueTraits, typename ValueCompare>
+struct node_pointer_compare
+{
+  using value_traits = ValueTraits;
+  using node_pointer = typename value_traits::node_pointer;
+  using const_node_pointer = typename value_traits::const_node_pointer;
+  using pointer = typename value_traits::pointer;
+  using const_pointer = typename value_traits::const_pointer;
+
+  ValueCompare value_comp_;
+
+  constexpr explicit node_pointer_compare(ValueCompare comp) noexcept
+      : value_comp_(comp)
+  {
+  }
+
+  constexpr bool operator()(const_node_pointer x,
+                            const_node_pointer y) const noexcept
+  {
+    const_pointer vx = value_traits::to_value_pointer(x);
+    const_pointer vy = value_traits::to_value_pointer(y);
+    return value_comp_(*vx, *vy);
+  }
+};
+
+template <typename ValueTraits, typename KeyCompare, typename KeyOfValue>
+struct key_node_pointer_compare
+{
+  using value_traits = ValueTraits;
+  using node_pointer = typename value_traits::node_pointer;
+  using const_node_pointer = typename value_traits::const_node_pointer;
+  using pointer = typename value_traits::pointer;
+  using const_pointer = typename value_traits::const_pointer;
+
+  using key_type = typename KeyOfValue::type;
+
+  using is_transparent = int;
+
+  detail::compressed_pair<KeyCompare, KeyOfValue> pair_;
+
+  constexpr key_node_pointer_compare(
+      KeyCompare key_comp = KeyCompare(),
+      KeyOfValue key_of_value = KeyOfValue()) noexcept
+      : pair_(key_comp, key_of_value)
+  {
+  }
+
+  constexpr bool operator()(const_node_pointer x,
+                            const key_type &y) const noexcept
+  {
+    const_pointer vx = value_traits::to_value_pointer(x);
+    const key_type &kx = pair_.second()(*vx);
+    return pair_.first()(kx, y);
+  }
+
+  constexpr bool operator()(const key_type &x,
+                            const_node_pointer y) const noexcept
+  {
+    const_pointer vy = value_traits::to_value_pointer(y);
+    const key_type &ky = pair_.second()(*vy);
+    return pair_.first()(x, ky);
+  }
+};
+
+template <typename T, typename... Options>
+struct get_value_traits
+{
+  using base_hook = typename options::find_option<
+      meta::list<Options...>, options::base_hook,
+      options::base_hook<rbtree_base_hook<>>>::type;
+
+  using type = rbtree_value_traits<T, base_hook>;
+};
+
+} // namespace detail
+
 template <typename T, typename... Options>
 class rbtree
 {
 public:
-  using hook_traits =
-      options::find_option<meta::list<Options...>, rbtree_hook_traits, void>;
-  using node_type = typename hook_traits::node_type;
-  using node_pointer = typename hook_traits::node_pointer;
-  using const_node_pointer = typename hook_traits::const_node_pointer;
-  using color_type = typename hook_traits::color_type;
+  using option_list = meta::list<Options...>;
+  using value_traits = typename detail::get_value_traits<T, Options...>::type;
+  using node_traits = typename value_traits::node_traits;
 
-  using value_type = T;
-  using reference = value_type &;
-  using const_reference = const value_type &;
-  using pointer = typename hook_traits::pointer;
-  using const_pointer = typename hook_traits::const_pointer;
-
-  using compare = typename hook_traits::compare;
-  using projection = typename hook_traits::projection;
+  using value_type = typename value_traits::value_type;
+  using node_type = typename node_traits::node_type;
+  using node_pointer = typename value_traits::node_pointer;
+  using const_node_pointer = typename value_traits::const_node_pointer;
+  using pointer = typename value_traits::pointer;
+  using const_pointer = typename value_traits::const_pointer;
 
   using size_type = std::size_t;
   using difference_type = std::ptrdiff_t;
@@ -361,13 +459,35 @@ public:
                                     options::constant_time_size,
                                     options::constant_time_size_c<true>>::type;
 
-  using algo = rbtree_algorithms<hook_traits>;
+  using key_of_value = typename options::find_option<
+      option_list, options::key_of_value,
+      options::key_of_value<detail::identity<value_type>>>::type;
+  using key_type = typename key_of_value::type;
 
-  using iterator = tree_iterator<T, hook_traits>;
-  using const_iterator = const_tree_iterator<T, hook_traits>;
+  using key_compare = typename options::find_option<
+      option_list, options::compare,
+      options::compare<std::less<key_type>>>::type;
 
-  explicit rbtree(compare comp = compare(), projection proj = projection())
-      : pair_(comp, proj)
+  using value_compare =
+      detail::value_compare<value_type, key_compare, key_of_value>;
+
+  using node_pointer_compare =
+      detail::node_pointer_compare<value_traits, value_compare>;
+
+  using key_node_pointer_compare =
+      detail::key_node_pointer_compare<value_traits, key_compare, key_of_value>;
+
+  using algo = rbtree_algorithms<node_traits>;
+
+  using iterator = tree_iterator<value_traits>;
+  using const_iterator = const_tree_iterator<value_traits>;
+
+  using reference = value_type &;
+  using const_reference = value_type const &;
+
+  explicit rbtree(key_compare key_comp = key_compare(),
+                  key_of_value proj = key_of_value())
+      : value_comp_(key_comp, proj)
   {
   }
 
@@ -379,13 +499,24 @@ public:
     }
     else
     {
-      return hook_traits::size(header());
+      return algo::size(header());
     }
   }
 
-  compare comp() const { return pair_.first(); }
+  key_compare key_comp() const noexcept { return value_comp_.key_comp(); }
 
-  projection project() const { return pair_.second(); }
+  value_compare value_comp() const noexcept { return value_comp_; }
+
+  node_pointer_compare node_pointer_comp() const noexcept
+  {
+    return node_pointer_compare(value_comp());
+  }
+
+  key_node_pointer_compare key_node_pointer_comp() const noexcept
+  {
+    return key_node_pointer_compare(key_comp(),
+                                    value_comp().get_key_of_value());
+  }
 
   node_pointer header() noexcept
   {
@@ -397,34 +528,25 @@ public:
     return std::pointer_traits<const_node_pointer>::pointer_to(pair1_.first());
   }
 
-  iterator begin() noexcept
-  {
-    return iterator(algo::begin_node(header()), project());
-  }
+  iterator begin() noexcept { return iterator(algo::begin_node(header())); }
 
   const_iterator begin() const noexcept
   {
-    return const_iterator(algo::begin_node(header()), project());
+    return const_iterator(algo::begin_node(header()));
   }
 
-  iterator end() noexcept
-  {
-    return iterator(algo::end_node(header()), project());
-  }
+  iterator end() noexcept { return iterator(algo::end_node(header())); }
 
   const_iterator end() const noexcept
   {
-    return const_iterator(algo::end_node(header()), project());
+    return const_iterator(algo::end_node(header()));
   }
 
-  iterator root() noexcept
-  {
-    return iterator(algo::root_node(header()), project());
-  }
+  iterator root() noexcept { return iterator(algo::root_node(header())); }
 
   const_iterator root() const noexcept
   {
-    return const_iterator(algo::root_node(header()), project());
+    return const_iterator(algo::root_node(header()));
   }
 
   const_iterator cbegin() const noexcept { return begin(); }
@@ -433,123 +555,59 @@ public:
 
   const_iterator croot() const noexcept { return root(); }
 
-  iterator lower_bound(const_reference value)
+  iterator lower_bound(const key_type &key)
   {
-    return iterator(algo::lower_bound(header(), value, comp(), project()),
-                    project());
+    return iterator(algo::lower_bound(header(), key, key_node_pointer_comp()));
   }
 
-  const_iterator lower_bound(const_reference value) const
+  const_iterator lower_bound(const key_type &key) const
   {
-    return const_iterator(algo::lower_bound(header(), value, comp(), project()),
-                          project());
+    return const_iterator(
+        algo::lower_bound(header(), key, key_node_pointer_comp()));
   }
 
-  template <typename K, typename Compare = compare,
-            std::void_t<typename Compare::is_transparent> * = 0>
-  iterator lower_bound(const K &key)
+  iterator upper_bound(const key_type &key)
   {
-    return iterator(algo::lower_bound(header(), key, comp(), project()),
-                    project());
+    return iterator(algo::upper_bound(header(), key, key_node_pointer_comp()));
   }
 
-  template <typename K, typename Compare = compare,
-            std::void_t<typename Compare::is_transparent> * = 0>
-  const_iterator lower_bound(const K &key) const
+  const_iterator upper_bound(const key_type &key) const
   {
-    return const_iterator(algo::lower_bound(header(), key, comp(), project()),
-                          project());
+    return const_iterator(
+        algo::upper_bound(header(), key, key_node_pointer_comp()));
   }
 
-  iterator upper_bound(const_reference value)
-  {
-    return iterator(algo::upper_bound(header(), value, comp(), project()),
-                    project());
-  }
-
-  const_iterator upper_bound(const_reference value) const
-  {
-    return const_iterator(algo::upper_bound(header(), value, comp(), project()),
-                          project());
-  }
-
-  template <typename K, typename Compare = compare,
-            std::void_t<typename Compare::is_transparent> * = 0>
-  iterator upper_bound(const K &key)
-  {
-    return iterator(algo::upper_bound(header(), key, comp(), project()),
-                    project());
-  }
-
-  template <typename K, typename Compare = compare,
-            std::void_t<typename Compare::is_transparent> * = 0>
-  const_iterator upper_bound(const K &key) const
-  {
-    return const_iterator(algo::upper_bound(header(), key, comp(), project()),
-                          project());
-  }
-
-  std::pair<iterator, iterator> equal_range(const_reference value)
+  std::pair<iterator, iterator> equal_range(const key_type &key)
   {
     const auto [first, last] =
-        algo::equal_range(header(), value, comp(), project());
-    return std::make_pair(iterator(first, project()),
-                          iterator(last, project()));
+        algo::equal_range(header(), key, key_node_pointer_comp());
+    return std::make_pair(iterator(first), iterator(last));
   }
 
   std::pair<const_iterator, const_iterator>
-  equal_range(const_reference value) const
+  equal_range(const key_type &key) const
   {
     const auto [first, last] =
-        algo::equal_range(header(), value, comp(), project());
-    return std::make_pair(const_iterator(first, project()),
-                          const_iterator(last, project()));
+        algo::equal_range(header(), key, key_node_pointer_comp());
+    return std::make_pair(const_iterator(first), const_iterator(last));
   }
 
-  template <typename K, typename Compare = compare,
-            std::void_t<typename Compare::is_transparent> * = 0>
-  std::pair<iterator, iterator> equal_range(const K &key)
+  size_type count(const key_type &key) const
   {
-    const auto [first, last] =
-        algo::equal_range(header(), key, comp(), project());
-    return std::make_pair(iterator(first, project()),
-                          iterator(last, project()));
-  }
-
-  template <typename K, typename Compare = compare,
-            std::void_t<typename Compare::is_transparent> * = 0>
-  std::pair<const_iterator, const_iterator> equal_range(const K &key) const
-  {
-    const auto [first, last] =
-        algo::equal_range(header(), key, comp(), project());
-    return std::make_pair(const_iterator(first, project()),
-                          const_iterator(last, project()));
-  }
-
-  size_type count(const_reference value) const
-  {
-    return algo::count(header(), value, comp(), project());
-  }
-
-  template <typename K, typename Compare = compare,
-            std::void_t<typename Compare::is_transparent> * = 0>
-  size_type count(const K &key) const
-  {
-    return algo::count(header(), key, comp(), project());
+    return algo::count(header(), key, key_node_pointer_comp());
   }
 
   void insert_equal(reference value)
   {
     algo::insert_equal_upper_bound(
-        header(), std::pointer_traits<node_pointer>::pointer_to(value), comp(),
-        project());
+        header(), value_traits::to_node_pointer(value), node_pointer_comp());
 
     update_size(+1);
   }
 
   void erase(reference value) noexcept
   {
-    algo::erase(header(), std::pointer_traits<node_pointer>::pointer_to(value));
+    algo::erase(header(), value_traits::to_node_pointer(value));
 
     update_size(-1);
   }
@@ -581,7 +639,7 @@ private:
   gpcl::detail::compressed_pair<
       header_node, meta::if_<constant_time_size, size_type, empty_class>>
       pair1_;
-  gpcl::detail::compressed_pair<compare, projection> pair_;
+  value_compare value_comp_;
 };
 
 } // namespace gpcl

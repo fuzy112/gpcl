@@ -55,6 +55,28 @@ struct constant_time_size
   using type = E;
 };
 
+template <typename T>
+struct link_mode
+{
+  using type = T;
+};
+
+using normal_link = std::integral_constant<int, 0>;
+using safe_link = std::integral_constant<int, 1>;
+using auto_unlink = std::integral_constant<int, 2>;
+
+template <typename T>
+struct value_traits
+{
+  using type = T;
+};
+
+template <typename T>
+struct key_of_value
+{
+  using type = T;
+};
+
 template <bool V>
 using constant_time_size_c = constant_time_size<std::bool_constant<V>>;
 

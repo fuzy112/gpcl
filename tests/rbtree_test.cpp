@@ -7,10 +7,11 @@
 
 class my_tag;
 
-class MyClass
-    : public gpcl::rbtree_base_hook<MyClass>,
-      public gpcl::rbtree_base_hook<MyClass, gpcl::tag<my_tag>,
-                                    gpcl::void_pointer<gpcl::offset_ptr<void>>>
+using hook_1 =
+    gpcl::rbtree_base_hook<gpcl::tag<my_tag>,
+                           gpcl::void_pointer<gpcl::offset_ptr<void>>>;
+
+class MyClass : public gpcl::rbtree_base_hook<>, public hook_1
 {
 public:
   int value;
@@ -34,8 +35,7 @@ TEST_CASE("rbtree")
   MyClass o5(5);
   MyClass o6(6);
 
-  gpcl::rbtree<MyClass, gpcl::rbtree_hook_traits<gpcl::rbtree_base_hook<MyClass>>>
-      tree;
+  gpcl::rbtree<MyClass> tree;
 
   tree.insert_equal(o1);
   tree.insert_equal(o2);
@@ -59,10 +59,7 @@ TEST_CASE("rbtree")
 
 TEST_CASE("rbtree with fancy pointer")
 {
-  using my_tree =
-      gpcl::rbtree<MyClass, gpcl::rbtree_hook_traits<gpcl::rbtree_base_hook<
-                                MyClass, gpcl::tag<my_tag>,
-                                gpcl::void_pointer<gpcl::offset_ptr<void>>>>>;
+  using my_tree = gpcl::rbtree<MyClass, gpcl::base_hook<hook_1>>;
   my_tree tree;
 
   MyClass o1(1);
