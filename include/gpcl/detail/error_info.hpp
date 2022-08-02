@@ -40,7 +40,6 @@ template <typename CharT, typename Traits, typename T>
 std::basic_ostream<CharT, Traits> &
 operator<<(std::basic_ostream<CharT, Traits> &os, const T &)
 {
-  using std::operator<<;
   return os << "{unknown value}";
 }
 

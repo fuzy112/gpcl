@@ -16,6 +16,7 @@
 #include <gpcl/meta.hpp>
 #include <gpcl/options.hpp>
 #include <gpcl/rbtree_algorithms.hpp>
+#include <gpcl/detail/compressed_pair.hpp>
 
 namespace gpcl {
 
@@ -397,7 +398,7 @@ struct key_node_pointer_compare
 
   using key_type = typename KeyOfValue::type;
 
-  using is_transparent = int;
+  struct is_transparent;
 
   detail::compressed_pair<KeyCompare, KeyOfValue> pair_;
 

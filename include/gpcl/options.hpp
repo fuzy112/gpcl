@@ -12,6 +12,7 @@
 #define GPCL_OPTIONS_HPP
 
 #include <gpcl/detail/config.hpp>
+#include <gpcl/meta.hpp>
 
 #include <type_traits>
 

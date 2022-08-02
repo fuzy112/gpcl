@@ -303,3 +303,6 @@ if(GPCL_ENABLE_CLANG_TIDY)
       "-p" "${CMAKE_BINARY_DIR}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
+
+
+include(tools/generate_header_tests.cmake)

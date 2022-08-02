@@ -14,8 +14,8 @@
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/identity.hpp>
-
-#include <gpcl/dynarray.hpp>
+#include <gpcl/transparent_compare.hpp>
+#include <gpcl/invoke.hpp>
 
 namespace gpcl {
 
@@ -547,8 +547,16 @@ struct rbtree_algorithms
     }
   }
 
-  template <typename K, typename Compare = std::less<K>,
-            typename Project = gpcl::identity_t>
+  template <
+      typename K, typename Compare = std::less<K>,
+      typename Project = gpcl::identity_t,
+
+      std::enable_if_t<std::is_same<std::decay_t<typename gpcl::invoke_result<
+                                        Project, const_node_pointer>::type>,
+                                    std::decay_t<K>>::value ||
+                           gpcl::is_transparent_compare<Compare>::value,
+
+                       int> = 0>
   static std::size_t count(const_node_pointer header, const K &k,
                            const Compare &comp = Compare(),
                            const Project &proj = Project())
