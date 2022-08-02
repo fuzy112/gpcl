@@ -82,6 +82,20 @@ static bool my_node_compare(const my_node *x, const my_node *y) noexcept
   return x->value < y->value;
 }
 
+struct my_key_node_compare
+{
+  using is_transparent = int;
+  bool operator()(int x, const my_node *y) const noexcept
+  {
+    return x < y->value;
+  }
+
+  bool operator()(const my_node *y, int x) const noexcept
+  {
+    return y->value < x;
+  }
+};
+
 TEST_CASE("rbtree_algorithms")
 {
   my_node header;
@@ -95,8 +109,7 @@ TEST_CASE("rbtree_algorithms")
   CHECK(my_rbtree_alg::begin_node(&header) == &header);
   CHECK(my_rbtree_alg::end_node(&header) == &header);
 
-  CHECK(my_rbtree_alg::upper_bound(&header, 1, std::less<int>(),
-                                   std::mem_fn(&my_node::value)) == &header);
+  CHECK(my_rbtree_alg::upper_bound(&header, 1, my_key_node_compare()) == &header);
 
   my_node n1(1);
   my_rbtree_alg::insert_equal_upper_bound(&header, &n1, my_node_compare);
@@ -110,10 +123,8 @@ TEST_CASE("rbtree_algorithms")
   CHECK(n1.value == 1);
   CHECK(n1.color == my_rbtree_node_traits::black());
 
-  CHECK(my_rbtree_alg::upper_bound(&header, 1, std::less<int>(),
-                                   std::mem_fn(&my_node::value)) == &header);
-  CHECK(my_rbtree_alg::upper_bound(&header, 0, std::less<int>(),
-                                   std::mem_fn(&my_node::value)) == &n1);
+  CHECK(my_rbtree_alg::upper_bound(&header, 1, my_key_node_compare()) == &header);
+  CHECK(my_rbtree_alg::upper_bound(&header, 0, my_key_node_compare()) == &n1);
 
   SUBCASE("insert 1")
   {
@@ -276,8 +287,7 @@ TEST_CASE("rbtree search")
   CHECK(header.left == &n4);
   CHECK(header.right == &n1);
 
-  my_node *p = my_rbtree_alg::upper_bound(&header, 2, std::less<int>(),
-                                          std::mem_fn(&my_node::value));
+  my_node *p = my_rbtree_alg::upper_bound(&header, 2, my_key_node_compare());
   CHECK(p->value == 3);
   CHECK(p == &n3);
 
@@ -289,24 +299,19 @@ TEST_CASE("rbtree search")
   CHECK(n3.left == &n22);
   CHECK(n3.right == &n4);
 
-  auto *n = my_rbtree_alg::upper_bound(&header, 1, std::less<int>(),
-                                       std::mem_fn(&my_node::value));
+  auto *n = my_rbtree_alg::upper_bound(&header, 1, my_key_node_compare());
   CHECK(n->value == 2);
   CHECK(my_rbtree_alg::next_node(n)->value == 2);
-  CHECK(my_rbtree_alg::upper_bound(&header, 2, std::less<int>(),
-                                   std::mem_fn(&my_node::value)) == &n3);
+  CHECK(my_rbtree_alg::upper_bound(&header, 2, my_key_node_compare()) == &n3);
 
-  n = my_rbtree_alg::lower_bound(&header, 1, std::less<int>(),
-                                 std::mem_fn(&my_node::value));
+  n = my_rbtree_alg::lower_bound(&header, 1, my_key_node_compare());
   CHECK(n == &n1);
 
   my_node n222(2);
   my_rbtree_alg::insert_equal_upper_bound(&header, &n222, my_node_compare);
 
-  auto *first = my_rbtree_alg::lower_bound(&header, 2, std::less<int>(),
-                                           std::mem_fn(&my_node::value));
-  auto *last = my_rbtree_alg::upper_bound(&header, 2, std::less<int>(),
-                                          std::mem_fn(&my_node::value));
+  auto *first = my_rbtree_alg::lower_bound(&header, 2, my_key_node_compare());
+  auto *last = my_rbtree_alg::upper_bound(&header, 2, my_key_node_compare());
 
   CHECK(first == &n2);
   CHECK(last == &n3);
@@ -338,7 +343,6 @@ TEST_CASE("rbtree search")
   CHECK(n == &header);
 
   CHECK(my_rbtree_alg::size(&header) == 6);
-  CHECK(my_rbtree_alg::count(&header, 1, std::less<int>(), std::mem_fn(&my_node::value)) == 1);
-  CHECK(my_rbtree_alg::count(&header, 2, std::less<int>(), std::mem_fn(&my_node::value)) == 3);
-
+  CHECK(my_rbtree_alg::count(&header, 1, my_key_node_compare()) == 1);
+  CHECK(my_rbtree_alg::count(&header, 2, my_key_node_compare()) == 3);
 }

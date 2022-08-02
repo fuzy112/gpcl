@@ -11,12 +11,12 @@
 #ifndef GPCL_RBTREE_HPP
 #define GPCL_RBTREE_HPP
 
+#include <gpcl/detail/compressed_pair.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/invoke.hpp>
 #include <gpcl/meta.hpp>
 #include <gpcl/options.hpp>
 #include <gpcl/rbtree_algorithms.hpp>
-#include <gpcl/detail/compressed_pair.hpp>
 
 namespace gpcl {
 
@@ -346,20 +346,19 @@ struct value_compare
 
   detail::compressed_pair<KeyCompare, KeyOfValue> pair_;
 
-  constexpr value_compare(KeyCompare key_comp, KeyOfValue key_of_v) noexcept
+  constexpr value_compare(KeyCompare key_comp, KeyOfValue key_of_v)
       : pair_(key_comp, key_of_v)
   {
   }
 
-  constexpr bool operator()(const value_type &x,
-                            const value_type &y) const noexcept
+  constexpr bool operator()(const value_type &x, const value_type &y) const
   {
     return pair_.first()(pair_.second()(x), pair_.second()(y));
   }
 
-  key_compare key_comp() const noexcept { return pair_.first(); }
+  key_compare key_comp() const { return pair_.first(); }
 
-  key_of_value get_key_of_value() const noexcept { return pair_.second(); }
+  key_of_value get_key_of_value() const { return pair_.second(); }
 };
 
 template <typename ValueTraits, typename ValueCompare>
@@ -373,13 +372,11 @@ struct node_pointer_compare
 
   ValueCompare value_comp_;
 
-  constexpr explicit node_pointer_compare(ValueCompare comp) noexcept
-      : value_comp_(comp)
+  constexpr explicit node_pointer_compare(ValueCompare comp) : value_comp_(comp)
   {
   }
 
-  constexpr bool operator()(const_node_pointer x,
-                            const_node_pointer y) const noexcept
+  constexpr bool operator()(const_node_pointer x, const_node_pointer y) const
   {
     const_pointer vx = value_traits::to_value_pointer(x);
     const_pointer vy = value_traits::to_value_pointer(y);
@@ -402,23 +399,20 @@ struct key_node_pointer_compare
 
   detail::compressed_pair<KeyCompare, KeyOfValue> pair_;
 
-  constexpr key_node_pointer_compare(
-      KeyCompare key_comp = KeyCompare(),
-      KeyOfValue key_of_value = KeyOfValue()) noexcept
+  constexpr key_node_pointer_compare(KeyCompare key_comp = KeyCompare(),
+                                     KeyOfValue key_of_value = KeyOfValue())
       : pair_(key_comp, key_of_value)
   {
   }
 
-  constexpr bool operator()(const_node_pointer x,
-                            const key_type &y) const noexcept
+  constexpr bool operator()(const_node_pointer x, const key_type &y) const
   {
     const_pointer vx = value_traits::to_value_pointer(x);
     const key_type &kx = pair_.second()(*vx);
     return pair_.first()(kx, y);
   }
 
-  constexpr bool operator()(const key_type &x,
-                            const_node_pointer y) const noexcept
+  constexpr bool operator()(const key_type &x, const_node_pointer y) const
   {
     const_pointer vy = value_traits::to_value_pointer(y);
     const key_type &ky = pair_.second()(*vy);
@@ -504,16 +498,16 @@ public:
     }
   }
 
-  key_compare key_comp() const noexcept { return value_comp_.key_comp(); }
+  key_compare key_comp() const { return value_comp_.key_comp(); }
 
-  value_compare value_comp() const noexcept { return value_comp_; }
+  value_compare value_comp() const { return value_comp_; }
 
-  node_pointer_compare node_pointer_comp() const noexcept
+  node_pointer_compare node_pointer_comp() const
   {
     return node_pointer_compare(value_comp());
   }
 
-  key_node_pointer_compare key_node_pointer_comp() const noexcept
+  key_node_pointer_compare key_node_pointer_comp() const
   {
     return key_node_pointer_compare(key_comp(),
                                     value_comp().get_key_of_value());

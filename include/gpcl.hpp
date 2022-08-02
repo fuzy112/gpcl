@@ -138,6 +138,7 @@
 #include <gpcl/thread_attributes.hpp>
 #include <gpcl/throw_exception.hpp>
 #include <gpcl/time.hpp>
+#include <gpcl/transparent_compare.hpp>
 #include <gpcl/tss_ptr.hpp>
 #include <gpcl/type_identity.hpp>
 #include <gpcl/typeid.hpp>

@@ -14,8 +14,8 @@
 #include <gpcl/detail/assert.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/identity.hpp>
-#include <gpcl/transparent_compare.hpp>
 #include <gpcl/invoke.hpp>
+#include <gpcl/transparent_compare.hpp>
 
 namespace gpcl {
 
@@ -547,24 +547,14 @@ struct rbtree_algorithms
     }
   }
 
-  template <
-      typename K, typename Compare = std::less<K>,
-      typename Project = gpcl::identity_t,
-
-      std::enable_if_t<std::is_same<std::decay_t<typename gpcl::invoke_result<
-                                        Project, const_node_pointer>::type>,
-                                    std::decay_t<K>>::value ||
-                           gpcl::is_transparent_compare<Compare>::value,
-
-                       int> = 0>
+  template <typename K, typename KeyNodePtrCompare>
   static std::size_t count(const_node_pointer header, const K &k,
-                           const Compare &comp = Compare(),
-                           const Project &proj = Project())
+                           const KeyNodePtrCompare &comp)
   {
     std::size_t num{0};
 
-    for (node_pointer n = lower_bound(header, k, comp, proj),
-                      end = upper_bound(header, k, comp, proj);
+    for (node_pointer n = lower_bound(header, k, comp),
+                      end = upper_bound(header, k, comp);
          n != end; n = next_node(n))
       ++num;
 
@@ -582,11 +572,9 @@ struct rbtree_algorithms
     return num;
   }
 
-  template <typename K, typename Compare = std::less<K>,
-            typename Project = gpcl::identity_t>
+  template <typename K, typename  KeyNodePtrCompare>
   static node_pointer find(const_node_pointer header, const K &k,
-                           const Compare &comp = Compare(),
-                           const Project &proj = Project())
+                           const KeyNodePtrCompare &comp)
   {
     node_pointer q = node_traits::get_parent(header);
     node_pointer p = null();
@@ -594,9 +582,9 @@ struct rbtree_algorithms
     while (q != null())
     {
       p = q;
-      if (comp(k, proj(q)))
+      if (comp(k, q))
         q = node_traits::get_left(q);
-      else if (comp(proj(q), k))
+      else if (comp(q, k))
         q = node_traits::get_right(q);
       else
         return q;
@@ -605,22 +593,20 @@ struct rbtree_algorithms
     return null();
   }
 
-  template <typename K, typename Compare = std::less<K>,
-            typename Project = gpcl::identity_t>
+  template <typename K, typename KeyNodePtrCompare>
   static node_pointer upper_bound(const_node_pointer header, const K &k,
-                                  const Compare &comp = Compare(),
-                                  const Project &proj = Project())
+                                  const KeyNodePtrCompare &comp)
   {
     node_pointer q = node_traits::get_parent(header);
     node_pointer p = end_node(header);
 
-    while (q != null() && comp(k, proj(q)))
+    while (q != null() && comp(k, q))
     {
       p = q;
       q = node_traits::get_left(q);
     }
 
-    while (q != null() && !comp(k, proj(q)))
+    while (q != null() && !comp(k, q))
     {
       q = node_traits::get_right(q);
     }
@@ -628,22 +614,20 @@ struct rbtree_algorithms
     return q != null() ? q : p;
   }
 
-  template <typename K, typename Compare = std::less<K>,
-            typename Project = gpcl::identity_t>
+  template <typename K, typename KeyNodePtrCompare>
   static node_pointer lower_bound(const_node_pointer header, const K &k,
-                                  const Compare &comp = Compare(),
-                                  const Project &proj = Project())
+                                  const KeyNodePtrCompare &comp)
   {
     node_pointer q = node_traits::get_parent(header);
     node_pointer p = end_node(header);
 
-    while (q != null() && !comp(proj(q), k))
+    while (q != null() && !comp(q, k))
     {
       p = q;
       q = node_traits::get_left(q);
     }
 
-    while (q != null() && comp(proj(q), k))
+    while (q != null() && comp(q, k))
     {
       q = node_traits::get_right(q);
     }
@@ -651,14 +635,13 @@ struct rbtree_algorithms
     return q != null() ? q : p;
   }
 
-  template <typename K, typename Compare = std::less<K>,
-            typename Project = gpcl::identity_t>
+  template <typename K, typename KeyNodePtrCompare>
   static std::pair<node_pointer, node_pointer>
   equal_range(const_node_pointer header, const K &k,
-              const Compare &comp = Compare(), const Project &proj = Project())
+              const KeyNodePtrCompare&comp)
   {
-    return std::make_pair(lower_bound(header, k, comp, proj),
-                          upper_bound(header, k, comp, proj));
+    return std::make_pair(lower_bound(header, k, comp),
+                          upper_bound(header, k, comp));
   }
 
   static void insert_before(node_pointer header, node_pointer pos,
@@ -702,12 +685,12 @@ struct rbtree_algorithms
     rebalance_after_insert(header, new_node);
   }
 
-  template <typename Compare, typename Project = gpcl::identity_t>
+  template <typename NodePtrCompare>
   static void insert_equal_upper_bound(node_pointer header,
-                                       node_pointer new_node, Compare compare,
-                                       Project proj = Project())
+                                       node_pointer new_node,
+                                       NodePtrCompare comp)
   {
-    node_pointer pos = upper_bound(header, proj(new_node), compare, proj);
+    node_pointer pos = upper_bound(header, new_node, comp);
     insert_before(header, pos, new_node);
   }
 };
