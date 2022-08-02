@@ -566,6 +566,7 @@ struct rbtree_algorithms
     return num;
   }
 
+  // Complexity: O(size)
   static std::size_t size(const_node_pointer header)
   {
     std::size_t num{0};
@@ -577,6 +578,7 @@ struct rbtree_algorithms
     return num;
   }
 
+  // Complexity: O(h) where h is the height of the node in the tree.
   template <typename K, typename KeyNodePtrCompare,
             typename std::enable_if<
                 std::is_same<K, const_node_pointer>::value ||
