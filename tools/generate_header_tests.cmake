@@ -8,7 +8,10 @@ foreach(file ${files})
 
   if(NOT filename STREQUAL "ext.hpp")
     set(HEADER_FILE ${file})
-    configure_file(${CMAKE_CURRENT_LIST_DIR}/header_test.cpp.in "header_tests/${filename}.cpp")
-    target_sources(header_tests PRIVATE "header_tests/${filename}.cpp")
+    configure_file(${CMAKE_CURRENT_LIST_DIR}/header_test.cpp.in "header_tests/${filename}.1.cpp")
+    configure_file(${CMAKE_CURRENT_LIST_DIR}/header_test.cpp.in "header_tests/${filename}.2.cpp")
+
+    target_sources(header_tests PRIVATE "header_tests/${filename}.1.cpp"
+      "header_tests/${filename}.2.cpp")
   endif()
 endforeach(file ${files})
