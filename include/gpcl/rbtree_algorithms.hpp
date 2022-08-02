@@ -47,7 +47,7 @@ struct rbtree_algorithms
     node_traits::set_parent(header, null());
     node_traits::set_left(header, header);
     node_traits::set_right(header, header);
-    node_traits::set_color(header, red());
+    // node_traits::set_color(header, red());
   }
 
   // Complexity: O(h) where h is height of n.
@@ -547,7 +547,12 @@ struct rbtree_algorithms
     }
   }
 
-  template <typename K, typename KeyNodePtrCompare>
+  template <typename K, typename KeyNodePtrCompare,
+            typename std::enable_if<
+                std::is_same<K, const_node_pointer>::value ||
+                    std::is_same<K, node_pointer>::value ||
+                    is_transparent_compare<KeyNodePtrCompare>::value,
+                int>::type = 0>
   static std::size_t count(const_node_pointer header, const K &k,
                            const KeyNodePtrCompare &comp)
   {
@@ -572,7 +577,12 @@ struct rbtree_algorithms
     return num;
   }
 
-  template <typename K, typename  KeyNodePtrCompare>
+  template <typename K, typename KeyNodePtrCompare,
+            typename std::enable_if<
+                std::is_same<K, const_node_pointer>::value ||
+                    std::is_same<K, node_pointer>::value ||
+                    is_transparent_compare<KeyNodePtrCompare>::value,
+                int>::type = 0>
   static node_pointer find(const_node_pointer header, const K &k,
                            const KeyNodePtrCompare &comp)
   {
@@ -593,7 +603,12 @@ struct rbtree_algorithms
     return null();
   }
 
-  template <typename K, typename KeyNodePtrCompare>
+  template <typename K, typename KeyNodePtrCompare,
+            typename std::enable_if<
+                std::is_same<K, const_node_pointer>::value ||
+                    std::is_same<K, node_pointer>::value ||
+                    is_transparent_compare<KeyNodePtrCompare>::value,
+                int>::type = 0>
   static node_pointer upper_bound(const_node_pointer header, const K &k,
                                   const KeyNodePtrCompare &comp)
   {
@@ -614,7 +629,12 @@ struct rbtree_algorithms
     return q != null() ? q : p;
   }
 
-  template <typename K, typename KeyNodePtrCompare>
+  template <typename K, typename KeyNodePtrCompare,
+            typename std::enable_if<
+                std::is_same<K, const_node_pointer>::value ||
+                    std::is_same<K, node_pointer>::value ||
+                    is_transparent_compare<KeyNodePtrCompare>::value,
+                int>::type = 0>
   static node_pointer lower_bound(const_node_pointer header, const K &k,
                                   const KeyNodePtrCompare &comp)
   {
@@ -635,10 +655,15 @@ struct rbtree_algorithms
     return q != null() ? q : p;
   }
 
-  template <typename K, typename KeyNodePtrCompare>
+  template <typename K, typename KeyNodePtrCompare,
+            typename std::enable_if<
+                std::is_same<K, const_node_pointer>::value ||
+                    std::is_same<K, node_pointer>::value ||
+                    is_transparent_compare<KeyNodePtrCompare>::value,
+                int>::type = 0>
   static std::pair<node_pointer, node_pointer>
   equal_range(const_node_pointer header, const K &k,
-              const KeyNodePtrCompare&comp)
+              const KeyNodePtrCompare &comp)
   {
     return std::make_pair(lower_bound(header, k, comp),
                           upper_bound(header, k, comp));
