@@ -260,12 +260,12 @@ public:
   using algo = rbtree_algorithms<node_traits>;
 
 private:
-  const_node_pointer n_;
+  node_pointer n_;
 
 public:
   const_tree_iterator() = default;
 
-  explicit const_tree_iterator(const_node_pointer p) noexcept : n_(p) {}
+  explicit const_tree_iterator(node_pointer p) noexcept : n_(p) {}
 
   const_tree_iterator(tree_iterator<ValueTraits> iter) noexcept : n_(iter.n_) {}
 
@@ -600,6 +600,13 @@ public:
     update_size(+1);
   }
 
+  void insert_equal_hint(const_iterator hint, reference value)
+  {
+    algo::insert_equal_upper_bound_hint(header(), hint.p_, value);
+
+    update_size(+1);
+  }
+
   void erase(reference value) noexcept
   {
     algo::erase(header(), value_traits::to_node_pointer(value));
@@ -610,7 +617,7 @@ public:
 private:
   void update_size(difference_type diff) noexcept
   {
-    if constexpr (constant_time_size_)
+    GPCL_CXX17_IF_CONSTEXPR (constant_time_size_)
     {
       pair1_.second() += diff;
     }
