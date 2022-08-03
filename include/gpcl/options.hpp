@@ -14,7 +14,6 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/meta.hpp>
 
-#include <type_traits>
 
 namespace gpcl {
 

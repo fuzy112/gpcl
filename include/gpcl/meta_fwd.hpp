@@ -11,6 +11,8 @@
 #ifndef GPCL_META_FWD_HPP
 #define GPCL_META_FWD_HPP
 
+#include <gpcl/detail/config.hpp>
+
 #include <type_traits>
 #include <utility>
 

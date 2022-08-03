@@ -32,12 +32,13 @@ public:
   using type = T;
 
   template <typename... Args>
-  explicit constexpr compressed_storage(Args &&...args)
+  explicit constexpr compressed_storage(Args &&...args) noexcept(std::is_nothrow_constructible<T, Args&&...>::value)
       : data_(std::forward<Args>(args)...)
   {
   }
 
-  void swap(compressed_storage &other) noexcept(std::is_nothrow_swappable_v<T>)
+  void
+  swap(compressed_storage &other) noexcept(std::is_nothrow_swappable<T>::value)
   {
     using gpcl::swap;
     swap(data_, other.data_);
@@ -57,12 +58,13 @@ public:
   using type = T;
 
   template <typename... Args>
-  explicit constexpr compressed_storage(Args &&...args)
+  explicit constexpr compressed_storage(Args &&...args) noexcept(std::is_nothrow_constructible<T, Args&&...>::value)
       : T(std::forward<Args>(args)...)
   {
   }
 
-  void swap(compressed_storage &other) noexcept(std::is_nothrow_swappable_v<T>)
+  void
+  swap(compressed_storage &other) noexcept(std::is_nothrow_swappable<T>::value)
   {
     using gpcl::swap;
     swap(static_cast<T &>(*this), static_cast<T &>(other));
@@ -133,11 +135,12 @@ public:
 
   compressed_pair &operator=(const compressed_pair &) = default;
   compressed_pair &operator=(compressed_pair &&) noexcept(
-      std::is_nothrow_move_assignable_v<T1>
-          &&std::is_nothrow_move_assignable_v<T2>) = default;
+      std::is_nothrow_move_assignable<T1>::value
+          &&std::is_nothrow_move_assignable<T2>::value) = default;
 
   void swap(compressed_pair &other) noexcept(
-      std::is_nothrow_swappable_v<T1> &&std::is_nothrow_swappable_v<T2>)
+      std::is_nothrow_swappable<T1>::value
+          &&std::is_nothrow_swappable<T2>::value)
   {
     base_type_1::swap(other);
     base_type_2::swap(other);

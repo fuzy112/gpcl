@@ -16,6 +16,7 @@
 #include <iosfwd>
 #include <tuple>
 #include <type_traits>
+#include <string>
 
 namespace gpcl {
 

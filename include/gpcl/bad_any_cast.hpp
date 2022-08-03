@@ -11,7 +11,10 @@
 #ifndef GPCL_BAD_ANY_CAST_HPP
 #define GPCL_BAD_ANY_CAST_HPP
 
-#include <stdexcept>
+#include <gpcl/detail/config.hpp>
+
+#include <exception>
+#include <typeinfo>
 
 namespace gpcl {
 

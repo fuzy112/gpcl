@@ -13,6 +13,8 @@
 
 #include <gpcl/detail/config.hpp>
 
+#include <cstddef>
+
 namespace gpcl::pmr {
 
 struct pool_options

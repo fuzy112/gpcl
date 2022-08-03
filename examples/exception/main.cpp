@@ -1,7 +1,7 @@
-#define _CRT_SECURE_NO_WARNINGS .
-
-#include <gpcl.hpp>
-
+#include <gpcl/exception.hpp>
+#include <gpcl/stacktrace.hpp>
+#include <gpcl/strerror.hpp>
+#include <iomanip>
 #include <cerrno>
 #include <cstdio>
 #include <sstream>
