@@ -22,7 +22,7 @@ struct global_impl
 
   ~global_impl() { delete static_ptr_; }
 
-  static void do_init() { ptr_ = static_ptr_ = new T(); }
+  void do_init() { ptr_ = static_ptr_ = new T(); }
 
   static global_impl instance_;
   static once_flag init_once_;
@@ -42,7 +42,7 @@ T *global_impl<T>::static_ptr_ = nullptr;
 template <typename T>
 T &global()
 {
-  call_once(global_impl<T>::init_once_, global_impl<T>::do_init);
+  call_once(global_impl<T>::init_once_, &global_impl<T>::do_init);
 
   return *global_impl<T>::instance_.ptr_;
 }
