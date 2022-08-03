@@ -414,7 +414,7 @@ struct rbtree_algorithms
     if (x != null())
       node_traits::set_parent(x, p);
 
-    bool y_color = node_traits::get_color(y);
+    color_type y_color = node_traits::get_color(y);
 
     if (y != z)
     {
@@ -729,7 +729,7 @@ struct rbtree_algorithms
 
   template <typename NodePtrCompare>
   static node_pointer
-  insert_equal_upper_bound_hint(node_pointer header, node_pointer hint,
+  insert_equal_upper_bound_hint(node_pointer header, const_node_pointer hint,
                                 node_pointer new_node, NodePtrCompare comp)
   {
     if (new_node == node_traits::get_left(header) || comp(new_node, hint))
