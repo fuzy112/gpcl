@@ -75,9 +75,9 @@ public:
       GPCL_THROW(std::length_error("basic_flat_buffer::prepare"));
     }
 
-    if (end_ - output_ < n)
+    if (static_cast<std::size_t>(end_ - output_) < n)
     {
-      if (end_ - output_ + (input_ - start_) >= n)
+      if (end_ - output_ + static_cast<std::size_t>(input_ - start_) >= n)
       {
         std::memmove(start_, input_, size());
         std::size_t isize = size();

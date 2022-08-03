@@ -18,7 +18,7 @@ struct my_rbtree_node_traits
   using node_type = my_node;
   using node_pointer = node_type *;
   using const_node_pointer = const node_type *;
-  using color_type = std::uintptr_t;
+  using color_type = int;
 
   static color_type red() noexcept { return 0; }
 

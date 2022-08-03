@@ -52,7 +52,7 @@ template <typename T>
 
 typename offset_ptr<T>::pointer offset_ptr<T>::get() const
 {
-  if (!std::is_void<value_type>::value &&
+  GPCL_CXX17_IF_CONSTEXPR (!std::is_void<value_type>::value &&
       !std::is_same<value_type, char>::value &&
       !std::is_same<value_type, signed char>::value &&
       !std::is_same<value_type, unsigned char>::value

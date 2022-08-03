@@ -294,6 +294,7 @@
 
 #if GPCL_MSVC && !defined GPCL_SOURCE && !defined GPCL_DISABLE_AUTO_LINKING
 #  pragma comment(lib, "gpcl")
+#  pragma comment(compiler)
 #endif
 
 #ifndef GPCL_BACKTRACE_HEADER

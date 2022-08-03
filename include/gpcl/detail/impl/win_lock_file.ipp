@@ -50,7 +50,7 @@ void win_lock_file::lock()
   std::string pid_str = std::to_string(pid);
 
   GPCL_THROW_LAST_ERROR_IF(
-      !WriteFile(file.get(), pid_str.data(), pid_str.size(), NULL, NULL));
+      !WriteFile(file.get(), pid_str.data(), narrow_cast<DWORD>(pid_str.size()), NULL, NULL));
   handle_ = std::move(file);
 }
 
@@ -83,30 +83,33 @@ bool win_lock_file::try_lock()
   std::string pid_str = std::to_string(pid);
 
   GPCL_THROW_LAST_ERROR_IF(
-      !WriteFile(file.get(), pid_str.data(), pid_str.size(), NULL, NULL));
+      !WriteFile(file.get(), pid_str.data(), narrow_cast<DWORD>(pid_str.size()), NULL, NULL));
   handle_ = std::move(file);
 
   return true;
 }
 
-void win_lock_file::unlock() GPCL_TRY
+void win_lock_file::unlock()
 {
-  GPCL_ASSERT(owns_lock());
-  GPCL_THROW_LAST_ERROR_IF(SetFilePointer(handle_.get(), 0, NULL, FILE_BEGIN) ==
+  GPCL_TRY
+  {
+    GPCL_ASSERT(owns_lock());
+    GPCL_THROW_LAST_ERROR_IF(SetFilePointer(handle_.get(), 0, NULL, FILE_BEGIN) ==
                            INVALID_SET_FILE_POINTER);
-  GPCL_THROW_LAST_ERROR_IF(!SetEndOfFile(handle_.get()));
+    GPCL_THROW_LAST_ERROR_IF(!SetEndOfFile(handle_.get()));
 
-  OVERLAPPED overlapped = {};
-  GPCL_THROW_LAST_ERROR_IF(!UnlockFileEx(handle_.get(), 0, FILE_LOCK_BYTES, 0, &overlapped));
-  handle_.reset();
+    OVERLAPPED overlapped = {};
+    GPCL_THROW_LAST_ERROR_IF(!UnlockFileEx(handle_.get(), 0, FILE_LOCK_BYTES, 0, &overlapped));
+    handle_.reset();
 
-  DeleteFileA(filename_.c_str());
+    DeleteFileA(filename_.c_str());
+  }
+  GPCL_CATCH(...)
+  {
+    std::terminate();
+  }
+  GPCL_CATCH_END
 }
-GPCL_CATCH(...)
-{
-  std::terminate();
-}
-GPCL_CATCH_END
 
 } // namespace detail
 } // namespace gpcl

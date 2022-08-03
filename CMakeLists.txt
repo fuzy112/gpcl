@@ -51,6 +51,8 @@ option(GPCL_ENABLE_RTTI "Enable RTTI support" TRUE)
 
 option(GPCL_ENABLE_CLANG_TIDY "Enable clang-tidy" FALSE)
 
+option(GPCL_ENABLE_HEADER_TEST "Check whether public headers are self contained" FALSE)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 check_ipo_supported(RESULT ipo_supported)
@@ -153,6 +155,10 @@ endif()
 
 if(NOT GPCL_ENABLE_EXCEPTIONS)
   target_compile_definitions(gpcl PUBLIC GPCL_CONFIG_NO_EXCEPTIONS=1)
+else()
+  if(MSVC)
+    target_compile_options(gpcl PUBLIC /EHsc)
+  endif()
 endif()
 
 if(NOT GPCL_ENABLE_RTTI)
@@ -304,5 +310,6 @@ if(GPCL_ENABLE_CLANG_TIDY)
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 
-
-include(tools/generate_header_tests.cmake)
+if(GPCL_ENABLE_HEADER_TEST)
+  include(tools/generate_header_tests.cmake)
+endif()

@@ -33,7 +33,6 @@ bool win_once_flag::initialized() const
 template <typename Callable, typename... Args>
 void call_once(detail::win_once_flag &flag, Callable &&callable, Args &&...args)
 {
-  BOOL status;
   BOOL pending = FALSE;
 
   if (!InitOnceBeginInitialize(&flag.opaque_, 0, &pending, NULL))

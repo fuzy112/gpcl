@@ -17,6 +17,8 @@
 #include <gpcl/invoke.hpp>
 #include <gpcl/transparent_compare.hpp>
 
+#include <memory>
+
 namespace gpcl {
 
 template <typename NodeTraits>
@@ -239,6 +241,12 @@ struct rbtree_algorithms
     node_traits::set_right(n, a);
     if (a != null())
       node_traits::set_parent(a, n);
+  }
+
+  static void replace_node(node_pointer old_node, node_pointer new_node) noexcept
+  {
+    node_pointer header = get_header(old_node);
+    replace_node(old_node, header, new_node);
   }
 
   // @param old_node the node to replace

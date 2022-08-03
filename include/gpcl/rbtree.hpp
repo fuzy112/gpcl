@@ -103,6 +103,10 @@ private:
                                     options::void_pointer<void *>>::type;
 
   using node_type = rbtree_base_hook;
+
+  using node_traits = detail::rbtree_node_traits<rbtree_base_hook>;
+  using algo = gpcl::rbtree_algorithms<node_traits>;
+
   using node_pointer =
       typename std::pointer_traits<void_pointer>::template rebind<node_type>;
   using const_node_pointer = typename std::pointer_traits<
@@ -121,6 +125,28 @@ protected:
   constexpr rbtree_base_hook() = default;
 
   ~rbtree_base_hook() = default;
+
+  rbtree_base_hook(const rbtree_base_hook &) = delete;
+  rbtree_base_hook &operator=(const rbtree_base_hook &) = delete;
+
+  rbtree_base_hook(rbtree_base_hook &&other) noexcept
+  {
+    algo::replace_node(std::pointer_traits<node_pointer>::pointer_to(other),
+                       std::pointer_traits<node_pointer>::pointer_to(*this));
+  }
+
+  rbtree_base_hook &operator=(rbtree_base_hook &&other) noexcept
+  {
+    algo::replace_node(std::pointer_traits<node_pointer>::pointer_to(other),
+                       std::pointer_traits<node_pointer>::pointer_to(*this));
+    return *this;
+  }
+/*
+  void swap(rbtree_base_hook &other) noexcept
+  {
+    algo::swap_node(std::pointer_traits<node_pointer>::pointer_to(other),
+                    std::pointer_traits<node_pointer>::pointer_to(*this));
+  }*/
 };
 
 namespace detail {
@@ -617,7 +643,7 @@ public:
 private:
   void update_size(difference_type diff) noexcept
   {
-    GPCL_CXX17_IF_CONSTEXPR (constant_time_size_)
+    GPCL_CXX17_IF_CONSTEXPR(constant_time_size_)
     {
       pair1_.second() += diff;
     }
