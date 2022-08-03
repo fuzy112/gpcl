@@ -42,11 +42,11 @@ public:
   {
     GPCL_ASSERT(use_count() > 0);
 
-    if (use_count_.fetch_sub(1, std::memory_order_acquire) == 1) 
+    if (use_count_.fetch_sub(1, std::memory_order_acquire) == 1)
     {
       operate(ref_count_operation::destroy_managed_object);
 
-      if (weak_count_.fetch_sub(1, std::memory_order_acquire) == 1) 
+      if (weak_count_.fetch_sub(1, std::memory_order_acquire) == 1)
       {
         operate(ref_count_operation::delete_control_block);
       }
@@ -72,7 +72,7 @@ public:
   void weak_put() noexcept
   {
     GPCL_ASSERT(weak_count() > 0);
-    if (weak_count_.fetch_sub(1, std::memory_order_acquire) == 1) 
+    if (weak_count_.fetch_sub(1, std::memory_order_acquire) == 1)
     {
       GPCL_ASSERT(use_count() == 0);
       operate(ref_count_operation::delete_control_block);
@@ -91,7 +91,8 @@ public:
     GPCL_ASSERT(weak_count() > 0);
     long old_val = use_count();
 
-    while (old_val > 0) {
+    while (old_val > 0)
+    {
       if (use_count_.compare_exchange_weak(old_val, old_val + 1,
                                            std::memory_order_release,
                                            std::memory_order_relaxed))
@@ -106,7 +107,8 @@ public:
 
 protected:
   // Constructor.
-  explicit std_ref_count_base(operation_func_t op_func) : op_func_(op_func)
+  explicit constexpr std_ref_count_base(operation_func_t op_func) noexcept
+      : op_func_(op_func)
   {
     GPCL_ASSERT(op_func_);
   }

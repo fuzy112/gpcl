@@ -106,14 +106,12 @@ public:
   }
 
   // Invoke an operation.
-  void *operate(ref_count_operation op) noexcept
-  {
-    return op_func_(this, op);
-  }
+  void *operate(ref_count_operation op) noexcept { return op_func_(this, op); }
 
 protected:
   // Constructor.
-  explicit gcc_ref_count_base(operation_func_t op_func) : op_func_(op_func)
+  explicit constexpr gcc_ref_count_base(operation_func_t op_func) noexcept
+      : op_func_(op_func)
   {
     GPCL_ASSERT(op_func_);
   }

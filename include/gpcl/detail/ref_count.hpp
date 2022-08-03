@@ -47,8 +47,7 @@ private:
 
 protected:
   /// operation function.
-  static void *do_operate(ref_count_base *self,
-                          ref_count_operation op) noexcept
+  static void *do_operate(ref_count_base *self, ref_count_operation op) noexcept
   {
     auto s = static_cast<Derived *>(self);
     switch (op)
@@ -78,7 +77,8 @@ protected:
   /// @param op_func the operation function, normally &ref_count::do_operate.
   /// @param a allocator
   template <typename... Args>
-  explicit ref_count(operation_func_t op_func, Allocator a)
+  explicit ref_count(operation_func_t op_func, Allocator a) noexcept(
+      std::is_nothrow_copy_constructible<Allocator>::value)
       : ref_count_base{op_func},
         Allocator(a)
   {
@@ -90,7 +90,7 @@ public:
   /// @param args arguments passed to the constructor of Manager.
   template <typename... Args>
   GPCL_NODISCARD static Derived *create(const Allocator &allocator,
-                                       Args &&...args)
+                                        Args &&...args)
   {
     rebind_allocator alloc{allocator};
 
@@ -170,7 +170,10 @@ public:
   }
 #endif
 
-  inline ~ref_count_ptr() noexcept { delete_managed_object(); }
+  inline ~ref_count_ptr() noexcept
+  {
+    delete_managed_object();
+  }
 };
 
 template <typename T, typename Allocator>

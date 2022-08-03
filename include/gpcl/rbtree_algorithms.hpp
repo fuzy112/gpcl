@@ -378,10 +378,12 @@ struct rbtree_algorithms
   }
 
   // Complexity: O(1)
-  static void erase(node_pointer h, node_pointer z) noexcept
+  static node_pointer erase(node_pointer h, node_pointer z) noexcept
   {
     GPCL_ASSERT(h != null());
     GPCL_ASSERT(z != null());
+
+    node_pointer r = next_node(z);
 
     /* y is either z or z's successor and has at most one child */
     node_pointer y = (node_traits::get_left(z) != null() &&
@@ -427,7 +429,7 @@ struct rbtree_algorithms
     }
 
     if (y_color == red())
-      return;
+      return r;
 
     for (;;)
     {
@@ -545,6 +547,8 @@ struct rbtree_algorithms
         }
       }
     }
+
+    return r;
   }
 
   template <typename K, typename KeyNodePtrCompare,
@@ -671,8 +675,8 @@ struct rbtree_algorithms
                           upper_bound(header, k, comp));
   }
 
-  static void insert_before(node_pointer header, node_pointer pos,
-                            node_pointer new_node) noexcept
+  static node_pointer insert_before(node_pointer header, node_pointer pos,
+                                    node_pointer new_node) noexcept
   {
     if (pos == header)
     {
@@ -710,15 +714,34 @@ struct rbtree_algorithms
     node_traits::set_right(new_node, null());
 
     rebalance_after_insert(header, new_node);
+
+    return new_node;
   }
 
   template <typename NodePtrCompare>
-  static void insert_equal_upper_bound(node_pointer header,
-                                       node_pointer new_node,
-                                       NodePtrCompare comp)
+  static node_pointer insert_equal_upper_bound(node_pointer header,
+                                               node_pointer new_node,
+                                               NodePtrCompare comp)
   {
     node_pointer pos = upper_bound(header, new_node, comp);
-    insert_before(header, pos, new_node);
+    return insert_before(header, pos, new_node);
+  }
+
+  template <typename NodePtrCompare>
+  static node_pointer
+  insert_equal_upper_bound_hint(node_pointer header, node_pointer hint,
+                                node_pointer new_node, NodePtrCompare comp)
+  {
+    if (new_node == node_traits::get_left(header) || comp(new_node, hint))
+    {
+      if (hint == node_traits::get_right(header) ||
+          !comp(new_node, prev_node(hint)))
+      {
+        return insert_before(header, hint, new_node);
+      }
+    }
+
+    return insert_equal_upper_bound(header, new_node, comp);
   }
 };
 

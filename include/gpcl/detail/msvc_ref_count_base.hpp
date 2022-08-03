@@ -91,13 +91,13 @@ public:
     return false;
   }
 
-  void *operate(ref_count_operation op) noexcept
-  {
-    return op_func_(this, op);
-  }
+  void *operate(ref_count_operation op) noexcept { return op_func_(this, op); }
 
 protected:
-  explicit msvc_ref_count_base(operation_func_t op_func) : op_func_(op_func) {}
+  explicit constexpr msvc_ref_count_base(operation_func_t op_func) noexcept
+      : op_func_(op_func)
+  {
+  }
 
 private:
   operation_func_t op_func_ = nullptr;
