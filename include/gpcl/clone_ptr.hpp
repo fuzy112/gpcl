@@ -19,20 +19,16 @@
 
 namespace gpcl {
 
-#ifndef GPCL_DOXYGEN
-template <typename T, typename Void = void>
-struct is_cloneable : std::false_type
-{
-};
-
 template <typename T>
-struct is_cloneable<
-    T, std::enable_if_t<std::is_constructible<
-           unique_ptr<T>, decltype(std::declval<T &>().clone())>::value>>
-    : std::true_type
+struct default_clone
 {
+  T *operator()(const T *value) const
+  {
+    if (value)
+      return ::new T(*value);
+    return nullptr;
+  }
 };
-#endif
 
 /// clone_ptr is a smart pointer that automatically clones the managed object.
 ///
@@ -42,125 +38,74 @@ struct is_cloneable<
 /// Deleter Deleter must be *FunctionObject* or lvalue reference to a
 /// *FunctionObject* or lvalue reference to function, callable with an argument
 /// of type `unique_ptr<T, Deleter>::pointer`.
-template <typename T, typename Deleter = default_delete<T>>
+template <typename T, typename Cloner = default_clone<T>,
+          typename Deleter = default_delete<T>>
 class clone_ptr
 {
 public:
-  static_assert(is_cloneable<T>::value, "T shall be cloneable");
+  using cloner = Cloner;
+  using deleter = Deleter;
 
-  /// Default constructor.
-  constexpr clone_ptr() = default;
+  using unique_pointer = unique_ptr<T, deleter>;
 
-  /// Create an empty clone_ptr.
-  constexpr clone_ptr(std::nullptr_t) noexcept {}
+  using element_type = T;
 
-  /// Move constructor.
-  clone_ptr(clone_ptr &&other) noexcept
-      : ptr_(detail::exchange(other.ptr_, nullptr))
+  explicit clone_ptr(unique_pointer object, cloner clone = cloner()) noexcept
+      : pair_(std::move(object), clone)
   {
   }
 
-  /// Copy constructor.
-  /// If `bool(other)` is true, the managed object will be cloned.
-  template <bool Dummy = true,
-            std::enable_if_t<Dummy && std::is_convertible_v<T, T>, int> = 0>
+  explicit clone_ptr(T *object, cloner c = cloner(), deleter d = deleter()) noexcept
+      : pair_(unique_pointer(object, d), c)
+  {
+  }
+
   clone_ptr(const clone_ptr &other)
-      : clone_ptr(other ? other->clone() : nullptr)
+      : clone_ptr(other.get_cloner()(other.operator->()), other.get_cloner(),
+                  other.get_deleter())
   {
   }
 
-  /// Copy constructor.
-  /// If `bool(other)` is true, the managed object will be cloned.
-  template <bool Dummy = true,
-            std::enable_if_t<Dummy && !std::is_convertible_v<T, T>, int> = 0>
-  explicit clone_ptr(const clone_ptr &other)
-      : clone_ptr(other ? other->clone() : nullptr)
+  clone_ptr(clone_ptr &&other) noexcept
+      : clone_ptr(std::move(other.pair_).first(),
+                  std::move(other.pair_).second())
   {
   }
 
-  /// Create a clone_ptr from a unique_ptr.
-  explicit clone_ptr(unique_ptr<T, Deleter> &&unique_ptr) noexcept
-      : ptr_(unique_ptr.release())
+  clone_ptr &operator=(const clone_ptr &other)
   {
+    clone_ptr(other).swap(*this);
+    return *this;
   }
 
-  /// Create a clone_ptr from raw pointer and deleter.
-  explicit clone_ptr(T *p, Deleter d = Deleter()) noexcept
-      : ptr_(p),
-        deleter_(std::move(d))
-  {
-  }
-
-  /// Move assignment.
   clone_ptr &operator=(clone_ptr &&other) noexcept
   {
     swap(other);
     return *this;
   }
 
-  /// Copy assignment.
-  /// If `bool(other)` is true, the managed object will be cloned.
-  clone_ptr &operator=(const clone_ptr &other)
+  void swap(clone_ptr &other) noexcept
   {
-    if (std::addressof(other) == this)
-      return *this;
+    using std::swap;
 
-    reset(other ? other->clone() : nullptr);
-    return *this;
+    swap(pair_.first(), other.pair_.first());
+    swap(pair_.second(), other.pair_.second());
   }
 
-  /// Create a clone_ptr from a unique_ptr
-  clone_ptr &operator=(unique_ptr<T, Deleter> unique_ptr) noexcept
-  {
-    ptr_ = unique_ptr.release();
-    return *this;
-  }
+  deleter get_deleter() const noexcept { return pair_.first().get_deleter(); }
 
-  /// Destructor.
-  ~clone_ptr() noexcept
-  {
-    if (ptr_)
-      deleter_(ptr_);
-  }
+  cloner get_cloner() const noexcept { return pair_.second(); }
 
-  /// Swap the pointers.
-  void swap(clone_ptr &other) noexcept { swap(ptr_, other.ptr_); }
+  T *operator->() noexcept { return pair_.first().get(); }
 
-  /// Determine whether this clone_ptr is empty.
-  explicit operator bool() const noexcept { return ptr_ != nullptr; }
+  const T *operator->() const noexcept { return pair_.first().get(); }
 
-  /// Dereference operator.
-  /// @pre `bool(*this)` is `true`.
-  T &operator*() const
-  {
-    GPCL_ASSERT(*this);
-    return *ptr_;
-  }
+  T &operator*() noexcept { return *operator->(); }
 
-  /// Member-access operator.
-  /// @pre `bool(*this)` is `true`.
-  T *operator->() const
-  {
-    GPCL_ASSERT(*this);
-    return ptr_;
-  }
-
-  /// Replace the managed pointer.
-  void reset(T *ptr = nullptr, Deleter d = Deleter()) noexcept
-  {
-    if (ptr_)
-      deleter_(ptr_);
-    ptr_ = ptr;
-    deleter_ = std::move(d);
-  }
-
-  /// Release the ownership of the managed object.
-  T *release() noexcept { return detail::exchange(ptr_, nullptr); }
+  const T &operator*() const noexcept { return *operator->(); }
 
 private:
-  propagate_const<T *> ptr_{};
-
-  Deleter deleter_{};
+  detail::compressed_pair<unique_pointer, Cloner> pair_;
 };
 
 /// Swap the pointers.
