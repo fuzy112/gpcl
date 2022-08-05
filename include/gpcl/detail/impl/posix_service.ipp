@@ -88,7 +88,10 @@ inline void close_all_fd(int start = 3)
       GPCL_THROW_LAST_ERROR_IF(getrlimit(RLIMIT_NOFILE, &lim) < 0);
       fd_max = lim.rlim_cur;
     }
-    GPCL_CATCH(...) { fd_max = 8192; }
+    GPCL_CATCH(...)
+    {
+      fd_max = 8192;
+    }
     GPCL_CATCH_END
     for (int fd = start; fd < fd_max; ++fd)
       GPCL_THROW_LAST_ERROR_IF(::close(fd) < 0 && errno != EINVAL &&
@@ -280,8 +283,14 @@ l_restart:
 
   do_start();
 
-  GPCL_TRY { run(); }
-  GPCL_CATCH(...) { std::terminate(); }
+  GPCL_TRY
+  {
+    run();
+  }
+  GPCL_CATCH(...)
+  {
+    std::terminate();
+  }
   GPCL_CATCH_END
 
   GPCL_THROW_LAST_ERROR_IF(seteuid(euid) < 0);
@@ -315,46 +324,49 @@ void posix_service::parent()
   exit(0);
 }
 
-void posix_service::child1() GPCL_TRY
+void posix_service::child1()
 {
-  rdfd_.reset();
+  GPCL_TRY
+  {
+    rdfd_.reset();
 
-  int pipefd2[2];
-  GPCL_THROW_LAST_ERROR_IF(::pipe2(pipefd2, O_CLOEXEC) < 0);
-  GPCL_ASSERT(pipefd2[0] >= 3);
-  GPCL_ASSERT(pipefd2[1] >= 3);
+    int pipefd2[2];
+    GPCL_THROW_LAST_ERROR_IF(::pipe2(pipefd2, O_CLOEXEC) < 0);
+    GPCL_ASSERT(pipefd2[0] >= 3);
+    GPCL_ASSERT(pipefd2[1] >= 3);
 
-  unique_fd rdfd2(pipefd2[0]);
-  unique_fd wrfd2(pipefd2[1]);
+    unique_fd rdfd2(pipefd2[0]);
+    unique_fd wrfd2(pipefd2[1]);
 
-  GPCL_THROW_LAST_ERROR_IF(::setsid() < 0);
+    GPCL_THROW_LAST_ERROR_IF(::setsid() < 0);
 
-  pid_.reset(::fork());
-  GPCL_THROW_LAST_ERROR_IF(!pid_);
-  if (pid_.get() > 0)
-    return exit(0);
+    pid_.reset(::fork());
+    GPCL_THROW_LAST_ERROR_IF(!pid_);
+    if (pid_.get() > 0)
+      return exit(0);
 
-  // in child2, wait child1 to exit
-  wrfd2.reset();
-  char dummy[1];
-  GPCL_THROW_LAST_ERROR_IF(::read(rdfd2.get(), dummy, sizeof(dummy)) < 0);
+    // in child2, wait child1 to exit
+    wrfd2.reset();
+    char dummy[1];
+    GPCL_THROW_LAST_ERROR_IF(::read(rdfd2.get(), dummy, sizeof(dummy)) < 0);
 
-  child2();
+    child2();
+  }
+  GPCL_CATCH(system_error & ex)
+  {
+    auto ec = ex.code();
+    write_error(ec);
+  }
+  GPCL_AND_CATCH(std::bad_alloc &)
+  {
+    write_error(error_code(ENOMEM, system_category()));
+  }
+  GPCL_AND_CATCH(...)
+  {
+    write_error(make_error_code(errc::invalid_argument));
+  }
+  GPCL_CATCH_END
 }
-GPCL_CATCH(system_error &ex)
-{
-  auto ec = ex.code();
-  write_error(ec);
-}
-GPCL_AND_CATCH(std::bad_alloc &)
-{
-  write_error(error_code(ENOMEM, system_category()));
-}
-GPCL_AND_CATCH(...)
-{
-  write_error(make_error_code(errc::invalid_argument));
-}
-GPCL_CATCH_END
 
 void posix_service::child2()
 {

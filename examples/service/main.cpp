@@ -38,35 +38,38 @@ void print_usage(std::ostream &out)
   out << "service start|stop|restart|help\n";
 }
 
-int main(int argc, const char **argv) GPCL_TRY
+int main(int argc, const char **argv)
 {
-  std::iostream::sync_with_stdio(false);
-
-  if (argc != 2)
+  GPCL_TRY
   {
-    print_usage(std::cerr);
-    return 1;
-  }
-  my_service svc("gpcl-test");
+    std::iostream::sync_with_stdio(false);
 
-  if (argv[1] == std::string_view("start"))
-    svc.start();
-  else if (argv[1] == std::string_view("stop"))
-    svc.stop();
-  else if (argv[1] == std::string_view("restart"))
-    svc.restart();
-  else if (argv[1] == std::string_view("help"))
-    print_usage(std::cout);
-  else
+    if (argc != 2)
+    {
+      print_usage(std::cerr);
+      return 1;
+    }
+    my_service svc("gpcl-test");
+
+    if (argv[1] == std::string_view("start"))
+      svc.start();
+    else if (argv[1] == std::string_view("stop"))
+      svc.stop();
+    else if (argv[1] == std::string_view("restart"))
+      svc.restart();
+    else if (argv[1] == std::string_view("help"))
+      print_usage(std::cout);
+    else
+    {
+      print_usage(std::cerr);
+      return 1;
+    }
+
+    return 0;
+  }
+  GPCL_CATCH(std::exception & exc)
   {
-    print_usage(std::cerr);
-    return 1;
+    std::clog << gpcl::diagnostic_information(exc) << std::endl;
   }
-
-  return 0;
+  GPCL_CATCH_END
 }
-GPCL_CATCH(std::exception &exc)
-{
-  std::clog << gpcl::diagnostic_information(exc) << std::endl;
-}
-GPCL_CATCH_END
