@@ -22,6 +22,7 @@
 
 #include <streambuf>
 #include <unordered_map>
+#include <bitset>
 
 namespace gpcl {
 
@@ -39,16 +40,16 @@ private:
 
   enum flags
   {
-    none = 0,
+    emit_on_sync,
+    pending_flush,
 
-    emit_on_sync = 1 << 0,
-    pending_flush = 1 << 1,
+    n_flags,
   };
 
   // the wrapped streambuf.
   std::basic_streambuf<CharType, Traits> *wrapped_ = nullptr;
 
-  unsigned char flag_ = none;
+  std::bitset<n_flags> flags_;
 
   // internal buffer for temporary storage.
   std::basic_string<CharType, Traits, Allocator> buffer_;
@@ -77,12 +78,12 @@ public:
   basic_syncbuf(basic_syncbuf &&other) noexcept
       : streambuf_type(other),
         wrapped_(other.wrapped_),
-        flag_(other.flag_),
+        flags_(other.flags_),
         buffer_(std::move(other).buffer_),
         mutex_(std::move(other).mutex_)
   {
     other.wrapped_ = false;
-    other.flag_ = none;
+    other.flag_.reset();
     other.mutex_ = nullptr;
   }
 
@@ -95,12 +96,12 @@ public:
 
     streambuf_type::operator=(std::move(other));
     wrapped_ = other.wrapped_;
-    flag_ = other.flag_;
+    flags_ = other.flags_;
     buffer_ = std::move(other).buffer_;
     mutex_ = std::move(other).mutex_;
 
     other.wrapped_ = nullptr;
-    other.flag_ = none;
+    other.flag_.reset();
     other.mutex_ = nullptr;
 
     return *this;
@@ -111,7 +112,7 @@ public:
   {
     streambuf_type::swap(other);
     swap(wrapped_, other.wrapped_);
-    swap(flag_, other.flag_);
+    swap(flags_, other.flags_);
     swap(buffer_, other.buffer_);
     swap(mutex_, other.mutex_);
   }
@@ -137,9 +138,9 @@ public:
     auto n = wrapped_->sputn(buffer_.data(), buffer_.size());
     buffer_.erase(buffer_.begin(), buffer_.begin() + n);
 
-    if (flag_ & pending_flush)
+    if (flags_.test(pending_flush))
     {
-      flag_ &= ~pending_flush;
+      flags_.reset(pending_flush);
       if (wrapped_->pubsync() != 0)
         return false;
     }
@@ -159,10 +160,7 @@ public:
   /// Changes the current emit-on-sync policy.
   void set_emit_on_sync(bool b) noexcept
   {
-    if (b)
-      flag_ |= emit_on_sync;
-    else
-      flag_ &= ~emit_on_sync;
+    flags_.set(emit_on_sync, b);
   }
 
 protected:
@@ -170,11 +168,11 @@ protected:
   /// emit-on-sync policy.
   int sync() override
   {
-    flag_ |= pending_flush;
+    flags_.set(pending_flush);
 
     GPCL_TRY
     {
-      if (flag_ & emit_on_sync)
+      if (flags_.test(emit_on_sync))
         return emit() ? 0 : -1;
     }
     GPCL_CATCH(...) { return -1; }
