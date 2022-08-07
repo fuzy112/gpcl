@@ -141,12 +141,12 @@ protected:
                        std::pointer_traits<node_pointer>::pointer_to(*this));
     return *this;
   }
-/*
-  void swap(rbtree_base_hook &other) noexcept
-  {
-    algo::swap_node(std::pointer_traits<node_pointer>::pointer_to(other),
-                    std::pointer_traits<node_pointer>::pointer_to(*this));
-  }*/
+  /*
+    void swap(rbtree_base_hook &other) noexcept
+    {
+      algo::swap_node(std::pointer_traits<node_pointer>::pointer_to(other),
+                      std::pointer_traits<node_pointer>::pointer_to(*this));
+    }*/
 };
 
 namespace detail {
@@ -385,7 +385,17 @@ struct value_compare
   key_compare key_comp() const { return pair_.first(); }
 
   key_of_value get_key_of_value() const { return pair_.second(); }
+
+  void swap(value_compare &other) noexcept { pair_.swap(other.pair_); }
 };
+
+template <typename ValueType, typename KeyCompare, typename KeyOfValue>
+void swap(value_compare<ValueType, KeyCompare, KeyOfValue> &x,
+          value_compare<ValueType, KeyCompare, KeyOfValue>
+              &y) noexcept(noexcept(x.swap(y)))
+{
+  x.swap(y);
+}
 
 template <typename ValueTraits, typename ValueCompare>
 struct node_pointer_compare
@@ -408,7 +418,20 @@ struct node_pointer_compare
     const_pointer vy = value_traits::to_value_pointer(y);
     return value_comp_(*vx, *vy);
   }
+
+  void swap(node_pointer_compare &other) noexcept
+  {
+    value_comp_.swap(other.value_comp_);
+  }
 };
+
+template <typename ValueTraits, typename ValueCompare>
+void swap(node_pointer_compare<ValueTraits, ValueCompare> &x,
+          node_pointer_compare<ValueTraits, ValueCompare>
+              &y) noexcept(noexcept(x.swap(y)))
+{
+  x.swap(y);
+}
 
 template <typename ValueTraits, typename KeyCompare, typename KeyOfValue>
 struct key_node_pointer_compare
@@ -444,7 +467,20 @@ struct key_node_pointer_compare
     const key_type &ky = pair_.second()(*vy);
     return pair_.first()(x, ky);
   }
+
+  void swap(key_node_pointer_compare &other) noexcept
+  {
+    pair_.swap(other.pair_);
+  }
 };
+
+template <typename ValueTraits, typename KeyCompare, typename KeyOfValue>
+void swap(key_node_pointer_compare<ValueTraits, KeyCompare, KeyOfValue> &x,
+          key_node_pointer_compare<ValueTraits, KeyCompare, KeyOfValue>
+              &y) noexcept(noexcept(x.swap(y)))
+{
+  x.swap(y);
+}
 
 template <typename T, typename... Options>
 struct get_value_traits
@@ -512,16 +548,40 @@ public:
   {
   }
 
+  rbtree(const rbtree &other) = delete;
+
+  rbtree &operator=(const rbtree &other) = delete;
+
+  rbtree(rbtree &&other) noexcept : value_comp_(std::move(other).value_comp_)
+  {
+    algo::swap_trees(header(), other.header());
+  }
+
+  rbtree &operator=(rbtree &&other) noexcept
+  {
+    swap(other);
+    return *this;
+  }
+
+  void swap(rbtree &other) noexcept
+  {
+    using std::swap;
+    swap(value_comp_, other.value_comp_);
+    algo::swap_trees(header(), other.header());
+  }
+
+  template <typename C = constant_time_size,
+            typename std::enable_if<!C::value, int>::type = 0>
   size_type size() const noexcept
   {
-    if constexpr (constant_time_size_)
-    {
-      return pair1_.second();
-    }
-    else
-    {
-      return algo::size(header());
-    }
+    return algo::size(header());
+  }
+
+  template <typename C = constant_time_size,
+            typename std::enable_if<C::value, int>::type = 0>
+  size_type size() const noexcept
+  {
+    return pair1_.second();
   }
 
   key_compare key_comp() const { return value_comp_.key_comp(); }
@@ -643,11 +703,15 @@ public:
 private:
   void update_size(difference_type diff) noexcept
   {
-    GPCL_CXX17_IF_CONSTEXPR(constant_time_size_)
-    {
-      pair1_.second() += diff;
-    }
+    update_size_impl(diff, constant_time_size_);
   }
+
+  void update_size_impl(difference_type diff, std::true_type) noexcept
+  {
+    pair1_.second() += diff;
+  }
+
+  void update_size_impl(difference_type, std::false_type) noexcept {}
 
   class header_node : public node_type
   {
@@ -669,6 +733,13 @@ private:
       pair1_;
   value_compare value_comp_;
 };
+
+template <typename T, typename... Options>
+void swap(rbtree<T, Options...> &x,
+          rbtree<T, Options...> &y) noexcept(noexcept(x.swap(y)))
+{
+  x.swap(y);
+}
 
 } // namespace gpcl
 
