@@ -249,8 +249,6 @@ public:
   }
 };
 
-GPCL_CLANG_SUPPRESS_WARNING_POP
-
 } // namespace gpcl::detail
 
 #endif // GPCL_DETAIL_WIN_PROCESS_HPP
