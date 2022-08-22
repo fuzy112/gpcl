@@ -31,8 +31,6 @@ set(TESTS_SRCS
     string_utils_test.cpp
     pool_test.cpp
     compressed_pointer_test.cpp
-    rbtree_test.cpp
-    rbtree_algorithms_test.cpp
     clone_ptr_test.cpp
     )
 

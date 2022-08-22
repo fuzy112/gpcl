@@ -110,8 +110,6 @@
 #include <gpcl/pool_allocator.hpp>
 #include <gpcl/process.hpp>
 #include <gpcl/propagate_const.hpp>
-#include <gpcl/rbtree.hpp>
-#include <gpcl/rbtree_algorithms.hpp>
 #include <gpcl/scope_exit.hpp>
 #include <gpcl/scope_fail.hpp>
 #include <gpcl/scope_success.hpp>
