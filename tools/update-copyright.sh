@@ -15,10 +15,10 @@ username=$(git config user.name)
 year=$(date +%Y)
 git diff --cached --name-only |
 	xargs sed -i "/Copyright (c) [0-9]\\+\\(-[0-9]\\+\\)\\? ${username}/{
-        s/${year}/${year}/; t;
-	s/\\([0-9]\\+\\)\\(-[0-9]\\+\\)\\?/\\1-${year}/;
-	s/${year}-${year}/${year}/;
-	T;
-	H
-	};
-	\${x; s/.// ; x ; T ; q 1 }"
+		/${year}/!{
+			s/\\([0-9]\\+\\)\\(-[0-9]\\+\\)\\?/\\1-${year}/
+			T
+			H
+		}
+	}
+	\${p; x; /./Q 1 ; Q  }"
