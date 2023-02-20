@@ -2,490 +2,349 @@
 #define GPCL_DETAIL_WIN_ATOMIC_HPP
 
 #include <gpcl/detail/assert.hpp>
-#include <gpcl/detail/atomic_facade.hpp>
 #include <gpcl/detail/config.hpp>
+#include <gpcl/detail/interlocked.hpp>
 #include <gpcl/memory_order.hpp>
 
-#include <type_traits>
-
-#include <Windows.h>
-#include <intrin.h>
-
-#if defined _MSC_VER && !defined GPCL_SOURCE &&                                \
-    !defined GPCL_DISABLE_AUTO_LINKING
-#  pragma comment(lib, "Synchronization")
-#endif
+#define GPCL_ATOMIC_WARN_INVALID_MEMORDER(op)                                  \
+  GPCL_UNREACHABLE("Invalid memory order for " #op " operation")
 
 namespace gpcl {
-
-template <typename T>
-class shared_ptr;
-
-template <typename T>
-class weak_ptr;
-
 namespace detail {
 
-#if !(defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) ||  \
-      defined(_M_ARM64EC))
-#  define GPCL_DETAIL_WIN_ARM_MACHINE 0
-#else
-#  define GPCL_DETAIL_WIN_ARM_MACHINE 1
-#endif
+template <size_t Size>
+struct win_atomic_ops;
 
-inline char InterlockedExchangeRelease8(volatile char *target,
-                                        char value) noexcept
-{
-#if !gpcl_detail_win_arm_machine
-  return InterlockedExchange8(target, value);
-#else
-  return _InterlockedExchange8_rel(target, value);
-#endif
-}
+#define GPCL_DEFINE_WIN_ATOMIC_OPS(bytes, bits, data_type)                     \
+  template <>                                                                  \
+  struct win_atomic_ops<bytes>                                                 \
+  {                                                                            \
+    static constexpr bool is_always_lock_free = true;                          \
+                                                                               \
+    static bool is_lock_free(T const volatile *ptr) { return true; }           \
+                                                                               \
+    template <typename T>                                                      \
+    static void store(T volatile *ptr, T val, memory_order order) noexcept     \
+    {                                                                          \
+      switch (order)                                                           \
+      {                                                                        \
+      case memory_order::relaxed:                                              \
+        WriteNoFence##bits((data_type volatile *)ptr, val);                    \
+        break;                                                                 \
+                                                                               \
+      default:                                                                 \
+        GPCL_ATOMIC_WARN_INVALID_MEMORDER(store);                              \
+                                                                               \
+      case memory_order::seq_cst:                                              \
+      case memory_order::release:                                              \
+        WriteRelease##bits((data_type volatile *)ptr, val);                    \
+        break;                                                                 \
+      }                                                                        \
+    }                                                                          \
+                                                                               \
+    template <typename T>                                                      \
+    static T load(T const volatile *ptr, memory_order order) noexcept          \
+    {                                                                          \
+      switch (order)                                                           \
+      {                                                                        \
+      case memory_order::relaxed:                                              \
+        return ReadNoFence##bits((data_type const volatile *)ptr);             \
+                                                                               \
+      default:                                                                 \
+        GPCL_ATOMIC_WARN_INVALID_MEMORDER(load);                               \
+                                                                               \
+      case memory_order::acquire:                                              \
+      case memory_order::seq_cst:                                              \
+        return ReadAcquire##bits((data_type const volatile *)load);            \
+      }                                                                        \
+    }                                                                          \
+                                                                               \
+    template <typename T>                                                      \
+    static T exchange(T volatile *ptr, T val, memory_order order) noexcept     \
+    {                                                                          \
+      switch (order)                                                           \
+      {                                                                        \
+      case memory_order::relaxed:                                              \
+        return InterlockedExchangeNoFence##bits((data_type volatile *)ptr,     \
+                                                val);                          \
+                                                                               \
+      case memory_order::consume:                                              \
+      case memory_order::acquire:                                              \
+        return InterlockedExchangeAcquire##bits((data_type volatile *)ptr,     \
+                                                val);                          \
+                                                                               \
+      case memory_order::release:                                              \
+        return InterlockedExchangeRelease##bits((data_type volatile *)ptr,     \
+                                                val);                          \
+                                                                               \
+      default:                                                                 \
+        GPCL_ATOMIC_WARN_INVALID_MEMORDER(exchange);                           \
+                                                                               \
+      case memory_order::acq_rel:                                              \
+      case memory_order::seq_cst:                                              \
+        return InterlockedExchange##bits((data_type volatile *)ptr, val);      \
+      }                                                                        \
+    }                                                                          \
+                                                                               \
+    template <typename T>                                                      \
+    static bool compare_exchange_strong(T volatile *ptr, T &expected,          \
+                                        T desired,                             \
+                                        memory_order order) noexcept           \
+    {                                                                          \
+      const T comparand = expected;                                            \
+                                                                               \
+      switch (order)                                                           \
+      {                                                                        \
+      case memory_order::relaxed:                                              \
+        expected = InterlockedCompareExchangeNoFence##bits(                    \
+            (data_type volatile *)ptr, desired, expected);                     \
+        break;                                                                 \
+      case memory_order::consume:                                              \
+      case memory_order::acquire:                                              \
+        expected = InterlockedCompareExchangeAcquire##bits(                    \
+            (data_type volatile *)ptr, desired, expected);                     \
+        break;                                                                 \
+      case memory_order::release:                                              \
+        expected = InterlockedCompareExchangeRelease##bits(                    \
+            (data_type volatile *)ptr, desired, expected);                     \
+        break;                                                                 \
+      default:                                                                 \
+        GPCL_ATOMIC_WARN_INVALID_MEMORDER(compare_exchange_strong);            \
+      case memory_order::acq_rel:                                              \
+      case memory_order::seq_cst:                                              \
+        expected = InterlockedCompareExchange##bits((data_type volatile *)ptr, \
+                                                    desired, expected);        \
+        break;                                                                 \
+      }                                                                        \
+                                                                               \
+      return comparand == expected;                                            \
+    }                                                                          \
+                                                                               \
+    template <typename T>                                                      \
+    static bool compare_exchange_strong(T volatile *ptr, T &expected,          \
+                                        T desired, memory_order success,       \
+                                        memory_order failure) noexcept         \
+    {                                                                          \
+      if (failure == memory_order::acquire ||                                  \
+          failure == memory_order::consume)                                    \
+      {                                                                        \
+        if (success == memory_order::relaxed)                                  \
+          success = failure;                                                   \
+        else if (success == memory_order::release)                             \
+          success = memory_order::acq_rel;                                     \
+        else if (success == memory_order::consume &&                           \
+                 failure == memory_order::acquire)                             \
+          success = memory_order::acquire;                                     \
+      }                                                                        \
+      return compare_exchange_strong(ptr, expected, desired, success);         \
+    }                                                                          \
+                                                                               \
+    template <typename T>                                                      \
+    static bool compare_exchange_weak(T volatile *ptr, T &expected, T desired, \
+                                      memory_order order) noexcept             \
+    {                                                                          \
+      return compare_exchange_strong(ptr, expected, desired, order);           \
+    }                                                                          \
+                                                                               \
+    template <typename T>                                                      \
+    static bool compare_exchange_weak(T volatile *ptr, T &expected, T desired, \
+                                      memory_order success,                    \
+                                      memory_order failure) noexcept           \
+    {                                                                          \
+      if (failure == memory_order::acquire ||                                  \
+          failure == memory_order::consume)                                    \
+      {                                                                        \
+        if (success == memory_order::relaxed)                                  \
+          success = failure;                                                   \
+        else if (success == memory_order::release)                             \
+          success = memory_order::acq_rel;                                     \
+        else if (success == memory_order::consume &&                           \
+                 failure == memory_order::acquire)                             \
+          success = memory_order::acquire;                                     \
+      }                                                                        \
+      return compare_exchange_weak(ptr, expected, desired, success);           \
+    }                                                                          \
+                                                                               \
+    template <typename T>                                                      \
+    static T fetch_add(T volatile *ptr, T arg, memory_order order) noexcept    \
+    {                                                                          \
+      switch (order)                                                           \
+      {                                                                        \
+      case memory_order::relaxed:                                              \
+        return InterlockedExchangeAddNoFence##bits((data_type volatile *)ptr,  \
+                                                   arg);                       \
+      case memory_order::consume:                                              \
+      case memory_order::acquire:                                              \
+        return InterlockedExchangeAddAcquire##bits((data_type volatile *)ptr,  \
+                                                   arg);                       \
+      case memory_order::release:                                              \
+        return InterlockedExchangeAddRelease##bits((data_type volatile *)ptr,  \
+                                                   arg);                       \
+      default:                                                                 \
+        GPCL_ATOMIC_WARN_INVALID_MEMORDER(fetch_add);                          \
+      case memory_order::acq_rel:                                              \
+      case memory_order::seq_cst:                                              \
+        return InterlockedExchangeAdd##bits((data_type volatile *)ptr, arg);   \
+      }                                                                        \
+    }                                                                          \
+                                                                               \
+    template <typename T>                                                      \
+    static T fetch_sub(T volatile *ptr, T arg, memory_order order) noexcept    \
+    {                                                                          \
+      return fetch_add(ptr, -static_cast<signed data_type>(arg), order);       \
+    }                                                                          \
+                                                                               \
+    template <typename T>                                                      \
+    static T fetch_and(T volatile *ptr, T arg, memory_order order) noexcept    \
+    {                                                                          \
+      switch (order)                                                           \
+      {                                                                        \
+      case memory_order::relaxed:                                              \
+        return InterlockedAndNoFence##bits((data_type volatile *)ptr, arg);    \
+      case memory_order::consume:                                              \
+      case memory_order::acquire:                                              \
+        return InterlockedAndAcquire##bits((data_type volatile *)ptr, arg);    \
+      case memory_order::release:                                              \
+        return InterlockedAndRelease##bits((data_type volatile *)ptr, arg);    \
+      default:                                                                 \
+        GPCL_ATOMIC_WARN_INVALID_MEMORDER(fetch_add);                          \
+      case memory_order::acq_rel:                                              \
+      case memory_order::seq_cst:                                              \
+        return InterlockedAnd##bits((data_type volatile *)ptr, arg);           \
+      }                                                                        \
+    }                                                                          \
+                                                                               \
+    template <typename T>                                                      \
+    static T fetch_or(T volatile *ptr, T arg, memory_order order) noexcept     \
+    {                                                                          \
+      switch (order)                                                           \
+      {                                                                        \
+      case memory_order::relaxed:                                              \
+        return InterlockedOrNoFence##bits((data_type volatile *)ptr, arg);     \
+      case memory_order::consume:                                              \
+      case memory_order::acquire:                                              \
+        return InterlockedOrAcquire##bits((data_type volatile *)ptr, arg);     \
+      case memory_order::release:                                              \
+        return InterlockedOrRelease##bits((data_type volatile *)ptr, arg);     \
+      default:                                                                 \
+        GPCL_ATOMIC_WARN_INVALID_MEMORDER(fetch_add);                          \
+      case memory_order::acq_rel:                                              \
+      case memory_order::seq_cst:                                              \
+        return InterlockedOr##bits((data_type volatile *)ptr, arg);            \
+      }                                                                        \
+    }                                                                          \
+                                                                               \
+    template <typename T>                                                      \
+    static T fetch_xor(T volatile *ptr, T arg, memory_order order) noexcept    \
+    {                                                                          \
+      switch (order)                                                           \
+      {                                                                        \
+      case memory_order::relaxed:                                              \
+        return InterlockedXorNoFence##bits((data_type volatile *)ptr, arg);    \
+      case memory_order::consume:                                              \
+      case memory_order::acquire:                                              \
+        return InterlockedXorAcquire##bits((data_type volatile *)ptr, arg);    \
+      case memory_order::release:                                              \
+        return InterlockedXorRelease##bits((data_type volatile *)ptr, arg);    \
+      default:                                                                 \
+        GPCL_ATOMIC_WARN_INVALID_MEMORDER(fetch_add);                          \
+      case memory_order::acq_rel:                                              \
+      case memory_order::seq_cst:                                              \
+        return InterlockedXor##bits((data_type volatile *)ptr, arg);           \
+      }                                                                        \
+    }                                                                          \
+  };
 
-inline CHAR InterlockedCompareExchange8(volatile CHAR *destination,
-                                        CHAR exchange, CHAR comparand) noexcept
-{
-  return _InterlockedCompareExchange8(destination, exchange, comparand);
-}
+GPCL_DEFINE_WIN_ATOMIC_OPS(1, 8, char)
+GPCL_DEFINE_WIN_ATOMIC_OPS(2, 16, short)
+GPCL_DEFINE_WIN_ATOMIC_OPS(4, , long)
+GPCL_DEFINE_WIN_ATOMIC_OPS(8, 64, __int64)
 
-inline CHAR InterlockedCompareExchangeNoFence8(volatile CHAR *destination,
-                                               CHAR exchange,
-                                               CHAR comparand) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedCompareExchange8(destination, exchange, comparand);
-#else
-  return _InterlockedCompareExchange8_nf(destination, exchange, comparand);
-#endif
-}
-
-inline CHAR InterlockedCompareExchangeAcquire8(volatile CHAR *destination,
-                                               CHAR exchange,
-                                               CHAR comparand) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedCompareExchange8(destination, exchange, comparand);
-#else
-  return _InterlockedCompareExchange8_acq(destination, exchange, comparand);
-#endif
-}
-
-inline CHAR InterlockedCompareExchangeRelease8(volatile CHAR *destination,
-                                               CHAR exchange,
-                                               CHAR comparand) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedCompareExchange8(destination, exchange, comparand);
-#else
-  return _InterlockedCompareExchange8_release(destination, exchange, comparand);
-#endif
-}
-
-inline CHAR InterlockedExchangeAddNoFence8(CHAR volatile *addend,
-                                           CHAR value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedExchangeAdd8(addend, value);
-
-#else
-  return _InterlockedExchangeAdd8_nf(addend, value);
-#endif
-}
-
-inline CHAR InterlockedExchangeAddAcquire8(CHAR volatile *addend,
-                                           CHAR value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedExchangeAdd8(addend, value);
-
-#else
-  return _InterlockedExchangeAdd8_acq(addend, value);
-#endif
-}
-
-inline CHAR InterlockedExchangeAddRelease8(CHAR volatile *addend,
-                                           CHAR value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedExchangeAdd8(addend, value);
-
-#else
-  return _InterlockedExchangeAdd8_rel(addend, value);
-#endif
-}
-
-inline SHORT InterlockedExchangeNoFence16(SHORT volatile *target,
-                                          SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedExchange16(target, value);
-#else
-
-  return _InterlockedExchange16_nf(target, value);
-#endif
-}
-
-inline SHORT InterlockedExchangeAcquire16(SHORT volatile *target,
-                                          SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedExchange16(target, value);
-#else
-
-  return _InterlockedExchange16_acq(target, value);
-#endif
-}
-
-inline SHORT InterlockedExchangeRelease16(SHORT volatile *target,
-                                          SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedExchange16(target, value);
-#else
-
-  return _InterlockedExchange16_rel(target, value);
-#endif
-}
-
-inline SHORT InterlockedExchangeAdd16(SHORT volatile *addend,
-                                      SHORT value) noexcept
-{
-  return _InterlockedExchangeAdd16(addend, value);
-}
-
-inline SHORT InterlockedExchangeAddNoFence16(SHORT volatile *addend,
-                                             SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedExchangeAdd16(addend, value);
-#else
-  return _InterlockedExchangeAdd16_nf(addend, value);
-#endif
-}
-
-inline SHORT InterlockedExchangeAddAcquire16(SHORT volatile *addend,
-                                             SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedExchangeAdd16(addend, value);
-#else
-  return _InterlockedExchangeAdd16_acq(addend, value);
-#endif
-}
-
-inline SHORT InterlockedExchangeAddRelease16(SHORT volatile *addend,
-                                             SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedExchangeAdd16(addend, value);
-#else
-  return _InterlockedExchangeAdd16_rel(addend, value);
-#endif
-}
-
-inline SHORT InterlockedAndNoFence16(SHORT volatile *target,
-                                     SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedAnd16(target, value);
-#else
-  return _InterlockedAnd16_nf(target, value);
-#endif
-}
-
-inline SHORT InterlockedAndAcquire16(SHORT volatile *target,
-                                     SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedAnd16(target, value);
-#else
-  return _InterlockedAnd16_acq(target, value);
-#endif
-}
-
-inline SHORT InterlockedAndRelease16(SHORT volatile *target,
-                                     SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedAnd16(target, value);
-#else
-  return _InterlockedAnd16_rel(target, value);
-#endif
-}
-
-inline SHORT InterlockedOrNoFence16(SHORT volatile *target,
-                                    SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedOr16(target, value);
-#else
-  return _InterlockedOr16_nf(target, value);
-#endif
-}
-
-inline SHORT InterlockedOrAcquire16(SHORT volatile *target,
-                                    SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedOr16(target, value);
-#else
-  return _InterlockedOr16_acq(target, value);
-#endif
-}
-
-inline SHORT InterlockedOrRelease16(SHORT volatile *target,
-                                    SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedOr16(target, value);
-#else
-  return _InterlockedOr16_rel(target, value);
-#endif
-}
-
-inline SHORT InterlockedXorNoFence16(SHORT volatile *target,
-                                     SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedXor16(target, value);
-#else
-  return _InterlockedXor16_nf(target, value);
-#endif
-}
-
-inline SHORT InterlockedXorAcquire16(SHORT volatile *target,
-                                     SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedXor16(target, value);
-#else
-  return _InterlockedXor16_acq(target, value);
-#endif
-}
-
-inline SHORT InterlockedXorRelease16(SHORT volatile *target,
-                                     SHORT value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedXor16(target, value);
-#else
-  return _InterlockedXor16_rel(target, value);
-#endif
-}
-
-inline LONG InterlockedExchangeRelease(LONG volatile *target,
-                                       LONG value) noexcept
-{
-#if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedExchange(target, value);
-#else
-  return _InterlockedExchange_rel(target, value);
-#endif
-}
-
-#if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_X64)
-
-inline LONG InterlockedExchangeRelease64(LONG64 volatile *target,
-                                         LONG64 value) noexcept
-{
-#  if !GPCL_DETAIL_WIN_ARM_MACHINE
-  return InterlockedExchange64(target, value);
-#  else
-  return _InterlockedExchange64_rel(target, value);
-#  endif
-}
-#endif
-
-template <typename T, size_t Size = sizeof(T)>
-struct win_atomic;
+// Generic functions
 
 template <typename T>
-struct win_atomic<T, 1> : atomic_facade<win_atomic<T, 1>, T>
+void win_atomic_store(T volatile *ptr, T val, memory_order order) noexcept
 {
-  static constexpr bool is_always_lock_free = true;
-
-  CHAR value;
-
-  constexpr win_atomic() noexcept : value() {}
-
-  constexpr win_atomic(T desired) noexcept : value(desired) {}
-
-  bool is_lock_free() const volatile noexcept { return true; }
-
-  void store(T desired,
-             memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T load(memory_order order = memory_order::seq_cst) const volatile noexcept;
-
-  T exchange(T desired,
-             memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  bool compare_exchange_strong(
-      T &expected, T desired,
-      memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_add(T arg,
-              memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_and(T arg,
-              memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_or(T arg,
-             memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_xor(T arg,
-              memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  void wait(T old,
-            memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  void notify_one() volatile noexcept;
-
-  void notify_all() volatile noexcept;
-};
+  win_atomic_ops<sizeof(T)>::store(ptr, val, order);
+}
 
 template <typename T>
-struct win_atomic<T, 2> : atomic_facade<win_atomic<T, 2>, T>
+T win_atomic_load(T const volatile *ptr, memory_order order) noexcept
 {
-  static constexpr bool is_always_lock_free = true;
-
-  SHORT value;
-
-  constexpr win_atomic() noexcept : value() {}
-
-  constexpr win_atomic(T desired) noexcept : value(desired) {}
-
-  bool is_lock_free() const volatile noexcept { return true; }
-
-  void store(T desired,
-             memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T load(memory_order order = memory_order::seq_cst) const volatile noexcept;
-
-  T exchange(T desired,
-             memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  bool compare_exchange_strong(
-      T &expected, T desired,
-      memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_add(T arg,
-              memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_and(T arg,
-              memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_or(T arg,
-             memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_xor(T arg,
-              memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  void wait(T old,
-            memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  void notify_one() volatile noexcept;
-
-  void notify_all() volatile noexcept;
-};
+  return win_atomic_ops<sizeof(T)>::load(ptr, order);
+}
 
 template <typename T>
-struct win_atomic<T, 4> : atomic_facade<win_atomic<T, 4>, T>
+T win_atomic_exchange(T volatile *ptr, T desired, memory_order order) noexcept
 {
-  static constexpr bool is_always_lock_free = true;
-
-  LONG value;
-
-  constexpr win_atomic() noexcept : value() {}
-  constexpr win_atomic(T desired) noexcept : value(desired) {}
-
-  bool is_lock_free() const volatile noexcept { return true; }
-
-  void store(T desired,
-             memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T load(memory_order order = memory_order::seq_cst) const volatile noexcept;
-
-  T exchange(T desired,
-             memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  bool compare_exchange_strong(
-      T &expected, T desired,
-      memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_add(T arg,
-              memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_and(T arg,
-              memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_or(T arg,
-             memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_xor(T arg,
-              memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  void wait(T old,
-            memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  void notify_one() volatile noexcept;
-
-  void notify_all() volatile noexcept;
-};
-
-#if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_X64)
+  return win_atomic_ops<sizeof(T)>::exchange(ptr, desired, order);
+}
 
 template <typename T>
-struct win_atomic<T, 8> : atomic_facade<win_atomic<T, 8>, T>
+bool win_atomic_exchange_strong(T volatile *ptr, T &expected, T desired,
+                                memory_order order) noexcept
 {
-  static constexpr bool is_always_lock_free = true;
+  return win_atomic_ops<sizeof(T)>::compare_exchange_strong(ptr, expected,
+                                                            desired, order);
+}
 
-  LONG64 value;
+template <typename T>
+bool win_atomic_exchange_strong(T volatile *ptr, T &expected, T desired,
+                                memory_order success,
+                                memory_order failure) noexcept
+{
+  return win_atomic_ops<sizeof(T)>::compare_exchange_strong(
+      ptr, expected, desired, success, failure);
+}
 
-  constexpr win_atomic() noexcept : value() {}
+template <typename T>
+bool win_atomic_exchange_weak(T volatile *ptr, T &expected, T desired,
+                              memory_order order) noexcept
+{
+  return win_atomic_ops<sizeof(T)>::compare_exchange_weak(ptr, expected,
+                                                          desired, order);
+}
 
-  constexpr win_atomic(T desired) noexcept : value(desired) {}
+template <typename T>
+bool win_atomic_exchange_weak(T volatile *ptr, T &expected, T desired,
+                              memory_order success,
+                              memory_order failure) noexcept
+{
+  return win_atomic_ops<sizeof(T)>::compare_exchange_weak(
+      ptr, expected, desired, success, failure);
+}
 
-  bool is_lock_free() const volatile noexcept { return true; }
+template <typename T>
+T win_atomic_fetch_add(T volatile *ptr, T arg, memory_order order) noexcept
+{
+  return win_atomic_ops<sizeof(T)>::fetch_add(ptr, arg, order);
+}
 
-  void store(T desired,
-             memory_order order = memory_order::seq_cst) volatile noexcept;
+template <typename T>
+T win_atomic_fetch_sub(T volatile *ptr, T arg, memory_order order) noexcept
+{
+  return win_atomic_ops<sizeof(T)>::fetch_sub(ptr, arg, order);
+}
 
-  T load(memory_order order = memory_order::seq_cst) const volatile noexcept;
+template <typename T>
+T win_atomic_fetch_and(T volatile *ptr, T arg, memory_order order) noexcept
+{
+  return win_atomic_ops<sizeof(T)>::fetch_and(ptr, arg, order);
+}
 
-  T exchange(T desired,
-             memory_order order = memory_order::seq_cst) volatile noexcept;
+template <typename T>
+T win_atomic_fetch_or(T volatile *ptr, T arg, memory_order order) noexcept
+{
+  return win_atomic_ops<sizeof(T)>::fetch_or(ptr, arg, order);
+}
 
-  bool compare_exchange_strong(
-      T &expected, T desired,
-      memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_add(T arg,
-              memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_and(T arg,
-              memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_or(T arg,
-             memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  T fetch_xor(T arg,
-              memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  void wait(T old,
-            memory_order order = memory_order::seq_cst) volatile noexcept;
-
-  void notify_one() volatile noexcept;
-
-  void notify_all() volatile noexcept;
-};
-
-#endif
+template <typename T>
+T win_atomic_fetch_xor(T volatile *ptr, T arg, memory_order order) noexcept
+{
+  return win_atomic_ops<sizeof(T)>::fetch_xor(ptr, arg, order);
+}
 
 } // namespace detail
 } // namespace gpcl
 
-#include <gpcl/detail/impl/win_atomic.hpp>
-
-#endif //
+#endif
