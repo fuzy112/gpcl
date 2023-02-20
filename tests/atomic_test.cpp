@@ -43,6 +43,10 @@ void test_atomic()
   CHECK(ac.load() == 2);
 
   ac.store(1);
+  CHECK(ac++ == 1);
+  CHECK(ac.load() == 2);
+
+  ac.store(1);
   CHECK(ac.fetch_sub(1) == 1);
   CHECK(ac.load() == 0);
 
@@ -71,7 +75,7 @@ void test_atomic()
     t.join();
 }
 
-TEST_CASE("test atomic")
+TEST_CASE("test atomic specialization")
 {
   test_atomic<int64_t>();
   test_atomic<uint64_t>();
@@ -97,4 +101,30 @@ TEST_CASE("test atomic")
   test_atomic<size_t>();
   test_atomic<char16_t>();
   test_atomic<char32_t>();
+}
+
+struct S
+{
+  int a;
+  char b;
+};
+
+TEST_CASE("test atomic primary template")
+{
+  gpcl::atomic<bool> ab;
+  gpcl::atomic<bool> ab2{true};
+
+  CHECK(ab.load() == false);
+  CHECK(ab2.load() == true);
+
+  ab.store(2);
+  CHECK(ab.load() == true);
+
+  gpcl::atomic<S> as;
+  CHECK(as.load().a == 0);
+  CHECK(as.load().b == 0);
+
+  as.store(S{1, 2});
+  CHECK(as.load().a == 1);
+  CHECK(as.load().b == 2);
 }

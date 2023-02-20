@@ -37,22 +37,6 @@ struct atomic_facade
     return static_cast<Derived const volatile *>(this);
   }
 
-  value_type operator=(value_type desired) &noexcept
-  {
-    derived()->store(desired);
-    return desired;
-  }
-
-  value_type operator=(value_type desired) volatile &noexcept
-  {
-    derived()->store(desired);
-    return desired;
-  }
-
-  operator value_type() const noexcept { return derived()->load(); }
-
-  operator value_type() const volatile noexcept { return derived()->load(); }
-
   value_type operator++() noexcept { return derived()->fetch_add(1) + 1; }
 
   value_type operator++() volatile noexcept

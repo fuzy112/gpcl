@@ -165,6 +165,12 @@ struct atomic<char32_t> : detail ::gcc_atomic<char32_t>
 {
 };
 
+// primary template
+template <typename T>
+struct atomic : detail::gcc_atomic_base<T>
+{
+};
+
 #endif
 
 ////extern template struct atomic<bool>;
