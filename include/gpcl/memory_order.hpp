@@ -6,7 +6,7 @@
 namespace gpcl {
 
 #if GPCL_GCC || GPCL_CLANG
-enum memory_order : int
+enum class memory_order : int
 {
   relaxed = __ATOMIC_RELAXED,
   consume = __ATOMIC_CONSUME,
@@ -17,16 +17,24 @@ enum memory_order : int
 };
 
 #else
-enum memory_order
+enum class memory_order : int
 {
-  relaxed,
-  consume,
-  acquire,
-  release,
-  acq_rel,
-  seq_cst,
+  relaxed = 0x00,
+  consume = 0x01,
+  acquire = 0x03,
+  release = 0x04,
+  acq_rel = 0x07,
+  seq_cst = 0x0f,
 };
 #endif
+
+constexpr auto memory_order_relaxed = memory_order::relaxed;
+constexpr auto memory_order_consume = memory_order::consume;
+constexpr auto memory_order_acquire = memory_order::acquire;
+constexpr auto memory_order_release = memory_order::release;
+constexpr auto memory_order_acq_rel = memory_order::acq_rel;
+constexpr auto memory_order_seq_cst = memory_order::seq_cst;
+
 } // namespace gpcl
 
 #endif

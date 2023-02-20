@@ -4,25 +4,73 @@
 #include <gpcl/detail/config.hpp>
 
 #include <intrin.h>
+#include <windows.h>
 
 #if defined _MSC_VER && !defined GPCL_SOURCE &&                                \
     !defined GPCL_DISABLE_AUTO_LINKING
 #  pragma comment(lib, "Synchronization")
 #endif
 
-inline CHAR InterlockedCompareExchangeRelease8(volatile CHAR *destination,
-                                               CHAR exchange,
-                                               CHAR comparand) noexcept
+#if defined(_M_ARM) || defined(_M_ARM64)
+#  define GPCL_DETAIL_WIN_ARM_MACHINE 1
+#else
+#  define GPCL_DETAIL_WIN_ARM_MACHINE 0
+#endif
+
+namespace gpcl {
+namespace detail {
+
+inline char InterlockedExchangeRelease8(volatile char *target,
+                                        char value) noexcept
+{
+#if !GPCL_DETAIL_WIN_ARM_MACHINE
+  return InterlockedExchange8(target, value);
+#else
+  return InterlockedExchange8_rel(target, value);
+#endif
+}
+
+inline char InterlockedCompareExchange8(volatile char *destination,
+                                        char exchange, char comparand) noexcept
+{
+  return _InterlockedCompareExchange8(destination, exchange, comparand);
+}
+
+inline char InterlockedCompareExchangeNoFence8(volatile char *destination,
+                                               char exchange,
+                                               char comparand) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedCompareExchange8(destination, exchange, comparand);
 #else
-  return _InterlockedCompareExchange8_release(destination, exchange, comparand);
+  return _InterlockedCompareExchange8_nf(destination, exchange, comparand);
 #endif
 }
 
-inline CHAR InterlockedExchangeAddNoFence8(CHAR volatile *addend,
-                                           CHAR value) noexcept
+inline char InterlockedCompareExchangeAcquire8(volatile char *destination,
+                                               char exchange,
+                                               char comparand) noexcept
+{
+#if !GPCL_DETAIL_WIN_ARM_MACHINE
+  return InterlockedCompareExchange8(destination, exchange, comparand);
+#else
+  return _InterlockedCompareExchange8_acq(destination, exchange, comparand);
+#endif
+}
+
+inline char InterlockedCompareExchangeRelease8(volatile char *destination,
+                                               char exchange,
+                                               char comparand) noexcept
+{
+#if !GPCL_DETAIL_WIN_ARM_MACHINE
+  return InterlockedCompareExchange8(destination, exchange, comparand);
+#else
+  return _InterlockedCompareExchange8_rel(destination, exchange, comparand);
+#endif
+}
+
+inline char InterlockedExchangeAddNoFence8(char volatile *addend,
+                                           char value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedExchangeAdd8(addend, value);
@@ -32,8 +80,8 @@ inline CHAR InterlockedExchangeAddNoFence8(CHAR volatile *addend,
 #endif
 }
 
-inline CHAR InterlockedExchangeAddAcquire8(CHAR volatile *addend,
-                                           CHAR value) noexcept
+inline char InterlockedExchangeAddAcquire8(char volatile *addend,
+                                           char value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedExchangeAdd8(addend, value);
@@ -43,8 +91,8 @@ inline CHAR InterlockedExchangeAddAcquire8(CHAR volatile *addend,
 #endif
 }
 
-inline CHAR InterlockedExchangeAddRelease8(CHAR volatile *addend,
-                                           CHAR value) noexcept
+inline char InterlockedExchangeAddRelease8(char volatile *addend,
+                                           char value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedExchangeAdd8(addend, value);
@@ -54,8 +102,8 @@ inline CHAR InterlockedExchangeAddRelease8(CHAR volatile *addend,
 #endif
 }
 
-inline SHORT InterlockedExchangeNoFence16(SHORT volatile *target,
-                                          SHORT value) noexcept
+inline short InterlockedExchangeNoFence16(short volatile *target,
+                                          short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedExchange16(target, value);
@@ -65,8 +113,8 @@ inline SHORT InterlockedExchangeNoFence16(SHORT volatile *target,
 #endif
 }
 
-inline SHORT InterlockedExchangeAcquire16(SHORT volatile *target,
-                                          SHORT value) noexcept
+inline short InterlockedExchangeAcquire16(short volatile *target,
+                                          short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedExchange16(target, value);
@@ -76,8 +124,8 @@ inline SHORT InterlockedExchangeAcquire16(SHORT volatile *target,
 #endif
 }
 
-inline SHORT InterlockedExchangeRelease16(SHORT volatile *target,
-                                          SHORT value) noexcept
+inline short InterlockedExchangeRelease16(short volatile *target,
+                                          short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedExchange16(target, value);
@@ -87,14 +135,14 @@ inline SHORT InterlockedExchangeRelease16(SHORT volatile *target,
 #endif
 }
 
-inline SHORT InterlockedExchangeAdd16(SHORT volatile *addend,
-                                      SHORT value) noexcept
+inline short InterlockedExchangeAdd16(short volatile *addend,
+                                      short value) noexcept
 {
   return _InterlockedExchangeAdd16(addend, value);
 }
 
-inline SHORT InterlockedExchangeAddNoFence16(SHORT volatile *addend,
-                                             SHORT value) noexcept
+inline short InterlockedExchangeAddNoFence16(short volatile *addend,
+                                             short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedExchangeAdd16(addend, value);
@@ -103,8 +151,8 @@ inline SHORT InterlockedExchangeAddNoFence16(SHORT volatile *addend,
 #endif
 }
 
-inline SHORT InterlockedExchangeAddAcquire16(SHORT volatile *addend,
-                                             SHORT value) noexcept
+inline short InterlockedExchangeAddAcquire16(short volatile *addend,
+                                             short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedExchangeAdd16(addend, value);
@@ -113,8 +161,8 @@ inline SHORT InterlockedExchangeAddAcquire16(SHORT volatile *addend,
 #endif
 }
 
-inline SHORT InterlockedExchangeAddRelease16(SHORT volatile *addend,
-                                             SHORT value) noexcept
+inline short InterlockedExchangeAddRelease16(short volatile *addend,
+                                             short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedExchangeAdd16(addend, value);
@@ -123,8 +171,8 @@ inline SHORT InterlockedExchangeAddRelease16(SHORT volatile *addend,
 #endif
 }
 
-inline SHORT InterlockedAndNoFence16(SHORT volatile *target,
-                                     SHORT value) noexcept
+inline short InterlockedAndNoFence16(short volatile *target,
+                                     short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedAnd16(target, value);
@@ -133,8 +181,8 @@ inline SHORT InterlockedAndNoFence16(SHORT volatile *target,
 #endif
 }
 
-inline SHORT InterlockedAndAcquire16(SHORT volatile *target,
-                                     SHORT value) noexcept
+inline short InterlockedAndAcquire16(short volatile *target,
+                                     short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedAnd16(target, value);
@@ -143,8 +191,8 @@ inline SHORT InterlockedAndAcquire16(SHORT volatile *target,
 #endif
 }
 
-inline SHORT InterlockedAndRelease16(SHORT volatile *target,
-                                     SHORT value) noexcept
+inline short InterlockedAndRelease16(short volatile *target,
+                                     short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedAnd16(target, value);
@@ -153,8 +201,8 @@ inline SHORT InterlockedAndRelease16(SHORT volatile *target,
 #endif
 }
 
-inline SHORT InterlockedOrNoFence16(SHORT volatile *target,
-                                    SHORT value) noexcept
+inline short InterlockedOrNoFence16(short volatile *target,
+                                    short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedOr16(target, value);
@@ -163,8 +211,8 @@ inline SHORT InterlockedOrNoFence16(SHORT volatile *target,
 #endif
 }
 
-inline SHORT InterlockedOrAcquire16(SHORT volatile *target,
-                                    SHORT value) noexcept
+inline short InterlockedOrAcquire16(short volatile *target,
+                                    short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedOr16(target, value);
@@ -173,8 +221,8 @@ inline SHORT InterlockedOrAcquire16(SHORT volatile *target,
 #endif
 }
 
-inline SHORT InterlockedOrRelease16(SHORT volatile *target,
-                                    SHORT value) noexcept
+inline short InterlockedOrRelease16(short volatile *target,
+                                    short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedOr16(target, value);
@@ -183,8 +231,8 @@ inline SHORT InterlockedOrRelease16(SHORT volatile *target,
 #endif
 }
 
-inline SHORT InterlockedXorNoFence16(SHORT volatile *target,
-                                     SHORT value) noexcept
+inline short InterlockedXorNoFence16(short volatile *target,
+                                     short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedXor16(target, value);
@@ -193,8 +241,8 @@ inline SHORT InterlockedXorNoFence16(SHORT volatile *target,
 #endif
 }
 
-inline SHORT InterlockedXorAcquire16(SHORT volatile *target,
-                                     SHORT value) noexcept
+inline short InterlockedXorAcquire16(short volatile *target,
+                                     short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedXor16(target, value);
@@ -203,8 +251,8 @@ inline SHORT InterlockedXorAcquire16(SHORT volatile *target,
 #endif
 }
 
-inline SHORT InterlockedXorRelease16(SHORT volatile *target,
-                                     SHORT value) noexcept
+inline short InterlockedXorRelease16(short volatile *target,
+                                     short value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedXor16(target, value);
@@ -213,8 +261,8 @@ inline SHORT InterlockedXorRelease16(SHORT volatile *target,
 #endif
 }
 
-inline LONG InterlockedExchangeRelease(LONG volatile *target,
-                                       LONG value) noexcept
+inline long InterlockedExchangeRelease(long volatile *target,
+                                       long value) noexcept
 {
 #if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedExchange(target, value);
@@ -223,10 +271,10 @@ inline LONG InterlockedExchangeRelease(LONG volatile *target,
 #endif
 }
 
-#if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_X64)
+#if defined(_WIN64)
 
-inline LONG InterlockedExchangeRelease64(LONG64 volatile *target,
-                                         LONG64 value) noexcept
+inline __int64 InterlockedExchangeRelease64(__int64 volatile *target,
+                                            __int64 value) noexcept
 {
 #  if !GPCL_DETAIL_WIN_ARM_MACHINE
   return InterlockedExchange64(target, value);
@@ -234,6 +282,16 @@ inline LONG InterlockedExchangeRelease64(LONG64 volatile *target,
   return _InterlockedExchange64_rel(target, value);
 #  endif
 }
+
+#  define InterlockedAndAcquire64 InterlockedAnd64Acquire
+#  define InterlockedAndNoFence64 InterlockedAnd64NoFence
+#  define InterlockedAndRelease64 InterlockedAnd64Release
+#  define InterlockedOrNoFence64 InterlockedOr64NoFence
+#  define InterlockedOrAcquire64  InterlockedOr64Acquire
+#  define InterlockedOrRelease64 InterlockedOr64Release
+#  define InterlockedXorAcquire64 InterlockedXor64Acquire
+#  define InterlockedXorNoFence64 InterlockedXor64NoFence
+#  define InterlockedXorRelease64 InterlockedXor64Release
 
 #endif
 

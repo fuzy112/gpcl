@@ -93,6 +93,12 @@ struct atomic<wchar_t> : detail::win_atomic<wchar_t>
 {
 };
 
+// primary template
+template <typename T>
+struct atomic : detail::win_atomic_base<T>
+{
+};
+
 #elif GPCL_GCC || GPCL_CLANG
 
 template <>
