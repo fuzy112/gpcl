@@ -131,20 +131,6 @@ struct atomic_facade
         -static_cast<typename std::make_signed<difference_type>::type>(arg),
         order);
   }
-
-  bool
-  compare_exchange_weak(value_type &expected, value_type desired,
-                        memory_order order = memory_order::seq_cst) noexcept
-  {
-    return derived()->compare_exchange_strong(expected, desired, order);
-  }
-
-  bool compare_exchange_weak(
-      value_type &expected, value_type desired,
-      memory_order order = memory_order::seq_cst) volatile noexcept
-  {
-    return derived()->compare_exchange_strong(expected, desired, order);
-  }
 };
 
 } // namespace detail
