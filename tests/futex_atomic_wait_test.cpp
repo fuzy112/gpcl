@@ -17,7 +17,7 @@ TEST_CASE("futex_atomic_wait_test")
   bool result = false;
 
   std::thread t1([&] {
-    futex_atomic_wait(&v, short(0));
+    futex_atomic_wait_on_address(&v, short(0), __ATOMIC_SEQ_CST);
 
     short r;
     __atomic_load(&v, &r, __ATOMIC_ACQUIRE);
@@ -31,7 +31,7 @@ TEST_CASE("futex_atomic_wait_test")
 
     short newval = 256;
     __atomic_store(&v, &newval, __ATOMIC_RELEASE);
-    futex_atomic_notify_one(&v);
+    futex_atomic_wake_by_address(&v, false);
   });
 
   t1.join();

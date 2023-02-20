@@ -96,4 +96,5 @@ TEST_CASE("test atomic")
   test_atomic<wint_t>();
   test_atomic<size_t>();
   test_atomic<char16_t>();
+  test_atomic<char32_t>();
 }

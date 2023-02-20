@@ -14,7 +14,7 @@ namespace detail {
 template <typename Derived, typename ValueType = typename Derived::value_type,
           typename DifferenceType = ValueType,
           typename UnderlyingType = ValueType>
-struct atomic_facade : noncopyable
+struct atomic_facade
 {
   typedef ValueType value_type;
 
@@ -37,13 +37,13 @@ struct atomic_facade : noncopyable
     return static_cast<Derived const volatile *>(this);
   }
 
-  value_type operator=(value_type desired) noexcept
+  value_type operator=(value_type desired) &noexcept
   {
     derived()->store(desired);
     return desired;
   }
 
-  value_type operator=(value_type desired) volatile noexcept
+  value_type operator=(value_type desired) volatile &noexcept
   {
     derived()->store(desired);
     return desired;

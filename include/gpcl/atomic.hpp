@@ -2,7 +2,12 @@
 #define GPCL_ATOMIC_HPP
 
 #include <gpcl/detail/config.hpp>
-#include <gpcl/detail/win_atomic.hpp>
+
+#ifdef GPCL_WINDOWS
+#  include <gpcl/detail/win_atomic.hpp>
+#elif GPCL_GCC || GPCL_CLANG
+#  include <gpcl/detail/gcc_atomic.hpp>
+#endif
 
 #include <type_traits>
 
@@ -14,7 +19,6 @@ namespace detail {
 
 template <typename T>
 struct atomic;
-
 
 #ifdef GPCL_WINDOWS
 template <>
@@ -88,25 +92,97 @@ template <>
 struct atomic<wchar_t> : detail::win_atomic<wchar_t>
 {
 };
+
+#elif GPCL_GCC || GPCL_CLANG
+
+template <>
+struct atomic<char> : detail::gcc_atomic<char>
+{
+};
+
+template <>
+struct atomic<signed char> : detail::gcc_atomic<signed char>
+{
+};
+
+template <>
+struct atomic<unsigned char> : detail ::gcc_atomic<unsigned char>
+{
+};
+
+template <>
+struct atomic<short> : detail::gcc_atomic<short>
+{
+};
+
+template <>
+struct atomic<unsigned short> : detail::gcc_atomic<unsigned short>
+{
+};
+
+template <>
+struct atomic<int> : detail::gcc_atomic<int>
+{
+};
+
+template <>
+struct atomic<unsigned int> : detail::gcc_atomic<unsigned int>
+{
+};
+
+template <>
+struct atomic<long> : detail ::gcc_atomic<long>
+{
+};
+
+template <>
+struct atomic<unsigned long> : detail::gcc_atomic<unsigned long>
+{
+};
+
+template <>
+struct atomic<long long> : detail ::gcc_atomic<long long>
+{
+};
+
+template <>
+struct atomic<unsigned long long> : detail::gcc_atomic<unsigned long long>
+{
+};
+
+template <>
+struct atomic<wchar_t> : detail ::gcc_atomic<wchar_t>
+{
+};
+
+template <>
+struct atomic<char16_t> : detail::gcc_atomic<char16_t>
+{
+};
+
+template <>
+struct atomic<char32_t> : detail ::gcc_atomic<char32_t>
+{
+};
+
 #endif
 
 ////extern template struct atomic<bool>;
-//extern template struct atomic<char>;
-//extern template struct atomic<signed char>;
-//extern template struct atomic<unsigned char>;
-//extern template struct atomic<short>;
-//extern template struct atomic<unsigned short>;
-//extern template struct atomic<int>;
-//extern template struct atomic<unsigned int>;
-//extern template struct atomic<long>;
-//extern template struct atomic<unsigned long>;
-//extern template struct atomic<long long>;
-//extern template struct atomic<unsigned long long>;
+// extern template struct atomic<char>;
+// extern template struct atomic<signed char>;
+// extern template struct atomic<unsigned char>;
+// extern template struct atomic<short>;
+// extern template struct atomic<unsigned short>;
+// extern template struct atomic<int>;
+// extern template struct atomic<unsigned int>;
+// extern template struct atomic<long>;
+// extern template struct atomic<unsigned long>;
+// extern template struct atomic<long long>;
+// extern template struct atomic<unsigned long long>;
 //// extern template struct atomic<char8_t> ;
-//extern template struct atomic<char16_t>;
-//extern template struct atomic<char32_t>;
-//extern template struct atomic<wchar_t>;
-
+// extern template struct atomic<char16_t>;
+// extern template struct atomic<char32_t>;
+// extern template struct atomic<wchar_t>;
 
 typedef atomic<bool> atomic_bool;
 typedef atomic<char> atomic_char;

@@ -14,8 +14,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/futex.hpp>
 #include <gpcl/detail/posix_thread.hpp>
-
-#include <atomic>
+#include <gpcl/memory_order.hpp>
 
 namespace gpcl {
 namespace detail {
@@ -57,7 +56,7 @@ struct futex_atomic_wait_state
   {
     futex_atomic_wait_state &state_;
 
-    explicit waiter(futex_atomic_wait_state &state) : state_(state)
+    explicit waiter(futex_atomic_wait_state &state) noexcept : state_(state)
     {
       state_.start_waiting();
     }
@@ -75,10 +74,8 @@ struct futex_atomic_wait_state
   }
 
   template <typename T>
-  T wait(const T *addr, const T old, std::memory_order order)
+  T wait(const T *addr, const T old, int order)
   {
-    GPCL_ASSERT(order != std::memory_order_release);
-    GPCL_ASSERT(order != std::memory_order_acq_rel);
 
     T val;
     futex_word_type event;
@@ -86,7 +83,7 @@ struct futex_atomic_wait_state
 
     __atomic_load(wait_addr, &event, __ATOMIC_ACQUIRE);
 
-    __atomic_load(addr, &val, (int)order);
+    __atomic_load(addr, &val, order);
     if (0 != memcmp(&val, &old, sizeof(old)))
       return val;
 
@@ -95,7 +92,7 @@ struct futex_atomic_wait_state
     do
     {
       futex_wait(wait_addr, event);
-      __atomic_load(addr, &val, (int)order);
+      __atomic_load(addr, &val, order);
     } while (!memcmp(&val, &old, sizeof(old)));
     return val;
   }
@@ -121,8 +118,7 @@ struct futex_atomic_wait_state
 };
 
 template <typename T>
-T futex_atomic_wait_on_address(
-    const T *addr, T old, std::memory_order order = std::memory_order_acquire)
+T futex_atomic_wait_on_address(const T *addr, T old, int order)
 {
   return futex_atomic_wait_state::for_(addr).wait(addr, old, order);
 }
@@ -131,25 +127,6 @@ template <typename T>
 void futex_atomic_wake_by_address(T *addr, bool all)
 {
   futex_atomic_wait_state::for_(addr).wake(addr, all);
-}
-
-template <typename T>
-T futex_atomic_wait(const T *addr, T old,
-                    std::memory_order order = std::memory_order_acquire)
-{
-  return futex_atomic_wait_on_address(addr, old, order);
-}
-
-template <typename T>
-void futex_atomic_notify_one(T *addr)
-{
-  futex_atomic_wake_by_address(addr, false);
-}
-
-template <typename T>
-void futex_atomic_notify_all(T *addr)
-{
-  futex_atomic_wake_by_address(addr, true);
 }
 
 } // namespace detail

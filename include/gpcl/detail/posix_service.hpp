@@ -11,6 +11,7 @@
 #ifndef GPCL_DETAIL_POSIX_SERVICE_HPP
 #define GPCL_DETAIL_POSIX_SERVICE_HPP
 
+#include <gpcl/atomic.hpp>
 #include <gpcl/content_iterator.hpp>
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/error.hpp>
@@ -65,8 +66,8 @@ class posix_service
   optional<gpcl::pid_file> pidfilefd_{};
 
   static inline posix_service *instance_{nullptr};
-  std::atomic_bool run_{false};
-  std::atomic_bool need_restart_{false};
+  atomic_char run_{false};
+  atomic_char need_restart_{false};
 
 public:
   explicit posix_service(std::string name) : service_name_(std::move(name)) {}
@@ -90,7 +91,10 @@ public:
       int pid = pidfile.read_pid();
       GPCL_THROW_LAST_ERROR_IF(::kill(pid, SIGHUP) < 0);
     }
-    GPCL_CATCH(...) { start(); }
+    GPCL_CATCH(...)
+    {
+      start();
+    }
     GPCL_CATCH_END
   }
 
@@ -107,27 +111,42 @@ public:
 #endif
   }
 
-  std::string err_file() const { return "/var/log/" + name() + "/err.log"; }
+  std::string err_file() const
+  {
+    return "/var/log/" + name() + "/err.log";
+  }
 
-  std::string out_file() const { return "/var/log/" + name() + "/out.log"; }
+  std::string out_file() const
+  {
+    return "/var/log/" + name() + "/out.log";
+  }
 
 protected:
   virtual void do_start()
   {
-    run_ = true;
+    run_.store(true);
     notify_success();
   }
   virtual void run() noexcept {}
-  virtual void do_stop() noexcept { run_ = false; }
+  virtual void do_stop() noexcept
+  {
+    run_.store(false);
+  }
   virtual void do_restart() noexcept
   {
-    need_restart_ = true;
+    need_restart_.store(true);
     do_stop();
   }
 
-  virtual bool do_is_stopped() const noexcept { return !run_; }
+  virtual bool do_is_stopped() const noexcept
+  {
+    return !run_;
+  }
 
-  void notify_success() { write_error(error_code()); }
+  void notify_success()
+  {
+    write_error(error_code());
+  }
 
 private:
   GPCL_NORETURN GPCL_DECL void parent();

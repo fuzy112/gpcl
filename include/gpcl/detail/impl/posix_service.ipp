@@ -297,7 +297,7 @@ l_restart:
 
   if (need_restart_)
   {
-    need_restart_ = false;
+    need_restart_.store(false);
     goto l_restart;
   }
 
