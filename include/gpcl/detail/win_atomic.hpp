@@ -1,3 +1,13 @@
+//
+// win_atomic.hpp
+// ~~~~~~~~~~~~~~
+//
+// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
 #ifndef GPCL_DETAIL_WIN_ATOMIC_HPP
 #define GPCL_DETAIL_WIN_ATOMIC_HPP
 
@@ -133,7 +143,7 @@ struct win_atomic_ops;
     }                                                                          \
                                                                                \
     template <typename T>                                                      \
-    static T fetch_add(T *ptr, T arg, memory_order order) noexcept             \
+    static T fetch_add(T *ptr, data_type arg, memory_order order) noexcept     \
     {                                                                          \
       switch (order)                                                           \
       {                                                                        \
@@ -153,13 +163,13 @@ struct win_atomic_ops;
     }                                                                          \
                                                                                \
     template <typename T>                                                      \
-    static T fetch_sub(T *ptr, T arg, memory_order order) noexcept             \
+    static T fetch_sub(T *ptr, data_type arg, memory_order order) noexcept     \
     {                                                                          \
       return fetch_add<T>(ptr, -static_cast<signed data_type>(arg), order);    \
     }                                                                          \
                                                                                \
     template <typename T>                                                      \
-    static T fetch_and(T *ptr, T arg, memory_order order) noexcept             \
+    static T fetch_and(T *ptr, T_type arg, memory_order order) noexcept        \
     {                                                                          \
       switch (order)                                                           \
       {                                                                        \
@@ -198,8 +208,7 @@ struct win_atomic_ops;
       }                                                                        \
     }                                                                          \
                                                                                \
-    template <typename T>                                                      \
-    static T fetch_xor(T *ptr, T arg, memory_order order) noexcept             \
+    static T fetch_xor(T *ptr, T_type arg, memory_order order) noexcept        \
     {                                                                          \
       switch (order)                                                           \
       {                                                                        \
@@ -250,6 +259,8 @@ GPCL_DEFINE_WIN_ATOMIC_OPS(2, 16, short);
 GPCL_DEFINE_WIN_ATOMIC_OPS(4, , long);
 GPCL_DEFINE_WIN_ATOMIC_OPS(8, 64, __int64);
 
+// todo: primary template for win_atomic_ops
+
 // Generic functions
 
 template <typename T>
@@ -298,14 +309,14 @@ bool win_atomic_compare_exchange(T *ptr, T *expected, T desired, bool weak,
                                                      weak, success, failure);
 }
 
-template <typename T>
-T win_atomic_fetch_add(T *ptr, T arg, memory_order order) noexcept
+template <typename T, typename U>
+T win_atomic_fetch_add(T *ptr, U arg, memory_order order) noexcept
 {
   return win_atomic_ops<sizeof(T)>::fetch_add(ptr, arg, order);
 }
 
-template <typename T>
-T win_atomic_fetch_sub(T *ptr, T arg, memory_order order) noexcept
+template <typename T, typename U>
+T win_atomic_fetch_sub(T *ptr, U arg, memory_order order) noexcept
 {
   return win_atomic_ops<sizeof(T)>::fetch_sub(ptr, arg, order);
 }
@@ -487,25 +498,27 @@ struct win_atomic
 {
   using win_atomic_base<T>::win_atomic_base;
 
-  T fetch_add(T arg, memory_order order = memory_order::seq_cst) noexcept
+  T fetch_add(DifferenceType arg,
+              memory_order order = memory_order::seq_cst) noexcept
   {
     return win_atomic_fetch_add(&this->value, arg, (order));
   }
 
   GPCL_WIN_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
-  T fetch_add(T arg,
+  T fetch_add(DifferenceType arg,
               memory_order order = memory_order::seq_cst) volatile noexcept
   {
     return win_atomic_fetch_add(&this->value, arg, (order));
   }
 
-  T fetch_sub(T arg, memory_order order = memory_order::seq_cst) noexcept
+  T fetch_sub(DifferenceType arg,
+              memory_order order = memory_order::seq_cst) noexcept
   {
     return win_atomic_fetch_sub(&this->value, arg, (order));
   }
 
   GPCL_WIN_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
-  T fetch_sub(T arg,
+  T fetch_sub(DifferenceType arg,
               memory_order order = memory_order::seq_cst) volatile noexcept
   {
     return win_atomic_fetch_sub(&this->value, arg, (order));
@@ -545,6 +558,40 @@ struct win_atomic
              memory_order order = memory_order::seq_cst) volatile noexcept
   {
     return win_atomic_fetch_or(&this->value, arg, (order));
+  }
+};
+
+template <typename T>
+struct win_atomic<T *, std::ptrdiff_t, void>
+    : win_atomic_base<T *>,
+      atomic_facade<win_atomic<T *, std::ptrdiff_t, void>, std::ptrdiff_t>
+{
+  using win_atomic_base<T *>::win_atomic_base;
+
+  T *fetch_add(std::ptrdiff_t arg,
+               memory_order order = memory_order::seq_cst) noexcept
+  {
+    return win_atomic_fetch_add(&this->value, sizeof(T) * arg, (order));
+  }
+
+  GPCL_WIN_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
+  T *fetch_add(std::ptrdiff_t arg,
+               memory_order order = memory_order::seq_cst) volatile noexcept
+  {
+    return win_atomic_fetch_add(&this->value, sizeof(T) * arg, (order));
+  }
+
+  T *fetch_sub(std::ptrdiff_t arg,
+               memory_order order = memory_order::seq_cst) noexcept
+  {
+    return win_atomic_fetch_sub(&this->value, sizeof(T) * arg, (order));
+  }
+
+  GPCL_WIN_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
+  T *fetch_sub(std::ptrdiff_t arg,
+               memory_order order = memory_order::seq_cst) volatile noexcept
+  {
+    return win_atomic_fetch_sub(&this->value, sizeof(T) * arg, (order));
   }
 };
 

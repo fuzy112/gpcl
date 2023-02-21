@@ -1,3 +1,13 @@
+//
+// gcc_atomic.hpp
+// ~~~~~~~~~~~~~~
+//
+// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
 #ifndef GPCL_DETAIL_GCC_ATOMIC_HPP
 #define GPCL_DETAIL_GCC_ATOMIC_HPP
 
@@ -33,7 +43,7 @@ inline int gcc_memory_order(memory_order order) noexcept
   }
 }
 
-#define GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(Type)                       \
+#define GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(Type)              \
   template <typename GpclDummyType = int,                                      \
             typename std::enable_if<                                           \
                 gpcl::detail::gcc_atomic_base<Type>::is_always_lock_free,      \
@@ -69,7 +79,7 @@ struct gcc_atomic_base
     return desired;
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   T operator=(T desired) volatile noexcept
   {
     store(desired);
@@ -78,7 +88,7 @@ struct gcc_atomic_base
 
   operator T() const noexcept { return load(); }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   operator T() const volatile noexcept { return load(); }
 
   void wait(T old, memory_order order = memory_order::seq_cst) volatile noexcept
@@ -101,7 +111,7 @@ struct gcc_atomic_base
     __atomic_store(&value, &desired, gcc_memory_order(order));
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   void store(T desired,
              memory_order order = memory_order::seq_cst) volatile noexcept
   {
@@ -115,7 +125,7 @@ struct gcc_atomic_base
     return result;
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   T load(memory_order order = memory_order::seq_cst) const volatile noexcept
   {
     T result;
@@ -130,7 +140,7 @@ struct gcc_atomic_base
     return result;
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   T exchange(T desired,
              memory_order order = memory_order::seq_cst) volatile noexcept
   {
@@ -147,7 +157,7 @@ struct gcc_atomic_base
                                      gcc_memory_order(failure));
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   bool compare_exchange_strong(T &expected, T desired, memory_order success,
                                memory_order failure) volatile noexcept
   {
@@ -168,7 +178,7 @@ struct gcc_atomic_base
     return compare_exchange_strong(expected, desired, order, failure);
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   bool compare_exchange_strong(
       T &expected, T desired,
       memory_order order = memory_order::seq_cst) volatile noexcept
@@ -189,7 +199,7 @@ struct gcc_atomic_base
                                      gcc_memory_order(failure));
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   bool compare_exchange_weak(T &expected, T desired, memory_order success,
                              memory_order failure) volatile noexcept
   {
@@ -210,7 +220,7 @@ struct gcc_atomic_base
     return compare_exchange_weak(expected, desired, order, failure);
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   bool compare_exchange_weak(
       T &expected, T desired,
       memory_order order = memory_order::seq_cst) volatile noexcept
@@ -224,10 +234,8 @@ struct gcc_atomic_base
   }
 };
 
-template <typename T, typename DifferenceType = T, typename V = void>
-struct gcc_atomic
-    : gcc_atomic_base<T>,
-      atomic_facade<gcc_atomic<T, DifferenceType, V>, DifferenceType>
+template <typename T>
+struct gcc_atomic : gcc_atomic_base<T>, atomic_facade<gcc_atomic<T>, T>
 {
   using gcc_atomic_base<T>::gcc_atomic_base;
 
@@ -236,7 +244,7 @@ struct gcc_atomic
     return __atomic_fetch_add(&this->value, arg, gcc_memory_order(order));
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   T fetch_add(T arg,
               memory_order order = memory_order::seq_cst) volatile noexcept
   {
@@ -248,7 +256,7 @@ struct gcc_atomic
     return __atomic_fetch_sub(&this->value, arg, gcc_memory_order(order));
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   T fetch_sub(T arg,
               memory_order order = memory_order::seq_cst) volatile noexcept
   {
@@ -260,7 +268,7 @@ struct gcc_atomic
     return __atomic_fetch_and(&this->value, arg, gcc_memory_order(order));
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   T fetch_and(T arg,
               memory_order order = memory_order::seq_cst) volatile noexcept
   {
@@ -272,7 +280,7 @@ struct gcc_atomic
     return __atomic_fetch_xor(&this->value, arg, gcc_memory_order(order));
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   T fetch_xor(T arg,
               memory_order order = memory_order::seq_cst) volatile noexcept
   {
@@ -284,11 +292,49 @@ struct gcc_atomic
     return __atomic_fetch_or(&this->value, arg, gcc_memory_order(order));
   }
 
-  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE(T)
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
   T fetch_or(T arg,
              memory_order order = memory_order::seq_cst) volatile noexcept
   {
     return __atomic_fetch_or(&this->value, arg, gcc_memory_order(order));
+  }
+};
+
+template <typename T>
+struct gcc_atomic<T *> : gcc_atomic_base<T *>,
+                         atomic_facade<gcc_atomic<T *>, T *, std::ptrdiff_t>
+{
+  using gcc_atomic_base<T *>::gcc_atomic_base;
+  using gcc_atomic_base<T *>::operator=;
+
+  T *fetch_add(std::ptrdiff_t arg,
+               memory_order order = memory_order::seq_cst) noexcept
+  {
+    return __atomic_fetch_add(&this->value, sizeof(T) * arg,
+                              gcc_memory_order(order));
+  }
+
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
+  T *fetch_add(std::ptrdiff_t arg,
+               memory_order order = memory_order::seq_cst) volatile noexcept
+  {
+    return __atomic_fetch_add(&this->value, sizeof(T) * arg,
+                              gcc_memory_order(order));
+  }
+
+  T *fetch_sub(std::ptrdiff_t arg,
+               memory_order order = memory_order::seq_cst) noexcept
+  {
+    return __atomic_fetch_sub(&this->value, sizeof(T) * arg,
+                              gcc_memory_order(order));
+  }
+
+  GPCL_GCC_ATOMIC_ENABLE_IF_ALWAYS_LOCK_FREE_TEMPLATE(T)
+  T *fetch_sub(std::ptrdiff_t arg,
+               memory_order order = memory_order::seq_cst) volatile noexcept
+  {
+    return __atomic_fetch_sub(&this->value, sizeof(T) * arg,
+                              gcc_memory_order(order));
   }
 };
 

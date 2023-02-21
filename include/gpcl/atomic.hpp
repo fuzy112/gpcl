@@ -1,3 +1,13 @@
+//
+// atomic.hpp
+// ~~~~~~~~~~
+//
+// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
 #ifndef GPCL_ATOMIC_HPP
 #define GPCL_ATOMIC_HPP
 
@@ -93,6 +103,12 @@ struct atomic<wchar_t> : detail::win_atomic<wchar_t>
 {
 };
 
+// specialization for pointers
+template <typename T>
+struct atomic<T *> : detail::win_atomic<T *>
+{
+};
+
 // primary template
 template <typename T>
 struct atomic : detail::win_atomic_base<T>
@@ -171,10 +187,20 @@ struct atomic<char32_t> : detail ::gcc_atomic<char32_t>
 {
 };
 
+// specialization for pointers
+template <typename T>
+struct atomic<T *> : detail::gcc_atomic<T *>
+{
+  using detail::gcc_atomic<T *>::gcc_atomic;
+  using detail::gcc_atomic<T *>::operator=;
+};
+
 // primary template
 template <typename T>
 struct atomic : detail::gcc_atomic_base<T>
 {
+  using detail::gcc_atomic_base<T>::gcc_atomic_base;
+  using detail::gcc_atomic_base<T>::operator=;
 };
 
 #endif

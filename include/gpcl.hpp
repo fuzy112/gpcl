@@ -18,6 +18,7 @@
 #include <gpcl/any_cast.hpp>
 #include <gpcl/apply.hpp>
 #include <gpcl/assert.hpp>
+#include <gpcl/atomic.hpp>
 #include <gpcl/bad_any_cast.hpp>
 #include <gpcl/bad_expected_access.hpp>
 #include <gpcl/bad_weak_ptr.hpp>
@@ -90,6 +91,7 @@
 #include <gpcl/make_iomanip.hpp>
 #include <gpcl/make_shared.hpp>
 #include <gpcl/memory_mapped_region.hpp>
+#include <gpcl/memory_order.hpp>
 #include <gpcl/message_queue.hpp>
 #include <gpcl/meta.hpp>
 #include <gpcl/meta_fwd.hpp>

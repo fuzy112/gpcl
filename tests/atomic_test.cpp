@@ -128,3 +128,16 @@ TEST_CASE("test atomic primary template")
   CHECK(as.load().a == 1);
   CHECK(as.load().b == 2);
 }
+
+TEST_CASE("test atomic pointer")
+{
+  gpcl::atomic<int *> ap;
+  CHECK(ap.load() == 0);
+
+  int n = 42;
+  ap.store(&n);
+  CHECK(ap.load() == &n);
+
+  CHECK(ap.fetch_add(1) == &n);
+  CHECK(ap.load() == (&n) + 1);
+}
