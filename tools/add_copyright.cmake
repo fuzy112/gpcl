@@ -2,7 +2,7 @@
 # add_copyright.cmake
 # ~~~~~~~~~~~~~~~~~~~
 #
-# Copyright (c) 2020-2022 Zhengyi Fu (tsingyat at outlook dot com)
+# Copyright (c) 2020-2023 Zhengyi Fu (tsingyat at outlook dot com)
 #
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -13,13 +13,13 @@ file(GLOB_RECURSE SOURCES "${GPCL_SOURCE_DIR}/include/gpcl/*.?pp")
 function(generate_copyright_notation_for_file filename OUT_VAR)
   get_filename_component(filename "${filename}" NAME)
   string(REGEX REPLACE "." "~" lines "${filename}")
-
+  string(TIMESTAMP year "%Y")
   set(${OUT_VAR}
       "//
 // ${filename}
 // ${lines}
 //
-// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) ${year} Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
