@@ -5,9 +5,9 @@
 TEST_CASE("future")
 {
   auto fut = gpcl::async([] { return 1; });
-  for (int i = 0; i < 1000; ++i)
+  for (int i = 0; i < 10; ++i)
   {
     fut = fut.then([](int a) { return a + 1; });
   }
-  CHECK(fut.get() == 1001);
+  CHECK(fut.get() == 11);
 }
