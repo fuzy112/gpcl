@@ -15,7 +15,6 @@
 #include <gpcl/detail/pthread_error.hpp>
 #include <gpcl/unique_lock.hpp>
 
-#include <atomic>
 #include <climits>
 #include <csetjmp>
 #include <exception>
