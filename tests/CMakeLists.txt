@@ -31,6 +31,7 @@ set(TESTS_SRCS
     vector_test.cpp
     out_ptr_test.cpp
     string_utils_test.cpp
+    symbol_location_test.cpp
     pool_test.cpp
     compressed_pointer_test.cpp
     clone_ptr_test.cpp
