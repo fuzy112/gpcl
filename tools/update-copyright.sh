@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # update-copyright.sh
 # ~~~~~~~~~~~~~~~~~~~
@@ -9,16 +9,26 @@
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 #
 
-set -e
-
 username=$(git config user.name)
 year=$(date +%Y)
-git diff --cached --name-only |
-	xargs sed -i "/Copyright (c) [0-9]\\+\\(-[0-9]\\+\\)\\? ${username}/{
+declare -a changed_files
+git diff --cached --name-only >.file_list
+val=0
+
+while IPS='' read file; do
+	sed -i "/Copyright (c) \\+[0-9]\\+\\(-[0-9]\\+\\)\\? \\+${username}/{
 		/${year}/!{
 			s/\\([0-9]\\+\\)\\(-[0-9]\\+\\)\\?/\\1-${year}/
 			T
 			H
 		}
 	}
-	\${p; x; /./Q 1 ; Q  }"
+	\${p; x; /./Q 1 ; Q  }" "$file"
+	if [ $? != '0' ]; then
+		val=1
+	fi
+done < .file_list
+
+rm .file_list
+
+exit $val

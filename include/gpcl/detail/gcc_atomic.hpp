@@ -2,7 +2,7 @@
 // gcc_atomic.hpp
 // ~~~~~~~~~~~~~~
 //
-// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2022-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -14,9 +14,12 @@
 #include <gpcl/detail/config.hpp>
 
 #include <gpcl/detail/atomic_facade.hpp>
+#include <gpcl/detail/assert.hpp>
 
 #ifdef GPCL_LINUX
 #  include <gpcl/detail/futex_atomic_wait.hpp>
+#elif defined(GPCL_WINDOWS)
+#  include <windows.h>
 #endif
 
 namespace gpcl {
@@ -93,17 +96,29 @@ struct gcc_atomic_base
 
   void wait(T old, memory_order order = memory_order::seq_cst) volatile noexcept
   {
+#if defined GPCL_LINUX
     futex_atomic_wait_on_address((T *)&value, old, gcc_memory_order(order));
+#elif defined GPCL_WINDOWS
+    WaitOnAddress((T *)&value, &old, sizeof(old), INFINITE);
+#endif
   }
 
   void notify_all() volatile noexcept
   {
+#if defined GPCL_LINUX
     futex_atomic_wake_by_address((T *)&value, true);
+#elif defined GPCL_WINDOWS
+    WakeByAddressAll((T *)&value);
+#endif
   }
 
   void notify_one() volatile noexcept
   {
+#if defined GPCL_LINUX
     futex_atomic_wake_by_address((T *)&value, false);
+#elif defined GPCL_WINDOWS
+    WakeByAddressSingle((T *)&value);
+#endif
   }
 
   void store(T desired, memory_order order = memory_order::seq_cst) noexcept
