@@ -2,7 +2,7 @@
 // gpcl.hpp
 // ~~~~~~~~
 //
-// Copyright (c) 2020-2022 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2020-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -107,7 +107,9 @@
 #include <gpcl/options.hpp>
 #include <gpcl/ospanstream.hpp>
 #include <gpcl/osyncstream.hpp>
+#include <gpcl/out_ptr.hpp>
 #include <gpcl/pid_file.hpp>
+#include <gpcl/pointer_traits.hpp>
 #include <gpcl/pool.hpp>
 #include <gpcl/pool_allocator.hpp>
 #include <gpcl/process.hpp>
@@ -132,6 +134,7 @@
 #include <gpcl/strerror.hpp>
 #include <gpcl/string_utils.hpp>
 #include <gpcl/swap.hpp>
+#include <gpcl/symbol_location.hpp>
 #include <gpcl/syncbuf.hpp>
 #include <gpcl/tag_invoke.hpp>
 #include <gpcl/thread.hpp>
