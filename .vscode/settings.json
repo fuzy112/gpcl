@@ -142,4 +142,5 @@
     "C/C++ Include Guard.Path Skip": 1,
     "C/C++ Include Guard.Remove Extension": false,
     "editor.renderWhitespace": "trailing",
+    "cmake.configureOnOpen": false,
 }
