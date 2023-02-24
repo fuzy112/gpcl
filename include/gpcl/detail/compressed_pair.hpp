@@ -2,7 +2,7 @@
 // compressed_pair.hpp
 // ~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2021-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -32,7 +32,8 @@ public:
   using type = T;
 
   template <typename... Args>
-  explicit constexpr compressed_storage(Args &&...args) noexcept(std::is_nothrow_constructible<T, Args&&...>::value)
+  explicit constexpr compressed_storage(Args &&...args) noexcept(
+      std::is_nothrow_constructible<T, Args &&...>::value)
       : data_(std::forward<Args>(args)...)
   {
   }
@@ -58,7 +59,8 @@ public:
   using type = T;
 
   template <typename... Args>
-  explicit constexpr compressed_storage(Args &&...args) noexcept(std::is_nothrow_constructible<T, Args&&...>::value)
+  explicit constexpr compressed_storage(Args &&...args) noexcept(
+      std::is_nothrow_constructible<T, Args &&...>::value)
       : T(std::forward<Args>(args)...)
   {
   }
@@ -128,8 +130,8 @@ public:
 
   constexpr compressed_pair(const compressed_pair &) = default;
   constexpr compressed_pair(compressed_pair &&) noexcept(
-      std::is_nothrow_move_constructible_v<T1>
-          &&std::is_nothrow_move_constructible_v<T2>) = default;
+      std::is_nothrow_move_constructible<T1>::value
+          && std::is_nothrow_move_constructible<T2>::value) = default;
 
   ~compressed_pair() = default;
 

@@ -28,7 +28,8 @@
                 "-Wall",
                 "-Wextra",
                 "-Wpedantic"
-            ]
+            ],
+            "compileCommands": "${workspaceFolder}/build-win32/compile_commands.json"
         }
     ],
     "version": 4

@@ -51,9 +51,12 @@ option(GPCL_ENABLE_RTTI "Enable RTTI support" TRUE)
 
 option(GPCL_ENABLE_CLANG_TIDY "Enable clang-tidy" FALSE)
 
-option(GPCL_ENABLE_HEADER_TEST "Check whether public headers are self contained" FALSE)
+option(GPCL_ENABLE_HEADER_TEST "Check whether public headers are self contained" TRUE)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 check_ipo_supported(RESULT ipo_supported)
 if(ipo_supported AND GPCL_ENABLE_LTO)
@@ -147,7 +150,7 @@ else()
 endif()
 
 if(GPCL_IS_GIT_REPO)
-  message(INFO "Installing pre-commit hook")
+  message(NOTICE "Installing pre-commit hook")
   file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/tools/pre-commit"
     DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/.git/hooks/")
 endif()

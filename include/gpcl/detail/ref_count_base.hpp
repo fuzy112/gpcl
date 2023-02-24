@@ -2,7 +2,7 @@
 // ref_count_base.hpp
 // ~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2021-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -22,8 +22,8 @@ namespace detail {
 class ref_count_base
 {
 public:
-  typedef void *(*operation_func_t)(ref_count_base *self,
-                                    ref_count_operation) noexcept;
+  using operation_func_t = void *(*)(ref_count_base *self,
+                                     ref_count_operation) noexcept;
 
   // Increment use count.
   void get() noexcept

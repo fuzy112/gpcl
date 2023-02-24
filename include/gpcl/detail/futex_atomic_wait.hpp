@@ -2,7 +2,7 @@
 // futex_atomic_wait.hpp
 // ~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2021-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -68,7 +68,7 @@ struct futex_atomic_wait_state
   static futex_word_type *wait_address(const T *addr, futex_word_type *proxy)
   {
     (void)addr;
-    if constexpr (sizeof(T) == sizeof(futex_word_type))
+    GPCL_CXX17_IF_CONSTEXPR (sizeof(T) == sizeof(futex_word_type))
       return reinterpret_cast<futex_word_type *>(const_cast<T *>(addr));
     return proxy;
   }
@@ -101,7 +101,7 @@ struct futex_atomic_wait_state
   void wake(T *addr, bool all)
   {
     futex_word_type *wait_addr = wait_address(addr, &proxy);
-    if constexpr (sizeof(futex_word_type) != sizeof(T))
+    GPCL_CXX17_IF_CONSTEXPR (sizeof(futex_word_type) != sizeof(T))
       __atomic_fetch_add(wait_addr, 1, __ATOMIC_ACQ_REL);
     else
       all = true;

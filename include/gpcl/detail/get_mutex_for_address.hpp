@@ -2,7 +2,7 @@
 // get_mutex_for_address.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2021-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -14,14 +14,15 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/mutex.hpp>
 
-namespace gpcl
-{
+namespace gpcl {
 
-template <typename T> class shared_ptr;
+template <typename T>
+class shared_ptr;
 
 }
 
-namespace gpcl ::detail {
+namespace gpcl {
+namespace detail {
 
 #if GPCL_DETAIL_MUTEX_FOR_ADDRESS_USE_SHARED_PTR
 typedef shared_ptr<mutex> mutex_for_address_ptr;
@@ -32,6 +33,7 @@ typedef mutex *mutex_for_address_ptr;
 GPCL_DECL
 mutex_for_address_ptr get_mutex_for_address(void const *key);
 
-} // namespace gpcl::detail
+} // namespace detail
+} // namespace gpcl
 
 #endif // GPCL_DETAIL_GET_MUTEX_FOR_ADDRESS_HPP

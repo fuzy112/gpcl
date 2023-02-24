@@ -2,7 +2,7 @@
 // variant.hpp
 // ~~~~~~~~~~~
 //
-// Copyright (c) 2021-2022 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2021-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -69,10 +69,10 @@ namespace detail {
 
 // clang-format off
 template <std::size_t MaxIndex>
-using variant_index_type_impl = 
+using variant_index_type_impl =
     std::conditional_t<MaxIndex < (std::size_t)(std::numeric_limits<signed char>::max)(), signed char,
     std::conditional_t<MaxIndex < (std::size_t)(std::numeric_limits<signed short>::max)(), signed short,
-    std::conditional_t<MaxIndex < (std::size_t)(std::numeric_limits<signed int>::max)(), signed int, 
+    std::conditional_t<MaxIndex < (std::size_t)(std::numeric_limits<signed int>::max)(), signed int,
     std::size_t>>>;
 // clang-format on
 
@@ -180,19 +180,22 @@ class variant_move_construct_base;
 
 template <typename... Types>
 class variant_move_construct_base<false, Types...>
-    : public variant_storage<(std::is_trivially_destructible_v<Types> && ...),
-                             Types...>
+    : public variant_storage<
+          std::conjunction<std::is_nothrow_destructible<Types>...>::value,
+          Types...>
 {
   static constexpr bool nothrow =
-      (std::is_nothrow_move_constructible_v<Types> && ...);
+      std::conjunction<std::is_nothrow_move_constructible<Types>...>::value;
 
 public:
   constexpr variant_move_construct_base() = default;
 
 #if !defined _MSC_VER
-  template <bool True = true,
-            std::enable_if_t<
-                True && (std::is_move_constructible_v<Types> && ...), int> = 0>
+  template <
+      bool True = true,
+      std::enable_if_t<
+          True && std::conjunction<std::is_move_constructible<Types>...>::value,
+          int> = 0>
 #endif
   constexpr variant_move_construct_base(
       variant_move_construct_base &&other) noexcept(nothrow)
@@ -244,11 +247,12 @@ protected:
 
 template <typename... Types>
 class variant_move_construct_base<true, Types...>
-    : public variant_storage<(std::is_trivially_destructible_v<Types> && ...),
-                             Types...>
+    : public variant_storage<
+          std::conjunction<std::is_trivially_destructible<Types>...>::value,
+          Types...>
 {
   static constexpr bool nothrow =
-      (std::is_nothrow_move_constructible_v<Types> && ...);
+      std::conjunction<std::is_nothrow_move_constructible<Types>...>::value;
 
 public:
   constexpr variant_move_construct_base() = default;
@@ -274,7 +278,9 @@ class variant_copy_construct_base;
 template <typename... Types>
 class variant_copy_construct_base<false, Types...>
     : public variant_move_construct_base<
-          (std::is_trivially_move_constructible_v<Types> && ...), Types...>
+          std::conjunction<
+              std::is_trivially_move_constructible<Types>...>::value,
+          Types...>
 {
 public:
   constexpr variant_copy_construct_base() = default;
@@ -288,9 +294,11 @@ public:
   // a copy constructor, but this does not work on MSVC.
 
 #if !defined _MSC_VER
-  template <bool True = true,
-            std::enable_if_t<
-                True && (std::is_copy_constructible_v<Types> && ...), int> = 0>
+  template <
+      bool True = true,
+      std::enable_if_t<
+          True && std::conjunction<std::is_copy_constructible<Types>...>::value,
+          int> = 0>
 #endif
   constexpr variant_copy_construct_base(
       const variant_copy_construct_base &other)
@@ -1027,7 +1035,7 @@ struct visit_impl
         "parameters");
 
     return (*this)(
-        [&](auto &&... values) -> decltype(auto) {
+        [&](auto &&...values) -> decltype(auto) {
           GPCL_ASSERT(!variant1.valueless_by_exception());
           return apply_visitor(
               [&](auto &&value1) -> decltype(auto) {

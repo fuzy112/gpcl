@@ -2,7 +2,7 @@
 // posix_once_flag.hpp
 // ~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2021 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2021-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -33,15 +33,9 @@ class posix_once_flag
 public:
   explicit constexpr posix_once_flag()
 #if defined(__CYGWIN__)
-      : data_init_
-  {
-    19, 0
-  }
+      : data_init_{19, 0}
 #else
-      : data_
-   (
-    PTHREAD_ONCE_INIT
-   )
+      : data_(PTHREAD_ONCE_INIT)
 #endif
   {
   }
@@ -55,7 +49,10 @@ public:
 
   typedef pthread_once_t *native_handle_type;
 
-  native_handle_type native_handle() { return &data_; }
+  native_handle_type native_handle()
+  {
+    return &data_;
+  }
 
 private:
 #if defined(__CYGWIN__)
@@ -74,7 +71,18 @@ private:
 #endif
 };
 
-inline __thread gpcl::function<void()> *posix_once_functor;
+template <typename = void>
+struct posix_once_functor_impl
+{
+  static __thread gpcl::function<void()> *value;
+};
+
+template <typename T>
+__thread gpcl::function<void()> *posix_once_functor_impl<T>::value;
+
+namespace {
+auto &posix_once_functor = posix_once_functor_impl<>::value;
+}
 
 } // namespace detail
 } // namespace gpcl

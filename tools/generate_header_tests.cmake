@@ -1,4 +1,4 @@
-add_library(header_tests)
+add_library(header_tests STATIC EXCLUDE_FROM_ALL)
 target_link_libraries(header_tests PRIVATE gpcl::gpcl)
 file(GLOB files "${GPCL_SOURCE_DIR}/include/gpcl/*.hpp"
   "${GPCL_SOURCE_DIR}/include/gpcl/pmr/*.hpp")

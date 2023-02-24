@@ -2,7 +2,7 @@
 // unreachable.ipp
 // ~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2020 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2020-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -20,7 +20,7 @@
 namespace gpcl {
 namespace detail {
 
-void unreachable_internal(std::string_view message, source_location location) noexcept
+void unreachable_internal(gpcl::czstring<> message, source_location location) noexcept
 {
   auto &&stream = cdebug();
   stream << message << "\n";

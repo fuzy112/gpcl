@@ -2,7 +2,7 @@
 // zstring.hpp
 // ~~~~~~~~~~~
 //
-// Copyright (c) 2020 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2020-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -31,7 +31,21 @@ namespace gpcl {
 //
 
 GPCL_MSVC_SUPPRESS_WARNING_WITH_PUSH(4245)
-inline constexpr const std::size_t dynamic_extent = -1;
+namespace detail {
+template <typename X>
+struct dynamic_extent_impl
+{
+  const static std::size_t value;
+};
+
+template <typename X>
+const std::size_t dynamic_extent_impl<X>::value = -1;
+} // namespace detail
+
+namespace {
+static constexpr const auto &dynamic_extent =
+    detail::dynamic_extent_impl<void>::value;
+}
 GPCL_MSVC_SUPPRESS_WARNING_POP
 
 template <typename CharT, std::size_t Extent = dynamic_extent>

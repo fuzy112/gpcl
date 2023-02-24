@@ -2,7 +2,7 @@
 // optional.hpp
 // ~~~~~~~~~~~~
 //
-// Copyright (c) 2020 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2020-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -539,7 +539,7 @@ public:
   /// @name Monadic operations
   /// @{
 
-  template <typename F, typename U = std::invoke_result_t<F, T &>,
+  template <typename F, typename U = gpcl::invoke_result_t<F, T &>,
             std::enable_if_t<is_optional_v<std::decay_t<U>>>>
   constexpr auto and_then(F &&f) &
   {
@@ -567,7 +567,7 @@ public:
     }
   }
 
-  template <typename F, typename U = std::invoke_result_t<F, T &&>,
+  template <typename F, typename U = gpcl::invoke_result_t<F, T &&>,
             std::enable_if_t<is_optional_v<std::decay_t<U>>>>
   constexpr auto and_then(F &&f) &&
   {
@@ -581,7 +581,7 @@ public:
     }
   }
 
-  template <typename F, typename U = std::invoke_result_t<F, const T &&>,
+  template <typename F, typename U = gpcl::invoke_result_t<F, const T &&>,
             std::enable_if_t<is_optional_v<std::decay_t<U>>>>
   constexpr auto and_then(F &&f) const &&
   {

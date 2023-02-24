@@ -2,7 +2,7 @@
 // source_location.hpp
 // ~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2022-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -12,8 +12,7 @@
 #define GPCL_SOURCE_LOCATION_HPP
 
 #include <gpcl/detail/config.hpp>
-
-#include <string_view>
+#include <gpcl/zstring.hpp>
 
 #ifndef GPCL_CONFIG_NO_IOSTREAMS
 #  include <ostream>
@@ -26,19 +25,19 @@ class source_location
 public:
   constexpr source_location() = default;
 
-  constexpr source_location(std::string_view file, std::uint_least32_t line,
-                            std::string_view function) noexcept
+  constexpr source_location(czstring<> file, std::uint_least32_t line,
+                            czstring<> function) noexcept
       : file_{file},
         line_{line},
         function_{function}
   {
   }
 
-  constexpr std::string_view file() const noexcept { return file_; }
+  constexpr czstring<> file() const noexcept { return file_; }
 
   constexpr std::uint_least32_t line() const noexcept { return line_; }
 
-  constexpr std::string_view function() const noexcept { return function_; }
+  constexpr czstring<> function() const noexcept { return function_; }
 
 #ifndef GPCL_CONFIG_NO_IOSTREAMS
   friend std::ostream &operator<<(std::ostream &out, source_location location)
@@ -53,9 +52,9 @@ public:
 #endif
 
 private:
-  std::string_view file_;
+  czstring<> file_{};
   std::uint_least32_t line_{};
-  std::string_view function_;
+  czstring<> function_{};
 };
 
 } // namespace gpcl

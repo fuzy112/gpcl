@@ -2,7 +2,7 @@
 // meta.hpp
 // ~~~~~~~~
 //
-// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2022-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -14,7 +14,8 @@
 #include <gpcl/meta_fwd.hpp>
 
 /// Metaprogramming utilities.
-namespace gpcl::meta {
+namespace gpcl {
+namespace meta {
 
 /// @defgroup meta Metaprogramming utilities
 /// @{
@@ -62,14 +63,14 @@ template <typename F, typename... Xs>
 using invoke = defer<meta::invoke, F, Xs...>;
 }
 
-template <template <typename...> typename F>
+template <template <typename...> class F>
 struct quote
 {
   template <typename... Args>
   using invoke = _t<defer<F, Args...>>;
 };
 
-template <template <typename...> typename T>
+template <template <typename...> class T>
 using quote_trait = compose<quote<_t>, quote<T>>;
 
 template <typename... Fs>
@@ -248,7 +249,8 @@ struct fold_<C<>, State, F>
 
 template <template <typename...> class C, typename X, typename... Xs,
           typename State, typename F>
-struct fold_<C<X, Xs...>, State, F> : fold_<C<Xs...>, meta::invoke<F, State, X>, F>
+struct fold_<C<X, Xs...>, State, F>
+    : fold_<C<Xs...>, meta::invoke<F, State, X>, F>
 {
 };
 } // namespace detail
@@ -274,7 +276,7 @@ struct foldr_<C<>, State, F>
 template <template <typename...> class C, typename X, typename... Xs,
           typename State, typename F>
 struct foldr_<C<X, Xs...>, State, F>
-    : meta:: invoke<F, _t<foldr_<C<Xs...>, State, F>>, X>
+    : meta::invoke<F, _t<foldr_<C<Xs...>, State, F>>, X>
 {
 };
 
@@ -425,21 +427,17 @@ template <typename List, typename X>
 using find_index =
     second<fold<List, pair<size_t<0>, npos>, detail::find_index_helper<X>>>;
 
-
-
-namespace detail
+namespace detail {
+template <typename P>
+struct filter_helper
 {
-  template <typename P>
-  struct filter_helper
-  {
-    template <typename State, typename X>
-    using invoke = if_<meta::invoke<P, X>, meta::push_back<State, X>, State>;
-  };
-}
+  template <typename State, typename X>
+  using invoke = if_<meta::invoke<P, X>, meta::push_back<State, X>, State>;
+};
+} // namespace detail
 
 template <typename List, typename P>
 using filter = fold<List, list<>, detail::filter_helper<P>>;
-
 
 namespace detail {
 
@@ -485,7 +483,8 @@ template <typename ListOfLists>
 using join = apply<quote<concat>, ListOfLists>;
 
 namespace detail {
-template <typename List, typename N, bool V = (std::size_t(N::type::value) == 0)>
+template <typename List, typename N,
+          bool V = (std::size_t(N::type::value) == 0)>
 struct at_
 {
 };
@@ -763,6 +762,7 @@ using as_tuple = apply<quote<std::tuple>, List>;
 
 /// @}
 
-} // namespace gpcl::meta
+} // namespace meta
+} // namespace gpcl
 
 #endif // GPCL_META_HPP

@@ -3,16 +3,6 @@
 #include <gpcl/atomic.hpp>
 #include <gpcl/thread.hpp>
 
-namespace gpcl {
-
-template struct atomic<char>;
-template struct atomic<unsigned char>;
-template struct atomic<signed char>;
-template struct atomic<short>;
-template struct atomic<unsigned short>;
-
-} // namespace gpcl
-
 template <typename T>
 void test_atomic()
 {

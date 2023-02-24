@@ -2,7 +2,7 @@
 // error_info_base.hpp
 // ~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2022-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,7 +16,8 @@
 #include <gpcl/excfwd.hpp>
 #include <gpcl/typeid.hpp>
 
-namespace gpcl::detail {
+namespace gpcl {
+namespace detail {
 
 class error_info_base;
 class error_info_ref;
@@ -74,6 +75,7 @@ link_error_infos(std::tuple<ErrorInfos...> &error_infos) noexcept
   return r;
 }
 
-} // namespace gpcl::detail
+} // namespace detail
+} // namespace gpcl
 
 #endif // GPCL_DETAIL_ERROR_INFO_BASE_HPP

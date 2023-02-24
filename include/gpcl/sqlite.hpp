@@ -2,7 +2,7 @@
 // sqlite.hpp
 // ~~~~~~~~~~
 //
-// Copyright (c) 2020 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2020-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -27,7 +27,8 @@
 
 #endif
 
-namespace gpcl::sqlite {
+namespace gpcl {
+namespace sqlite {
 
 #ifdef GPCL_SQLITE
 
@@ -104,7 +105,7 @@ GPCL_DECL void bind_static_string(const bind_proxy &proxy, int col,
 
 template <std::size_t N>
 inline auto tag_invoke(bind_fn, const bind_proxy &proxy, int col,
-                       const char(&&str)[N]) -> void
+                       const char (&&str)[N]) -> void
 {
   bind_static_string(proxy, col, str);
 }
@@ -300,6 +301,7 @@ public:
 
 #endif
 
-} // namespace gpcl::sqlite
+} // namespace sqlite
+} // namespace gpcl
 
 #endif // GPCL_SQLITE_HPP

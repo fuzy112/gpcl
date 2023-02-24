@@ -13,6 +13,8 @@
 
 #include <gpcl/detail/config.hpp>
 
+#include <memory>
+
 namespace gpcl {
 
 template <typename Pointer>

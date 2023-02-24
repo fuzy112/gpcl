@@ -2,7 +2,7 @@
 // invoke.hpp
 // ~~~~~~~~~~
 //
-// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2022-2023 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -148,6 +148,9 @@ constexpr typename invoke_result<F, Ts...>::type invoke(F &&f, Ts &&...ts)
 {
   return detail::invoke_impl(std::forward<F>(f), std::forward<Ts>(ts)...);
 }
+
+template <typename F, typename ...Ts>
+using invoke_result_t = typename invoke_result<F, Ts...>::type;
 
 } // namespace gpcl
 
