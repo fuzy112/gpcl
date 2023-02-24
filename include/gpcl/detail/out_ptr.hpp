@@ -15,6 +15,7 @@
 #include <gpcl/detail/config.hpp>
 #include <gpcl/detail/type_traits.hpp>
 #include <gpcl/pointer_traits.hpp>
+#include <gpcl/variant.hpp>
 
 #include <tuple>
 
@@ -22,28 +23,29 @@ namespace gpcl {
 namespace detail {
 
 template <typename Smart, typename Pointer, typename = void>
-struct first_reset_arg;
+struct out_ptr_first_arg;
 
 template <typename Smart, typename Pointer>
-struct first_reset_arg<Smart, Pointer, void_t<typename Smart::pointer>>
+struct out_ptr_first_arg<Smart, Pointer, void_t<typename Smart::pointer>>
 {
   typedef typename Smart::pointer type;
 };
 
 template <typename Smart, typename Pointer, typename = void>
-struct first_reset_arg_1;
+struct out_ptr_first_arg_1;
 
 template <typename Smart, typename Pointer>
-struct first_reset_arg_1<Smart, Pointer, void_t<typename Smart::element_type *>>
+struct out_ptr_first_arg_1<Smart, Pointer,
+                           void_t<typename Smart::element_type *>>
 {
   typedef typename Smart::element_type *type;
 };
 
 template <typename Smart, typename Pointer, typename = void>
-struct first_reset_arg_2;
+struct out_ptr_first_arg_2;
 
 template <typename Smart, typename Pointer>
-struct first_reset_arg_2<
+struct out_ptr_first_arg_2<
     Smart, Pointer,
     void_t<typename gpcl::pointer_traits<Smart>::element_type *>>
 {
@@ -51,39 +53,40 @@ struct first_reset_arg_2<
 };
 
 template <typename Smart, typename Pointer, typename>
-struct first_reset_arg_2
+struct out_ptr_first_arg_2
 {
   typedef Pointer type;
 };
 
 template <typename Smart, typename Pointer, typename>
-struct first_reset_arg_1 : first_reset_arg_2<Smart, Pointer>
+struct out_ptr_first_arg_1 : out_ptr_first_arg_2<Smart, Pointer>
 {
 };
 
 template <typename Smart, typename Pointer, typename>
-struct first_reset_arg : first_reset_arg_1<Smart, Pointer>
+struct out_ptr_first_arg : out_ptr_first_arg_1<Smart, Pointer>
 {
 };
 
 template <typename Smart, typename X, typename Args, typename = void>
-struct is_resettable : std::false_type
+struct out_ptr_is_smart_ptr_resettable : std::false_type
 {
 };
 
 template <typename Smart, typename X, typename... Args>
-struct is_resettable<Smart, X, std::tuple<Args...>,
-                     void_t<decltype(std::declval<Smart &>().reset(
-                         std::declval<X>(), std::declval<Args>()...))>>
-    : std::true_type
+struct out_ptr_is_smart_ptr_resettable<
+    Smart, X, std::tuple<Args...>,
+    void_t<decltype(std::declval<Smart &>().reset(
+        std::declval<X>(), std::declval<Args>()...))>> : std::true_type
 {
 };
 
 template <typename Smart, typename X, typename... Args>
-void do_reset(
+void out_ptr_reset_smart_ptr(
     Smart &sp, X x, std::tuple<Args...> args,
-    typename std::enable_if<
-        is_resettable<Smart, X, std::tuple<Args...>>::value>::type * = nullptr)
+    typename std::enable_if<out_ptr_is_smart_ptr_resettable<
+        Smart, X, std::tuple<Args...>>::value>::type * =
+        0) noexcept(noexcept(sp.reset(std::declval<X>(), std::declval<Args>()...)))
 {
   gpcl::apply([&sp, x = std::move(x)](
                   Args... args) { sp.reset(std::move(x), std::move(args)...); },
@@ -91,10 +94,12 @@ void do_reset(
 }
 
 template <typename Smart, typename X, typename... Args>
-void do_reset(
+void out_ptr_reset_smart_ptr(
     Smart &sp, X x, std::tuple<Args...> args,
-    typename std::enable_if<
-        !is_resettable<Smart, X, std::tuple<Args...>>::value>::type * = nullptr)
+    typename std::enable_if<!out_ptr_is_smart_ptr_resettable<
+        Smart, X, std::tuple<Args...>>::value>::type * =
+        0) noexcept(noexcept(std::is_nothrow_constructible<Smart, X,
+                                                           Args...>::value))
 {
   gpcl::apply(
       [&sp, x = std::move(x)](Args... args) {
@@ -103,24 +108,28 @@ void do_reset(
       std::move(args));
 }
 
+template <typename Pointer>
+Pointer out_ptr_get_pointer(variant<void *, Pointer> const &ptr) noexcept
+{
+  return gpcl::visit(
+      [](auto &&x) {
+        return static_cast<Pointer>(std::forward<decltype(x)>(x));
+      },
+      ptr);
+}
+
 template <typename Smart, typename Pointer, typename... Args>
 class out_ptr_t
 {
   Smart &smart_ptr_;
   std::tuple<Args...> args_;
-  union
-  {
-    mutable Pointer ptr_;
-    mutable void *void_;
-  };
-  mutable bool is_void_;
+  mutable variant<void *, Pointer> ptr_;
 
 public:
   explicit out_ptr_t(Smart &sp, Args... args)
       : smart_ptr_(sp),
         args_(std::move(args)...),
-        ptr_(),
-        is_void_()
+        ptr_()
   {
   }
 
@@ -130,33 +139,20 @@ public:
 
   ~out_ptr_t()
   {
-    Pointer p = [this] {
-      if (is_void_)
-      {
-        return static_cast<Pointer>(void_);
-      }
-      else
-      {
-        Pointer p = std::move(ptr_);
-        ptr_.~Pointer();
-        return p;
-      }
-    }();
-
-    do_reset<Smart, typename first_reset_arg<Smart, Pointer>::type, Args...>(
+    Pointer p = detail::out_ptr_get_pointer(ptr_);
+    detail::out_ptr_reset_smart_ptr<
+        Smart, typename out_ptr_first_arg<Smart, Pointer>::type, Args...>(
         smart_ptr_, std::move(p), std::move(args_));
   }
 
   operator Pointer *() const noexcept
   {
-    is_void_ = false;
-    return &ptr_;
+    return std::addressof(ptr_.template emplace<Pointer>());
   }
 
   operator void **() const noexcept
   {
-    is_void_ = true;
-    return &void_;
+    return std::addressof(ptr_.template emplace<void *>());
   }
 };
 
@@ -169,7 +165,7 @@ struct out_ptr_deduce_helper
 template <typename Smart>
 struct out_ptr_deduce_helper<Smart, void>
 {
-  typedef typename first_reset_arg<Smart, void>::type pointer;
+  typedef typename out_ptr_first_arg<Smart, void>::type pointer;
 };
 
 template <typename Pointer = void, typename Smart, typename... Args>
