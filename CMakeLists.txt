@@ -140,6 +140,18 @@ if(GIT_FOUND)
   endif()
 endif()
 
+if(GPCL_GIT_HASH)
+  set(GPCL_IS_GIT_REPO TRUE)
+else()
+  set(GPCL_IS_GIT_REPO FALSE)
+endif()
+
+if(GPCL_IS_GIT_REPO)
+  message(INFO "Installing pre-commit hook")
+  file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/tools/pre-commit"
+    DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/.git/hooks/")
+endif()
+
 if(UNIX AND NOT APPLE)
   target_link_libraries(gpcl PUBLIC rt)
 endif()
