@@ -215,8 +215,9 @@ set(GPCL_CPPREFERENCE_DIR
 FetchContent_Declare(
   cppreference
   URL https://upload.cppreference.com/mwiki/images/1/16/html_book_20190607.tar.xz
-  URL_HASH
-    SHA256=8f97b2baa749c748a2e022d785f1a2e95aa851a3075987dfcf38baf65e0e486d)
+  URL_HASH SHA256=8f97b2baa749c748a2e022d785f1a2e95aa851a3075987dfcf38baf65e0e486d
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
 
 if(Doxygen_FOUND AND GPCL_BUILD_DOC)
 
