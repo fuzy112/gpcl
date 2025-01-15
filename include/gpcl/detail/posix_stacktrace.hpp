@@ -2,7 +2,7 @@
 // posix_stacktrace.hpp
 // ~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2022 Zhengyi Fu (tsingyat at outlook dot com)
+// Copyright (c) 2022, 2025 Zhengyi Fu (tsingyat at outlook dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -43,13 +43,13 @@
 #  endif
 #endif
 
-#if GPCL_HAVE_CXXABI_H
+#if GPCL_HAVE_CXXABI_H && !defined GPCL_LLVM
 #  include <cxxabi.h>
 #endif
 
 namespace gpcl::detail {
 
-#if GPCL_HAVE_CXXABI_H
+#if GPCL_HAVE_CXXABI_H && !defined GPCL_LLVM
 
 inline std::string cppfilt(std::string_view str)
 {
