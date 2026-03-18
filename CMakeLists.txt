@@ -2,7 +2,7 @@
 # CMakeLists.txt
 # ~~~~~~~~~~~~~~
 #
-# Copyright (c) 2020-2023 Zhengyi Fu (tsingyat at outlook dot com)
+# Copyright (c) 2020-2026 Zhengyi Fu <i@fuzy.me>
 #
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -14,7 +14,7 @@ project(
   GPCL
   VERSION 0.9.0
   DESCRIPTION "General purpose C++ libraries"
-  HOMEPAGE_URL "https://github.com/Chingyat/gpcl"
+  HOMEPAGE_URL "https://github.com/fuzy112/gpcl"
   LANGUAGES CXX C)
 
 math(
@@ -214,7 +214,7 @@ set(GPCL_CPPREFERENCE_DIR
 
 FetchContent_Declare(
   cppreference
-  URL https://upload.cppreference.com/mwiki/images/1/16/html_book_20190607.tar.xz
+  URL https://github.com/PeterFeicht/cppreference-doc/releases/download/v20250209/html-book-20250209.tar.xz
   URL_HASH SHA256=8f97b2baa749c748a2e022d785f1a2e95aa851a3075987dfcf38baf65e0e486d
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )

@@ -2,7 +2,7 @@
 # gpcl.spec
 # ~~~~~~~~~
 #
-# Copyright (c) 2020-2022 Zhengyi Fu (tsingyat at outlook dot com)
+# Copyright (c) 2020-2026 Zhengyi Fu <i@fuzy.me>
 #
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -13,7 +13,7 @@ Version:        0.9.0
 Release:        0
 Summary:        General Purpose C++ Libraries
 License:        BSL-1.0
-URL:            https://github.com/Chingyat/gpcl
+URL:            https://github.com/fuzy112/gpcl
 Source0:        gpcl.tar.gz
 Source1:	html_book_20190607.tar.xz
 BuildRequires:  c++_compiler cmake
